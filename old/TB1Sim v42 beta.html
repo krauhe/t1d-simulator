@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes-Dysten v42</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* General body and layout styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #eef1f5; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #333;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 1920px;
+            min-height: 95vh;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            border-radius: 8px;
+            margin: 10px;
+        }
+        #game-title-container {
+            text-align: center;
+            padding: 10px 0;
+        }
+        #game-title {
+            margin: 0;
+            font-size: 1.8em;
+            color: #2c5282;
+            font-weight: 600;
+        }
+        
+        /* Top control panel for simulation controls */
+        #top-control-panel {
+            background-color: #4a5568; 
+            color: white;
+            padding: 10px 15px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .top-panel-section { 
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap; 
+        }
+
+        #top-control-panel button, #top-control-panel select, #top-control-panel label, #top-control-panel span {
+            margin: 5px 7px; 
+        }
+        #top-control-panel button {
+            background-color: #63b3ed; 
+            border: none;
+            padding: 8px 12px; 
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #top-control-panel button:hover {
+            background-color: #4299e1; 
+        }
+        #speedSelector { 
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            color: #333;
+        }
+        .version-indicator {
+            font-weight: bold;
+            margin-right: 10px; 
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        .normo-hours-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #f6e05e; /* Bright yellow for visibility */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+            margin: 0 15px;
+        }
+        .normo-hours-display small {
+            font-size: 0.7em;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+
+        /* Main layout area */
+        #main-area {
+            display: flex;
+            flex-grow: 1;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        /* Left-side intervention panel */
+        #intervention-panel {
+            width: 480px; /* Increased width to accommodate side-by-side layout */
+            padding: 15px;
+            background-color: #f7fafc; 
+            border-right: 1px solid #e2e8f0; 
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column; 
+            gap: 10px; 
+        }
+        .intervention-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .intervention-group {
+            border: 1px solid #cbd5e0; 
+            padding: 12px;
+            border-radius: 6px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            width: 100%; 
+            box-sizing: border-box;
+            margin-bottom: 10px; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .intervention-row > .intervention-group, .inner-row > div {
+             width: calc(50% - 10px);
+             margin-bottom: 0;
+        }
+        .inner-row {
+             gap: 20px;
+        }
+        
+        .food-presets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px; 
+            margin-top: 10px;
+        }
+        .food-presets button {
+            width: 100%;
+            margin: 0;
+            padding: 8px 5px;
+            font-size: 0.8em;
+            background-color: #e2e8f0;
+            color: #4a5568;
+            border: 1px solid #cbd5e0;
+        }
+        .food-presets button:hover {
+            background-color: #cbd5e0;
+        }
+        
+        #debug-panel {
+            margin-top: 10px; 
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* General styles for intervention group elements */
+        .intervention-group h3, .intervention-group h4 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: #2c5282; 
+            font-weight: bold;
+        }
+         .intervention-group h4 {
+            font-size: 1.0em;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+         }
+
+        .intervention-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .intervention-group input[type="range"], .intervention-group select {
+            width: 100%;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+        }
+        .intervention-group button {
+            width: 100%;
+            padding: 10px;
+            background-color: #48bb78; 
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            margin-top: auto; 
+        }
+        .intervention-group button:hover {
+            background-color: #38a169; 
+        }
+        
+        #other-interventions-container button:disabled {
+            background-color: #a0aec0; 
+            cursor: not-allowed;
+        }
+
+        #glucagonButton {
+            background-color: #e53e3e; 
+        }
+        #glucagonButton:hover {
+            background-color: #c53030; 
+        }
+
+        /* Center and right area containing graph and stats */
+        #center-and-right-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column; 
+            overflow: hidden;
+        }
+        
+        #graph-area-container {
+            flex-grow: 1; 
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        #other-interventions-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding-top: 10px;
+        }
+        #other-interventions-container button {
+            width: 150px;
+        }
+
+        #iob-cob-panel {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9em;
+            z-index: 10;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        #bg-graph {
+            width: 100%;
+            height: 438px;
+            border: 1px solid #cbd5e0;
+            background-color: #fff;
+            border-radius: 6px;
+        }
+        
+        /* Stats Panel */
+        #stats-panel {
+            width: 280px; 
+            padding: 15px;
+            background-color: #f7fafc;
+            border-left: 1px solid #e2e8f0;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+        @media (min-width: 1201px) { 
+             #center-and-right-area {
+                flex-direction: row;
+            }
+        }
+
+        #stats-panel h4 {
+            font-size: 1.1em;
+            color: #2c5282;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        #stats-panel div {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        #weightChangeSlider {
+            width: 90%; 
+            max-width: 250px;
+            margin: 5px auto;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 10px;
+            background: #ddd;
+            outline: none;
+            border-radius: 5px;
+        }
+        #weightChangeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--thumb-color, #4CAF50); 
+            cursor: default;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+        }
+        
+        .stats-table {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr;
+            gap: 8px 12px;
+            align-items: center;
+        }
+        .stats-table .header {
+            font-weight: bold;
+            color: #2c5282;
+            text-align: right;
+        }
+        .stats-table > div {
+             padding: 4px;
+             border-radius: 3px;
+        }
+         .stats-table > .label {
+            font-weight: bold;
+            text-align: left;
+        }
+        .stats-table > .value {
+            text-align: right;
+            background-color: #edf2f7;
+        }
+
+        /* Popups and Warnings */
+        .popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); display: flex;
+            justify-content: center; align-items: center; z-index: 1000; padding: 15px;
+        }
+        .popup-content {
+            background-color: white; padding: 25px 35px; border-radius: 10px;
+            text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 600px;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .popup-content h2 { margin-top: 0; color: #e53e3e; font-size: 1.8em; text-align: center;}
+        .popup-content h2.event-title, .popup-content h2.info-title { color: #3182ce; }
+        .popup-content p, .popup-content li { font-size: 1.0em; line-height: 1.5; margin-bottom: 15px; }
+        .popup-content ul { padding-left: 20px; }
+        .popup-content h3 { color: #2c5282; margin-top: 20px; }
+        .popup-content .popup-button-container { text-align: center; margin-top: 20px; }
+        .popup-content button {
+            padding: 12px 25px; background-color: #48bb78; color: white;
+            border: none; border-radius: 6px; cursor: pointer;
+            font-size: 1.1em; font-weight: bold; transition: background-color 0.2s;
+        }
+        .popup-content button:hover { background-color: #38a169; }
+
+        #steep-drop-warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 0, 0, 0.85);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            z-index: 100;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            display: none; 
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1 id="game-title">Diabetes-Dysten v42</h1>
+        <div id="top-control-panel">
+            <div class="top-panel-section">
+                <button id="startButton">Start Simulation</button>
+                <button id="resetButton">Reset Simulation</button>
+                <button id="helpButton">Hjælp / Info</button>
+            </div>
+            <div class="top-panel-section">
+                <label for="speedSelector">Hastighed:</label>
+                <select id="speedSelector">
+                    <option value="60">1t / min (x60)</option>
+                    <option value="240" selected>4t / min (x240)</option> 
+                    <option value="720">12t / min (x720)</option>
+                    <option value="1440">24t / min (x1440)</option>
+                </select>
+                <button id="pauseButton">Pause</button> 
+            </div>
+             <div class="top-panel-section">
+                <span class="normo-hours-display" title="Optjenes ved at holde blodsukkeret i målområdet. Vægtningen afhænger af dit aktuelle blodsukker og om du foretager natlige interventioner.">Normoglykæmi-points: <span id="normoPointsDisplay">0.0</span> <small id="normoPointsWeighting">(x1.0)</small></span>
+            </div>
+            <div class="top-panel-section">
+                <button id="muteButton">Mute Lyd</button>
+            </div>
+        </div>
+
+        <div id="main-area">
+            <div id="intervention-panel">
+                <div class="intervention-row">
+                     <div class="intervention-group">
+                        <h3>Insulin</h3>
+                        <label for="fastInsulinSlider" title="Hurtigtvirkende insulin dækker kulhydrater i et måltid og korrigerer højt blodsukker. Begynder at virke efter 10-15 minutter og er ude af kroppen efter 2-6 timer.">Hurtig: <span id="fastInsulinValue">4.0</span> E</label>
+                        <input type="range" id="fastInsulinSlider" min="0.5" max="10" value="4" step="0.5"> 
+                        <button id="giveFastInsulinButton">💉 Giv Hurtig</button>
+                        
+                        <label for="longInsulinSlider" style="margin-top: 15px;" title="Basalinsulin dækker kroppens grundlæggende behov for insulin over ca. 24 timer. Det er fundamentet i din behandling og hjælper med at holde dit blodsukker stabilt mellem måltider og om natten.">Basal: <span id="longInsulinValue">10</span> E</label>
+                        <input type="range" id="longInsulinSlider" min="1" max="30" value="10" step="1"> 
+                        <button id="giveLongInsulinButton">🖊️ Giv Basal</button>
+                    </div>
+                     <div class="intervention-group">
+                        <h3>Motion</h3>
+                        <label for="motionIntensity" title="Høj intensitet sænker blodsukkeret hurtigere og øger insulinfølsomheden mere end lav intensitet.">Intensitet:</label>
+                        <select id="motionIntensity">
+                            <option value="Lav">Lav</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Høj">Høj</option>
+                        </select>
+                        <label for="motionDuration" title="Længere tids motion har en større og længerevarende effekt på dit blodsukker og insulinfølsomhed.">Varighed:</label>
+                        <select id="motionDuration">
+                            <option value="15">15 min</option>
+                            <option value="30">30 min</option>
+                            <option value="60">1 time</option>
+                        </select>
+                        <div class="kcal-display"><span id="motionKcalDisplay"></span> kcal</div>
+                        <button id="startMotionButton">🏃 Start Motion</button>
+                    </div>
+                </div>
+                <div class="intervention-group">
+                    <h3>Mad</h3>
+                    <div class="intervention-row inner-row">
+                        <div style="display:flex; flex-direction:column; gap: 5px;">
+                            <label for="carbsSlider" title="Kulhydrater hæver blodsukkeret hurtigst. Effekten starter typisk efter 20 minutter.">Kulhydrat: <span id="carbsValue">50</span> g</label>
+                            <input type="range" id="carbsSlider" min="0" max="100" value="50" step="5">
+                            <label for="proteinSlider" title="Protein har en mindre og langsommere effekt på blodsukkeret end kulhydrater.">Protein: <span id="proteinValue">10</span> g</label>
+                            <input type="range" id="proteinSlider" min="0" max="100" value="10" step="5">
+                            <label for="fatSlider" title="Fedt påvirker ikke blodsukkeret direkte, men forsinker optagelsen af kulhydrater og protein markant.">Fedt: <span id="fatValue">5</span> g</label>
+                            <input type="range" id="fatSlider" min="0" max="50" value="5" step="5">
+                            <div class="kcal-display" id="foodInfoDisplay" title="Kalorier og kulhydrat-ækvivalenter for det sammensatte måltid."><span id="foodKcalDisplay"></span> | KE: <span id="foodKeDisplay"></span></div>
+                            <button id="giveFoodButton" style="margin-top: 10px;">🍴 Spis Mad</button> 
+                        </div>
+                        <div>
+                             <div class="food-presets">
+                                <button id="dextroButton" title="3g Kulhydrater">🍬 Dextro</button>
+                                <button id="burgerButton" title="~40g Kulhydrat, 30g Protein, 30g Fedt">🍔 Burger</button>
+                                <button id="avocadoButton" title="~5g Kulhydrat, 5g Protein, 25g Fedt">🥑 Avocado</button>
+                                <button id="chickenButton" title="~2g Kulhydrat, 30g Protein, 15g Fedt">🍗 Kyl. lår</button>
+                                <button id="cakeButton" title="~60g Kulhydrat, 5g Protein, 25g Fedt">🍰 Lagkage</button>
+                                <button id="sodaButton" title="~35g Kulhydrater">🥤 Sodavand</button>
+                                <button id="saladButton" title="~5g Kulhydrat, 2g Protein, 1g Fedt">🥗 Salat</button>
+                                <button id="cerealButton" title="~30g Kulhydrat, 8g Protein, 2g Fedt">🥣 Havregryn</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div id="debug-panel" class="intervention-group">
+                    <h3>Debug</h3>
+                    <label>
+                        <input type="checkbox" id="debugTrueBgCheckbox"> Vis Sandt BG
+                    </label>
+                </div>
+            </div>
+
+            <div id="center-and-right-area">
+                <div id="graph-area-container">
+                    <div id="iob-cob-panel">
+                        Dag: <span id="dayDisplay">1</span> - <span id="timeDisplay">00:00</span><br>
+                        CGM: <span id="cgmValueDisplayGraph">-.-</span><br>
+                        IOB: <span id="iobDisplay">0.0</span> E | 
+                        COB: <span id="cobDisplay">0</span> g
+                    </div>
+                    <canvas id="bg-graph"></canvas>
+                    <div id="other-interventions-container">
+                        <button id="fingerprickButton" title="En manuel blodsukkermåling. Den er mere præcis end CGM'en og kan bruges til at dobbelttjekke din CGM-værdi, især hvis du har mistanke om, at den viser forkert.">🩸 Fingerprik</button>
+                        <button id="glucagonButton" title="Nødbehandling ved meget lavt blodsukker. Giver en kraftig og hurtig stigning i blodsukker. Har en 24-timers cooldown.">✚ Brug Glycagon</button>
+                    </div>
+                    <div id="steep-drop-warning">ADVARSEL: Hurtigt faldende BG!</div>
+                </div>
+                <div id="stats-panel">
+                    <div>
+                        <h4 title="Dine personlige diabetes-parametre. Disse er konstante i hele simulationen.">Spiller Data</h4>
+                        <div title="Insulin/Kulhydrat-Ratio: Hvor mange gram kulhydrat dækker 1 enhed (E) hurtigtvirkende insulin? Bruges til at beregne insulin til måltider."><span>ICR:</span> <span id="icrDisplay">--</span> g/E</div>
+                        <div title="Insulin Sensitivitets-Faktor: Hvor meget sænker 1 enhed (E) hurtigtvirkende insulin dit blodsukker? Bruges til korrektion af højt blodsukker."><span>ISF:</span> <span id="isfDisplay">--</span> (mmol/L)/E</div>
+                        <div title="Kulhydrat-Effekt: Hvor meget stiger dit blodsukker (i mmol/L) for hvert gram kulhydrat, du spiser? Udregnes som ISF / ICR."><span>Kulh. effekt:</span> <span id="carbEffectDisplay">--</span> g/(mmol/L)</div>
+                        <div title="Hvileforbrug: Dit basale kalorieforbrug pr. dag, uden motion."><span>Hvileforbrug:</span> <span id="restingKcalDisplay">--</span> kcal/dag</div>
+                    </div>
+                    <hr>
+                     <div>
+                        <h4>Vægtændring</h4>
+                        <label for="weightChangeSlider"><span id="weightChangeValue">0.0</span> kg</label>
+                        <input type="range" id="weightChangeSlider" min="-5" max="5" value="0" step="0.1" disabled>
+                    </div>
+                    <hr>
+                    <div class="stats-table">
+                        <div class="header">Beskrivelse</div>
+                        <div class="header">24 Timer</div>
+                        <div class="header">14 Dage</div>
+
+                        <div class="label" title="Time in Range: Procentdel af tiden hvor dit sande blodsukker har været mellem 4.0 og 10.0 mmol/L.">TIR (4-10)</div>
+                        <div class="value" id="tir24h">--%</div>
+                        <div class="value" id="tir14d">--%</div>
+
+                        <div class="label" title="Time in Tight Range: Procentdel af tiden hvor dit sande blodsukker har været i det ideelle interval mellem 4.0 og 8.0 mmol/L.">TITR (4-8)</div>
+                        <div class="value" id="titr24h">--%</div>
+                        <div class="value" id="titr14d">--%</div>
+
+                        <div class="label" title="Gennemsnitlig CGM-værdi over perioden. Giver en indikation af den generelle blodsukkerkontrol.">Gns. CGM</div>
+                        <div class="value" id="avgCgm24h">--</div>
+                        <div class="value" id="avgCgm14d">--</div>
+
+                        <div class="label">Hurtig Insulin</div>
+                        <div class="value" id="fastInsulin24h">-- E</div>
+                        <div class="value">--</div>
+
+                        <div class="label">Basal Insulin</div>
+                        <div class="value" id="basalInsulin24h">-- E</div>
+                        <div class="value">--</div>
+
+                        <div class="label">Kalorieindtag</div>
+                        <div class="value" id="kcal24h">-- kcal</div>
+                        <div class="value">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        let startButton, resetButton, helpButton, pauseButton, speedSelector, dayDisplay, timeDisplay, cgmValueDisplayGraph, normoPointsDisplay, normoPointsWeighting, muteButton, carbsSlider, carbsValue, proteinSlider, proteinValue, fatSlider, fatValue, giveFoodButton, foodInfoDisplay, foodKcalDisplay, foodKeDisplay, dextroButton, burgerButton, avocadoButton, chickenButton, cakeButton, sodaButton, saladButton, cerealButton, fastInsulinSlider, fastInsulinValue, giveFastInsulinButton, longInsulinSlider, longInsulinValue, giveLongInsulinButton, motionIntensitySelect, motionDurationSelect, startMotionButton, motionKcalDisplay, fingerprickButton, glucagonButton, debugTrueBgCheckbox, iobDisplay, cobDisplay, bgGraphCanvas, graphCtx, weightChangeSlider, weightChangeValue, steepDropWarningDiv, icrDisplay, isfDisplay, carbEffectDisplay, restingKcalDisplay, tir24hDisplay, titr24hDisplay, avgCgm24hDisplay, fastInsulin24hDisplay, basalInsulin24hDisplay, kcal24hDisplay, tir14dDisplay, titr14dDisplay, avgCgm14dDisplay;
+        
+        // --- Game State and Configuration ---
+        let game;
+        let gameLoopIntervalId = null;
+        let lastFrameTime = 0;
+        let isPaused = true;
+        let isMuted = false;
+        let cgmDataPoints = []; 
+        let trueBgPoints = [];
+        const MAX_GRAPH_POINTS_PER_DAY = 288;
+        const KCAL_PER_KG_WEIGHT = 7700;
+        const RESTING_KCAL_PER_DAY = 2200;
+        const RESTING_KCAL_PER_MINUTE = RESTING_KCAL_PER_DAY / (24 * 60);
+
+        // --- Tone.js Sound Setup ---
+        let sounds = {};
+        try {
+            sounds.tickSynth = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 2, envelope: { attack: 0.001, decay: 0.2, sustain: 0 }, volume: -6 }).toDestination();
+            sounds.interventionSynth = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 }, volume: -12 }).toDestination();
+            sounds.bonusSynth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 }, volume: -10 }).toDestination();
+            sounds.gameOverSynth = new Tone.FMSynth({
+                harmonicity: 8, modulationIndex: 2, oscillator: { type: "sine" },
+                envelope: { attack: 0.01, decay: 0.5, release: 1 },
+                modulation: { type: "square" },
+                modulationEnvelope: { attack: 0.01, decay: 0.2, release: 0.1 }
+            }).toDestination();
+        } catch (e) {
+            console.error("Tone.js initialization failed.", e);
+            sounds = null; 
+        }
+        
+        function playSound(type, note = 'C4', duration = '8n') {
+            if (isMuted || !sounds) return;
+            try {
+                const now = Tone.now();
+                if (type === 'tick' && sounds.tickSynth) sounds.tickSynth.triggerAttackRelease("C2", "32n", now);
+                else if (type === 'bonus' && sounds.bonusSynth) sounds.bonusSynth.triggerAttackRelease("A5", "16n", now);
+                else if (type === 'intervention' && sounds.interventionSynth) sounds.interventionSynth.triggerAttackRelease(note, duration, now);
+                else if (type === 'gameOver' && sounds.gameOverSynth) {
+                    sounds.gameOverSynth.triggerAttackRelease("G3", "8n", now);
+                    sounds.gameOverSynth.triggerAttackRelease("E3", "8n", now + 0.1);
+                    sounds.gameOverSynth.triggerAttackRelease("C3", "4n", now + 0.2);
+                }
+            } catch (e) { console.warn("Error playing sound:", type, e); }
+        }
+
+        // --- Simulator Class: The core engine of the game ---
+        class Simulator {
+            constructor() {
+                this.day = 1; this.timeInMinutes = 0; this.totalSimMinutes = 0; 
+                this.simulationSpeed = parseInt(speedSelector.value); this.isGameOver = false;
+                this.ISF = 3.0; this.ICR = 10;
+                this.gramsPerMmolRise = this.ICR / this.ISF; 
+                this.trueBG = 5.5; 
+                this.cgmBG = 5.5; 
+                this.cgmBGHistory = [{ time: -5 * 60, value: 5.5 }];
+                this.lastCgmCalculationTime = -5;
+                this.cgmSystemicPeriod = (4 + Math.random() * 4) * 60;
+                this.cgmSystemicAmplitude = (0.3 + Math.random() * 0.4);
+                this.lastTrueBGForDropCheck = this.trueBG; this.timeOfLastBGDropCheck = 0;
+                this.activeFood = []; this.activeFastInsulin = []; this.activeLongInsulin = []; this.activeMotion = []; 
+                this.iob = 0; this.cob = 0; this.lastInsulinTime = -Infinity;
+                this.timeOfHighBGwithInsulinDeficit = 0; this.dkaWarning1Given = false; this.dkaGameOverTime = -1;
+                this.glucagonUsedTime = -Infinity; this.normoPoints = 0;
+                this.nightInterventionPenaltyFactor = 1.0; this.nightInterventionPenaltyEndTime = -1;
+                this.basalReminderGivenForDay = [false, false, false];
+                this.bgHistoryForStats = []; this.logHistory = [];
+                this.totalKcalConsumed = 0; this.totalKcalBurnedBase = 0; this.totalKcalBurnedMotion = 0;
+                this.weightChangeKg = 0;
+                this.graphMessages = [];
+                this.insulinResistanceFactor = 1.0;
+                this.isInBonusRange = false;
+                this.addLongInsulin(12, this.totalSimMinutes - 16 * 60, true); 
+                this.lastInsulinTime = this.totalSimMinutes - 16 * 60; 
+            }
+
+            get currentISF() {
+                let sensitivityIncreaseFactor = 1.0;
+                this.activeMotion.forEach(motion => {
+                    if (this.totalSimMinutes < motion.sensitivityEndTime) {
+                        const timeIntoSensitivityEffect = this.totalSimMinutes - (motion.startTime + motion.duration);
+                        const totalSensitivityDuration = motion.sensitivityEndTime - (motion.startTime + motion.duration);
+                        if (totalSensitivityDuration <= 0) return;
+                        const currentIncrease = (motion.maxSensitivityIncreaseFactor - 1) * (1 - (timeIntoSensitivityEffect / totalSensitivityDuration));
+                        sensitivityIncreaseFactor = Math.max(sensitivityIncreaseFactor, 1 + currentIncrease);
+                    }
+                });
+                return (this.ISF * this.insulinResistanceFactor) / sensitivityIncreaseFactor;
+            }
+             get currentCarbEffect() { return this.currentISF / this.ICR; }
+
+            update(deltaTimeSeconds) {
+                if (this.isGameOver) return;
+                const simulatedMinutesPassed = deltaTimeSeconds * this.simulationSpeed / 60;
+                this.totalSimMinutes += simulatedMinutesPassed;
+                this.timeInMinutes = this.totalSimMinutes % (24 * 60);
+                this.day = Math.floor(this.totalSimMinutes / (24*60)) + 1;
+                this.totalKcalBurnedBase += RESTING_KCAL_PER_MINUTE * simulatedMinutesPassed;
+                
+                let bgChangeThisFrame = 0;
+
+                let liverGlucoseProduction = 0.02;  
+                const currentHour = Math.floor(this.timeInMinutes / 60);
+                if (currentHour >= 3 && currentHour < 8) liverGlucoseProduction *= 1.3; 
+                bgChangeThisFrame += liverGlucoseProduction * simulatedMinutesPassed;
+                
+                this.activeLongInsulin.forEach(ins => {
+                    const timeSinceInjection = this.totalSimMinutes - ins.injectionTime;
+                    if (timeSinceInjection < 0) return;
+                    let effectFactor = 0; 
+                    const timeToPlateau = 4 * 60, endOfPlateau = timeToPlateau + 18 * 60, tailOffDuration = ins.totalDuration - endOfPlateau;
+                    if (timeSinceInjection < timeToPlateau) effectFactor = timeSinceInjection / timeToPlateau;
+                    else if (timeSinceInjection < endOfPlateau) effectFactor = 1.0;
+                    else if (timeSinceInjection < ins.totalDuration) effectFactor = 1.0 - (timeSinceInjection - endOfPlateau) / tailOffDuration;
+                    const basalRate = (ins.dose * this.currentISF) / (ins.totalDuration - (timeToPlateau + tailOffDuration) * 0.5);
+                    bgChangeThisFrame -= basalRate * Math.max(0, effectFactor) * simulatedMinutesPassed;
+                });
+                this.activeLongInsulin = this.activeLongInsulin.filter(ins => (this.totalSimMinutes - ins.injectionTime) < ins.totalDuration);
+
+                this.cob = 0;
+                this.activeFood.forEach(food => {
+                    const timeSinceConsumption = this.totalSimMinutes - food.startTime;
+                    let carbAbsorptionDuration = 40 + (food.fat * 1.5) + (food.protein * 0.5);
+                    let carbAbsorptionStartDelay = 20 + (food.fat * 0.5); 
+                    if (food.carbsAbsorbed < food.carbs && timeSinceConsumption > carbAbsorptionStartDelay) { 
+                        const absorbAmount = Math.min(food.carbs - food.carbsAbsorbed, (food.carbs / carbAbsorptionDuration) * simulatedMinutesPassed);
+                        bgChangeThisFrame += absorbAmount * this.currentCarbEffect; 
+                        food.carbsAbsorbed += absorbAmount;
+                    }
+                    if (food.proteinAbsorbed < food.protein && timeSinceConsumption > 30) {
+                         const absorbAmountProtein = Math.min(food.protein - food.proteinAbsorbed, (food.protein / (180 + food.fat * 2)) * simulatedMinutesPassed);
+                         bgChangeThisFrame += absorbAmountProtein * this.currentCarbEffect * 0.25;
+                         food.proteinAbsorbed += absorbAmountProtein;
+                    }
+                    this.cob += (food.carbs - food.carbsAbsorbed) + (food.protein - food.proteinAbsorbed) * 0.25;
+                });
+                this.activeFood = this.activeFood.filter(f => f.carbsAbsorbed < f.carbs || f.proteinAbsorbed < f.protein);
+                
+                this.iob = 0;
+                this.activeFastInsulin.forEach(ins => {
+                    const timeSinceInjection = this.totalSimMinutes - ins.injectionTime;
+                    if (timeSinceInjection >= ins.onset) {
+                        let insulinEffectiveness = 0; 
+                        if (timeSinceInjection < (ins.onset + ins.timeToPeak)) insulinEffectiveness = (timeSinceInjection - ins.onset) / ins.timeToPeak;
+                        else if (timeSinceInjection < ins.totalDuration) insulinEffectiveness = 1 - (timeSinceInjection - (ins.onset + ins.timeToPeak)) / (ins.totalDuration - (ins.onset + ins.timeToPeak));
+                        const insulinRate = (2 * ins.dose * this.currentISF) / (ins.totalDuration - ins.onset);
+                        bgChangeThisFrame -= insulinRate * Math.max(0, insulinEffectiveness) * simulatedMinutesPassed;
+                        
+                        const remainingDuration = ins.totalDuration - timeSinceInjection;
+                        if (remainingDuration > 0) {
+                            let iobFactor = (timeSinceInjection < (ins.onset + ins.timeToPeak)) ? 1 : (remainingDuration / (ins.totalDuration - (ins.onset + ins.timeToPeak)));
+                            this.iob += ins.dose * Math.max(0, iobFactor);
+                        }
+                    }
+                });
+                this.activeFastInsulin = this.activeFastInsulin.filter(ins => (this.totalSimMinutes - ins.injectionTime) < ins.totalDuration);
+                
+                this.activeMotion.forEach(motion => {
+                    if (this.totalSimMinutes >= motion.startTime && this.totalSimMinutes < (motion.startTime + motion.duration)) {
+                        let bgDropPer10min = (motion.intensity === "Lav") ? 1.0 : (motion.intensity === "Medium") ? 2.0 : 3.0;
+                        bgChangeThisFrame -= (bgDropPer10min / 10) * (1 + (Math.random()*0.4-0.2)) * simulatedMinutesPassed;
+                    }
+                });
+                
+                this.trueBG += bgChangeThisFrame;
+                this.trueBG = Math.max(0.1, this.trueBG);
+
+                if (this.totalSimMinutes - this.timeOfLastBGDropCheck >= 1) { 
+                    const bgDropPerMinute = this.lastTrueBGForDropCheck - this.trueBG; 
+                    if (this.trueBG < 4.0 && bgDropPerMinute > 0.15) this.showSteepDropWarning();
+                    this.lastTrueBGForDropCheck = this.trueBG;
+                    this.timeOfLastBGDropCheck = this.totalSimMinutes;
+                }
+
+                // V13 CGM Logic
+                if (this.totalSimMinutes - this.lastCgmCalculationTime >= 5) {
+                    const cgmDelayMinutes = 5 + Math.random() * 5; 
+                    let delayedTrueBG = this.trueBG; 
+                    const targetTime = this.totalSimMinutes - cgmDelayMinutes;
+                    for (let i = this.cgmBGHistory.length - 1; i >= 0; i--) { 
+                        if (this.cgmBGHistory[i].time <= targetTime) { 
+                            delayedTrueBG = this.cgmBGHistory[i].value; 
+                            break; 
+                        } 
+                    }
+                    const randomNoise = (Math.random() - 0.5) * 0.15; 
+                    let systemicDeviation = Math.sin(this.totalSimMinutes / this.cgmSystemicPeriod) * this.cgmSystemicAmplitude;
+                    this.cgmBG = delayedTrueBG + randomNoise + systemicDeviation;
+                    this.cgmBG = Math.max(2.2, Math.min(25.0, this.cgmBG));
+                    this.lastCgmCalculationTime = this.totalSimMinutes;
+
+                    cgmDataPoints.push({ time: this.totalSimMinutes, value: this.cgmBG });
+                    trueBgPoints.push({ time: this.totalSimMinutes, value: this.trueBG });
+                    this.bgHistoryForStats.push({time: this.totalSimMinutes, cgmBG: this.cgmBG, trueBG: this.trueBG });
+                    this.cgmBGHistory.push({ time: this.totalSimMinutes, value: this.trueBG });
+                    if(this.cgmBGHistory.length > 120) this.cgmBGHistory.shift();
+                    
+                    if (cgmDataPoints.length > MAX_GRAPH_POINTS_PER_DAY * 2) cgmDataPoints.shift();
+                    if (trueBgPoints.length > MAX_GRAPH_POINTS_PER_DAY * 2) trueBgPoints.shift();
+                    if (this.bgHistoryForStats.length > (14 * MAX_GRAPH_POINTS_PER_DAY + 10)) this.bgHistoryForStats.shift();
+                    if (this.simulationSpeed >= 240) playSound('tick');
+                }
+                
+                this.graphMessages = this.graphMessages.filter(msg => this.totalSimMinutes < msg.expireTime); 
+                if (this.day <= 3 && !this.basalReminderGivenForDay[this.day-1] && currentHour >= 8 && currentHour < 12) {
+                    const startOfDay = (this.day - 1) * 24 * 60;
+                    const hasTakenBasalToday = this.logHistory.some(e => e.type === 'insulin-basal' && e.time >= startOfDay);
+                    if (!hasTakenBasalToday) {
+                        const existingReminder = this.graphMessages.find(msg => msg.id === `basal_reminder_day_${this.day}`);
+                        if (!existingReminder) {
+                            this.graphMessages.push({
+                                id: `basal_reminder_day_${this.day}`,
+                                text: "Husk Basal Insulin (Normal dosis ca. 10E)",
+                                expireTime: this.totalSimMinutes + (120 * (this.simulationSpeed/60)) // Show for 2 simulated hours
+                            });
+                        }
+                    }
+                }
+                
+                this.updateNormoPoints(simulatedMinutesPassed);
+                this.updateWeight();
+                this.updateStats(); 
+                this.checkGameOverConditions(); 
+                this.updateGlucagonStatus();
+            }
+
+            updateNormoPoints(minutesPassed) {
+                 if (this.totalSimMinutes > this.nightInterventionPenaltyEndTime) this.nightInterventionPenaltyFactor = 1.0;
+                
+                const inBonusNow = this.trueBG >= 5.0 && this.trueBG <= 6.0;
+                if(inBonusNow && !this.isInBonusRange) {
+                    playSound('bonus');
+                }
+                this.isInBonusRange = inBonusNow;
+
+                let bgWeight = 0;
+                if (inBonusNow) {
+                    bgWeight = 2;
+                } else if (this.trueBG >= 4.0 && this.trueBG <= 10.0) {
+                    bgWeight = 1;
+                } else {
+                    bgWeight = 0;
+                }
+
+                const finalWeight = this.nightInterventionPenaltyFactor * bgWeight;
+                this.normoPoints += (minutesPassed / 60) * finalWeight;
+
+                normoPointsWeighting.textContent = `(x${finalWeight.toFixed(1)})`;
+            }
+            
+            handleNightIntervention(penaltyMinutes = 120) {
+                const currentHour = Math.floor(this.timeInMinutes / 60);
+                if (currentHour >= 22 || currentHour < 7) {
+                    if (this.nightInterventionPenaltyFactor === 1.0) {
+                        logEvent(`Natlig intervention! Pointoptjening halveret i ${penaltyMinutes/60} timer.`, 'event');
+                        this.graphMessages.push({
+                            id: `night_intervention_${this.totalSimMinutes}`,
+                            text: "zZzz... Natlig intervention",
+                            expireTime: this.totalSimMinutes + penaltyMinutes
+                        });
+                    }
+                    this.nightInterventionPenaltyFactor = 0.5;
+                    this.nightInterventionPenaltyEndTime = this.totalSimMinutes + penaltyMinutes;
+                }
+            }
+            
+            showSteepDropWarning() {
+                if (steepDropWarningDiv.style.display === 'block') return;
+                steepDropWarningDiv.style.display = 'block';
+                playSound('intervention', 'A5', '2n'); 
+                setTimeout(() => { steepDropWarningDiv.style.display = 'none'; }, 5000); 
+            }
+
+            addFood(carbs, protein, fat, icon = '🍴') {
+                this.handleNightIntervention();
+                const foodKcal = (carbs * 4) + (protein * 4) + (fat * 9);
+                this.totalKcalConsumed += foodKcal;
+                logEvent(`Mad: ${carbs}g K, ${protein}g P, ${fat}g F`, 'food', {kcal: foodKcal, carbs, protein, icon});
+                this.activeFood.push({ carbs, protein, fat, startTime: this.totalSimMinutes, carbsAbsorbed: 0, proteinAbsorbed: 0 });
+                playSound('intervention', 'E4');
+            }
+            
+            addFastInsulin(dose) {
+                this.handleNightIntervention();
+                logEvent(`Hurtig insulin: ${dose}E`, 'insulin-fast', {dose});
+                const onset = 10 + Math.random() * 5, timeToPeak = 45 + (dose * 5) + (Math.random() * 20), totalDuration = 120 + (dose * 12) + (Math.random() * 60);
+                this.activeFastInsulin.push({ dose, injectionTime: this.totalSimMinutes, onset, timeToPeak, totalDuration });
+                this.lastInsulinTime = this.totalSimMinutes; 
+                this.resetDKAState();
+                playSound('intervention', 'A4');
+            }
+            
+            addLongInsulin(dose, injectionTime = this.totalSimMinutes, isSilent = false) {
+                 if (!isSilent) {
+                    this.handleNightIntervention();
+                    logEvent(`Basal insulin: ${dose}E`, 'insulin-basal', {dose});
+                    this.basalReminderGivenForDay[this.day-1] = true;
+                    playSound('intervention', 'G3'); 
+                 }
+                 this.activeLongInsulin.push({ dose, injectionTime, totalDuration: (24 + Math.random() * 12) * 60 });
+                 this.lastInsulinTime = injectionTime;
+                 this.resetDKAState();
+            }
+            
+            resetDKAState() { this.timeOfHighBGwithInsulinDeficit = 0; this.dkaWarning1Given = false; this.dkaGameOverTime = -1; }
+
+            startMotion(intensity, duration) {
+                this.handleNightIntervention();
+                const durationMinutes = parseInt(duration);
+                let kcalPerMinute = intensity === "Lav" ? 4 : (intensity === "Medium" ? 7 : 10);
+                this.totalKcalBurnedMotion += kcalPerMinute * durationMinutes;
+                logEvent(`Motion: ${intensity}, ${durationMinutes} min`, 'motion', {intensity, duration: durationMinutes});
+                let sensitivityDurationMinutes = durationMinutes * (intensity === "Høj" ? 4 : (intensity === "Medium" ? 2 : 1)); 
+                const maxSensIncrease = 1 + (intensity === "Høj" ? 1.0 : (intensity === "Medium" ? 0.75 : 0.5)); 
+                this.activeMotion.push({ intensity, startTime: this.totalSimMinutes, duration: durationMinutes, sensitivityEndTime: this.totalSimMinutes + durationMinutes + sensitivityDurationMinutes, maxSensitivityIncreaseFactor: maxSensIncrease });
+                startMotionButton.disabled = true;
+                setTimeout(() => { startMotionButton.disabled = false; }, durationMinutes * 60 * 1000 / this.simulationSpeed);
+                playSound('intervention', 'F4');
+            }
+            
+            performFingerprick() {
+                this.handleNightIntervention(30);
+                const measuredBG = this.trueBG * (1 + (Math.random() * 0.1 - 0.05));
+                logEvent(`Fingerprik: ${measuredBG.toFixed(1)} mmol/L`, 'fingerprick', {value: measuredBG.toFixed(1)});
+                cgmDataPoints.push({ time: this.totalSimMinutes, value: measuredBG, type: 'fingerprick' });
+                playSound('intervention', 'B4');
+            }
+            
+            updateGlucagonStatus() {
+                const cooldownMinutes = 24 * 60;
+                const timeSinceUsed = this.totalSimMinutes - this.glucagonUsedTime;
+                glucagonButton.disabled = timeSinceUsed < cooldownMinutes;
+            }
+
+            useGlucagon() {
+                this.handleNightIntervention();
+                logEvent("Glycagon brugt! BG stiger hurtigt.", 'event');
+                this.trueBG = Math.min(25, this.trueBG + 8 + Math.random() * 4);
+                this.glucagonUsedTime = this.totalSimMinutes;
+                this.updateGlucagonStatus();
+            }
+
+             updateWeight() {
+                const netKcal = this.totalKcalConsumed - (this.totalKcalBurnedBase + this.totalKcalBurnedMotion);
+                this.weightChangeKg = netKcal / KCAL_PER_KG_WEIGHT;
+                weightChangeSlider.value = Math.max(-5, Math.min(5, this.weightChangeKg));
+                weightChangeValue.textContent = this.weightChangeKg.toFixed(1);
+                const absWeightChange = Math.abs(this.weightChangeKg);
+                let thumbColor = '#4CAF50'; 
+                if (absWeightChange > 3.5) thumbColor = '#F44336'; 
+                else if (absWeightChange > 1.5) thumbColor = '#FFC107'; 
+                weightChangeSlider.style.setProperty('--thumb-color', thumbColor);
+            }
+
+            checkGameOverConditions() {
+                if (this.isGameOver) return; // Don't trigger multiple game overs
+
+                if (this.trueBG < 1.5) { this.gameOver("GAME OVER", `Hypoglykæmi! Dit sande blodsukker faldt under 1.5 mmol/L.<br>Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return; }
+                if (Math.abs(this.weightChangeKg) > 5.0) { this.gameOver("GAME OVER", `Vægtændring! Din vægtændring oversteg 5 kg (${this.weightChangeKg.toFixed(1)} kg).<br>Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return; }
+
+                const insulinDeficient = this.iob < 0.1 && this.activeLongInsulin.length === 0 && (this.totalSimMinutes - this.lastInsulinTime > 8*60);
+                if (this.trueBG > 12 && insulinDeficient) {
+                    if (this.timeOfHighBGwithInsulinDeficit === 0) this.timeOfHighBGwithInsulinDeficit = this.totalSimMinutes;
+                } else {
+                    this.timeOfHighBGwithInsulinDeficit = 0;
+                }
+                if (this.timeOfHighBGwithInsulinDeficit > 0 && (this.totalSimMinutes - this.timeOfHighBGwithInsulinDeficit > 6 * 60) && !this.dkaWarning1Given) {
+                    this.dkaWarning1Given = true;
+                    this.dkaGameOverTime = this.totalSimMinutes + 12 * 60;
+                    showPopup("Advarsel: Risiko for Ketoacidose!", "Højt blodsukker og insulinmangel i over 6 timer. Symptomer: tørst, hyppig vandladning, kvalme, træthed. Tag insulin hurtigst muligt!", false, true, false, false);
+                }
+                if (this.dkaGameOverTime !== -1 && this.totalSimMinutes >= this.dkaGameOverTime) {
+                     this.gameOver("GAME OVER", `Diabetisk Ketoacidose! Du reagerede ikke på advarslen om insulinmangel i tide.<br>Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return;
+                }
+                
+                if (this.day > 14) {
+                    const avg14d = this.calculateAverageBGForPeriod(14 * 24 * 60, true);
+                    if (avg14d !== null && avg14d > 15.0) {
+                        this.gameOver(`GAME OVER`, `Sendiabetiske Komplikationer! Dit gennemsnitlige BG over de sidste 14 dage var ${avg14d.toFixed(1)} mmol/L.<br>Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return;
+                    }
+                }
+            }
+            
+            calculateAverageBGForPeriod(periodMinutes, useTrueBG = false) {
+                const relevantData = this.bgHistoryForStats.filter(p => p.time >= (this.totalSimMinutes - periodMinutes));
+                if (relevantData.length < 50) return null;
+                const key = useTrueBG ? 'trueBG' : 'cgmBG';
+                return relevantData.reduce((sum, p) => sum + p[key], 0) / relevantData.length;
+            }
+
+            updateStats() {
+                const periods = [ 
+                    { key: '24h', minutes: 24*60, displays: { tir: tir24hDisplay, titr: titr24hDisplay, avg: avgCgm24hDisplay, fast: fastInsulin24hDisplay, basal: basalInsulin24hDisplay, kcal: kcal24hDisplay }}, 
+                    { key: '14d', minutes: 14*24*60, displays: { tir: tir14dDisplay, titr: titr14dDisplay, avg: avgCgm14dDisplay }} 
+                ];
+                periods.forEach(p => {
+                    const dataPoints = this.bgHistoryForStats.filter(point => point.time >= (this.totalSimMinutes - p.minutes));
+                    if (dataPoints.length > 20) {
+                        let inRangeCount = 0, inTightRangeCount = 0, sumCgm = 0;
+                        dataPoints.forEach(pt => {
+                            sumCgm += pt.cgmBG;
+                            // TIR and TITR are based on True BG
+                            if (pt.trueBG >= 4 && pt.trueBG <= 10) inRangeCount++;
+                            if (pt.trueBG >= 4 && pt.trueBG <= 8) inTightRangeCount++;
+                        });
+                        p.displays.tir.textContent = ((inRangeCount / dataPoints.length) * 100).toFixed(0) + "%";
+                        p.displays.titr.textContent = ((inTightRangeCount / dataPoints.length) * 100).toFixed(0) + "%";
+                        p.displays.avg.textContent = (sumCgm / dataPoints.length).toFixed(1); 
+
+                        if (p.key === '24h') {
+                            let totalFast24h = 0, totalBasal24h = 0, totalKcal24h = 0;
+                            this.logHistory.filter(ev => ev.time >= (this.totalSimMinutes - p.minutes)).forEach(ev => {
+                                if (ev.type === 'insulin-fast') totalFast24h += ev.details.dose;
+                                if (ev.type === 'insulin-basal') totalBasal24h += ev.details.dose;
+                                if (ev.type === 'food') totalKcal24h += ev.details.kcal;
+                            });
+                            p.displays.fast.textContent = totalFast24h.toFixed(1) + " E";
+                            p.displays.basal.textContent = totalBasal24h.toFixed(0) + " E";
+                            p.displays.kcal.textContent = totalKcal24h.toFixed(0) + " kcal";
+                        }
+                    } else {
+                        Object.values(p.displays).forEach(el => { if(el) el.textContent = '--'; });
+                        if(p.displays.tir) p.displays.tir.textContent = '--%';
+                        if(p.displays.titr) p.displays.titr.textContent = '--%';
+                    }
+                });
+            }
+            gameOver(title, message) { 
+                this.isGameOver = true; isPaused = true; 
+                playSound('gameOver'); 
+                showPopup(title, message, true, false, false, true); 
+            }
+        }
+
+        // --- Main Game Loop Function ---
+        function mainGameLoop(currentTime) {
+            if (game?.isGameOver) {
+                if(gameLoopIntervalId) cancelAnimationFrame(gameLoopIntervalId);
+                gameLoopIntervalId = null;
+                return;
+            }
+            if (!isPaused) {
+                const deltaTime = (currentTime - lastFrameTime) / 1000; 
+                lastFrameTime = currentTime; 
+                game.update(deltaTime); 
+                updateUI(); 
+            }
+            drawGraph();
+            gameLoopIntervalId = requestAnimationFrame(mainGameLoop);
+        }
+
+        // --- Game Control Functions ---
+        function startGame() {
+            if (sounds && Tone.context.state !== 'running') Tone.start(); 
+            game = new Simulator();
+            cgmDataPoints = [{ time: 0, value: game.cgmBG }];
+            trueBgPoints = [{ time: 0, value: game.trueBG }];
+            isPaused = false; 
+            pauseButton.textContent = "Pause"; 
+            lastFrameTime = performance.now();
+            if (gameLoopIntervalId) cancelAnimationFrame(gameLoopIntervalId); 
+            gameLoopIntervalId = requestAnimationFrame(mainGameLoop);
+            updatePlayerFixedDataUI();
+            resetButton.disabled = false; startButton.disabled = true;
+        }
+
+        function resetGame() {
+            if (gameLoopIntervalId) { cancelAnimationFrame(gameLoopIntervalId); gameLoopIntervalId = null; }
+            isPaused = true; pauseButton.textContent = "Genoptag"; game = null; 
+            cgmDataPoints = []; trueBgPoints = [];
+            const existingPopup = document.querySelector('.popup-overlay');
+            if (existingPopup) document.body.removeChild(existingPopup);
+            
+            dayDisplay.textContent="1"; timeDisplay.textContent="00:00"; 
+            cgmValueDisplayGraph.textContent="-.-"; 
+            normoPointsDisplay.textContent = "0.0";
+            iobDisplay.textContent="0.0"; cobDisplay.textContent="0";
+            document.querySelectorAll('.stats-table .value').forEach(el => el.textContent = '--');
+            document.querySelectorAll('#tir24h, #tir14d, #titr24h, #titr14d').forEach(el => el.textContent = '--%');
+            document.querySelectorAll('#fastInsulin24h, #basalInsulin24h').forEach(el => el.textContent = '-- E');
+            document.querySelector('#kcal24h').textContent = '-- kcal';
+            [icrDisplay, isfDisplay, carbEffectDisplay, restingKcalDisplay].forEach(el => el.textContent="--");
+            weightChangeSlider.value = 0; weightChangeValue.textContent = "0.0"; 
+            weightChangeSlider.style.setProperty('--thumb-color', '#4CAF50');
+            
+            resetButton.disabled = true; startButton.disabled = false;
+            drawGraph(); 
+        }
+        
+        // --- UI Update Functions ---
+        function updateUI() {
+            if (!game) return;
+            dayDisplay.textContent = game.day;
+            const hours = String(Math.floor(game.timeInMinutes / 60)).padStart(2, '0');
+            const minutes = String(Math.floor(game.timeInMinutes % 60)).padStart(2, '0');
+            timeDisplay.textContent = `${hours}:${minutes}`;
+            cgmValueDisplayGraph.textContent = game.cgmBG.toFixed(1);
+            iobDisplay.textContent = game.iob.toFixed(1);
+            cobDisplay.textContent = game.cob.toFixed(0);
+            normoPointsDisplay.textContent = game.normoPoints.toFixed(1);
+        }
+        
+        function updatePlayerFixedDataUI() {
+            const tempSim = game || { ICR: 10, ISF: 3.0, gramsPerMmolRise: 3.3 };
+            icrDisplay.textContent = tempSim.ICR; 
+            isfDisplay.textContent = tempSim.ISF.toFixed(1);
+            carbEffectDisplay.textContent = tempSim.gramsPerMmolRise.toFixed(1);
+            restingKcalDisplay.textContent = RESTING_KCAL_PER_DAY;
+        }
+
+        // --- Graph Drawing Function ---
+        let yAxisMax = 12.0;
+        function drawGraph() {
+            if (!bgGraphCanvas) return; // Guard against premature calls
+            const rect = bgGraphCanvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            bgGraphCanvas.width = rect.width * dpr;
+            bgGraphCanvas.height = rect.height * dpr;
+            graphCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            let currentMaxCGMOnGraph = 0;
+            const visibleCGMPoints = cgmDataPoints.slice(-MAX_GRAPH_POINTS_PER_DAY); 
+            visibleCGMPoints.forEach(p => { if (p.value > currentMaxCGMOnGraph) currentMaxCGMOnGraph = p.value; });
+            if (currentMaxCGMOnGraph > 11.5 && yAxisMax < Math.min(25, currentMaxCGMOnGraph + 2)) yAxisMax = Math.ceil((currentMaxCGMOnGraph + 2) / 2) * 2;
+            else if (currentMaxCGMOnGraph < 10.0 && yAxisMax > 12.0) yAxisMax = 12.0; 
+            const range = yAxisMax - 0; if (range <= 0) return; 
+
+            const padding = {top: 20, right: 20, bottom: 40, left: 50};
+            graphCtx.clearRect(0, 0, bgGraphCanvas.width, bgGraphCanvas.height);
+            const graphWidth = rect.width - padding.left - padding.right;
+            const graphHeight = rect.height - padding.top - padding.bottom;
+            if (graphWidth <= 0 || graphHeight <= 0) return;
+
+            const totalMinutesInView = 24 * 60;
+            const xNightStart = padding.left + ((22 * 60) / totalMinutesInView) * graphWidth;
+            const xNightEnd = padding.left + ((7 * 60) / totalMinutesInView) * graphWidth;
+            graphCtx.fillStyle = 'rgba(60, 60, 80, 0.1)';
+            graphCtx.fillRect(xNightStart, padding.top, graphWidth - (xNightStart - padding.left), graphHeight);
+            graphCtx.fillRect(padding.left, padding.top, xNightEnd - padding.left, graphHeight);
+            
+            const zones = [
+                { min: 4.0, max: 10.0, color: 'rgba(72, 187, 120, 0.15)' },
+                { min: 0, max: 3.99, color: 'rgba(229, 62, 62, 0.1)' },
+                { min: 10.01, max: yAxisMax, color: 'rgba(229, 62, 62, 0.1)' },
+            ];
+            zones.forEach(zone => {
+                const y_max_px = padding.top + graphHeight - ((zone.min) / range) * graphHeight;
+                const y_min_px = padding.top + graphHeight - ((zone.max) / range) * graphHeight;
+                graphCtx.fillStyle = zone.color;
+                graphCtx.fillRect(padding.left, y_min_px, graphWidth, y_max_px - y_min_px);
+            });
+
+            [1.5, 4, 5.5, 8, 10].forEach(val => {
+                const y = padding.top + graphHeight - ((val) / range) * graphHeight;
+                graphCtx.beginPath();
+                graphCtx.moveTo(padding.left, y);
+                graphCtx.lineTo(padding.left + graphWidth, y);
+                if (val === 1.5) {
+                    graphCtx.strokeStyle = 'rgba(229, 62, 62, 0.8)'; // Red line for 1.5
+                    graphCtx.lineWidth = 2;
+                    graphCtx.setLineDash([2, 2]);
+                } else {
+                    graphCtx.strokeStyle = (val === 5.5) ? 'rgba(76, 175, 80, 0.7)' : 'rgba(0, 0, 0, 0.1)';
+                    graphCtx.lineWidth = (val === 4 || val === 10) ? 1.5 : 1;
+                    graphCtx.setLineDash((val === 5.5) ? [4, 4] : []);
+                }
+                graphCtx.stroke();
+            });
+            graphCtx.setLineDash([]); 
+
+            graphCtx.strokeStyle = '#a0aec0'; graphCtx.lineWidth = 1;
+            graphCtx.strokeRect(padding.left, padding.top, graphWidth, graphHeight);
+            
+            graphCtx.fillStyle = '#4a5568'; graphCtx.font = "bold 12px Segoe UI";
+            for (let i = 0; i <= 24; i += 2) { 
+                const x = padding.left + ( (i*60 / totalMinutesInView ) * graphWidth ); 
+                graphCtx.fillText(`${String(i).padStart(2,'0')}:00`, x - 15, padding.top + graphHeight + 20);
+            }
+            
+            const yStep = range > 15 ? 2 : 1;
+            for (let i = Math.ceil(0); i <= yAxisMax; i += yStep) { 
+                if (i === 0 && yAxisMax > 2) continue; // Skip 0 if axis is large
+                const y = padding.top + graphHeight - ((i) / range) * graphHeight;
+                graphCtx.fillText(i.toFixed(0), padding.left - 30, y + 4);
+            }
+            graphCtx.save(); graphCtx.translate(padding.left - 40, padding.top + graphHeight/2); graphCtx.rotate(-Math.PI/2); 
+            graphCtx.textAlign = "center"; graphCtx.font = "bold 13px Segoe UI"; graphCtx.fillText("Blodsukker (mmol/L)", 0, 0); graphCtx.restore();
+
+            if (!game) return;
+            const currentDayStartMinutes = (game.day - 1) * totalMinutesInView;
+
+            if(debugTrueBgCheckbox.checked) {
+                const points = trueBgPoints.filter(p => p.time >= currentDayStartMinutes && p.time < currentDayStartMinutes + totalMinutesInView);
+                graphCtx.beginPath();
+                points.forEach((p, i) => {
+                    const x = padding.left + ((p.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+                    const y = padding.top + graphHeight - ((p.value) / range) * graphHeight;
+                    if (i === 0) graphCtx.moveTo(x, y); else graphCtx.lineTo(x, y);
+                });
+                graphCtx.strokeStyle = 'rgba(100, 100, 255, 0.7)'; graphCtx.lineWidth = 2; graphCtx.stroke();
+            }
+
+            const pointsToDraw = cgmDataPoints.filter(p => p.time >= currentDayStartMinutes && p.time < currentDayStartMinutes + totalMinutesInView);
+            pointsToDraw.forEach(p => {
+                const x = padding.left + ((p.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+                const y = padding.top + graphHeight - ((p.value) / range) * graphHeight;
+                if (y < padding.top || y > padding.top + graphHeight) return;
+                
+                if (p.type === 'fingerprick') {
+                    graphCtx.font = '16px Arial';
+                    graphCtx.textAlign = 'center';
+                    graphCtx.textBaseline = 'middle';
+                    graphCtx.fillStyle = '#e53e3e';
+                    graphCtx.fillText('🩸', x, y);
+                } else {
+                    graphCtx.beginPath();
+                    graphCtx.arc(x, y, 3, 0, 2 * Math.PI);
+                    if (p.value < 4.0 || p.value > 10.0) graphCtx.fillStyle = '#e53e3e';
+                    else graphCtx.fillStyle = '#38a169';
+                    graphCtx.fill();
+                }
+            });
+
+            game.logHistory.forEach(event => {
+                if (event.time >= currentDayStartMinutes && event.time < currentDayStartMinutes + totalMinutesInView) {
+                    const x = padding.left + ((event.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+                    let yPos = padding.top + graphHeight - 10;
+                    graphCtx.textAlign = "center";
+                    graphCtx.font = "14px Arial";
+                    if(event.type === 'food') {
+                        const icon = event.details.icon || '🍴';
+                        graphCtx.fillText(icon, x, yPos);
+                        if (icon === '🍴') {
+                            const ke = (event.details.carbs + event.details.protein * 0.25).toFixed(0);
+                            graphCtx.font = "bold 9px Segoe UI";
+                            graphCtx.fillStyle = '#333';
+                            graphCtx.fillText(`KE:${ke}g`, x, yPos - 12);
+                        }
+                    } else if (event.type === 'motion') {
+                        graphCtx.fillText(event.icon, x, yPos);
+                    } else if(event.type.includes('insulin')) {
+                        graphCtx.fillStyle = event.type === 'insulin-basal' ? '#2b6cb0' : '#c53030';
+                        graphCtx.fillText(event.icon, x, yPos);
+                        graphCtx.font = "bold 10px Segoe UI";
+                        const doseText = event.details.dose.toFixed(event.type === 'insulin-fast' ? 1 : 0);
+                        graphCtx.fillText(doseText, x, yPos - 12);
+                    }
+                }
+            });
+
+             game.graphMessages.forEach(msg => {
+                const xCenter = padding.left + graphWidth / 2;
+                const yPos = padding.top + 25;
+                graphCtx.fillStyle = "rgba(255, 240, 150, 0.9)"; 
+                graphCtx.strokeStyle = "#FFC107";
+                graphCtx.lineWidth = 2;
+                graphCtx.textAlign = "center";
+                graphCtx.font = "bold 13px Segoe UI";
+                const textWidth = graphCtx.measureText(msg.text).width;
+                if (msg.text.startsWith("zZzz")) {
+                    graphCtx.globalAlpha = 0.6;
+                    graphCtx.font = "italic bold 16px Segoe UI";
+                    graphCtx.fillStyle = "#63b3ed";
+                    const xOffset = Math.sin(game.totalSimMinutes / 20) * 5;
+                    graphCtx.fillText(msg.text, padding.left + 50 + xOffset, padding.top + 20);
+                    graphCtx.globalAlpha = 1.0;
+                } else {
+                    graphCtx.fillRect(xCenter - textWidth/2 - 10, yPos - 20, textWidth + 20, 30);
+                    graphCtx.strokeRect(xCenter - textWidth/2 - 10, yPos - 20, textWidth + 20, 30);
+                    graphCtx.fillStyle = "#333";
+                    graphCtx.fillText(msg.text, xCenter, yPos);
+                }
+            });
+        }
+        
+        // --- Popup and Logging Functions ---
+        function showHelpPopup() {
+            if(document.querySelector('.popup-overlay')) return;
+            if (game && !isPaused) togglePause();
+            const overlay = document.createElement('div');
+            overlay.className = 'popup-overlay';
+            const content = document.createElement('div');
+            content.className = 'popup-content';
+            content.innerHTML = `
+                <h2 class="info-title">Hjælp & Information</h2>
+                <p>Jeg fik konstateret Type 1 Diabetes i februar 2025 og har lavet denne simulator for at blive klogere på sygdommen. Simulatoren er lavet med hjælp fra AI, inspiration fra litteraturen og lidt personlige erfaringer fra de første måneder med T1D.<br>- Kristian R Harreby</p>
+                <p style="color: red;"><strong>Disclaimer:</strong> Simulationen er IKKE en guide til kliniske beslutninger vedrørende diabetesbehandling. Konsulter altid sundhedspersonale for konkret medicinsk rådgivning om din egen situation.</p>
+                <h3>Spilmekanikker</h3>
+                <ul>
+                    <li><strong>Mål:</strong> Opnå så mange 'Normoglykæmi-points' som muligt ved at holde dit blodsukker stabilt i målområdet (ideelt 4-8 mmol/L).</li>
+                    <li><strong>Usikkerheder:</strong> Vær opmærksom på usikkerheder! Madoptagelse varierer, insulins virkning er ikke altid ens, og CGM-målingerne er ikke 100% præcise.</li>
+                    <li><strong>Mad:</strong> Kulhydrater virker hurtigt. Protein og fedt forsinker og forlænger blodsukkerstigningen.</li>
+                    <li><strong>Insulin:</strong> Hurtig insulin virker 2-6 timer. Basal dækker grundbehov over 24+ timer.</li>
+                    <li><strong>Motion:</strong> Sænker BG direkte og øger insulinfølsomheden i op til 30 timer efter.</li>
+                    <li><strong>Dawn Effect:</strong> Leveren frigiver mere glukose om morgenen (ca. 03:00-08:00).</li>
+                </ul>
+                <h3>Game Over Scenarier</h3>
+                <ul>
+                    <li><strong>Hypoglykæmi:</strong> Sandt blodsukker < 1.5 mmol/L.</li>
+                    <li><strong>Ketoacidose (DKA):</strong> Vedvarende højt BG med insulinmangel. Du advares først.</li>
+                    <li><strong>Vægtændring:</strong> Samlet vægtændring overstiger +/- 5 kg.</li>
+                    <li><strong>Komplikationer:</strong> 14-dages gennemsnitligt BG er > 15 mmol/L.</li>
+                </ul>
+                <div class="popup-button-container">
+                    <button id="help-ok-button">OK</button>
+                </div>`;
+            overlay.appendChild(content);
+            document.body.appendChild(overlay);
+
+            document.getElementById('help-ok-button').addEventListener('click', () => {
+                document.body.removeChild(overlay);
+                if (game && isPaused && !game.isGameOver) togglePause();
+            });
+        }
+
+        function showPopup(title, message, isGameOverPopup, isEventPopup = false, isInfoPopup = false, shouldPause = true) {
+            // Prevent multiple popups
+            const existingPopup = document.querySelector('.popup-overlay');
+            if (existingPopup) return;
+
+            if (shouldPause && game && !isPaused) togglePause();
+            const overlay = document.createElement('div'); overlay.className = 'popup-overlay';
+            const content = document.createElement('div'); content.className = 'popup-content';
+            
+            const h2 = document.createElement('h2'); h2.textContent = title;
+            if (isEventPopup) h2.classList.add('event-title');
+            if (isGameOverPopup) h2.style.color = '#e53e3e';
+            const p = document.createElement('p'); p.innerHTML = message; 
+            content.appendChild(h2); content.appendChild(p);
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'popup-button-container';
+            const button = document.createElement('button');
+            button.textContent = isGameOverPopup ? "Reset Spil" : "OK";
+            button.onclick = () => {
+                document.body.removeChild(overlay);
+                if (isGameOverPopup) resetGame();
+                else if (shouldPause && game && !game.isGameOver && isPaused) togglePause();
+            };
+            buttonContainer.appendChild(button);
+            content.appendChild(buttonContainer);
+            overlay.appendChild(content); 
+            if (!isGameOverPopup && !isInfoPopup) playSound('intervention', 'C5'); 
+        }
+
+        function logEvent(message, type = 'info', details = {}) {
+            if (!game) return; 
+            let icon = '';
+            switch(type) {
+                case 'food': icon = details.icon || '🍴'; break;
+                case 'motion': icon = '🏃'; break;
+                case 'insulin-fast': icon = '💉'; break; 
+                case 'insulin-basal': icon = '🖊️'; break;
+            }
+            game.logHistory.push({ time: game.totalSimMinutes, message, type, icon, details });
+        }
+        
+        function updateFoodDisplay() {
+            foodKcalDisplay.textContent = ((parseInt(carbsSlider.value) * 4) + (parseInt(proteinSlider.value) * 4) + (parseInt(fatSlider.value) * 9)).toFixed(0);
+            const ke = (parseInt(carbsSlider.value) + parseInt(proteinSlider.value) * 0.25).toFixed(0);
+            foodKeDisplay.textContent = ke + " g";
+        }
+
+        function updateMotionKcal() {
+            let kcalPerMinute = motionIntensitySelect.value === "Lav" ? 4 : (motionIntensitySelect.value === "Medium" ? 7 : 10);
+            motionKcalDisplay.textContent = (kcalPerMinute * parseInt(motionDurationSelect.value)).toFixed(0);
+        }
+        
+        function togglePause() {
+            if (!game || game.isGameOver) return;
+            isPaused = !isPaused;
+            pauseButton.textContent = isPaused ? "Genoptag" : "Pause";
+            if (!isPaused) {
+                lastFrameTime = performance.now();
+                if (!gameLoopIntervalId) gameLoopIntervalId = requestAnimationFrame(mainGameLoop);
+            }
+        }
+        
+        const sizeCanvas = () => {
+            if (!bgGraphCanvas) return;
+            const rect = bgGraphCanvas.getBoundingClientRect();
+            if (rect.width > 0) {
+                const dpr = window.devicePixelRatio || 1;
+                bgGraphCanvas.width = rect.width * dpr;
+                bgGraphCanvas.height = rect.height * dpr;
+                graphCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                drawGraph();
+            } else {
+                 setTimeout(sizeCanvas, 50);
+            }
+        }
+        
+        // --- App Initialization ---
+        function initializeApp() {
+            // Assign all DOM elements once the document is loaded
+            startButton = document.getElementById('startButton');
+            resetButton = document.getElementById('resetButton');
+            helpButton = document.getElementById('helpButton');
+            pauseButton = document.getElementById('pauseButton');
+            speedSelector = document.getElementById('speedSelector'); 
+            dayDisplay = document.getElementById('dayDisplay');
+            timeDisplay = document.getElementById('timeDisplay');
+            cgmValueDisplayGraph = document.getElementById('cgmValueDisplayGraph');
+            normoPointsDisplay = document.getElementById('normoPointsDisplay');
+            normoPointsWeighting = document.getElementById('normoPointsWeighting');
+            muteButton = document.getElementById('muteButton');
+            carbsSlider = document.getElementById('carbsSlider');
+            carbsValue = document.getElementById('carbsValue');
+            proteinSlider = document.getElementById('proteinSlider');
+            proteinValue = document.getElementById('proteinValue');
+            fatSlider = document.getElementById('fatSlider');
+            fatValue = document.getElementById('fatValue');
+            giveFoodButton = document.getElementById('giveFoodButton');
+            foodInfoDisplay = document.getElementById('foodInfoDisplay');
+            foodKcalDisplay = document.getElementById('foodKcalDisplay');
+            foodKeDisplay = document.getElementById('foodKeDisplay');
+            dextroButton = document.getElementById('dextroButton');
+            burgerButton = document.getElementById('burgerButton');
+            avocadoButton = document.getElementById('avocadoButton');
+            chickenButton = document.getElementById('chickenButton');
+            cakeButton = document.getElementById('cakeButton');
+            sodaButton = document.getElementById('sodaButton');
+            saladButton = document.getElementById('saladButton');
+            cerealButton = document.getElementById('cerealButton');
+            fastInsulinSlider = document.getElementById('fastInsulinSlider');
+            fastInsulinValue = document.getElementById('fastInsulinValue');
+            giveFastInsulinButton = document.getElementById('giveFastInsulinButton');
+            longInsulinSlider = document.getElementById('longInsulinSlider');
+            longInsulinValue = document.getElementById('longInsulinValue');
+            giveLongInsulinButton = document.getElementById('giveLongInsulinButton');
+            motionIntensitySelect = document.getElementById('motionIntensity');
+            motionDurationSelect = document.getElementById('motionDuration');
+            startMotionButton = document.getElementById('startMotionButton');
+            motionKcalDisplay = document.getElementById('motionKcalDisplay');
+            fingerprickButton = document.getElementById('fingerprickButton');
+            glucagonButton = document.getElementById('glucagonButton');
+            debugTrueBgCheckbox = document.getElementById('debugTrueBgCheckbox');
+            iobDisplay = document.getElementById('iobDisplay');
+            cobDisplay = document.getElementById('cobDisplay');
+            bgGraphCanvas = document.getElementById('bg-graph');
+            graphCtx = bgGraphCanvas.getContext('2d');
+            weightChangeSlider = document.getElementById('weightChangeSlider');
+            weightChangeValue = document.getElementById('weightChangeValue');
+            steepDropWarningDiv = document.getElementById('steep-drop-warning');
+            icrDisplay = document.getElementById('icrDisplay');
+            isfDisplay = document.getElementById('isfDisplay');
+            carbEffectDisplay = document.getElementById('carbEffectDisplay');
+            restingKcalDisplay = document.getElementById('restingKcalDisplay');
+            tir24hDisplay = document.getElementById('tir24h');
+            titr24hDisplay = document.getElementById('titr24h');
+            avgCgm24hDisplay = document.getElementById('avgCgm24h');
+            fastInsulin24hDisplay = document.getElementById('fastInsulin24h');
+            basalInsulin24hDisplay = document.getElementById('basalInsulin24h');
+            kcal24hDisplay = document.getElementById('kcal24h');
+            tir14dDisplay = document.getElementById('tir14d');
+            titr14dDisplay = document.getElementById('titr14d');
+            avgCgm14dDisplay = document.getElementById('avgCgm14d');
+
+            sizeCanvas();
+            updatePlayerFixedDataUI(); 
+            resetButton.disabled = true; 
+            updateFoodDisplay(); 
+            updateMotionKcal();
+            weightChangeSlider.style.setProperty('--thumb-color', '#4CAF50'); 
+            
+            // --- Event Listeners ---
+            carbsSlider.addEventListener('input', (e) => { carbsValue.textContent = e.target.value; updateFoodDisplay(); });
+            proteinSlider.addEventListener('input', (e) => { proteinValue.textContent = e.target.value; updateFoodDisplay(); });
+            fatSlider.addEventListener('input', (e) => { fatValue.textContent = e.target.value; updateFoodDisplay(); });
+
+            fastInsulinSlider.addEventListener('input', (e) => fastInsulinValue.textContent = parseFloat(e.target.value).toFixed(1));
+            longInsulinSlider.addEventListener('input', (e) => longInsulinValue.textContent = e.target.value);
+            
+            startButton.addEventListener('click', startGame); 
+            resetButton.addEventListener('click', resetGame);
+            helpButton.addEventListener('click', showHelpPopup);
+            pauseButton.addEventListener('click', togglePause);
+            muteButton.addEventListener('click', () => { isMuted = !isMuted; muteButton.textContent = isMuted ? "Unmute" : "Mute"; if (sounds && Tone.Destination) Tone.Destination.mute = isMuted; });
+            speedSelector.addEventListener('change', (e) => { if (game) game.simulationSpeed = parseInt(e.target.value); });
+            
+            giveFoodButton.addEventListener('click', () => { if(game) game.addFood(parseInt(carbsSlider.value), parseInt(proteinSlider.value), parseInt(fatSlider.value)); });
+            dextroButton.addEventListener('click', () => { if(game) game.addFood(3, 0, 0, '🍬'); });
+            burgerButton.addEventListener('click', () => { if(game) game.addFood(40, 30, 30, '🍔'); });
+            avocadoButton.addEventListener('click', () => { if(game) game.addFood(5, 5, 25, '🥑'); });
+            chickenButton.addEventListener('click', () => { if(game) game.addFood(2, 30, 15, '🍗'); });
+            cakeButton.addEventListener('click', () => { if(game) game.addFood(60, 5, 25, '🍰'); });
+            sodaButton.addEventListener('click', () => { if(game) game.addFood(35, 0, 0, '🥤'); });
+            saladButton.addEventListener('click', () => { if(game) game.addFood(5, 2, 1, '🥗'); });
+            cerealButton.addEventListener('click', () => { if(game) game.addFood(30, 8, 2, '🥣'); });
+            
+            giveFastInsulinButton.addEventListener('click', () => { if(game) game.addFastInsulin(parseFloat(fastInsulinSlider.value)); });
+            giveLongInsulinButton.addEventListener('click', () => { if(game) game.addLongInsulin(parseInt(longInsulinSlider.value)); });
+            
+            [motionIntensitySelect, motionDurationSelect].forEach(el => el.addEventListener('change', updateMotionKcal));
+            startMotionButton.addEventListener('click', () => { if(game && !startMotionButton.disabled) game.startMotion(motionIntensitySelect.value, motionDurationSelect.value); });
+            
+            fingerprickButton.addEventListener('click', () => { if(game) game.performFingerprick(); });
+            glucagonButton.addEventListener('click', () => { if (game && !glucagonButton.disabled) game.useGlucagon(); });
+            debugTrueBgCheckbox.addEventListener('change', () => { if(game) drawGraph(); });
+        }
+
+        // Run initialization on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+        window.addEventListener('resize', sizeCanvas);
+    </script>
+</body>
+</html>

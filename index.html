@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes-Dysten v42</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <h1 id="game-title">Diabetes-Dysten v42</h1>
+        <div id="top-control-panel">
+            <div class="top-panel-section">
+                <button id="startButton">Start Simulation</button>
+                <button id="resetButton">Reset Simulation</button>
+                <button id="helpButton">Hjælp / Info</button>
+            </div>
+            <div class="top-panel-section">
+                <label for="speedSelector">Hastighed:</label>
+                <select id="speedSelector">
+                    <option value="60">1t / min (x60)</option>
+                    <option value="240" selected>4t / min (x240)</option>
+                    <option value="720">12t / min (x720)</option>
+                    <option value="1440">24t / min (x1440)</option>
+                </select>
+                <button id="pauseButton">Pause</button>
+            </div>
+             <div class="top-panel-section">
+                <span class="normo-hours-display" title="Optjenes ved at holde blodsukkeret i målområdet. Vægtningen afhænger af dit aktuelle blodsukker og om du foretager natlige interventioner.">Normoglykæmi-points: <span id="normoPointsDisplay">0.0</span> <small id="normoPointsWeighting">(x1.0)</small></span>
+            </div>
+            <div class="top-panel-section">
+                <button id="muteButton">Mute Lyd</button>
+            </div>
+        </div>
+
+        <div id="main-area">
+            <div id="intervention-panel">
+                <div class="intervention-row">
+                     <div class="intervention-group">
+                        <h3>Insulin</h3>
+                        <label for="fastInsulinSlider" title="Hurtigtvirkende insulin dækker kulhydrater i et måltid og korrigerer højt blodsukker. Begynder at virke efter 10-15 minutter og er ude af kroppen efter 2-6 timer.">Hurtig: <span id="fastInsulinValue">4.0</span> E</label>
+                        <input type="range" id="fastInsulinSlider" min="0.5" max="10" value="4" step="0.5">
+                        <button id="giveFastInsulinButton">💉 Giv Hurtig</button>
+
+                        <label for="longInsulinSlider" style="margin-top: 15px;" title="Basalinsulin dækker kroppens grundlæggende behov for insulin over ca. 24 timer. Det er fundamentet i din behandling og hjælper med at holde dit blodsukker stabilt mellem måltider og om natten.">Basal: <span id="longInsulinValue">10</span> E</label>
+                        <input type="range" id="longInsulinSlider" min="1" max="30" value="10" step="1">
+                        <button id="giveLongInsulinButton">🖊️ Giv Basal</button>
+                    </div>
+                     <div class="intervention-group">
+                        <h3>Motion</h3>
+                        <label for="motionIntensity" title="Høj intensitet sænker blodsukkeret hurtigere og øger insulinfølsomheden mere end lav intensitet.">Intensitet:</label>
+                        <select id="motionIntensity">
+                            <option value="Lav">Lav</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Høj">Høj</option>
+                        </select>
+                        <label for="motionDuration" title="Længere tids motion har en større og længerevarende effekt på dit blodsukker og insulinfølsomhed.">Varighed:</label>
+                        <select id="motionDuration">
+                            <option value="15">15 min</option>
+                            <option value="30">30 min</option>
+                            <option value="60">1 time</option>
+                        </select>
+                        <div class="kcal-display"><span id="motionKcalDisplay"></span> kcal</div>
+                        <button id="startMotionButton">🏃 Start Motion</button>
+                    </div>
+                </div>
+                <div class="intervention-group">
+                    <h3>Mad</h3>
+                    <div class="intervention-row inner-row">
+                        <div style="display:flex; flex-direction:column; gap: 5px;">
+                            <label for="carbsSlider" title="Kulhydrater hæver blodsukkeret hurtigst. Effekten starter typisk efter 20 minutter.">Kulhydrat: <span id="carbsValue">50</span> g</label>
+                            <input type="range" id="carbsSlider" min="0" max="100" value="50" step="5">
+                            <label for="proteinSlider" title="Protein har en mindre og langsommere effekt på blodsukkeret end kulhydrater.">Protein: <span id="proteinValue">10</span> g</label>
+                            <input type="range" id="proteinSlider" min="0" max="100" value="10" step="5">
+                            <label for="fatSlider" title="Fedt påvirker ikke blodsukkeret direkte, men forsinker optagelsen af kulhydrater og protein markant.">Fedt: <span id="fatValue">5</span> g</label>
+                            <input type="range" id="fatSlider" min="0" max="50" value="5" step="5">
+                            <div class="kcal-display" id="foodInfoDisplay" title="Kalorier og kulhydrat-ækvivalenter for det sammensatte måltid."><span id="foodKcalDisplay"></span> | KE: <span id="foodKeDisplay"></span></div>
+                            <button id="giveFoodButton" style="margin-top: 10px;">🍴 Spis Mad</button>
+                        </div>
+                        <div>
+                             <div class="food-presets">
+                                <button id="dextroButton" title="3g Kulhydrater">🍬 Dextro</button>
+                                <button id="burgerButton" title="~40g Kulhydrat, 30g Protein, 30g Fedt">🍔 Burger</button>
+                                <button id="avocadoButton" title="~5g Kulhydrat, 5g Protein, 25g Fedt">🥑 Avocado</button>
+                                <button id="chickenButton" title="~2g Kulhydrat, 30g Protein, 15g Fedt">🍗 Kyl. lår</button>
+                                <button id="cakeButton" title="~60g Kulhydrat, 5g Protein, 25g Fedt">🍰 Lagkage</button>
+                                <button id="sodaButton" title="~35g Kulhydrater">🥤 Sodavand</button>
+                                <button id="saladButton" title="~5g Kulhydrat, 2g Protein, 1g Fedt">🥗 Salat</button>
+                                <button id="cerealButton" title="~30g Kulhydrat, 8g Protein, 2g Fedt">🥣 Havregryn</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div id="debug-panel" class="intervention-group">
+                    <h3>Debug</h3>
+                    <label>
+                        <input type="checkbox" id="debugTrueBgCheckbox"> Vis Sandt BG
+                    </label>
+                </div>
+            </div>
+
+            <div id="center-and-right-area">
+                <div id="graph-area-container">
+                    <div id="iob-cob-panel">
+                        Dag: <span id="dayDisplay">1</span> - <span id="timeDisplay">00:00</span><br>
+                        CGM: <span id="cgmValueDisplayGraph">-.-</span><br>
+                        IOB: <span id="iobDisplay">0.0</span> E |
+                        COB: <span id="cobDisplay">0</span> g
+                    </div>
+                    <canvas id="bg-graph"></canvas>
+                    <div id="other-interventions-container">
+                        <button id="fingerprickButton" title="En manuel blodsukkermåling. Den er mere præcis end CGM'en og kan bruges til at dobbelttjekke din CGM-værdi, især hvis du har mistanke om, at den viser forkert.">🩸 Fingerprik</button>
+                        <button id="glucagonButton" title="Nødbehandling ved meget lavt blodsukker. Giver en kraftig og hurtig stigning i blodsukker. Har en 24-timers cooldown.">✚ Brug Glycagon</button>
+                    </div>
+                    <div id="steep-drop-warning">ADVARSEL: Hurtigt faldende BG!</div>
+                </div>
+                <div id="stats-panel">
+                    <div>
+                        <h4 title="Dine personlige diabetes-parametre. Disse er konstante i hele simulationen.">Spiller Data</h4>
+                        <div title="Insulin/Kulhydrat-Ratio: Hvor mange gram kulhydrat dækker 1 enhed (E) hurtigtvirkende insulin? Bruges til at beregne insulin til måltider."><span>ICR:</span> <span id="icrDisplay">--</span> g/E</div>
+                        <div title="Insulin Sensitivitets-Faktor: Hvor meget sænker 1 enhed (E) hurtigtvirkende insulin dit blodsukker? Bruges til korrektion af højt blodsukker."><span>ISF:</span> <span id="isfDisplay">--</span> (mmol/L)/E</div>
+                        <div title="Kulhydrat-Effekt: Hvor meget stiger dit blodsukker (i mmol/L) for hvert gram kulhydrat, du spiser? Udregnes som ISF / ICR."><span>Kulh. effekt:</span> <span id="carbEffectDisplay">--</span> g/(mmol/L)</div>
+                        <div title="Hvileforbrug: Dit basale kalorieforbrug pr. dag, uden motion."><span>Hvileforbrug:</span> <span id="restingKcalDisplay">--</span> kcal/dag</div>
+                    </div>
+                    <hr>
+                     <div>
+                        <h4>Vægtændring</h4>
+                        <label for="weightChangeSlider"><span id="weightChangeValue">0.0</span> kg</label>
+                        <input type="range" id="weightChangeSlider" min="-5" max="5" value="0" step="0.1" disabled>
+                    </div>
+                    <hr>
+                    <div class="stats-table">
+                        <div class="header">Beskrivelse</div>
+                        <div class="header">24 Timer</div>
+                        <div class="header">14 Dage</div>
+
+                        <div class="label" title="Time in Range: Procentdel af tiden hvor dit sande blodsukker har været mellem 4.0 og 10.0 mmol/L.">TIR (4-10)</div>
+                        <div class="value" id="tir24h">--%</div>
+                        <div class="value" id="tir14d">--%</div>
+
+                        <div class="label" title="Time in Tight Range: Procentdel af tiden hvor dit sande blodsukker har været i det ideelle interval mellem 4.0 og 8.0 mmol/L.">TITR (4-8)</div>
+                        <div class="value" id="titr24h">--%</div>
+                        <div class="value" id="titr14d">--%</div>
+
+                        <div class="label" title="Gennemsnitlig CGM-værdi over perioden. Giver en indikation af den generelle blodsukkerkontrol.">Gns. CGM</div>
+                        <div class="value" id="avgCgm24h">--</div>
+                        <div class="value" id="avgCgm14d">--</div>
+
+                        <div class="label">Hurtig Insulin</div>
+                        <div class="value" id="fastInsulin24h">-- E</div>
+                        <div class="value">--</div>
+
+                        <div class="label">Basal Insulin</div>
+                        <div class="value" id="basalInsulin24h">-- E</div>
+                        <div class="value">--</div>
+
+                        <div class="label">Kalorieindtag</div>
+                        <div class="value" id="kcal24h">-- kcal</div>
+                        <div class="value">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sounds.js"></script>
+    <script src="js/simulator.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

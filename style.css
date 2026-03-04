@@ -1,0 +1,375 @@
+        /* General body and layout styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #eef1f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #333;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 1920px;
+            min-height: 95vh;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            border-radius: 8px;
+            margin: 10px;
+        }
+        #game-title-container {
+            text-align: center;
+            padding: 10px 0;
+        }
+        #game-title {
+            margin: 0;
+            font-size: 1.8em;
+            color: #2c5282;
+            font-weight: 600;
+        }
+
+        /* Top control panel for simulation controls */
+        #top-control-panel {
+            background-color: #4a5568;
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .top-panel-section {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #top-control-panel button, #top-control-panel select, #top-control-panel label, #top-control-panel span {
+            margin: 5px 7px;
+        }
+        #top-control-panel button {
+            background-color: #63b3ed;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #top-control-panel button:hover {
+            background-color: #4299e1;
+        }
+        #speedSelector {
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            color: #333;
+        }
+        .version-indicator {
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        .normo-hours-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #f6e05e; /* Bright yellow for visibility */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+            margin: 0 15px;
+        }
+        .normo-hours-display small {
+            font-size: 0.7em;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+
+        /* Main layout area */
+        #main-area {
+            display: flex;
+            flex-grow: 1;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        /* Left-side intervention panel */
+        #intervention-panel {
+            width: 480px; /* Increased width to accommodate side-by-side layout */
+            padding: 15px;
+            background-color: #f7fafc;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .intervention-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .intervention-group {
+            border: 1px solid #cbd5e0;
+            padding: 12px;
+            border-radius: 6px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        .intervention-row > .intervention-group, .inner-row > div {
+             width: calc(50% - 10px);
+             margin-bottom: 0;
+        }
+        .inner-row {
+             gap: 20px;
+        }
+
+        .food-presets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .food-presets button {
+            width: 100%;
+            margin: 0;
+            padding: 8px 5px;
+            font-size: 0.8em;
+            background-color: #e2e8f0;
+            color: #4a5568;
+            border: 1px solid #cbd5e0;
+        }
+        .food-presets button:hover {
+            background-color: #cbd5e0;
+        }
+
+        #debug-panel {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* General styles for intervention group elements */
+        .intervention-group h3, .intervention-group h4 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: #2c5282;
+            font-weight: bold;
+        }
+         .intervention-group h4 {
+            font-size: 1.0em;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+         }
+
+        .intervention-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .intervention-group input[type="range"], .intervention-group select {
+            width: 100%;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+        }
+        .intervention-group button {
+            width: 100%;
+            padding: 10px;
+            background-color: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            margin-top: auto;
+        }
+        .intervention-group button:hover {
+            background-color: #38a169;
+        }
+
+        #other-interventions-container button:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        #glucagonButton {
+            background-color: #e53e3e;
+        }
+        #glucagonButton:hover {
+            background-color: #c53030;
+        }
+
+        /* Center and right area containing graph and stats */
+        #center-and-right-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #graph-area-container {
+            flex-grow: 1;
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        #other-interventions-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding-top: 10px;
+        }
+        #other-interventions-container button {
+            width: 150px;
+        }
+
+        #iob-cob-panel {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9em;
+            z-index: 10;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        #bg-graph {
+            width: 100%;
+            height: 438px;
+            border: 1px solid #cbd5e0;
+            background-color: #fff;
+            border-radius: 6px;
+        }
+
+        /* Stats Panel */
+        #stats-panel {
+            width: 280px;
+            padding: 15px;
+            background-color: #f7fafc;
+            border-left: 1px solid #e2e8f0;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+        @media (min-width: 1201px) {
+             #center-and-right-area {
+                flex-direction: row;
+            }
+        }
+
+        #stats-panel h4 {
+            font-size: 1.1em;
+            color: #2c5282;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        #stats-panel div {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        #weightChangeSlider {
+            width: 90%;
+            max-width: 250px;
+            margin: 5px auto;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 10px;
+            background: #ddd;
+            outline: none;
+            border-radius: 5px;
+        }
+        #weightChangeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--thumb-color, #4CAF50);
+            cursor: default;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+        }
+
+        .stats-table {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr;
+            gap: 8px 12px;
+            align-items: center;
+        }
+        .stats-table .header {
+            font-weight: bold;
+            color: #2c5282;
+            text-align: right;
+        }
+        .stats-table > div {
+             padding: 4px;
+             border-radius: 3px;
+        }
+         .stats-table > .label {
+            font-weight: bold;
+            text-align: left;
+        }
+        .stats-table > .value {
+            text-align: right;
+            background-color: #edf2f7;
+        }
+
+        /* Popups and Warnings */
+        .popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); display: flex;
+            justify-content: center; align-items: center; z-index: 1000; padding: 15px;
+        }
+        .popup-content {
+            background-color: white; padding: 25px 35px; border-radius: 10px;
+            text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 600px;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .popup-content h2 { margin-top: 0; color: #e53e3e; font-size: 1.8em; text-align: center;}
+        .popup-content h2.event-title, .popup-content h2.info-title { color: #3182ce; }
+        .popup-content p, .popup-content li { font-size: 1.0em; line-height: 1.5; margin-bottom: 15px; }
+        .popup-content ul { padding-left: 20px; }
+        .popup-content h3 { color: #2c5282; margin-top: 20px; }
+        .popup-content .popup-button-container { text-align: center; margin-top: 20px; }
+        .popup-content button {
+            padding: 12px 25px; background-color: #48bb78; color: white;
+            border: none; border-radius: 6px; cursor: pointer;
+            font-size: 1.1em; font-weight: bold; transition: background-color 0.2s;
+        }
+        .popup-content button:hover { background-color: #38a169; }
+
+        #steep-drop-warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 0, 0, 0.85);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            z-index: 100;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            display: none;
+        }
