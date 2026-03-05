@@ -1,375 +1,492 @@
-        /* General body and layout styles */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #eef1f5;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            overflow-x: hidden;
-            color: #333;
-        }
+/* =============================================================================
+   STYLE.CSS — Complete visual styling for Diabetes-Dysten
+   =============================================================================
 
-        #game-container {
-            width: 100%;
-            max-width: 1920px;
-            min-height: 95vh;
-            background-color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            border-radius: 8px;
-            margin: 10px;
-        }
-        #game-title-container {
-            text-align: center;
-            padding: 10px 0;
-        }
-        #game-title {
-            margin: 0;
-            font-size: 1.8em;
-            color: #2c5282;
-            font-weight: 600;
-        }
+   This file controls ALL visual presentation of the game. It uses standard CSS
+   (Cascading Style Sheets) with no preprocessor (no SASS/LESS/etc.).
 
-        /* Top control panel for simulation controls */
-        #top-control-panel {
-            background-color: #4a5568;
-            color: white;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-        }
-        .top-panel-section {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+   Layout system: CSS Flexbox and CSS Grid
+   ----------------------------------------
+   Flexbox (`display: flex`) arranges elements in a row or column. Think of it
+   like MATLAB's uipanel with a horizontal or vertical layout.
+   - flex-direction: row (default) = horizontal, column = vertical
+   - justify-content: alignment along the main axis
+   - align-items: alignment along the cross axis
+   - flex-grow: 1 means "take up remaining space"
 
-        #top-control-panel button, #top-control-panel select, #top-control-panel label, #top-control-panel span {
-            margin: 5px 7px;
-        }
-        #top-control-panel button {
-            background-color: #63b3ed;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        #top-control-panel button:hover {
-            background-color: #4299e1;
-        }
-        #speedSelector {
-            padding: 6px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            color: #333;
-        }
-        .version-indicator {
-            font-weight: bold;
-            margin-right: 10px;
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-        .normo-hours-display {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #f6e05e; /* Bright yellow for visibility */
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
-            margin: 0 15px;
-        }
-        .normo-hours-display small {
-            font-size: 0.7em;
-            font-weight: normal;
-            opacity: 0.8;
-        }
+   CSS Grid (`display: grid`) creates a 2D table-like layout.
+   - grid-template-columns: defines column widths
+   - gap: spacing between grid cells
 
-        /* Main layout area */
-        #main-area {
-            display: flex;
-            flex-grow: 1;
-            padding: 10px;
-            overflow: hidden;
-        }
+   CSS Variables
+   ----------------------------------------
+   var(--thumb-color) is a CSS custom property. It's set dynamically from
+   JavaScript (weightChangeSlider.style.setProperty('--thumb-color', color))
+   to change the weight slider thumb color based on weight change severity.
 
-        /* Left-side intervention panel */
-        #intervention-panel {
-            width: 480px; /* Increased width to accommodate side-by-side layout */
-            padding: 15px;
-            background-color: #f7fafc;
-            border-right: 1px solid #e2e8f0;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .intervention-row {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-        }
-        .intervention-group {
-            border: 1px solid #cbd5e0;
-            padding: 12px;
-            border-radius: 6px;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-            display: flex;
-            flex-direction: column;
-        }
-        .intervention-row > .intervention-group, .inner-row > div {
-             width: calc(50% - 10px);
-             margin-bottom: 0;
-        }
-        .inner-row {
-             gap: 20px;
-        }
+   Responsive design
+   ----------------------------------------
+   The @media query at the bottom adapts the layout for different screen widths.
+   On screens wider than 1200px, the graph and stats panel sit side by side.
+   On narrower screens, they stack vertically.
 
-        .food-presets {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 10px;
-        }
-        .food-presets button {
-            width: 100%;
-            margin: 0;
-            padding: 8px 5px;
-            font-size: 0.8em;
-            background-color: #e2e8f0;
-            color: #4a5568;
-            border: 1px solid #cbd5e0;
-        }
-        .food-presets button:hover {
-            background-color: #cbd5e0;
-        }
+   ============================================================================= */
 
-        #debug-panel {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #e2e8f0;
-        }
 
-        /* General styles for intervention group elements */
-        .intervention-group h3, .intervention-group h4 {
-            margin-top: 0;
-            font-size: 1.1em;
-            color: #2c5282;
-            font-weight: bold;
-        }
-         .intervention-group h4 {
-            font-size: 1.0em;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 8px;
-         }
+/* =============================================================================
+   BODY AND MAIN CONTAINER
+   ============================================================================= */
 
-        .intervention-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
-        .intervention-group input[type="range"], .intervention-group select {
-            width: 100%;
-            margin-bottom: 8px;
-            box-sizing: border-box;
-        }
-        .intervention-group button {
-            width: 100%;
-            padding: 10px;
-            background-color: #48bb78;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-            margin-top: auto;
-        }
-        .intervention-group button:hover {
-            background-color: #38a169;
-        }
+/* General body: centered layout with a neutral background */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #eef1f5;           /* Light grey-blue background */
+    display: flex;
+    justify-content: center;             /* Center the game container horizontally */
+    align-items: flex-start;             /* Align to top (not vertically centered) */
+    min-height: 100vh;                   /* Fill the full viewport height */
+    overflow-x: hidden;                  /* Prevent horizontal scrollbar */
+    color: #333;                         /* Default text color: dark grey */
+}
 
-        #other-interventions-container button:disabled {
-            background-color: #a0aec0;
-            cursor: not-allowed;
-        }
+/* Main game container: white card with shadow, full width up to 1920px */
+#game-container {
+    width: 100%;
+    max-width: 1920px;
+    min-height: 95vh;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Subtle drop shadow */
+    display: flex;
+    flex-direction: column;              /* Stack children vertically */
+    border-radius: 8px;
+    margin: 10px;
+}
 
-        #glucagonButton {
-            background-color: #e53e3e;
-        }
-        #glucagonButton:hover {
-            background-color: #c53030;
-        }
+/* Game title styling (currently unused container) */
+#game-title-container {
+    text-align: center;
+    padding: 10px 0;
+}
+#game-title {
+    margin: 0;
+    font-size: 1.8em;
+    color: #2c5282;                      /* Dark blue */
+    font-weight: 600;
+}
 
-        /* Center and right area containing graph and stats */
-        #center-and-right-area {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
 
-        #graph-area-container {
-            flex-grow: 1;
-            padding: 10px 15px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        #other-interventions-container {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            padding-top: 10px;
-        }
-        #other-interventions-container button {
-            width: 150px;
-        }
+/* =============================================================================
+   TOP CONTROL PANEL — Dark header bar with game controls
+   ============================================================================= */
 
-        #iob-cob-panel {
-            position: absolute;
-            top: 15px;
-            right: 25px;
-            background-color: rgba(255, 255, 255, 0.85);
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #e2e8f0;
-            font-size: 0.9em;
-            z-index: 10;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        #bg-graph {
-            width: 100%;
-            height: 438px;
-            border: 1px solid #cbd5e0;
-            background-color: #fff;
-            border-radius: 6px;
-        }
+#top-control-panel {
+    background-color: #4a5568;           /* Dark grey background */
+    color: white;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;      /* Spread sections across the full width */
+    align-items: center;
+    flex-wrap: wrap;                      /* Allow wrapping on narrow screens */
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
 
-        /* Stats Panel */
-        #stats-panel {
-            width: 280px;
-            padding: 15px;
-            background-color: #f7fafc;
-            border-left: 1px solid #e2e8f0;
-            overflow-y: auto;
-            font-size: 0.9em;
-        }
-        @media (min-width: 1201px) {
-             #center-and-right-area {
-                flex-direction: row;
-            }
-        }
+/* Each section within the top panel (groups related controls) */
+.top-panel-section {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
 
-        #stats-panel h4 {
-            font-size: 1.1em;
-            color: #2c5282;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        #stats-panel div {
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        #weightChangeSlider {
-            width: 90%;
-            max-width: 250px;
-            margin: 5px auto;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 10px;
-            background: #ddd;
-            outline: none;
-            border-radius: 5px;
-        }
-        #weightChangeSlider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: var(--thumb-color, #4CAF50);
-            cursor: default;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 0 3px rgba(0,0,0,0.3);
-        }
+/* Spacing for all interactive elements in the top panel */
+#top-control-panel button, #top-control-panel select, #top-control-panel label, #top-control-panel span {
+    margin: 5px 7px;
+}
 
-        .stats-table {
-            display: grid;
-            grid-template-columns: auto 1fr 1fr;
-            gap: 8px 12px;
-            align-items: center;
-        }
-        .stats-table .header {
-            font-weight: bold;
-            color: #2c5282;
-            text-align: right;
-        }
-        .stats-table > div {
-             padding: 4px;
-             border-radius: 3px;
-        }
-         .stats-table > .label {
-            font-weight: bold;
-            text-align: left;
-        }
-        .stats-table > .value {
-            text-align: right;
-            background-color: #edf2f7;
-        }
+/* Top panel buttons: blue with hover darkening */
+#top-control-panel button {
+    background-color: #63b3ed;           /* Medium blue */
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;   /* Smooth color transition on hover */
+}
+#top-control-panel button:hover {
+    background-color: #4299e1;           /* Darker blue on hover */
+}
 
-        /* Popups and Warnings */
-        .popup-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.6); display: flex;
-            justify-content: center; align-items: center; z-index: 1000; padding: 15px;
-        }
-        .popup-content {
-            background-color: white; padding: 25px 35px; border-radius: 10px;
-            text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 600px;
-            max-height: 90vh; overflow-y: auto;
-        }
-        .popup-content h2 { margin-top: 0; color: #e53e3e; font-size: 1.8em; text-align: center;}
-        .popup-content h2.event-title, .popup-content h2.info-title { color: #3182ce; }
-        .popup-content p, .popup-content li { font-size: 1.0em; line-height: 1.5; margin-bottom: 15px; }
-        .popup-content ul { padding-left: 20px; }
-        .popup-content h3 { color: #2c5282; margin-top: 20px; }
-        .popup-content .popup-button-container { text-align: center; margin-top: 20px; }
-        .popup-content button {
-            padding: 12px 25px; background-color: #48bb78; color: white;
-            border: none; border-radius: 6px; cursor: pointer;
-            font-size: 1.1em; font-weight: bold; transition: background-color 0.2s;
-        }
-        .popup-content button:hover { background-color: #38a169; }
+/* Speed selector dropdown */
+#speedSelector {
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #333;
+}
 
-        #steep-drop-warning {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(255, 0, 0, 0.85);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            font-size: 1.2em;
-            font-weight: bold;
-            z-index: 100;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-            display: none;
-        }
+/* Version indicator (currently unused but kept for future use) */
+.version-indicator {
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* Normoglycemia points display: prominent yellow text in the top bar */
+.normo-hours-display {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #f6e05e;                      /* Bright yellow for visibility on dark background */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4); /* Shadow for readability */
+    margin: 0 15px;
+}
+.normo-hours-display small {
+    font-size: 0.7em;
+    font-weight: normal;
+    opacity: 0.8;
+}
+
+
+/* =============================================================================
+   MAIN LAYOUT — Three-column structure (interventions | graph | stats)
+   ============================================================================= */
+
+#main-area {
+    display: flex;
+    flex-grow: 1;                        /* Take up all remaining vertical space */
+    padding: 10px;
+    overflow: hidden;
+}
+
+
+/* =============================================================================
+   LEFT PANEL — Intervention controls (food, insulin, exercise)
+   ============================================================================= */
+
+#intervention-panel {
+    width: 480px;                        /* Fixed width for the control panel */
+    padding: 15px;
+    background-color: #f7fafc;           /* Very light grey background */
+    border-right: 1px solid #e2e8f0;     /* Subtle border separating from graph */
+    overflow-y: auto;                    /* Scrollable if content is too tall */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;                           /* Spacing between intervention groups */
+}
+
+/* Horizontal row layout for side-by-side groups (insulin + exercise) */
+.intervention-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Individual intervention group (card-like container) */
+.intervention-group {
+    border: 1px solid #cbd5e0;
+    padding: 12px;
+    border-radius: 6px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Very subtle shadow */
+    width: 100%;
+    box-sizing: border-box;             /* Include padding in width calculation */
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* When intervention groups are in a row, each takes 50% width minus gap */
+.intervention-row > .intervention-group, .inner-row > div {
+     width: calc(50% - 10px);
+     margin-bottom: 0;
+}
+.inner-row {
+     gap: 20px;
+}
+
+/* Preset food buttons: 2-column grid layout */
+.food-presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;     /* Two equal-width columns */
+    gap: 12px;
+    margin-top: 10px;
+}
+.food-presets button {
+    width: 100%;
+    margin: 0;
+    padding: 8px 5px;
+    font-size: 0.8em;
+    background-color: #e2e8f0;           /* Light grey */
+    color: #4a5568;
+    border: 1px solid #cbd5e0;
+}
+.food-presets button:hover {
+    background-color: #cbd5e0;           /* Slightly darker on hover */
+}
+
+/* Debug panel: separated from other controls with a top border */
+#debug-panel {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Group headings: blue text, consistent sizing */
+.intervention-group h3, .intervention-group h4 {
+    margin-top: 0;
+    font-size: 1.1em;
+    color: #2c5282;
+    font-weight: bold;
+}
+ .intervention-group h4 {
+    font-size: 1.0em;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+ }
+
+/* Labels for sliders and dropdowns */
+.intervention-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+/* Sliders and dropdowns: full width within their container */
+.intervention-group input[type="range"], .intervention-group select {
+    width: 100%;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+/* Action buttons within intervention groups: green with white text */
+.intervention-group button {
+    width: 100%;
+    padding: 10px;
+    background-color: #48bb78;           /* Green */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    margin-top: auto;                    /* Push button to the bottom of the flex container */
+}
+.intervention-group button:hover {
+    background-color: #38a169;           /* Darker green on hover */
+}
+
+/* Disabled state for buttons (greyed out, no pointer cursor) */
+#other-interventions-container button:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+}
+
+/* Glucagon button: red to indicate emergency/danger */
+#glucagonButton {
+    background-color: #e53e3e;           /* Red */
+}
+#glucagonButton:hover {
+    background-color: #c53030;           /* Darker red on hover */
+}
+
+
+/* =============================================================================
+   CENTER AND RIGHT AREA — Graph and statistics panel
+   ============================================================================= */
+
+#center-and-right-area {
+    flex-grow: 1;                        /* Take up remaining horizontal space */
+    display: flex;
+    flex-direction: column;              /* Default: stack vertically */
+    overflow: hidden;
+}
+
+/* Graph container with relative positioning (for absolute-positioned overlays) */
+#graph-area-container {
+    flex-grow: 1;
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    position: relative;                  /* Needed for absolute children (IOB panel, warning) */
+}
+
+/* Finger prick and glucagon buttons below the graph */
+#other-interventions-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding-top: 10px;
+}
+#other-interventions-container button {
+    width: 150px;
+}
+
+/* IOB/COB overlay panel: positioned in the top-right corner of the graph */
+#iob-cob-panel {
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent white */
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.9em;
+    z-index: 10;                         /* Above the graph canvas */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* The main blood glucose graph canvas */
+#bg-graph {
+    width: 100%;
+    height: 438px;
+    border: 1px solid #cbd5e0;
+    background-color: #fff;
+    border-radius: 6px;
+}
+
+
+/* =============================================================================
+   STATS PANEL — Right-side statistics display
+   ============================================================================= */
+
+#stats-panel {
+    width: 280px;
+    padding: 15px;
+    background-color: #f7fafc;
+    border-left: 1px solid #e2e8f0;
+    overflow-y: auto;
+    font-size: 0.9em;
+}
+
+/* Responsive layout: on wide screens (>1200px), graph and stats sit side by side */
+@media (min-width: 1201px) {
+     #center-and-right-area {
+        flex-direction: row;             /* Switch to horizontal layout */
+    }
+}
+
+/* Stats panel headings */
+#stats-panel h4 {
+    font-size: 1.1em;
+    color: #2c5282;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+#stats-panel div {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+/* Weight change slider: styled as a visual indicator (not interactive) */
+#weightChangeSlider {
+    width: 90%;
+    max-width: 250px;
+    margin: 5px auto;
+    -webkit-appearance: none;            /* Remove default browser styling */
+    appearance: none;
+    height: 10px;
+    background: #ddd;                    /* Light grey track */
+    outline: none;
+    border-radius: 5px;
+}
+
+/* Custom slider thumb: circular, color controlled by --thumb-color CSS variable.
+   The color is set dynamically from JavaScript based on weight change:
+   green = stable (<1.5 kg), yellow = warning (1.5-3.5 kg), red = danger (>3.5 kg) */
+#weightChangeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--thumb-color, #4CAF50); /* CSS variable with green fallback */
+    cursor: default;
+    border-radius: 50%;                  /* Circular shape */
+    border: 2px solid white;
+    box-shadow: 0 0 3px rgba(0,0,0,0.3);
+}
+
+/* Statistics table: 3-column CSS Grid layout (label | 24h value | 14d value) */
+.stats-table {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr; /* First column auto-sized, others equal */
+    gap: 8px 12px;
+    align-items: center;
+}
+.stats-table .header {
+    font-weight: bold;
+    color: #2c5282;
+    text-align: right;
+}
+.stats-table > div {
+     padding: 4px;
+     border-radius: 3px;
+}
+ .stats-table > .label {
+    font-weight: bold;
+    text-align: left;
+}
+.stats-table > .value {
+    text-align: right;
+    background-color: #edf2f7;           /* Light grey background for value cells */
+}
+
+
+/* =============================================================================
+   POPUPS AND WARNINGS — Modal dialogs and alert overlays
+   ============================================================================= */
+
+/* Popup overlay: full-screen semi-transparent backdrop */
+.popup-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.6);   /* 60% black overlay */
+    display: flex;
+    justify-content: center; align-items: center;
+    z-index: 1000;                       /* Above everything else */
+    padding: 15px;
+}
+
+/* Popup content card: white box with rounded corners */
+.popup-content {
+    background-color: white; padding: 25px 35px; border-radius: 10px;
+    text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 600px;
+    max-height: 90vh; overflow-y: auto;  /* Scrollable if content exceeds viewport */
+}
+.popup-content h2 { margin-top: 0; color: #e53e3e; font-size: 1.8em; text-align: center;}
+.popup-content h2.event-title, .popup-content h2.info-title { color: #3182ce; } /* Blue for non-fatal events */
+.popup-content p, .popup-content li { font-size: 1.0em; line-height: 1.5; margin-bottom: 15px; }
+.popup-content ul { padding-left: 20px; }
+.popup-content h3 { color: #2c5282; margin-top: 20px; }
+.popup-content .popup-button-container { text-align: center; margin-top: 20px; }
+.popup-content button {
+    padding: 12px 25px; background-color: #48bb78; color: white;
+    border: none; border-radius: 6px; cursor: pointer;
+    font-size: 1.1em; font-weight: bold; transition: background-color 0.2s;
+}
+.popup-content button:hover { background-color: #38a169; }
+
+/* Steep drop warning: red overlay centered on the graph area.
+   Hidden by default (display: none). Shown by showSteepDropWarning()
+   when BG is dropping dangerously fast (< 4.0 mmol/L and > 0.15/min). */
+#steep-drop-warning {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);    /* Center precisely in the graph area */
+    background-color: rgba(255, 0, 0, 0.85);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 1.2em;
+    font-weight: bold;
+    z-index: 100;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    display: none;                       /* Hidden until triggered */
+}

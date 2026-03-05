@@ -1,105 +1,229 @@
-// --- UI Update Functions ---
+// =============================================================================
+// UI.JS — User Interface rendering: graph, popups, logging, display updates
+// =============================================================================
+//
+// This file handles everything the player SEES:
+//   - updateUI(): refreshes the top-bar numbers (day, time, CGM, IOB, COB, points)
+//   - drawGraph(): renders the blood glucose graph on an HTML5 Canvas element
+//   - showPopup() / showHelpPopup(): modal dialogs for events and game over
+//   - logEvent(): records events in the game's event history
+//   - updateFoodDisplay() / updateMotionKcal(): updates calorie displays in the UI
+//
+// The graph is the centerpiece of the game — it shows:
+//   - CGM data points (green = in range, red = out of range)
+//   - Optional true BG line (debug mode)
+//   - Color-coded BG zones (green = target, red = danger)
+//   - Event icons (food, insulin, exercise) placed at their timestamps
+//   - Temporary messages (basal reminders, night intervention warnings)
+//
+// Canvas basics (for MATLAB users):
+//   HTML5 Canvas is like MATLAB's figure/axes but lower-level. You draw
+//   shapes and text with explicit commands (moveTo, lineTo, fillRect, etc.)
+//   instead of plot(). The coordinate system has (0,0) at top-left, with
+//   y increasing downward (opposite to MATLAB's default). We use padding
+//   and coordinate transforms to create a proper chart area.
+//
+// Dependencies (global): game (Simulator), cgmDataPoints, trueBgPoints,
+//   MAX_GRAPH_POINTS_PER_DAY, isPaused, various DOM element references
+//
+// Exports (global): updateUI(), drawGraph(), showHelpPopup(), showPopup(),
+//   logEvent(), updateFoodDisplay(), updateMotionKcal(), updatePlayerFixedDataUI()
+// =============================================================================
+
+
+// =============================================================================
+// updateUI — Refresh the numeric displays in the top bar
+// =============================================================================
+//
+// Called every frame by the game loop. Updates:
+//   - Day counter and clock (HH:MM format)
+//   - CGM glucose reading (what the player sees as their "current BG")
+//   - IOB (Insulin On Board) — helps player avoid insulin stacking
+//   - COB (Carbs On Board) — shows remaining undigested food
+//   - Normoglycemia points (the score)
+// =============================================================================
 function updateUI() {
-    if (!game) return;
+    if (!game) return; // Guard: no game instance yet
+
     dayDisplay.textContent = game.day;
+
+    // Format time as HH:MM with zero-padding
+    // padStart(2, '0') ensures single digits get a leading zero: 7 → "07"
     const hours = String(Math.floor(game.timeInMinutes / 60)).padStart(2, '0');
     const minutes = String(Math.floor(game.timeInMinutes % 60)).padStart(2, '0');
     timeDisplay.textContent = `${hours}:${minutes}`;
-    cgmValueDisplayGraph.textContent = game.cgmBG.toFixed(1);
-    iobDisplay.textContent = game.iob.toFixed(1);
-    cobDisplay.textContent = game.cob.toFixed(0);
+
+    // Display values with appropriate precision
+    cgmValueDisplayGraph.textContent = game.cgmBG.toFixed(1);  // 1 decimal (e.g., "6.3")
+    iobDisplay.textContent = game.iob.toFixed(1);              // 1 decimal (e.g., "2.4")
+    cobDisplay.textContent = game.cob.toFixed(0);              // Integer (e.g., "45")
     normoPointsDisplay.textContent = game.normoPoints.toFixed(1);
 }
 
+// =============================================================================
+// updatePlayerFixedDataUI — Display the patient's fixed diabetes parameters
+// =============================================================================
+//
+// Shows ICR, ISF, carb effect, and resting calorie burn in the stats panel.
+// These values don't change during gameplay (they're the patient's profile).
+// If no game is running, shows default values.
+// =============================================================================
 function updatePlayerFixedDataUI() {
     const tempSim = game || { ICR: 10, ISF: 3.0, gramsPerMmolRise: 3.3 };
-    icrDisplay.textContent = tempSim.ICR;
-    isfDisplay.textContent = tempSim.ISF.toFixed(1);
-    carbEffectDisplay.textContent = tempSim.gramsPerMmolRise.toFixed(1);
-    restingKcalDisplay.textContent = RESTING_KCAL_PER_DAY;
+    icrDisplay.textContent = tempSim.ICR;                         // e.g., "10"
+    isfDisplay.textContent = tempSim.ISF.toFixed(1);              // e.g., "3.0"
+    carbEffectDisplay.textContent = tempSim.gramsPerMmolRise.toFixed(1); // e.g., "3.3"
+    restingKcalDisplay.textContent = RESTING_KCAL_PER_DAY;       // e.g., "2200"
 }
 
-// --- Graph Drawing Function ---
+// =============================================================================
+// drawGraph — Render the blood glucose chart on the HTML5 Canvas
+// =============================================================================
+//
+// This is the most complex rendering function. It draws:
+//   1. Background zones (green for target range, red for danger zones)
+//   2. Night shading (22:00-07:00)
+//   3. Horizontal reference lines at key BG thresholds
+//   4. Axis labels and tick marks
+//   5. True BG line (if debug mode is enabled)
+//   6. CGM data points (colored dots: green = in range, red = out of range)
+//   7. Finger prick measurements (blood drop emoji)
+//   8. Event icons (food, insulin, exercise) along the bottom
+//   9. Temporary graph messages (reminders, warnings)
+//
+// The graph shows one day (24 hours) at a time, determined by game.day.
+// Y-axis auto-scales: starts at 0-12, expands up to 25 if BG goes high.
+//
+// Canvas coordinate system:
+//   (0,0) is top-left of the canvas.
+//   x increases to the right (time: 00:00 → 24:00)
+//   y increases DOWNWARD (so high BG values are at the top = lower y pixel values)
+//
+// To convert between BG values and pixel coordinates:
+//   y_pixel = padding.top + graphHeight - (bgValue / range) * graphHeight
+//   x_pixel = padding.left + (timeInDay / 1440) * graphWidth
+// =============================================================================
+
+// yAxisMax: dynamic upper limit of the y-axis. Starts at 12 mmol/L,
+// expands when CGM readings exceed 11.5, contracts back when they drop.
 let yAxisMax = 12.0;
+
 function drawGraph() {
-    if (!bgGraphCanvas) return; // Guard against premature calls
+    if (!bgGraphCanvas) return; // Guard against premature calls before DOM is ready
+
+    // --- Canvas setup ---
+    // Handle high-DPI displays (e.g., Retina): scale canvas pixels by devicePixelRatio
+    // so everything looks crisp. Without this, the graph would look blurry on 2x screens.
     const rect = bgGraphCanvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     bgGraphCanvas.width = rect.width * dpr;
     bgGraphCanvas.height = rect.height * dpr;
     graphCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    // --- Dynamic y-axis scaling ---
+    // Find the highest CGM value currently visible on the graph
     let currentMaxCGMOnGraph = 0;
     const visibleCGMPoints = cgmDataPoints.slice(-MAX_GRAPH_POINTS_PER_DAY);
     visibleCGMPoints.forEach(p => { if (p.value > currentMaxCGMOnGraph) currentMaxCGMOnGraph = p.value; });
+
+    // Expand y-axis if needed (in steps of 2, max 25)
+    // Contract back to 12 when values drop below 10
     if (currentMaxCGMOnGraph > 11.5 && yAxisMax < Math.min(25, currentMaxCGMOnGraph + 2)) yAxisMax = Math.ceil((currentMaxCGMOnGraph + 2) / 2) * 2;
     else if (currentMaxCGMOnGraph < 10.0 && yAxisMax > 12.0) yAxisMax = 12.0;
     const range = yAxisMax - 0; if (range <= 0) return;
 
+    // --- Chart area dimensions ---
+    // Padding leaves room for axis labels and tick marks
     const padding = {top: 20, right: 20, bottom: 40, left: 50};
     graphCtx.clearRect(0, 0, bgGraphCanvas.width, bgGraphCanvas.height);
     const graphWidth = rect.width - padding.left - padding.right;
     const graphHeight = rect.height - padding.top - padding.bottom;
     if (graphWidth <= 0 || graphHeight <= 0) return;
 
-    const totalMinutesInView = 24 * 60;
+    // --- Night shading (22:00-07:00) ---
+    // Light grey-blue overlay to indicate nighttime hours
+    const totalMinutesInView = 24 * 60; // 1440 minutes = one full day
     const xNightStart = padding.left + ((22 * 60) / totalMinutesInView) * graphWidth;
     const xNightEnd = padding.left + ((7 * 60) / totalMinutesInView) * graphWidth;
     graphCtx.fillStyle = 'rgba(60, 60, 80, 0.1)';
-    graphCtx.fillRect(xNightStart, padding.top, graphWidth - (xNightStart - padding.left), graphHeight);
-    graphCtx.fillRect(padding.left, padding.top, xNightEnd - padding.left, graphHeight);
+    graphCtx.fillRect(xNightStart, padding.top, graphWidth - (xNightStart - padding.left), graphHeight); // 22:00 to midnight
+    graphCtx.fillRect(padding.left, padding.top, xNightEnd - padding.left, graphHeight);                  // Midnight to 07:00
 
+    // --- BG zone coloring ---
+    // Green zone: 4.0-10.0 mmol/L (target range)
+    // Red zones: below 4.0 (hypoglycemia) and above 10.0 (hyperglycemia)
     const zones = [
-        { min: 4.0, max: 10.0, color: 'rgba(72, 187, 120, 0.15)' },
-        { min: 0, max: 3.99, color: 'rgba(229, 62, 62, 0.1)' },
-        { min: 10.01, max: yAxisMax, color: 'rgba(229, 62, 62, 0.1)' },
+        { min: 4.0, max: 10.0, color: 'rgba(72, 187, 120, 0.15)' },   // Green: target
+        { min: 0, max: 3.99, color: 'rgba(229, 62, 62, 0.1)' },       // Red: hypo danger
+        { min: 10.01, max: yAxisMax, color: 'rgba(229, 62, 62, 0.1)' }, // Red: hyper danger
     ];
     zones.forEach(zone => {
+        // Convert BG values to pixel y-coordinates (remember: y is inverted on canvas)
         const y_max_px = padding.top + graphHeight - ((zone.min) / range) * graphHeight;
         const y_min_px = padding.top + graphHeight - ((zone.max) / range) * graphHeight;
         graphCtx.fillStyle = zone.color;
         graphCtx.fillRect(padding.left, y_min_px, graphWidth, y_max_px - y_min_px);
     });
 
+    // --- Horizontal reference lines at key BG thresholds ---
+    // 1.5: fatal hypo (red dashed)
+    // 4.0: lower target boundary
+    // 5.5: ideal center (green dashed)
+    // 8.0: upper tight range boundary
+    // 10.0: upper target boundary
     [1.5, 4, 5.5, 8, 10].forEach(val => {
         const y = padding.top + graphHeight - ((val) / range) * graphHeight;
         graphCtx.beginPath();
         graphCtx.moveTo(padding.left, y);
         graphCtx.lineTo(padding.left + graphWidth, y);
         if (val === 1.5) {
-            graphCtx.strokeStyle = 'rgba(229, 62, 62, 0.8)'; // Red line for 1.5
+            // Fatal hypo threshold: bold red dashed line
+            graphCtx.strokeStyle = 'rgba(229, 62, 62, 0.8)';
             graphCtx.lineWidth = 2;
             graphCtx.setLineDash([2, 2]);
         } else {
+            // Target boundaries: light grey; ideal center: green dashed
             graphCtx.strokeStyle = (val === 5.5) ? 'rgba(76, 175, 80, 0.7)' : 'rgba(0, 0, 0, 0.1)';
             graphCtx.lineWidth = (val === 4 || val === 10) ? 1.5 : 1;
             graphCtx.setLineDash((val === 5.5) ? [4, 4] : []);
         }
         graphCtx.stroke();
     });
-    graphCtx.setLineDash([]);
+    graphCtx.setLineDash([]); // Reset dash pattern
 
+    // --- Chart border ---
     graphCtx.strokeStyle = '#a0aec0'; graphCtx.lineWidth = 1;
     graphCtx.strokeRect(padding.left, padding.top, graphWidth, graphHeight);
 
+    // --- X-axis labels (time of day, every 2 hours) ---
     graphCtx.fillStyle = '#4a5568'; graphCtx.font = "bold 12px Segoe UI";
     for (let i = 0; i <= 24; i += 2) {
         const x = padding.left + ( (i*60 / totalMinutesInView ) * graphWidth );
         graphCtx.fillText(`${String(i).padStart(2,'0')}:00`, x - 15, padding.top + graphHeight + 20);
     }
 
+    // --- Y-axis labels (BG values in mmol/L) ---
+    // Step size depends on axis range: use steps of 2 for large ranges, 1 for small
     const yStep = range > 15 ? 2 : 1;
     for (let i = Math.ceil(0); i <= yAxisMax; i += yStep) {
-        if (i === 0 && yAxisMax > 2) continue; // Skip 0 if axis is large
+        if (i === 0 && yAxisMax > 2) continue; // Skip 0 label if axis is large
         const y = padding.top + graphHeight - ((i) / range) * graphHeight;
         graphCtx.fillText(i.toFixed(0), padding.left - 30, y + 4);
     }
+
+    // --- Y-axis label (rotated text: "Blodsukker (mmol/L)") ---
+    // save/restore preserves the current canvas state around the rotation
     graphCtx.save(); graphCtx.translate(padding.left - 40, padding.top + graphHeight/2); graphCtx.rotate(-Math.PI/2);
     graphCtx.textAlign = "center"; graphCtx.font = "bold 13px Segoe UI"; graphCtx.fillText("Blodsukker (mmol/L)", 0, 0); graphCtx.restore();
 
-    if (!game) return;
+    if (!game) return; // No data to plot if game hasn't started
+
+    // --- Determine which day's data to show ---
     const currentDayStartMinutes = (game.day - 1) * totalMinutesInView;
 
+    // --- True BG line (debug mode only) ---
+    // When the debug checkbox is enabled, draw the actual BG as a blue line.
+    // This reveals the "ground truth" that the CGM is trying to approximate.
     if(debugTrueBgCheckbox.checked) {
         const points = trueBgPoints.filter(p => p.time >= currentDayStartMinutes && p.time < currentDayStartMinutes + totalMinutesInView);
         graphCtx.beginPath();
@@ -111,36 +235,48 @@ function drawGraph() {
         graphCtx.strokeStyle = 'rgba(100, 100, 255, 0.7)'; graphCtx.lineWidth = 2; graphCtx.stroke();
     }
 
+    // --- CGM data points ---
+    // Each CGM reading is drawn as a small colored circle:
+    //   Green: within target range (4.0-10.0 mmol/L)
+    //   Red: outside target range (hypo or hyper)
+    // Finger prick measurements are shown as blood drop emojis instead.
     const pointsToDraw = cgmDataPoints.filter(p => p.time >= currentDayStartMinutes && p.time < currentDayStartMinutes + totalMinutesInView);
     pointsToDraw.forEach(p => {
         const x = padding.left + ((p.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
         const y = padding.top + graphHeight - ((p.value) / range) * graphHeight;
-        if (y < padding.top || y > padding.top + graphHeight) return;
+        if (y < padding.top || y > padding.top + graphHeight) return; // Skip if off-screen
 
         if (p.type === 'fingerprick') {
+            // Finger prick: draw blood drop emoji at the measurement point
             graphCtx.font = '16px Arial';
             graphCtx.textAlign = 'center';
             graphCtx.textBaseline = 'middle';
             graphCtx.fillStyle = '#e53e3e';
             graphCtx.fillText('🩸', x, y);
         } else {
+            // Regular CGM reading: small colored circle
             graphCtx.beginPath();
-            graphCtx.arc(x, y, 3, 0, 2 * Math.PI);
-            if (p.value < 4.0 || p.value > 10.0) graphCtx.fillStyle = '#e53e3e';
-            else graphCtx.fillStyle = '#38a169';
+            graphCtx.arc(x, y, 3, 0, 2 * Math.PI); // 3px radius circle
+            if (p.value < 4.0 || p.value > 10.0) graphCtx.fillStyle = '#e53e3e'; // Red: danger
+            else graphCtx.fillStyle = '#38a169'; // Green: in range
             graphCtx.fill();
         }
     });
 
+    // --- Event icons along the bottom of the graph ---
+    // Food (emoji), insulin (syringe/pen), and exercise icons are drawn at
+    // the x-position corresponding to their timestamp, near the bottom of the chart.
     game.logHistory.forEach(event => {
         if (event.time >= currentDayStartMinutes && event.time < currentDayStartMinutes + totalMinutesInView) {
             const x = padding.left + ((event.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
-            let yPos = padding.top + graphHeight - 10;
+            let yPos = padding.top + graphHeight - 10; // Near the bottom of the chart
             graphCtx.textAlign = "center";
             graphCtx.font = "14px Arial";
+
             if(event.type === 'food') {
                 const icon = event.details.icon || '🍴';
                 graphCtx.fillText(icon, x, yPos);
+                // For custom meals (not presets), show carb equivalent (KE) label
                 if (icon === '🍴') {
                     const ke = (event.details.carbs + event.details.protein * 0.25).toFixed(0);
                     graphCtx.font = "bold 9px Segoe UI";
@@ -150,8 +286,10 @@ function drawGraph() {
             } else if (event.type === 'motion') {
                 graphCtx.fillText(event.icon, x, yPos);
             } else if(event.type.includes('insulin')) {
+                // Color-coded: blue for basal, red for fast-acting
                 graphCtx.fillStyle = event.type === 'insulin-basal' ? '#2b6cb0' : '#c53030';
                 graphCtx.fillText(event.icon, x, yPos);
+                // Show dose amount above the icon
                 graphCtx.font = "bold 10px Segoe UI";
                 const doseText = event.details.dose.toFixed(event.type === 'insulin-fast' ? 1 : 0);
                 graphCtx.fillText(doseText, x, yPos - 12);
@@ -159,6 +297,9 @@ function drawGraph() {
         }
     });
 
+    // --- Temporary graph messages (reminders, warnings) ---
+    // These are transient messages displayed over the graph, e.g.,
+    // "Remember basal insulin" or "Night intervention" with sleep animation.
      game.graphMessages.forEach(msg => {
         const xCenter = padding.left + graphWidth / 2;
         const yPos = padding.top + 25;
@@ -168,14 +309,17 @@ function drawGraph() {
         graphCtx.textAlign = "center";
         graphCtx.font = "bold 13px Segoe UI";
         const textWidth = graphCtx.measureText(msg.text).width;
+
         if (msg.text.startsWith("zZzz")) {
+            // Sleep/night intervention: floating "zZzz" text with sine-wave wobble
             graphCtx.globalAlpha = 0.6;
             graphCtx.font = "italic bold 16px Segoe UI";
-            graphCtx.fillStyle = "#63b3ed";
-            const xOffset = Math.sin(game.totalSimMinutes / 20) * 5;
+            graphCtx.fillStyle = "#63b3ed"; // Light blue for sleepy feel
+            const xOffset = Math.sin(game.totalSimMinutes / 20) * 5; // Gentle horizontal sway
             graphCtx.fillText(msg.text, padding.left + 50 + xOffset, padding.top + 20);
             graphCtx.globalAlpha = 1.0;
         } else {
+            // Standard message: yellow rounded rectangle with text
             graphCtx.fillRect(xCenter - textWidth/2 - 10, yPos - 20, textWidth + 20, 30);
             graphCtx.strokeRect(xCenter - textWidth/2 - 10, yPos - 20, textWidth + 20, 30);
             graphCtx.fillStyle = "#333";
@@ -184,10 +328,22 @@ function drawGraph() {
     });
 }
 
-// --- Popup and Logging Functions ---
+
+// =============================================================================
+// POPUP FUNCTIONS — Modal dialogs for help, events, and game over
+// =============================================================================
+
+/**
+ * showHelpPopup — Display the help/information modal.
+ *
+ * Shows game instructions, mechanics explanation, and game over conditions.
+ * Pauses the game while open (if running). Only one popup can be open at a time.
+ */
 function showHelpPopup() {
-    if(document.querySelector('.popup-overlay')) return;
-    if (game && !isPaused) togglePause();
+    if(document.querySelector('.popup-overlay')) return; // Prevent duplicate popups
+    if (game && !isPaused) togglePause(); // Pause the game while reading help
+
+    // Create the popup DOM structure
     const overlay = document.createElement('div');
     overlay.className = 'popup-overlay';
     const content = document.createElement('div');
@@ -218,27 +374,44 @@ function showHelpPopup() {
     overlay.appendChild(content);
     document.body.appendChild(overlay);
 
+    // Close handler: remove popup and resume game
     document.getElementById('help-ok-button').addEventListener('click', () => {
         document.body.removeChild(overlay);
         if (game && isPaused && !game.isGameOver) togglePause();
     });
 }
 
+/**
+ * showPopup — Display a general-purpose modal popup.
+ *
+ * Used for game events (DKA warning), game over screens, and info messages.
+ * Only one popup can be active at a time (prevents stacking).
+ *
+ * @param {string}  title           - Popup title text
+ * @param {string}  message         - HTML body content
+ * @param {boolean} isGameOverPopup - If true: red title, "Reset" button, resets game on close
+ * @param {boolean} isEventPopup    - If true: blue title (for in-game events like DKA warning)
+ * @param {boolean} isInfoPopup     - If true: suppress sound on display
+ * @param {boolean} shouldPause     - If true: pause the game while popup is open
+ */
 function showPopup(title, message, isGameOverPopup, isEventPopup = false, isInfoPopup = false, shouldPause = true) {
-    // Prevent multiple popups
+    // Prevent multiple popups from stacking
     const existingPopup = document.querySelector('.popup-overlay');
     if (existingPopup) return;
 
     if (shouldPause && game && !isPaused) togglePause();
+
+    // Build popup DOM elements
     const overlay = document.createElement('div'); overlay.className = 'popup-overlay';
     const content = document.createElement('div'); content.className = 'popup-content';
 
     const h2 = document.createElement('h2'); h2.textContent = title;
-    if (isEventPopup) h2.classList.add('event-title');
-    if (isGameOverPopup) h2.style.color = '#e53e3e';
+    if (isEventPopup) h2.classList.add('event-title');   // Blue title for events
+    if (isGameOverPopup) h2.style.color = '#e53e3e';     // Red title for game over
     const p = document.createElement('p'); p.innerHTML = message;
     content.appendChild(h2); content.appendChild(p);
 
+    // Action button
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'popup-button-container';
     const button = document.createElement('button');
@@ -251,28 +424,66 @@ function showPopup(title, message, isGameOverPopup, isEventPopup = false, isInfo
     buttonContainer.appendChild(button);
     content.appendChild(buttonContainer);
     overlay.appendChild(content);
-    document.body.appendChild(overlay); // Tilføj overlayret til siden så det faktisk vises
+    document.body.appendChild(overlay); // Add overlay to the page so it's actually visible
+
+    // Play a notification sound (unless it's a game over or pure info popup)
     if (!isGameOverPopup && !isInfoPopup) playSound('intervention', 'C5');
 }
 
+
+// =============================================================================
+// EVENT LOGGING — Record game events for the graph and history
+// =============================================================================
+
+/**
+ * logEvent — Record a game event (food, insulin, exercise, etc.) in the history.
+ *
+ * Each event gets a timestamp and icon, and is stored in game.logHistory[].
+ * Events are rendered on the graph as icons at their x-position.
+ *
+ * @param {string} message  - Human-readable description of the event
+ * @param {string} type     - Event category: 'food', 'motion', 'insulin-fast',
+ *                            'insulin-basal', 'fingerprick', 'event', 'info'
+ * @param {object} details  - Additional data (dose, carbs, kcal, icon, etc.)
+ */
 function logEvent(message, type = 'info', details = {}) {
     if (!game) return;
+    // Assign an emoji icon based on event type
     let icon = '';
     switch(type) {
         case 'food': icon = details.icon || '🍴'; break;
         case 'motion': icon = '🏃'; break;
-        case 'insulin-fast': icon = '💉'; break;
-        case 'insulin-basal': icon = '🖊️'; break;
+        case 'insulin-fast': icon = '💉'; break;   // Syringe for bolus insulin
+        case 'insulin-basal': icon = '🖊️'; break;  // Pen for basal insulin
     }
     game.logHistory.push({ time: game.totalSimMinutes, message, type, icon, details });
 }
 
+
+// =============================================================================
+// FOOD & EXERCISE DISPLAY HELPERS
+// =============================================================================
+
+/**
+ * updateFoodDisplay — Update the calorie and carb-equivalent displays for custom meals.
+ *
+ * Called whenever the food sliders change. Shows:
+ *   - Total kcal: carbs*4 + protein*4 + fat*9 (standard Atwater factors)
+ *   - KE (Kulhydrat-Ækvivalenter / Carb Equivalents): carbs + protein*0.25
+ *     KE represents the total "carb-like" BG impact of the meal.
+ */
 function updateFoodDisplay() {
     foodKcalDisplay.textContent = ((parseInt(carbsSlider.value) * 4) + (parseInt(proteinSlider.value) * 4) + (parseInt(fatSlider.value) * 9)).toFixed(0);
     const ke = (parseInt(carbsSlider.value) + parseInt(proteinSlider.value) * 0.25).toFixed(0);
     foodKeDisplay.textContent = ke + " g";
 }
 
+/**
+ * updateMotionKcal — Update the estimated calorie burn for selected exercise settings.
+ *
+ * Calorie burn rates: Low=4, Medium=7, High=10 kcal per minute.
+ * Total = rate * duration.
+ */
 function updateMotionKcal() {
     let kcalPerMinute = motionIntensitySelect.value === "Lav" ? 4 : (motionIntensitySelect.value === "Medium" ? 7 : 10);
     motionKcalDisplay.textContent = (kcalPerMinute * parseInt(motionDurationSelect.value)).toFixed(0);

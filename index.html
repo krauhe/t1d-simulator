@@ -4,12 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diabetes-Dysten v42</title>
+    <!-- External stylesheet for all visual styling -->
     <link rel="stylesheet" href="style.css">
+    <!-- Tone.js: Web Audio framework for generating sound effects in the browser.
+         Loaded from CDN (Content Delivery Network) so no local install is needed.
+         Version 14.8.49 is pinned to avoid breaking changes from updates.
+         Must be loaded BEFORE sounds.js which uses the Tone.* classes. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
 </head>
 <body>
+    <!-- ===================================================================
+         MAIN GAME CONTAINER
+         ===================================================================
+         The entire game UI lives inside this container. It uses flexbox
+         (CSS) for layout: a vertical stack of header, controls, and the
+         main game area (which is itself a horizontal layout).
+         =================================================================== -->
     <div id="game-container">
         <h1 id="game-title">Diabetes-Dysten v42</h1>
+
+        <!-- ===============================================================
+             TOP CONTROL PANEL — Game controls and status bar
+             ===============================================================
+             Contains: Start/Reset/Help buttons, speed selector, pause,
+             normoglycemia points display, and mute button.
+             Displayed as a dark horizontal bar across the top.
+             =============================================================== -->
         <div id="top-control-panel">
             <div class="top-panel-section">
                 <button id="startButton">Start Simulation</button>
@@ -17,6 +37,9 @@
                 <button id="helpButton">Hjælp / Info</button>
             </div>
             <div class="top-panel-section">
+                <!-- Speed selector: controls how fast simulated time passes.
+                     Values are simulation speed multipliers (sim-seconds per real-second).
+                     x60 = 1 hour per real minute, x240 = 4 hours per real minute, etc. -->
                 <label for="speedSelector">Hastighed:</label>
                 <select id="speedSelector">
                     <option value="60">1t / min (x60)</option>
@@ -27,6 +50,10 @@
                 <button id="pauseButton">Pause</button>
             </div>
              <div class="top-panel-section">
+                <!-- Normoglycemia points: the game's scoring system.
+                     Points are earned for time spent with BG in target range.
+                     The weighting factor shows the current point multiplier
+                     (affected by bonus range and night intervention penalties). -->
                 <span class="normo-hours-display" title="Optjenes ved at holde blodsukkeret i målområdet. Vægtningen afhænger af dit aktuelle blodsukker og om du foretager natlige interventioner.">Normoglykæmi-points: <span id="normoPointsDisplay">0.0</span> <small id="normoPointsWeighting">(x1.0)</small></span>
             </div>
             <div class="top-panel-section">
@@ -34,21 +61,52 @@
             </div>
         </div>
 
+        <!-- ===============================================================
+             MAIN GAME AREA — Three-column layout
+             ===============================================================
+             Left:   Intervention panel (food, insulin, exercise controls)
+             Center: Blood glucose graph (the main visual)
+             Right:  Statistics panel (TIR, averages, weight, patient data)
+             =============================================================== -->
         <div id="main-area">
+
+            <!-- =============================================================
+                 LEFT PANEL — Player interventions (the "control panel")
+                 =============================================================
+                 This is where the player interacts with the simulation by:
+                 - Eating food (custom macros or preset meals)
+                 - Injecting insulin (fast-acting bolus or long-acting basal)
+                 - Starting exercise (at different intensities and durations)
+                 ============================================================= -->
             <div id="intervention-panel">
+
+                <!-- Insulin and Exercise side by side -->
                 <div class="intervention-row">
+                     <!-- INSULIN CONTROLS -->
                      <div class="intervention-group">
                         <h3>Insulin</h3>
+
+                        <!-- Fast-acting (bolus) insulin slider and inject button.
+                             Range: 0.5-10 units, step: 0.5 units.
+                             Tooltip explains what bolus insulin does. -->
                         <label for="fastInsulinSlider" title="Hurtigtvirkende insulin dækker kulhydrater i et måltid og korrigerer højt blodsukker. Begynder at virke efter 10-15 minutter og er ude af kroppen efter 2-6 timer.">Hurtig: <span id="fastInsulinValue">4.0</span> E</label>
                         <input type="range" id="fastInsulinSlider" min="0.5" max="10" value="4" step="0.5">
                         <button id="giveFastInsulinButton">💉 Giv Hurtig</button>
 
+                        <!-- Long-acting (basal) insulin slider and inject button.
+                             Range: 1-30 units, step: 1 unit.
+                             Tooltip explains what basal insulin does. -->
                         <label for="longInsulinSlider" style="margin-top: 15px;" title="Basalinsulin dækker kroppens grundlæggende behov for insulin over ca. 24 timer. Det er fundamentet i din behandling og hjælper med at holde dit blodsukker stabilt mellem måltider og om natten.">Basal: <span id="longInsulinValue">10</span> E</label>
                         <input type="range" id="longInsulinSlider" min="1" max="30" value="10" step="1">
                         <button id="giveLongInsulinButton">🖊️ Giv Basal</button>
                     </div>
+
+                     <!-- EXERCISE CONTROLS -->
                      <div class="intervention-group">
                         <h3>Motion</h3>
+                        <!-- Intensity affects BG impact:
+                             Low = mainly aerobic (BG drops)
+                             High = mixed aerobic+anaerobic (BG may rise acutely) -->
                         <label for="motionIntensity" title="Høj intensitet sænker blodsukkeret hurtigere og øger insulinfølsomheden mere end lav intensitet.">Intensitet:</label>
                         <select id="motionIntensity">
                             <option value="Lav">Lav</option>
@@ -61,25 +119,40 @@
                             <option value="30">30 min</option>
                             <option value="60">1 time</option>
                         </select>
+                        <!-- Estimated calorie burn for the selected exercise -->
                         <div class="kcal-display"><span id="motionKcalDisplay"></span> kcal</div>
                         <button id="startMotionButton">🏃 Start Motion</button>
                     </div>
                 </div>
+
+                <!-- FOOD CONTROLS -->
                 <div class="intervention-group">
                     <h3>Mad</h3>
                     <div class="intervention-row inner-row">
+                        <!-- Left side: macronutrient sliders for custom meals -->
                         <div style="display:flex; flex-direction:column; gap: 5px;">
+                            <!-- Carb slider: primary BG impact (fastest absorption) -->
                             <label for="carbsSlider" title="Kulhydrater hæver blodsukkeret hurtigst. Effekten starter typisk efter 20 minutter.">Kulhydrat: <span id="carbsValue">50</span> g</label>
                             <input type="range" id="carbsSlider" min="0" max="100" value="50" step="5">
+
+                            <!-- Protein slider: secondary BG impact (~25% of carb effect, delayed) -->
                             <label for="proteinSlider" title="Protein har en mindre og langsommere effekt på blodsukkeret end kulhydrater.">Protein: <span id="proteinValue">10</span> g</label>
                             <input type="range" id="proteinSlider" min="0" max="100" value="10" step="5">
+
+                            <!-- Fat slider: no direct BG impact, but slows carb absorption -->
                             <label for="fatSlider" title="Fedt påvirker ikke blodsukkeret direkte, men forsinker optagelsen af kulhydrater og protein markant.">Fedt: <span id="fatValue">5</span> g</label>
                             <input type="range" id="fatSlider" min="0" max="50" value="5" step="5">
+
+                            <!-- Calorie and carb-equivalent display for the custom meal -->
                             <div class="kcal-display" id="foodInfoDisplay" title="Kalorier og kulhydrat-ækvivalenter for det sammensatte måltid."><span id="foodKcalDisplay"></span> | KE: <span id="foodKeDisplay"></span></div>
                             <button id="giveFoodButton" style="margin-top: 10px;">🍴 Spis Mad</button>
                         </div>
+
+                        <!-- Right side: preset meal buttons (quick access to common foods) -->
                         <div>
                              <div class="food-presets">
+                                <!-- Each preset has fixed macros matching a typical portion.
+                                     Tooltips show the macronutrient breakdown. -->
                                 <button id="dextroButton" title="3g Kulhydrater">🍬 Dextro</button>
                                 <button id="burgerButton" title="~40g Kulhydrat, 30g Protein, 30g Fedt">🍔 Burger</button>
                                 <button id="avocadoButton" title="~5g Kulhydrat, 5g Protein, 25g Fedt">🥑 Avocado</button>
@@ -92,30 +165,56 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- DEBUG PANEL — Developer tools (show true BG on graph) -->
                  <div id="debug-panel" class="intervention-group">
                     <h3>Debug</h3>
                     <label>
+                        <!-- When checked, the graph shows the true BG as a blue line
+                             alongside the CGM dots, revealing the sensor inaccuracy. -->
                         <input type="checkbox" id="debugTrueBgCheckbox"> Vis Sandt BG
                     </label>
                 </div>
             </div>
 
+            <!-- =============================================================
+                 CENTER + RIGHT AREA — Graph and statistics
+                 =============================================================
+                 On wide screens (>1200px), this becomes a horizontal layout
+                 with the graph on the left and stats panel on the right.
+                 On narrow screens, they stack vertically.
+                 ============================================================= -->
             <div id="center-and-right-area">
+
+                <!-- GRAPH AREA — The main blood glucose chart -->
                 <div id="graph-area-container">
+                    <!-- Overlay panel showing current day, time, CGM value, IOB, and COB -->
                     <div id="iob-cob-panel">
                         Dag: <span id="dayDisplay">1</span> - <span id="timeDisplay">00:00</span><br>
                         CGM: <span id="cgmValueDisplayGraph">-.-</span><br>
                         IOB: <span id="iobDisplay">0.0</span> E |
                         COB: <span id="cobDisplay">0</span> g
                     </div>
+
+                    <!-- HTML5 Canvas element: all graph rendering happens here via JavaScript.
+                         The canvas is sized dynamically by sizeCanvas() in main.js.
+                         drawGraph() in ui.js handles all the actual drawing. -->
                     <canvas id="bg-graph"></canvas>
+
+                    <!-- Finger prick and glucagon emergency buttons below the graph -->
                     <div id="other-interventions-container">
                         <button id="fingerprickButton" title="En manuel blodsukkermåling. Den er mere præcis end CGM'en og kan bruges til at dobbelttjekke din CGM-værdi, især hvis du har mistanke om, at den viser forkert.">🩸 Fingerprik</button>
                         <button id="glucagonButton" title="Nødbehandling ved meget lavt blodsukker. Giver en kraftig og hurtig stigning i blodsukker. Har en 24-timers cooldown.">✚ Brug Glycagon</button>
                     </div>
+
+                    <!-- Warning overlay: shown when BG is dropping dangerously fast.
+                         Hidden by default (display:none), made visible by showSteepDropWarning(). -->
                     <div id="steep-drop-warning">ADVARSEL: Hurtigt faldende BG!</div>
                 </div>
+
+                <!-- STATS PANEL — Patient data and clinical metrics -->
                 <div id="stats-panel">
+                    <!-- Fixed patient parameters (don't change during gameplay) -->
                     <div>
                         <h4 title="Dine personlige diabetes-parametre. Disse er konstante i hele simulationen.">Spiller Data</h4>
                         <div title="Insulin/Kulhydrat-Ratio: Hvor mange gram kulhydrat dækker 1 enhed (E) hurtigtvirkende insulin? Bruges til at beregne insulin til måltider."><span>ICR:</span> <span id="icrDisplay">--</span> g/E</div>
@@ -124,29 +223,40 @@
                         <div title="Hvileforbrug: Dit basale kalorieforbrug pr. dag, uden motion."><span>Hvileforbrug:</span> <span id="restingKcalDisplay">--</span> kcal/dag</div>
                     </div>
                     <hr>
+
+                    <!-- Weight change indicator (visual slider showing net weight gain/loss) -->
                      <div>
                         <h4>Vægtændring</h4>
                         <label for="weightChangeSlider"><span id="weightChangeValue">0.0</span> kg</label>
+                        <!-- Disabled slider used as a visual indicator (not interactive).
+                             Thumb color changes: green=stable, yellow=warning, red=danger.
+                             Game over at +/- 5 kg. -->
                         <input type="range" id="weightChangeSlider" min="-5" max="5" value="0" step="0.1" disabled>
                     </div>
                     <hr>
+
+                    <!-- Clinical statistics table: TIR, TITR, average CGM, insulin, calories -->
                     <div class="stats-table">
                         <div class="header">Beskrivelse</div>
                         <div class="header">24 Timer</div>
                         <div class="header">14 Dage</div>
 
+                        <!-- TIR: Time In Range (4-10 mmol/L) — clinical standard metric -->
                         <div class="label" title="Time in Range: Procentdel af tiden hvor dit sande blodsukker har været mellem 4.0 og 10.0 mmol/L.">TIR (4-10)</div>
                         <div class="value" id="tir24h">--%</div>
                         <div class="value" id="tir14d">--%</div>
 
+                        <!-- TITR: Time In Tight Range (4-8 mmol/L) — stricter target -->
                         <div class="label" title="Time in Tight Range: Procentdel af tiden hvor dit sande blodsukker har været i det ideelle interval mellem 4.0 og 8.0 mmol/L.">TITR (4-8)</div>
                         <div class="value" id="titr24h">--%</div>
                         <div class="value" id="titr14d">--%</div>
 
+                        <!-- Average CGM glucose -->
                         <div class="label" title="Gennemsnitlig CGM-værdi over perioden. Giver en indikation af den generelle blodsukkerkontrol.">Gns. CGM</div>
                         <div class="value" id="avgCgm24h">--</div>
                         <div class="value" id="avgCgm14d">--</div>
 
+                        <!-- 24-hour insulin and calorie totals -->
                         <div class="label">Hurtig Insulin</div>
                         <div class="value" id="fastInsulin24h">-- E</div>
                         <div class="value">--</div>
@@ -164,6 +274,16 @@
         </div>
     </div>
 
+    <!-- ===================================================================
+         SCRIPT LOADING ORDER — Critical! Files share global scope.
+         ===================================================================
+         Each file builds on the previous ones:
+           1. sounds.js   — Sound system (Tone.js synths and playSound())
+           2. simulator.js — Simulator class (uses playSound, logEvent, DOM refs)
+           3. ui.js        — Drawing and UI functions (uses Simulator state)
+           4. game.js      — Game loop (uses Simulator, UI functions)
+           5. main.js      — Initialization (uses everything above)
+         =================================================================== -->
     <script src="js/sounds.js"></script>
     <script src="js/simulator.js"></script>
     <script src="js/ui.js"></script>
