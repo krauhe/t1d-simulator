@@ -58,6 +58,9 @@ function updateUI() {
     iobDisplay.textContent = game.iob.toFixed(1);              // 1 decimal (e.g., "2.4")
     cobDisplay.textContent = game.cob.toFixed(0);              // Integer (e.g., "45")
     normoPointsDisplay.textContent = game.normoPoints.toFixed(1);
+
+    // Opdater hændelsesloggen under grafen
+    updateEventLog();
 }
 
 // =============================================================================
@@ -136,7 +139,7 @@ function drawGraph() {
 
     // --- Chart area dimensions ---
     // Padding leaves room for axis labels and tick marks
-    const padding = {top: 20, right: 20, bottom: 40, left: 50};
+    const padding = {top: 20, right: 20, bottom: 40, left: 58};
     graphCtx.clearRect(0, 0, bgGraphCanvas.width, bgGraphCanvas.height);
     const graphWidth = rect.width - padding.left - padding.right;
     const graphHeight = rect.height - padding.top - padding.bottom;
@@ -215,8 +218,8 @@ function drawGraph() {
 
     // --- Y-axis label (rotated text: "Blodsukker (mmol/L)") ---
     // save/restore preserves the current canvas state around the rotation
-    graphCtx.save(); graphCtx.translate(padding.left - 40, padding.top + graphHeight/2); graphCtx.rotate(-Math.PI/2);
-    graphCtx.textAlign = "center"; graphCtx.font = "bold 13px Segoe UI"; graphCtx.fillText("Blodsukker (mmol/L)", 0, 0); graphCtx.restore();
+    graphCtx.save(); graphCtx.translate(12, padding.top + graphHeight/2); graphCtx.rotate(-Math.PI/2);
+    graphCtx.textAlign = "center"; graphCtx.font = "bold 12px Segoe UI"; graphCtx.fillText("Blodsukker (mmol/L)", 0, 0); graphCtx.restore();
 
     if (!game) return; // No data to plot if game hasn't started
 
@@ -496,6 +499,58 @@ function updateFoodDisplay() {
 function updateMotionKcal() {
     let kcalPerMinute = motionIntensitySelect.value === "Lav" ? 4 : (motionIntensitySelect.value === "Medium" ? 7 : 10);
     motionKcalDisplay.textContent = (kcalPerMinute * parseInt(motionDurationSelect.value)).toFixed(0);
+}
+
+
+// =============================================================================
+// EVENT LOG — Vis de seneste hændelser med tidsstempler og "tid siden"
+// =============================================================================
+//
+// Viser de seneste 8 events fra logHistory i en liste under grafen.
+// Hver entry viser: klokkeslæt, tid siden hændelsen, og beskrivelse.
+// Nyttigt for: pre-bolus timing, post-motion awareness, debugging.
+// =============================================================================
+function updateEventLog() {
+    const logList = document.getElementById('event-log-list');
+    if (!logList || !game) return;
+
+    // Vis de seneste 8 events (nyeste først)
+    const recentEvents = game.logHistory.slice(-8).reverse();
+
+    if (recentEvents.length === 0) {
+        logList.innerHTML = '<div style="padding:4px; color:#a0aec0;">Ingen hændelser endnu</div>';
+        return;
+    }
+
+    // Formatér "tid siden" som fx "12min", "1t 30min", "3t 15min"
+    function formatTimeSince(eventTime) {
+        const minSince = Math.floor(game.totalSimMinutes - eventTime);
+        if (minSince < 1) return 'nu';
+        const h = Math.floor(minSince / 60);
+        const m = minSince % 60;
+        if (h > 0) return `${h}t ${m}m`;
+        return `${m}min`;
+    }
+
+    // Formatér klokkeslæt fra totalSimMinutes
+    function formatClock(totalMin) {
+        const dayMin = totalMin % 1440; // Minutter inden for dagen
+        const hh = String(Math.floor(dayMin / 60)).padStart(2, '0');
+        const mm = String(Math.floor(dayMin % 60)).padStart(2, '0');
+        return `${hh}:${mm}`;
+    }
+
+    // Byg HTML for alle entries
+    let html = '';
+    recentEvents.forEach(ev => {
+        const icon = ev.icon || '';
+        html += `<div class="event-log-entry">
+            <span class="event-log-time">${formatClock(ev.time)}</span>
+            <span class="event-log-ago">${formatTimeSince(ev.time)}</span>
+            <span class="event-log-msg">${icon} ${ev.message}</span>
+        </div>`;
+    });
+    logList.innerHTML = html;
 }
 
 

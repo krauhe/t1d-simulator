@@ -506,6 +506,55 @@ body {
 
 
 /* =============================================================================
+   EVENT LOG — Hændelseslog under grafen
+   ============================================================================= */
+#event-log {
+    margin-top: 8px;
+    background: rgba(0,0,0,0.03);
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 0.8em;
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+#event-log-header {
+    font-weight: bold;
+    font-size: 0.85em;
+    padding: 4px 8px;
+    background: #edf2f7;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    color: #4a5568;
+}
+#event-log-list {
+    padding: 2px 8px;
+}
+.event-log-entry {
+    padding: 2px 0;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+}
+.event-log-entry:last-child { border-bottom: none; }
+.event-log-time {
+    color: #718096;
+    white-space: nowrap;
+    min-width: 45px;
+}
+.event-log-ago {
+    color: #a0aec0;
+    font-size: 0.9em;
+    white-space: nowrap;
+    min-width: 55px;
+}
+.event-log-msg {
+    flex: 1;
+}
+
+/* =============================================================================
    PROFILE FORM — Patient profile setup popup
    ============================================================================= */
 

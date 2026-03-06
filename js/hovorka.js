@@ -288,11 +288,29 @@ class HovorkaModel {
         const F_R = (G >= this.R_thr) ? this.R_cl * (G - this.R_thr) * this.V_G : 0;
 
         // Endogen glukoseproduktion (EGP) — leverens glukose-output.
-        // EGP undertrykkes af insulin (x3) og forstærkes af stress.
-        // Ved fuld insulinvirkning (x3 ≈ 1): EGP ≈ 0 (lever stopper)
-        // Ved ingen insulin (x3 = 0): EGP = EGP_0 (fuld produktion)
-        // Stress (kortisol, adrenalin) øger EGP via stressMultiplier.
-        const EGP = Math.max(0, this.EGP_0 * this.stressMultiplier * (1 - x3));
+        // EGP er en balance mellem insulin-suppression (x3) og stimulering
+        // fra kontraregulatoriske hormoner (stressMultiplier: glukagon, adrenalin).
+        //
+        // Formel: EGP = EGP_0 * max(0, stressMultiplier - x3)
+        //
+        // Normal tilstand (stress=1.0, x3=0.3):
+        //   EGP = EGP_0 * 0.7 — lever producerer moderat (normalt)
+        //
+        // Bolus aktiv (stress=1.0, x3=1.3):
+        //   EGP = EGP_0 * 0 — insulin undertrykker leverproduktion (korrekt)
+        //
+        // Hypoglykæmi + kontraregulering (stress=1.5, x3=1.3):
+        //   EGP = EGP_0 * 0.2 — glukagon "vinder" delvist over insulin!
+        //   Leveren frigiver glykogen trods aktiv insulin. Fysiologisk korrekt:
+        //   under hypo dominerer glukagon-signalet ved leverens glukagon-receptorer.
+        //
+        // Svær hypo + massiv kontraregulering (stress=2.0, x3=1.3):
+        //   EGP = EGP_0 * 0.7 — kraftig leverproduktion (emergency respons)
+        //
+        // Tidligere formel var: EGP_0 * stressMultiplier * (1 - x3)
+        // Problem: når x3 > 1.0 blev EGP clamped til 0, og stressMultiplier
+        // kunne ALDRIG override — glukagon var virkningsløs under hypo!
+        const EGP = Math.max(0, this.EGP_0 * (this.stressMultiplier - x3));
 
         // Motionsfaktor — forstærker insulins effekt under og efter træning.
         // (1 + alpha * E2^2) er en multiplikator der øger insulin-transport (x1)

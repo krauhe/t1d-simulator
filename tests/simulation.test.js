@@ -59,7 +59,8 @@ const domGlobals = [
     'basalDoseDisplay', 'restingKcalDisplay',
     'tir24hDisplay', 'titr24hDisplay', 'avgCgm24hDisplay',
     'fastInsulin24hDisplay', 'basalInsulin24hDisplay', 'kcal24hDisplay',
-    'tir14dDisplay', 'titr14dDisplay', 'avgCgm14dDisplay'
+    'tir14dDisplay', 'titr14dDisplay', 'avgCgm14dDisplay',
+    'lastBolusTimerDisplay', 'kcalBalance24hDisplay'
 ];
 
 domGlobals.forEach(name => { global[name] = mockElement(); });
@@ -410,11 +411,11 @@ test('Game over naar BG falder under 1.5 mmol/L', () => {
     const sim = createCleanSimulator();
     // Saet BG lige over graensen og giv en stor dosis insulin
     setSimulatorBG(sim, 3.0);
-    sim.addFastInsulin(10);  // Massiv overdosis
+    sim.addFastInsulin(20);  // Massiv overdosis (20E fra BG=3 overvinder kontraregulering)
 
     // Simuler indtil BG falder under graensen
     let gameOverTriggered = false;
-    for (let i = 0; i < 300; i++) {
+    for (let i = 0; i < 500; i++) {
         sim.simulationSpeed = 60;
         sim.update(1.0);
         if (sim.isGameOver) {

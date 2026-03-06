@@ -155,9 +155,9 @@ function resetGame() {
 
     // Reset stats table values to dashes
     document.querySelectorAll('.stats-table .value').forEach(el => el.textContent = '--');
-    document.querySelectorAll('#tir24h, #tir14d, #titr24h, #titr14d').forEach(el => el.textContent = '--%');
-    document.querySelectorAll('#fastInsulin24h, #basalInsulin24h').forEach(el => el.textContent = '-- E');
-    document.querySelector('#kcal24h').textContent = '-- kcal';
+    document.querySelectorAll('#tir24h, #tir14d, #titr24h, #titr14d').forEach(el => el.textContent = '--');
+    document.querySelectorAll('#fastInsulin24h, #basalInsulin24h').forEach(el => el.textContent = '--');
+    document.querySelector('#kcal24h').textContent = '--';
     [weightDisplay, icrDisplay, isfDisplay, carbEffectDisplay, basalDoseDisplay, restingKcalDisplay].forEach(el => el.textContent="--");
 
     // Reset weight slider

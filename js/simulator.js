@@ -917,18 +917,30 @@ class Simulator {
         const kroniskHenfaldskonstant = Math.log(2) / (12 * 60);
         this.chronicStressLevel *= Math.exp(-kroniskHenfaldskonstant * simulatedMinutesPassed);
 
-        // --- Somogyi Effect (counter-regulatory response to hypoglycemia) ---
-        // When BG drops below 3.5 mmol/L, the body detects danger and releases
-        // glucagon + adrenaline as a counter-regulatory defense mechanism.
-        // This is an automatic protective response.
+        // --- Kontraregulering (glucagon/adrenalin-respons ved lavt BG) ---
+        // Kroppen frigiver kontraregulatoriske hormoner når BG falder under ~4 mmol/L.
+        // Responsen er gradueret — stærkere jo lavere BG er:
+        //   4.0 mmol/L: svag respons (begyndende adrenalin-frigivelse)
+        //   3.5 mmol/L: moderat respons (mærkbar glukagon + adrenalin)
+        //   2.5 mmol/L: kraftig respons (massiv kontraregulering)
         //
-        // The effect is stronger during severe hypo (<2.5) than mild hypo (2.5-3.5).
+        // Fysiologisk grundlag: Cryer 2013 beskriver tærskler for kontraregulering:
+        //   Glukagon: ~3.8 mmol/L, Adrenalin: ~3.8 mmol/L, Kortisol: ~3.2 mmol/L
         //
-        // Clinical significance: This can cause BG to "rebound" to high levels
-        // after a hypoglycemic episode — especially problematic during nighttime
-        // hypos where the patient is asleep and can't intervene.
-        if (this.trueBG < 3.5) {
-            const hypoStressRate = this.trueBG < 2.5 ? 0.04 : 0.015;
+        // Klinisk betydning: Denne respons kan give "Somogyi rebound" —
+        // BG stiger kraftigt efter en hypoglykæmi-episode, især om natten.
+        if (this.trueBG < 4.0) {
+            // Gradueret respons: stærkere jo lavere BG er
+            let hypoStressRate;
+            if (this.trueBG < 2.5) {
+                hypoStressRate = 0.06;       // Svær hypo — massiv kontraregulering
+            } else if (this.trueBG < 3.0) {
+                hypoStressRate = 0.04;       // Alvorlig hypo
+            } else if (this.trueBG < 3.5) {
+                hypoStressRate = 0.02;       // Moderat hypo
+            } else {
+                hypoStressRate = 0.008;      // Begyndende hypo (3.5-4.0)
+            }
             this.acuteStressLevel = Math.min(2.0, this.acuteStressLevel + hypoStressRate * simulatedMinutesPassed);
         }
 
@@ -996,7 +1008,8 @@ class Simulator {
         let kcalPerMinute = intensity === "Lav" ? 4 : (intensity === "Medium" ? 7 : 10);
         this.totalKcalBurnedMotion += kcalPerMinute * durationMinutes;
 
-        logEvent(`Motion: ${intensity}, ${durationMinutes} min`, 'motion', {intensity, duration: durationMinutes});
+        const kcalBurned = kcalPerMinute * durationMinutes;
+        logEvent(`Motion: ${intensity}, ${durationMinutes} min (${kcalBurned} kcal)`, 'motion', {intensity, duration: durationMinutes, kcalBurned});
 
         // Post-exercise insulin sensitivity boost parameters
         let sensitivityDurationMinutes = durationMinutes * (intensity === "Høj" ? 4 : (intensity === "Medium" ? 2 : 1));
@@ -1032,6 +1045,16 @@ class Simulator {
         const measuredBG = this.trueBG * (1 + (Math.random() * 0.1 - 0.05)); // ±5% error
         logEvent(`Fingerprik: ${measuredBG.toFixed(1)} mmol/L`, 'fingerprick', {value: measuredBG.toFixed(1)});
         cgmDataPoints.push({ time: this.totalSimMinutes, value: measuredBG, type: 'fingerprick' });
+
+        // Vis resultatet som popup — giver visuelt feedback udover grafikonen
+        const bgColor = measuredBG < 4.0 ? '#e53e3e' : measuredBG > 10.0 ? '#e53e3e' : '#38a169';
+        showPopup(
+            'Fingerprik resultat',
+            `<div style="text-align:center; font-size:1.3em; margin:10px 0;">
+                <strong style="color:${bgColor}">${measuredBG.toFixed(1)} mmol/L</strong>
+            </div>`,
+            false, true, true, false  // isInfoPopup=true → ingen lyd, shouldPause=false
+        );
         playSound('intervention', 'B4');
     }
 
@@ -1088,22 +1111,40 @@ class Simulator {
         const measuredClamped = Math.max(0, measured);
 
         // Bestem advarselsniveau baseret på målt ketonværdi
-        let status, color;
+        // Kliniske grænseværdier for blod-ketoner (β-hydroxybutyrat):
+        //   < 0.6: normal (også ved faste kan det stige til 0.5)
+        //   0.6–1.5: let forhøjet — kan skyldes faste, keto-diæt, eller begyndende insulinmangel
+        //   1.5–3.0: forhøjet — risiko for DKA hvis det skyldes insulinmangel
+        //   > 3.0: høj — DKA sandsynlig hvis BG også er høj og der er insulinmangel
+        // NB: Faste-ketose kan give 3-4 mmol/L uden fare — kontekst er vigtig!
+        let status;
         if (measuredClamped < 0.6) {
             status = 'Normal';
-            color = 'food'; // grøn i loggen
         } else if (measuredClamped < 1.5) {
-            status = 'Forhøjet — tag ekstra insulin og drik vand';
-            color = 'event'; // gul
+            status = 'Let forhøjet — kan skyldes faste. Ved højt BG: tag ekstra insulin';
         } else if (measuredClamped < 3.0) {
-            status = 'FARLIGT — giv insulin straks, kontakt læge';
-            color = 'warning'; // orange/rød
+            status = 'Forhøjet — kontrollér BG og insulin. Ved højt BG + insulinmangel: DKA-risiko';
         } else {
-            status = 'KRITISK — akut DKA-risiko!';
-            color = 'warning';
+            status = 'Høj — ved højt BG og insulinmangel: akut DKA-risiko! Kontakt læge';
         }
 
-        logEvent(`Keton-stik: ${measuredClamped.toFixed(1)} mmol/L — ${status}`, color);
+        logEvent(`Keton-stik: ${measuredClamped.toFixed(1)} mmol/L — ${status}`, 'event');
+
+        // Vis resultatet som popup så spilleren faktisk kan se det
+        // (logEvent gemmer kun i logHistory som pt. ikke har en synlig liste i UI'en)
+        const popupColor = measuredClamped < 0.6 ? '#38a169' : measuredClamped < 1.5 ? '#d69e2e' : measuredClamped < 3.0 ? '#e67e22' : '#e53e3e';
+        showPopup(
+            'Keton-stik resultat',
+            `<div style="text-align:center; font-size:1.3em; margin:10px 0;">
+                <strong style="color:${popupColor}">${measuredClamped.toFixed(1)} mmol/L</strong>
+            </div>
+            <p>${status}</p>
+            <p style="font-size:0.85em; color:#666;">
+                Normal: &lt; 0.6 · Let forhøjet: 0.6–1.5 · Forhøjet: 1.5–3.0 · Høj: &gt; 3.0<br>
+                NB: Faste/keto-diæt kan give 3-4 uden fare. Kontekst er vigtig.
+            </p>`,
+            false, true, false, true
+        );
         playSound('intervention', 'B4');
     }
 
@@ -1277,11 +1318,14 @@ class Simulator {
     updateStats() {
         const periods = [
             { key: '24h', minutes: 24*60, displays: { tir: tir24hDisplay, titr: titr24hDisplay, avg: avgCgm24hDisplay, fast: fastInsulin24hDisplay, basal: basalInsulin24hDisplay, kcal: kcal24hDisplay }},
-            { key: '14d', minutes: 14*24*60, displays: { tir: tir14dDisplay, titr: titr14dDisplay, avg: avgCgm14dDisplay }}
+            { key: '7d', minutes: 7*24*60, displays: { tir: tir14dDisplay, titr: titr14dDisplay, avg: avgCgm14dDisplay }}
         ];
         periods.forEach(p => {
             const dataPoints = this.bgHistoryForStats.filter(point => point.time >= (this.totalSimMinutes - p.minutes));
-            if (dataPoints.length > 20) {
+            // Kræv mindst 1 times data for 24h, og mindst 1 dags data for 7d
+            // (288 = antal 5-min readings pr. dag)
+            const minRequired = p.key === '7d' ? 288 : 20;
+            if (dataPoints.length > minRequired) {
                 let inRangeCount = 0, inTightRangeCount = 0, sumCgm = 0;
                 dataPoints.forEach(pt => {
                     sumCgm += pt.cgmBG;
@@ -1301,9 +1345,23 @@ class Simulator {
                         if (ev.type === 'insulin-basal') totalBasal24h += ev.details.dose;
                         if (ev.type === 'food') totalKcal24h += ev.details.kcal;
                     });
-                    p.displays.fast.textContent = totalFast24h.toFixed(1) + " E";
-                    p.displays.basal.textContent = totalBasal24h.toFixed(0) + " E";
-                    p.displays.kcal.textContent = totalKcal24h.toFixed(0) + " kcal";
+                    p.displays.fast.textContent = totalFast24h.toFixed(1);
+                    p.displays.basal.textContent = totalBasal24h.toFixed(0);
+                    p.displays.kcal.textContent = totalKcal24h.toFixed(0);
+
+                    // Kaloriebalance: indtag minus forbrug (hvile + motion)
+                    // Hvileforbrænding beregnes proportionalt med perioden
+                    const periodMinutes = Math.min(this.totalSimMinutes, p.minutes);
+                    const restingBurn = this.restingKcalPerMinute * periodMinutes;
+                    let motionBurn24h = 0;
+                    this.logHistory.filter(ev => ev.time >= (this.totalSimMinutes - p.minutes) && ev.type === 'motion').forEach(ev => {
+                        motionBurn24h += ev.details.kcalBurned || 0;
+                    });
+                    const balance = totalKcal24h - restingBurn - motionBurn24h;
+                    if (kcalBalance24hDisplay) {
+                        kcalBalance24hDisplay.textContent = (balance >= 0 ? '+' : '') + balance.toFixed(0);
+                        kcalBalance24hDisplay.style.color = balance < -200 ? '#e53e3e' : balance > 200 ? '#d69e2e' : '#38a169';
+                    }
                 }
             } else {
                 // Not enough data yet — show placeholder dashes

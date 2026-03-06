@@ -36,14 +36,14 @@ Modellen består af 11 differentialligninger (ODE'er) fordelt på fire subsystem
 
 #### 1. Glukose-subsystem (Q1, Q2)
 ```
-dQ1/dt = -(F01c + FR) - x1*Q1 + k12*Q2 + UG + EGP0*(1 - x3)
+dQ1/dt = -(F01c + FR) - x1*Q1 + k12*Q2 + UG + max(0, EGP0*(stressMult - x3))
 dQ2/dt = x1*Q1 - (k12 + x2)*Q2
 ```
 - **Q1**: Glukose i plasma (det blod du kan måle)
 - **Q2**: Glukose i perifere væv (muskler, fedtvæv)
 - **F01c**: Glukoseforbrug i centralnervesystemet (hjernen bruger ~120g glukose/dag)
 - **FR**: Renal clearance — nyrerne udskiller glukose når BG > ~9 mmol/L
-- **EGP0*(1-x3)**: Endogen glukoseproduktion fra leveren, undertrykket af insulin
+- **EGP0*(stressMult-x3)**: Endogen glukoseproduktion fra leveren, balance mellem kontraregulering og insulin
 - **UG**: Glukose-absorption fra tarmen (fra mad)
 
 #### 2. Insulin-subsystem (S1, S2, I)
@@ -120,9 +120,14 @@ Stresshormon-systemet er vores egen udvidelse, inspireret af den fysiologiske li
 
 Alle stressparametre skalerer leverens glukoseproduktion (EGP):
 ```
-EGP_effektiv = EGP0 * stressMultiplikator * (1 - x3)
+EGP_effektiv = EGP0 * max(0, stressMultiplikator - x3)
 stressMultiplikator = 1.0 + akutStress + kroniskStress + cirkadiskKortisol
 ```
+
+Denne formel gør at kontraregulatoriske hormoner (glukagon, adrenalin) kan "slå igennem"
+selv når insulin-aktionen (x3) er høj. Ved hypoglykæmi stiger stressMultiplikator, og
+leveren kan frigive glukose trods aktiv insulin. Den originale Hovorka-formel
+`EGP0 * stressMultiplikator * (1 - x3)` tillod ikke dette — ved x3 > 1 var EGP altid 0.
 
 ### Kulhydrat-differentiering (fedt og protein)
 
