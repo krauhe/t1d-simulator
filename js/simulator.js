@@ -32,7 +32,7 @@
 //   - ICR (Insulin-to-Carb Ratio): grams of carbs covered by 1 unit of insulin
 //
 // Dependencies (global): speedSelector, logEvent, showPopup, playSound,
-//   cgmDataPoints, trueBgPoints, MAX_GRAPH_POINTS_PER_DAY, RESTING_KCAL_PER_MINUTE,
+//   cgmDataPoints, trueBgPoints, MAX_GRAPH_POINTS_PER_DAY,
 //   KCAL_PER_KG_WEIGHT, various DOM element references
 //
 // Exports (global): Simulator class
@@ -48,10 +48,20 @@ class Simulator {
     // and a pre-administered basal insulin dose from 16 hours ago (simulating
     // that the patient took their daily long-acting insulin the previous morning).
     //
+    // The constructor accepts an optional profile object with the patient's
+    // personal diabetes parameters (weight, ICR, ISF). If no profile is given,
+    // sensible defaults are used. The profile drives all derived calculations:
+    // basal insulin dose, resting calorie burn, etc.
+    //
     // In MATLAB terms, this is like setting up your initial conditions vector
     // before running ode45 — all state variables start here.
+    //
+    // @param {object} profile          - Optional patient profile
+    // @param {number} profile.weight   - Body weight in kg (default: 70)
+    // @param {number} profile.icr      - Insulin-to-Carb Ratio in g/E (default: 10)
+    // @param {number} profile.isf      - Insulin Sensitivity Factor in mmol/L per E (default: 3.0)
     // =========================================================================
-    constructor() {
+    constructor(profile = {}) {
         // --- Time tracking ---
         this.day = 1;                   // Current simulation day (1-indexed)
         this.timeInMinutes = 0;         // Time within current day (0-1440, wraps at midnight)
@@ -59,18 +69,36 @@ class Simulator {
         this.simulationSpeed = parseInt(speedSelector.value); // Real-seconds to sim-minutes ratio
         this.isGameOver = false;        // Flag to stop simulation on death
 
-        // --- Patient parameters ---
+        // --- Patient parameters (from profile or defaults) ---
+
+        // Weight in kg — used for resting calorie calculation.
+        this.weight = profile.weight || 70;
+
         // ISF: Insulin Sensitivity Factor — how many mmol/L one unit of insulin lowers BG.
         // Example: ISF=3.0 means 1 unit of fast insulin drops BG by ~3 mmol/L.
-        this.ISF = 3.0;
+        this.ISF = profile.isf || 3.0;
 
         // ICR: Insulin-to-Carb Ratio — how many grams of carbs are "covered" by 1 unit.
         // Example: ICR=10 means you need 1 unit of insulin per 10g carbs.
-        this.ICR = 10;
+        this.ICR = profile.icr || 10;
 
         // gramsPerMmolRise: derived value — how many grams of carbs raise BG by 1 mmol/L.
         // Calculated as ICR/ISF. With ICR=10 and ISF=3.0: 10/3 = 3.33 g per mmol/L rise.
         this.gramsPerMmolRise = this.ICR / this.ISF;
+
+        // --- Resting metabolic rate (derived from weight) ---
+        // Baseline: 2200 kcal/day at 70 kg, scales linearly with body weight.
+        // At 80 kg: ~2514 kcal/day. At 50 kg: ~1571 kcal/day.
+        this.restingKcalPerDay = this.weight * (2200 / 70);
+        this.restingKcalPerMinute = this.restingKcalPerDay / (24 * 60);
+
+        // --- Estimated Total Daily Dose (TDD) and basal dose ---
+        // The "100 rule" (derived from the 1800 rule for mg/dL):
+        //   TDD = 1800 / ISF_mgdl = 1800 / (ISF_mmol * 18) = 100 / ISF_mmol
+        // Basal insulin is typically ~45% of TDD.
+        // Example: ISF=3.0 → TDD=33 E/day → basal=15 E/day
+        this.estimatedTDD = 100 / this.ISF;
+        this.basalDose = Math.round(this.estimatedTDD * 0.45);
 
         // --- Blood glucose state ---
         // trueBG: the actual blood glucose level (ground truth, not visible to player).
@@ -179,8 +207,9 @@ class Simulator {
 
         // Pre-administer basal insulin from 16 hours ago (simulates the patient
         // taking their daily Lantus/Tresiba injection yesterday morning at 08:00).
+        // The dose is calculated from the patient's ISF using the 100-rule.
         // The `true` flag makes it silent (no log entry or sound).
-        this.addLongInsulin(12, this.totalSimMinutes - 16 * 60, true);
+        this.addLongInsulin(this.basalDose, this.totalSimMinutes - 16 * 60, true);
         this.lastInsulinTime = this.totalSimMinutes - 16 * 60;
     }
 
@@ -343,8 +372,9 @@ class Simulator {
         this.timeInMinutes = this.totalSimMinutes % (24 * 60); // Wrap at midnight
         this.day = Math.floor(this.totalSimMinutes / (24*60)) + 1;
 
-        // Burn resting calories (basal metabolic rate) proportional to time passed
-        this.totalKcalBurnedBase += RESTING_KCAL_PER_MINUTE * simulatedMinutesPassed;
+        // Burn resting calories (basal metabolic rate) proportional to time passed.
+        // Uses the patient-specific rate derived from body weight.
+        this.totalKcalBurnedBase += this.restingKcalPerMinute * simulatedMinutesPassed;
 
         // Accumulate all BG changes for this tick, then apply at the end
         let bgChangeThisFrame = 0;

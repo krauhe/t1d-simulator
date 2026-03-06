@@ -55,7 +55,8 @@ const domGlobals = [
     'startMotionButton', 'motionKcalDisplay', 'fingerprickButton', 'glucagonButton',
     'debugTrueBgCheckbox', 'iobDisplay', 'cobDisplay', 'bgGraphCanvas', 'graphCtx',
     'weightChangeSlider', 'weightChangeValue', 'steepDropWarningDiv',
-    'icrDisplay', 'isfDisplay', 'carbEffectDisplay', 'restingKcalDisplay',
+    'weightDisplay', 'icrDisplay', 'isfDisplay', 'carbEffectDisplay',
+    'basalDoseDisplay', 'restingKcalDisplay',
     'tir24hDisplay', 'titr24hDisplay', 'avgCgm24hDisplay',
     'fastInsulin24hDisplay', 'basalInsulin24hDisplay', 'kcal24hDisplay',
     'tir14dDisplay', 'titr14dDisplay', 'avgCgm14dDisplay'
@@ -623,6 +624,87 @@ test('addChronicStress oeget kronisk stressniveau', () => {
     const sim = createCleanSimulator();
     sim.addChronicStress(0.5);
     assertInRange(sim.chronicStressLevel, 0.45, 0.55, 'Kronisk stress efter tilfoejelse');
+});
+
+
+// =============================================================================
+// TEST 7: PERSONPROFIL — Custom patient parameters
+// =============================================================================
+//
+// Tester at Simulator-klassen accepterer en profil med vaegt, ICR og ISF,
+// og at alle afledte vaerdier (basal dosis, hvileforbrug, kulhydrateffekt)
+// beregnes korrekt ud fra profilen.
+// =============================================================================
+
+console.log('\n--- Test 7: Personprofil ---');
+
+test('Default profil: ISF=3.0, ICR=10, vaegt=70', () => {
+    const sim = createCleanSimulator();
+    assert(sim.ISF === 3.0, `ISF skal vaere 3.0, fik ${sim.ISF}`);
+    assert(sim.ICR === 10, `ICR skal vaere 10, fik ${sim.ICR}`);
+    assert(sim.weight === 70, `Vaegt skal vaere 70, fik ${sim.weight}`);
+});
+
+test('Custom profil: ISF=2.0, ICR=8, vaegt=85', () => {
+    global.cgmDataPoints = [];
+    global.trueBgPoints = [];
+
+    const sim = new Simulator({ isf: 2.0, icr: 8, weight: 85 });
+    sim.activeLongInsulin = [];
+    sim.lastInsulinTime = sim.totalSimMinutes;
+
+    assert(sim.ISF === 2.0, `ISF skal vaere 2.0, fik ${sim.ISF}`);
+    assert(sim.ICR === 8, `ICR skal vaere 8, fik ${sim.ICR}`);
+    assert(sim.weight === 85, `Vaegt skal vaere 85, fik ${sim.weight}`);
+});
+
+test('Basal dosis beregnes fra ISF via 100-reglen', () => {
+    global.cgmDataPoints = [];
+    global.trueBgPoints = [];
+
+    // ISF=2.0 → TDD = 100/2 = 50 → basal = 50 * 0.45 = 22.5 → afrundet 23
+    const sim = new Simulator({ isf: 2.0, icr: 8, weight: 70 });
+    assert(sim.estimatedTDD === 50, `TDD skal vaere 50, fik ${sim.estimatedTDD}`);
+    assert(sim.basalDose === 23, `Basal skal vaere 23, fik ${sim.basalDose}`);
+
+    // ISF=5.0 → TDD = 100/5 = 20 → basal = 20 * 0.45 = 9
+    global.cgmDataPoints = [];
+    global.trueBgPoints = [];
+    const sim2 = new Simulator({ isf: 5.0, icr: 15, weight: 60 });
+    assert(sim2.estimatedTDD === 20, `TDD skal vaere 20, fik ${sim2.estimatedTDD}`);
+    assert(sim2.basalDose === 9, `Basal skal vaere 9, fik ${sim2.basalDose}`);
+});
+
+test('Hvileforbrug skaleres med vaegt (2200 kcal ved 70 kg)', () => {
+    global.cgmDataPoints = [];
+    global.trueBgPoints = [];
+
+    const sim70 = new Simulator({ weight: 70 });
+    assertInRange(sim70.restingKcalPerDay, 2199, 2201, 'Kcal ved 70 kg');
+
+    global.cgmDataPoints = [];
+    global.trueBgPoints = [];
+    const sim100 = new Simulator({ weight: 100 });
+    // 100 * (2200/70) = 3142.86
+    assertInRange(sim100.restingKcalPerDay, 3142, 3144, 'Kcal ved 100 kg');
+
+    assert(sim100.restingKcalPerDay > sim70.restingKcalPerDay,
+        'Hoejere vaegt skal give hoejere hvileforbrug');
+});
+
+test('Kulhydrateffekt aendres med ISF og ICR', () => {
+    global.cgmDataPoints = [];
+    global.trueBgPoints = [];
+
+    // ISF=2.0, ICR=8 → carbEffect = 2.0/8 = 0.25
+    const sim = new Simulator({ isf: 2.0, icr: 8, weight: 70 });
+    assertInRange(sim.currentCarbEffect, 0.24, 0.26, 'CarbEffect ved ISF=2, ICR=8');
+
+    // ISF=5.0, ICR=15 → carbEffect = 5.0/15 = 0.333
+    global.cgmDataPoints = [];
+    global.trueBgPoints = [];
+    const sim2 = new Simulator({ isf: 5.0, icr: 15, weight: 70 });
+    assertInRange(sim2.currentCarbEffect, 0.32, 0.34, 'CarbEffect ved ISF=5, ICR=15');
 });
 
 

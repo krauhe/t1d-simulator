@@ -217,10 +217,12 @@
                     <!-- Fixed patient parameters (don't change during gameplay) -->
                     <div>
                         <h4 title="Dine personlige diabetes-parametre. Disse er konstante i hele simulationen.">Spiller Data</h4>
+                        <div title="Din kropsvægt, indtastet ved spilstart."><span>Vægt:</span> <span id="weightDisplay">--</span> kg</div>
                         <div title="Insulin/Kulhydrat-Ratio: Hvor mange gram kulhydrat dækker 1 enhed (E) hurtigtvirkende insulin? Bruges til at beregne insulin til måltider."><span>ICR:</span> <span id="icrDisplay">--</span> g/E</div>
                         <div title="Insulin Sensitivitets-Faktor: Hvor meget sænker 1 enhed (E) hurtigtvirkende insulin dit blodsukker? Bruges til korrektion af højt blodsukker."><span>ISF:</span> <span id="isfDisplay">--</span> (mmol/L)/E</div>
                         <div title="Kulhydrat-Effekt: Hvor meget stiger dit blodsukker (i mmol/L) for hvert gram kulhydrat, du spiser? Udregnes som ISF / ICR."><span>Kulh. effekt:</span> <span id="carbEffectDisplay">--</span> g/(mmol/L)</div>
-                        <div title="Hvileforbrug: Dit basale kalorieforbrug pr. dag, uden motion."><span>Hvileforbrug:</span> <span id="restingKcalDisplay">--</span> kcal/dag</div>
+                        <div title="Anbefalet daglig basal insulin-dosis, beregnet fra din ISF via 100-reglen (TDD = 100/ISF, basal = 45% af TDD)."><span>Basal dosis:</span> <span id="basalDoseDisplay">--</span> E/dag</div>
+                        <div title="Hvileforbrug: Dit basale kalorieforbrug pr. dag, beregnet ud fra din vægt."><span>Hvileforbrug:</span> <span id="restingKcalDisplay">--</span> kcal/dag</div>
                     </div>
                     <hr>
 

@@ -55,9 +55,11 @@ style.css       ← Al CSS-styling
 js/
   sounds.js     ← Lyd-opsætning (Tone.js) og playSound()
   simulator.js  ← Simulator-klassen: al fysiologisk modellering og spilmekanik
-  ui.js         ← Tegning af graf, opdatering af UI, popups, logning
+  ui.js         ← Tegning af graf, opdatering af UI, popups, logning, profil-popup
   game.js       ← Game loop, startGame, resetGame, togglePause
   main.js       ← Globale variable, DOM-referencer, event listeners, init
+tests/
+  simulation.test.js  ← Automatiserede tests (28 stk), kør med: node tests/simulation.test.js
 old/            ← Original enkeltfil-version (TB1Sim v42 beta.html) + referencefiler
 ```
 
@@ -97,8 +99,13 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
 2. "Du døde"-skærm med forklaring på dødsårsag (hypoglykæmi, ketoacidose osv.)
    - 2b: Bedre definition af ketoacidose med symptomindikation før død
    - 2c: Mulighed for ketose-stik måling
-3. Personprofil — bruger kan indtaste vægt, ICR og ISF så simulatoren matcher deres egen diabetes
-   - 3b: Spillet initieres fra midnat med stabilt blodsukker baseret på ICR og korrekt basal forudindgivet
+3. ~~Personprofil — bruger kan indtaste vægt, ICR og ISF så simulatoren matcher deres egen diabetes~~ ✅ IMPLEMENTERET
+   - ~~3b: Spillet initieres fra midnat med stabilt blodsukker baseret på ICR og korrekt basal forudindgivet~~ ✅ IMPLEMENTERET
+   - Profil-popup vises ved klik på "Start Simulation" med vægt, ICR, ISF
+   - Basal dosis beregnes via 100-reglen: TDD = 100/ISF, basal = 45% af TDD
+   - Hvileforbrug skaleres med vægt (2200 kcal/dag ved 70 kg)
+   - Profil gemmes i localStorage og huskes mellem sessioner
+   - Vægt, basal dosis og hvileforbrug vises i stats-panelet
 
 ### Mellemfristede features
 4. Highscore-liste med navn

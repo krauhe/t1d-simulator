@@ -76,39 +76,46 @@ function mainGameLoop(currentTime) {
 
 
 // =============================================================================
-// startGame — Initialize and begin a new simulation
+// startGame — Show profile popup, then initialize and begin a new simulation
 // =============================================================================
 //
-// Creates a fresh Simulator instance, resets all display data, and starts
-// the game loop. Called when the player clicks "Start Simulation".
+// First shows the profile popup for the player to enter/confirm their diabetes
+// parameters (weight, ICR, ISF). When they click "Start", creates a Simulator
+// with those parameters and starts the game loop.
+//
+// Called when the player clicks "Start Simulation".
 // =============================================================================
 function startGame() {
     // Tone.js requires a user gesture to start the audio context (browser security policy).
     // We attempt to start it here on the first button click.
     if (sounds && Tone.context.state !== 'running') Tone.start();
 
-    // Create a new Simulator with default patient parameters
-    game = new Simulator();
+    // Show the profile setup popup. The callback is called with the profile
+    // when the player clicks "Start Simulation" in the popup.
+    showProfilePopup((profile) => {
+        // Create a new Simulator with the player's personal parameters
+        game = new Simulator(profile);
 
-    // Initialize the graph data arrays with the starting BG value
-    cgmDataPoints = [{ time: 0, value: game.cgmBG }];
-    trueBgPoints = [{ time: 0, value: game.trueBG }];
+        // Initialize the graph data arrays with the starting BG value
+        cgmDataPoints = [{ time: 0, value: game.cgmBG }];
+        trueBgPoints = [{ time: 0, value: game.trueBG }];
 
-    // Unpause and start the loop
-    isPaused = false;
-    pauseButton.textContent = "Pause";
+        // Unpause and start the loop
+        isPaused = false;
+        pauseButton.textContent = "Pause";
 
-    // Record the current time as the reference point for deltaTime calculations
-    // performance.now() returns a high-resolution timestamp in milliseconds
-    lastFrameTime = performance.now();
+        // Record the current time as the reference point for deltaTime calculations
+        // performance.now() returns a high-resolution timestamp in milliseconds
+        lastFrameTime = performance.now();
 
-    // Cancel any existing loop before starting a new one (safety measure)
-    if (gameLoopIntervalId) cancelAnimationFrame(gameLoopIntervalId);
-    gameLoopIntervalId = requestAnimationFrame(mainGameLoop);
+        // Cancel any existing loop before starting a new one (safety measure)
+        if (gameLoopIntervalId) cancelAnimationFrame(gameLoopIntervalId);
+        gameLoopIntervalId = requestAnimationFrame(mainGameLoop);
 
-    // Update the patient data display and enable/disable appropriate buttons
-    updatePlayerFixedDataUI();
-    resetButton.disabled = false; startButton.disabled = true;
+        // Update the patient data display and enable/disable appropriate buttons
+        updatePlayerFixedDataUI();
+        resetButton.disabled = false; startButton.disabled = true;
+    });
 }
 
 
@@ -143,7 +150,7 @@ function resetGame() {
     document.querySelectorAll('#tir24h, #tir14d, #titr24h, #titr14d').forEach(el => el.textContent = '--%');
     document.querySelectorAll('#fastInsulin24h, #basalInsulin24h').forEach(el => el.textContent = '-- E');
     document.querySelector('#kcal24h').textContent = '-- kcal';
-    [icrDisplay, isfDisplay, carbEffectDisplay, restingKcalDisplay].forEach(el => el.textContent="--");
+    [weightDisplay, icrDisplay, isfDisplay, carbEffectDisplay, basalDoseDisplay, restingKcalDisplay].forEach(el => el.textContent="--");
 
     // Reset weight slider
     weightChangeSlider.value = 0; weightChangeValue.textContent = "0.0";

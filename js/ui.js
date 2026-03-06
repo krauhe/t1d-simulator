@@ -69,11 +69,13 @@ function updateUI() {
 // If no game is running, shows default values.
 // =============================================================================
 function updatePlayerFixedDataUI() {
-    const tempSim = game || { ICR: 10, ISF: 3.0, gramsPerMmolRise: 3.3 };
-    icrDisplay.textContent = tempSim.ICR;                         // e.g., "10"
-    isfDisplay.textContent = tempSim.ISF.toFixed(1);              // e.g., "3.0"
+    const tempSim = game || { ICR: 10, ISF: 3.0, gramsPerMmolRise: 3.3, weight: 70, restingKcalPerDay: 2200, basalDose: 15 };
+    weightDisplay.textContent = tempSim.weight;                      // e.g., "70"
+    icrDisplay.textContent = tempSim.ICR;                            // e.g., "10"
+    isfDisplay.textContent = tempSim.ISF.toFixed(1);                 // e.g., "3.0"
     carbEffectDisplay.textContent = tempSim.gramsPerMmolRise.toFixed(1); // e.g., "3.3"
-    restingKcalDisplay.textContent = RESTING_KCAL_PER_DAY;       // e.g., "2200"
+    basalDoseDisplay.textContent = tempSim.basalDose;                // e.g., "15"
+    restingKcalDisplay.textContent = Math.round(tempSim.restingKcalPerDay); // e.g., "2200"
 }
 
 // =============================================================================
@@ -487,4 +489,138 @@ function updateFoodDisplay() {
 function updateMotionKcal() {
     let kcalPerMinute = motionIntensitySelect.value === "Lav" ? 4 : (motionIntensitySelect.value === "Medium" ? 7 : 10);
     motionKcalDisplay.textContent = (kcalPerMinute * parseInt(motionDurationSelect.value)).toFixed(0);
+}
+
+
+// =============================================================================
+// PROFILE POPUP — Patient profile setup before starting the game
+// =============================================================================
+//
+// Shows a modal form where the player enters their personal diabetes parameters:
+//   - Weight (kg) — used for resting calorie calculation
+//   - ICR (Insulin-to-Carb Ratio) — grams of carbs per unit of insulin
+//   - ISF (Insulin Sensitivity Factor) — BG drop per unit of insulin
+//
+// The form also displays calculated values (TDD, basal dose, resting kcal)
+// that update live as the player adjusts the inputs.
+//
+// Previous values are saved to localStorage and restored as defaults.
+//
+// @param {function} onStartCallback - Called with the profile object when
+//                                     the player clicks "Start Simulation"
+// =============================================================================
+function showProfilePopup(onStartCallback) {
+    // Prevent duplicate popups
+    if (document.querySelector('.popup-overlay')) return;
+
+    // Load previously saved profile from localStorage (or use defaults)
+    let savedProfile = { weight: 70, icr: 10, isf: 3.0 };
+    try {
+        const stored = localStorage.getItem('diabetesDystenProfile');
+        if (stored) savedProfile = JSON.parse(stored);
+    } catch (e) { /* localStorage not available or corrupted — use defaults */ }
+
+    // Build the popup DOM
+    const overlay = document.createElement('div');
+    overlay.className = 'popup-overlay';
+    const content = document.createElement('div');
+    content.className = 'popup-content';
+
+    content.innerHTML = `
+        <h2 class="info-title">Personprofil</h2>
+        <p>Indtast dine diabetes-parametre for en personlig simulation.
+           Værdierne bruges til at beregne din insulin-dosering og kaloriebehov.</p>
+
+        <div class="profile-form">
+            <div class="profile-field">
+                <label for="profileWeight">Vægt</label>
+                <div class="profile-input-row">
+                    <input type="number" id="profileWeight" min="30" max="200" step="1" value="${savedProfile.weight}">
+                    <span class="profile-unit">kg</span>
+                </div>
+                <small>Din kropsvægt — bruges til beregning af kalorieforbrug.</small>
+            </div>
+
+            <div class="profile-field">
+                <label for="profileICR">ICR (Insulin-to-Carb Ratio)</label>
+                <div class="profile-input-row">
+                    <input type="number" id="profileICR" min="3" max="30" step="1" value="${savedProfile.icr}">
+                    <span class="profile-unit">g / E</span>
+                </div>
+                <small>Hvor mange gram kulhydrat dækker 1 enhed hurtigvirkende insulin?
+                       Typisk 8-15 for voksne. Lavere tal = mere insulin pr. måltid.</small>
+            </div>
+
+            <div class="profile-field">
+                <label for="profileISF">ISF (Insulin Sensitivity Factor)</label>
+                <div class="profile-input-row">
+                    <input type="number" id="profileISF" min="0.5" max="10" step="0.1" value="${savedProfile.isf}">
+                    <span class="profile-unit">mmol/L / E</span>
+                </div>
+                <small>Hvor meget sænker 1 enhed hurtigvirkende insulin dit blodsukker?
+                       Typisk 1.5-5.0 for voksne. Højere tal = mere følsom for insulin.</small>
+            </div>
+
+            <div class="profile-calculated">
+                <h4>Beregnede værdier</h4>
+                <div><span>Estimeret TDD:</span> <span id="profileTDD">--</span> E/dag</div>
+                <div><span>Anbefalet basal:</span> <span id="profileBasal">--</span> E/dag</div>
+                <div><span>Hvileforbrug:</span> <span id="profileKcal">--</span> kcal/dag</div>
+            </div>
+        </div>
+
+        <div class="popup-button-container">
+            <button id="profileStartButton">Start Simulation</button>
+        </div>
+    `;
+
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+
+    // References to the form inputs and calculated displays
+    const weightInput = document.getElementById('profileWeight');
+    const icrInput = document.getElementById('profileICR');
+    const isfInput = document.getElementById('profileISF');
+    const tddDisplay = document.getElementById('profileTDD');
+    const basalDisplay = document.getElementById('profileBasal');
+    const kcalDisplay = document.getElementById('profileKcal');
+
+    // Live-update calculated values whenever an input changes
+    function updateCalculatedValues() {
+        const w = parseFloat(weightInput.value) || 70;
+        const isf = parseFloat(isfInput.value) || 3.0;
+        const tdd = 100 / isf;
+        const basal = Math.round(tdd * 0.45);
+        const kcal = Math.round(w * (2200 / 70));
+
+        tddDisplay.textContent = tdd.toFixed(0);
+        basalDisplay.textContent = basal;
+        kcalDisplay.textContent = kcal;
+    }
+
+    // Attach input listeners for live calculation updates
+    [weightInput, icrInput, isfInput].forEach(input => {
+        input.addEventListener('input', updateCalculatedValues);
+    });
+
+    // Show initial calculated values
+    updateCalculatedValues();
+
+    // Start button handler: collect values, save to localStorage, and start the game
+    document.getElementById('profileStartButton').addEventListener('click', () => {
+        const profile = {
+            weight: Math.max(30, Math.min(200, parseFloat(weightInput.value) || 70)),
+            icr: Math.max(3, Math.min(30, parseInt(icrInput.value) || 10)),
+            isf: Math.max(0.5, Math.min(10, parseFloat(isfInput.value) || 3.0))
+        };
+
+        // Save profile for next session
+        try {
+            localStorage.setItem('diabetesDystenProfile', JSON.stringify(profile));
+        } catch (e) { /* localStorage not available — that's OK */ }
+
+        // Remove the popup and start the game with the profile
+        document.body.removeChild(overlay);
+        onStartCallback(profile);
+    });
 }
