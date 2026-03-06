@@ -27,6 +27,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Foreslå gerne forbedringer men implementer dem ikke uden godkendelse
 - Bevar altid simulationslogikken intakt ved UI-ændringer
 - **Foreslå ALTID at committe og pushe før store ændringer** — så der altid er et sikkert fallback-punkt
+- **Opdater `docs/VIDENSKAB.md`** løbende med nye emner der er relevante for blodglukoseregulering — også selvom de ikke implementeres i simulatoren. Dokumentet skal være en komplet videnskabelig oversigt over alle faktorer der påvirker BG ved T1D.
+- **Hent relevante videnskabelige artikler** ned i `docs/references/` når nye emner tilføjes. Filnavns-format: `Efternavn_Årstal[_RW]_Titel.pdf` (fx `Hovorka_2004_NonlinearMPC.pdf`, `Cryer_2013_RW_GlucoseCounterregulation.pdf`). RW tilføjes kun ved review-artikler.
 
 ---
 
@@ -62,7 +64,8 @@ js/
   main.js       ← Globale variable, DOM-referencer, event listeners, init
 docs/
   FYSIOLOGI.md  ← Beskrivelse af fysiologiske modeller, videnskabelige kilder, credits
-  references/   ← Hentede videnskabelige artikler (PDF/HTML)
+  VIDENSKAB.md  ← Systematisk gennemgang af ALLE faktorer der påvirker BG (23+ emner med referencer)
+  references/   ← Hentede videnskabelige artikler. Format: Efternavn_Årstal[_RW]_Titel.ext
 tests/
   simulation.test.js  ← Automatiserede tests (28 stk), kør med: node tests/simulation.test.js
 old/            ← Original enkeltfil-version (TB1Sim v42 beta.html) + referencefiler
@@ -129,7 +132,7 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
    - TIR (4–10 mmol/L), TAR (> 10), TBR (< 4)
    - Samlet insulinforbrug
 8. Multiplayer/familie-konkurrence om bedste blodsukkerkontrol
-9. Giv adgang til fysiologi-dokumentet (docs/FYSIOLOGI.md) et sted i spillet — fx en "Videnskab"-knap i hjælp-popuppen eller en separat side
+9. Giv adgang til fysiologi-dokumenterne (docs/FYSIOLOGI.md og docs/VIDENSKAB.md) et sted i spillet — fx en "Videnskab"-knap i hjælp-popuppen eller en separat side
 10. Mere prominent disclaimer med flueben der skal bekræftes før spillet starter
 10. Kønsvalg (mand/kvinde) — påvirker BMR-beregning og evt. fysiologiske parametre
 11. Sprogskift (dansk/engelsk)
@@ -139,6 +142,26 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
 15. Stop/afbryd motion-knap
 16. Ketonmåling med omkostning (begrænset antal stik eller tidscooldown)
 17. Fingerprik med omkostning (simuler at strimler koster penge)
+18. Væskebalance-model (lav prioritet — mest relevant for DKA-advarsler)
+19. Menstruationscyklus-effekt på insulinfølsomhed
+    - Lutealfasen (ca. dag 15–28): insulinfølsomhed falder ~50% (progesteron-drevet)
+    - Follikulærfasen (dag 1–14): normal/øget insulinfølsomhed
+    - Kræver kønsvalg (TODO 10) + cykluslængde-input
+    - Klinisk relevant: mange kvinder med T1D oplever uforklarlig hyperglykæmi før menstruation
+    - Reference: Yeung et al. 2024, Diabetes Care — Si falder fra 5.03 til 2.22 i lutealfase
+20. Døgnvariation i insulinfølsomhed (cirkadisk ISF)
+    - ISF lavest om morgenen (~08:30), højest om aftenen (~19:00)
+    - Variation ~30-40% over dagen
+    - Delvist dækket af dawn-fænomenet, men den fulde cirkadiske kurve mangler
+    - Gary Scheiner ("Think Like a Pancreas") beskriver basalrate-mønstre baseret på klinisk erfaring
+21. Sæsonvariation i insulinbehov
+    - HbA1c typisk højere om vinteren (9.1% vs 7.7% i en ungdomsstudie)
+    - Flere hypoglykæmi-episoder om sommeren (øget aktivitet, varme)
+    - Lav prioritet — mest relevant for langvarige simulationer
+    - Osmotisk diurese ved BG > 10 mmol/L (tørst, hyppig vandladning)
+    - Dehydrering forværrer DKA-forløb
+    - Kunne forbedre symptom-advarsler, men risikerer at forstyrre gameplay
+    - Overvej kun til "avanceret" tilstand eller baner med sygdomsscenarier
 
 ---
 
