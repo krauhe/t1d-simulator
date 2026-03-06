@@ -124,6 +124,15 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
    - TIR (4–10 mmol/L), TAR (> 10), TBR (< 4)
    - Samlet insulinforbrug
 8. Multiplayer/familie-konkurrence om bedste blodsukkerkontrol
+9. Mere prominent disclaimer med flueben der skal bekræftes før spillet starter
+10. Kønsvalg (mand/kvinde) — påvirker BMR-beregning og evt. fysiologiske parametre
+11. Sprogskift (dansk/engelsk)
+12. Avanceret debug-panel med alle interne variable synlige
+13. Mad-billede upload (genkend makronæring fra foto — AI-integration)
+14. Styrketræning som separat motionstype (anaerob → akut BG-stigning)
+15. Stop/afbryd motion-knap
+16. Ketonmåling med omkostning (begrænset antal stik eller tidscooldown)
+17. Fingerprik med omkostning (simuler at strimler koster penge)
 
 ---
 

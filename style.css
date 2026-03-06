@@ -286,6 +286,14 @@ body {
     cursor: not-allowed;
 }
 
+/* Ketone test button: purple/violet to indicate metabolic measurement */
+#ketoneTestButton {
+    background-color: #805ad5;           /* Purple */
+}
+#ketoneTestButton:hover {
+    background-color: #6b46c1;           /* Darker purple on hover */
+}
+
 /* Glucagon button: red to indicate emergency/danger */
 #glucagonButton {
     background-color: #e53e3e;           /* Red */

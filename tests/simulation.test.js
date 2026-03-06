@@ -52,7 +52,7 @@ const domGlobals = [
     'saladButton', 'cerealButton', 'fastInsulinSlider', 'fastInsulinValue',
     'giveFastInsulinButton', 'longInsulinSlider', 'longInsulinValue',
     'giveLongInsulinButton', 'motionIntensitySelect', 'motionDurationSelect',
-    'startMotionButton', 'motionKcalDisplay', 'fingerprickButton', 'glucagonButton',
+    'startMotionButton', 'motionKcalDisplay', 'fingerprickButton', 'ketoneTestButton', 'glucagonButton',
     'debugTrueBgCheckbox', 'iobDisplay', 'cobDisplay', 'bgGraphCanvas', 'graphCtx',
     'weightChangeSlider', 'weightChangeValue', 'steepDropWarningDiv',
     'weightDisplay', 'icrDisplay', 'isfDisplay', 'carbEffectDisplay',

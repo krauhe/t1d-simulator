@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diabetes-Dysten v42</title>
+    <title>Diabetes-Dysten C0.5</title>
     <!-- External stylesheet for all visual styling -->
     <link rel="stylesheet" href="style.css">
     <!-- Tone.js: Web Audio framework for generating sound effects in the browser.
@@ -21,7 +21,7 @@
          main game area (which is itself a horizontal layout).
          =================================================================== -->
     <div id="game-container">
-        <h1 id="game-title">Diabetes-Dysten v42</h1>
+        <h1 id="game-title">Diabetes-Dysten C0.5</h1>
 
         <!-- ===============================================================
              TOP CONTROL PANEL — Game controls and status bar
@@ -201,9 +201,10 @@
                          drawGraph() in ui.js handles all the actual drawing. -->
                     <canvas id="bg-graph"></canvas>
 
-                    <!-- Finger prick and glucagon emergency buttons below the graph -->
+                    <!-- Finger prick, ketone test, and glucagon emergency buttons below the graph -->
                     <div id="other-interventions-container">
                         <button id="fingerprickButton" title="En manuel blodsukkermåling. Den er mere præcis end CGM'en og kan bruges til at dobbelttjekke din CGM-værdi, især hvis du har mistanke om, at den viser forkert.">🩸 Fingerprik</button>
+                        <button id="ketoneTestButton" title="Mål blod-ketoner med et ketonstik. Vigtigt ved højt blodsukker og mistanke om insulinmangel. Normal: &lt; 0.6 mmol/L. Forhøjet: 0.6-1.5. Farligt: &gt; 1.5.">🧪 Keton-stik</button>
                         <button id="glucagonButton" title="Nødbehandling ved meget lavt blodsukker. Giver en kraftig og hurtig stigning i blodsukker. Har en 24-timers cooldown.">✚ Brug Glycagon</button>
                     </div>
 

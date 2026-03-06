@@ -56,8 +56,16 @@ function mainGameLoop(currentTime) {
     if (!isPaused) {
         // deltaTime: real-world seconds since the last frame
         // Typical values: ~0.016s at 60fps, ~0.033s at 30fps
-        const deltaTime = (currentTime - lastFrameTime) / 1000;
+        let deltaTime = (currentTime - lastFrameTime) / 1000;
         lastFrameTime = currentTime;
+
+        // CAP deltaTime to prevent simulation blowup when tab is backgrounded.
+        // When the browser tab is inactive, requestAnimationFrame pauses, but
+        // real time keeps ticking. Without this cap, returning to the tab would
+        // produce a deltaTime of minutes/hours, causing the simulation to "fast
+        // forward" in one giant step — leading to wildly unrealistic BG values.
+        // Max 0.5 seconds = ~30 sim-seconds at 60x speed, a safe upper bound.
+        if (deltaTime > 0.5) deltaTime = 0.5;
 
         // Advance the physiological simulation by deltaTime
         game.update(deltaTime);

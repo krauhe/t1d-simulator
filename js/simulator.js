@@ -143,6 +143,13 @@ class Simulator {
         this.dkaWarning1Given = false;           // Has the first DKA warning been shown?
         this.dkaGameOverTime = -1;               // Scheduled game over time (-1 = not set)
 
+        // --- Ketone level (mmol/L blood ketones) ---
+        // Ketoner produceres når kroppen brænder fedt i stedet for glukose pga. insulinmangel.
+        // Normal: < 0.6 mmol/L. Forhøjet: 0.6-1.5. Farlig: 1.5-3.0. DKA: > 3.0.
+        // Ketonniveauet stiger ved insulinmangel + høj BG, og falder når der gives insulin.
+        // Spilleren kan måle ketoner med et "keton-stik" (som fingerprik).
+        this.ketoneLevel = 0.1;                 // Starter normalt (< 0.6 mmol/L)
+
         // --- Emergency glucagon ---
         // Glucagon is a hormone that rapidly raises BG by telling the liver to dump glucose.
         // In real life, it's an emergency injection for severe hypoglycemia.
@@ -699,6 +706,7 @@ class Simulator {
         // Run end-of-tick housekeeping
         this.updateNormoPoints(simulatedMinutesPassed);
         this.updateWeight();
+        this.updateKetones(simulatedMinutesPassed);
         this.updateStats();
         this.checkGameOverConditions();
         this.updateGlucagonStatus();
@@ -1027,6 +1035,78 @@ class Simulator {
         playSound('intervention', 'B4');
     }
 
+    // =========================================================================
+    // KETONE MODEL — Simpel ketonproduktions- og clearancemodel
+    // =========================================================================
+    //
+    // Ketoner stiger når kroppen mangler insulin og ikke kan bruge glukose.
+    // I stedet brændes fedt, og ketoner er et biprodukt.
+    //
+    // Nøglemekanik:
+    //   - Stiger ved: insulinmangel (IOB < 0.1, ingen basal) OG høj BG (> 12)
+    //   - Falder ved: tilstrækkeligt insulin tilstede
+    //   - Hastighed afhænger af graden af insulinmangel og BG-niveau
+    //
+    // Kliniske grænseværdier (blod-ketoner, mmol/L):
+    //   Normal:   < 0.6    — alt ok
+    //   Forhøjet: 0.6-1.5  — tag ekstra insulin, drik vand
+    //   Farligt:  1.5-3.0  — søg læge, giv insulin
+    //   DKA:      > 3.0    — akut livsfarligt
+    //
+    // @param {number} simMinutes - Simulerede minutter passeret dette tick
+    // =========================================================================
+    updateKetones(simMinutes) {
+        const insulinDeficient = this.iob < 0.1 && this.activeLongInsulin.length === 0;
+
+        if (insulinDeficient && this.trueBG > 12) {
+            // Ketonproduktion: hurtigere jo højere BG og jo længere insulinmangel
+            // Maks stigning: ~0.5 mmol/L per time ved BG > 20
+            const bgFactor = Math.min((this.trueBG - 12) / 8, 1.0); // 0-1, max ved BG=20
+            const riseRate = 0.008 * bgFactor; // mmol/L per sim-minut (~0.48/time ved max)
+            this.ketoneLevel += riseRate * simMinutes;
+        } else {
+            // Keton-clearance: insulin hjælper kroppen med at stoppe fedtforbrænding.
+            // Halveringstid ~2 timer med insulin tilstede.
+            const clearanceRate = 0.006; // mmol/L per sim-minut (~0.36/time)
+            this.ketoneLevel -= clearanceRate * simMinutes;
+        }
+
+        // Clamp til fysiologisk interval: 0.0 - 10.0 mmol/L
+        this.ketoneLevel = Math.max(0.0, Math.min(10.0, this.ketoneLevel));
+    }
+
+    /**
+     * performKetoneTest — Manuel ketonmåling med blod-ketonstik.
+     *
+     * Måler det aktuelle ketonniveau med ±10% fejlmargin (ligesom fingerprik).
+     * Viser resultatet som en log-besked med farvekodet advarselsniveau.
+     * Koster 30-minutters natpenalty (ligesom fingerprik).
+     */
+    performKetoneTest() {
+        this.handleNightIntervention(30);
+        const measured = this.ketoneLevel * (1 + (Math.random() * 0.2 - 0.1)); // ±10% fejl
+        const measuredClamped = Math.max(0, measured);
+
+        // Bestem advarselsniveau baseret på målt ketonværdi
+        let status, color;
+        if (measuredClamped < 0.6) {
+            status = 'Normal';
+            color = 'food'; // grøn i loggen
+        } else if (measuredClamped < 1.5) {
+            status = 'Forhøjet — tag ekstra insulin og drik vand';
+            color = 'event'; // gul
+        } else if (measuredClamped < 3.0) {
+            status = 'FARLIGT — giv insulin straks, kontakt læge';
+            color = 'warning'; // orange/rød
+        } else {
+            status = 'KRITISK — akut DKA-risiko!';
+            color = 'warning';
+        }
+
+        logEvent(`Keton-stik: ${measuredClamped.toFixed(1)} mmol/L — ${status}`, color);
+        playSound('intervention', 'B4');
+    }
+
     /**
      * updateGlucagonStatus — Enable/disable the glucagon button based on cooldown.
      *
@@ -1130,33 +1210,15 @@ class Simulator {
             this.timeOfHighBGwithInsulinDeficit = 0;
         }
 
-        // TODO: DKA model improvements needed:
+        // NOTE: Keton-model er nu implementeret (se updateKetones() og performKetoneTest()).
+        // Ketoner stiger automatisk ved insulinmangel + høj BG, og spilleren kan måle dem.
+        // DKA-advarsler bruger stadig den tidsbaserede model (6+12 timer) som supplement.
         //
-        // 1. TIMELINE FOR DEATH:
-        //    Research clinical literature for realistic timeline.
-        //    Current model: warning after 6 hours of high BG + insulin deficit,
-        //    game over 12 hours after warning (i.e., ~18 hours total).
-        //    Question: When does loss of consciousness occur? When is it fatal?
-        //    Hint: Untreated DKA can be fatal within 24-72 hours,
-        //    but severe symptoms (altered consciousness) typically occur earlier.
-        //
-        // 2. KETONE MODEL:
-        //    In reality, it's ketones (acids produced when the body burns fat
-        //    instead of glucose due to insulin deficiency) that are the actual
-        //    killing mechanism — not high glucose alone.
-        //    A future model could include:
-        //      - Ketones rise when: BG > 12 AND insulin deficit AND time
-        //      - Ketone rate depends on degree of insulin deficit and BG level
-        //      - Player can measure ketones with "ketone strips" (like finger prick)
-        //      - Symptom thresholds: mild (0.6-1.5) → warning,
-        //        moderate (1.5-3.0) → strong warning + symptoms,
-        //        severe (> 3.0) → DKA, game over approaching
-        //      - Insulin + fluids lower ketones over time
-        //
-        // 3. STRESS HORMONES / HEPATIC GLUCOSE OUTPUT:
-        //    Consider adding a unified "stress hormone parameter" that drives
-        //    liver glucose production. The current model has this partially
-        //    implemented (see updateStressHormones), but could be extended.
+        // TODO: DKA model forbedringer:
+        // 1. Kobl DKA game-over direkte til ketonniveau (> 3.0 → advarsel, > 5.0 → død)
+        //    i stedet for den nuværende rene tidsbaserede model.
+        // 2. Tilføj symptom-progression baseret på ketonniveau (tørst, kvalme, opkastning)
+        // 3. Research klinisk litteratur for realistisk tidslinje fra onset til bevidstløshed.
 
         // DKA Warning: after 6 hours of insulin deficiency + high BG
         if (this.timeOfHighBGwithInsulinDeficit > 0 && (this.totalSimMinutes - this.timeOfHighBGwithInsulinDeficit > 6 * 60) && !this.dkaWarning1Given) {

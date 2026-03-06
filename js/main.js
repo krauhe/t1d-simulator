@@ -35,7 +35,7 @@
 // This is similar to MATLAB's guidata or handles structure — a central place
 // where all UI element references are stored for easy access.
 // =============================================================================
-let startButton, resetButton, helpButton, pauseButton, speedSelector, dayDisplay, timeDisplay, cgmValueDisplayGraph, normoPointsDisplay, normoPointsWeighting, muteButton, carbsSlider, carbsValue, proteinSlider, proteinValue, fatSlider, fatValue, giveFoodButton, foodInfoDisplay, foodKcalDisplay, foodKeDisplay, dextroButton, burgerButton, avocadoButton, chickenButton, cakeButton, sodaButton, saladButton, cerealButton, fastInsulinSlider, fastInsulinValue, giveFastInsulinButton, longInsulinSlider, longInsulinValue, giveLongInsulinButton, motionIntensitySelect, motionDurationSelect, startMotionButton, motionKcalDisplay, fingerprickButton, glucagonButton, debugTrueBgCheckbox, iobDisplay, cobDisplay, bgGraphCanvas, graphCtx, weightChangeSlider, weightChangeValue, steepDropWarningDiv, weightDisplay, icrDisplay, isfDisplay, carbEffectDisplay, basalDoseDisplay, restingKcalDisplay, tir24hDisplay, titr24hDisplay, avgCgm24hDisplay, fastInsulin24hDisplay, basalInsulin24hDisplay, kcal24hDisplay, tir14dDisplay, titr14dDisplay, avgCgm14dDisplay;
+let startButton, resetButton, helpButton, pauseButton, speedSelector, dayDisplay, timeDisplay, cgmValueDisplayGraph, normoPointsDisplay, normoPointsWeighting, muteButton, carbsSlider, carbsValue, proteinSlider, proteinValue, fatSlider, fatValue, giveFoodButton, foodInfoDisplay, foodKcalDisplay, foodKeDisplay, dextroButton, burgerButton, avocadoButton, chickenButton, cakeButton, sodaButton, saladButton, cerealButton, fastInsulinSlider, fastInsulinValue, giveFastInsulinButton, longInsulinSlider, longInsulinValue, giveLongInsulinButton, motionIntensitySelect, motionDurationSelect, startMotionButton, motionKcalDisplay, fingerprickButton, ketoneTestButton, glucagonButton, debugTrueBgCheckbox, iobDisplay, cobDisplay, bgGraphCanvas, graphCtx, weightChangeSlider, weightChangeValue, steepDropWarningDiv, weightDisplay, icrDisplay, isfDisplay, carbEffectDisplay, basalDoseDisplay, restingKcalDisplay, tir24hDisplay, titr24hDisplay, avgCgm24hDisplay, fastInsulin24hDisplay, basalInsulin24hDisplay, kcal24hDisplay, tir14dDisplay, titr14dDisplay, avgCgm14dDisplay;
 
 
 // =============================================================================
@@ -163,6 +163,7 @@ function initializeApp() {
     startMotionButton = document.getElementById('startMotionButton');
     motionKcalDisplay = document.getElementById('motionKcalDisplay');
     fingerprickButton = document.getElementById('fingerprickButton');
+    ketoneTestButton = document.getElementById('ketoneTestButton');
     glucagonButton = document.getElementById('glucagonButton');
     debugTrueBgCheckbox = document.getElementById('debugTrueBgCheckbox');
     iobDisplay = document.getElementById('iobDisplay');
@@ -253,6 +254,7 @@ function initializeApp() {
 
     // --- Measurement and emergency buttons ---
     fingerprickButton.addEventListener('click', () => { if(game) game.performFingerprick(); });
+    ketoneTestButton.addEventListener('click', () => { if(game) game.performKetoneTest(); });
     glucagonButton.addEventListener('click', () => { if (game && !glucagonButton.disabled) game.useGlucagon(); });
 
     // --- Debug checkbox: toggle true BG line on graph ---
