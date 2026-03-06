@@ -82,6 +82,19 @@ class Simulator {
         // Example: ICR=10 means you need 1 unit of insulin per 10g carbs.
         this.ICR = profile.icr || 10;
 
+        // --- Hovorka fysiologisk model ---
+        // Vi bruger den validerede Hovorka 2004-model som kerne-motor for
+        // glukose-insulin dynamikken. Spillerens ISF mappes til modellens
+        // insulinfølsomheds-parametre via en skaleringsfaktor.
+        //
+        // Default ISF = 3.0 mmol/L per E svarer til scale = 1.0.
+        // Højere ISF → mere følsom → scale > 1.0
+        // Lavere ISF → mindre følsom → scale < 1.0
+        const insulinSensitivityScale = this.ISF / 3.0;
+        this.hovorka = new HovorkaModel(this.weight, {
+            insulinSensitivityScale: insulinSensitivityScale
+        });
+
         // gramsPerMmolRise: derived value — how many grams of carbs raise BG by 1 mmol/L.
         // Calculated as ICR/ISF. With ICR=10 and ISF=3.0: 10/3 = 3.33 g per mmol/L rise.
         this.gramsPerMmolRise = this.ICR / this.ISF;
@@ -218,6 +231,18 @@ class Simulator {
         // The `true` flag makes it silent (no log entry or sound).
         this.addLongInsulin(this.basalDose, this.totalSimMinutes - 16 * 60, true);
         this.lastInsulinTime = this.totalSimMinutes - 16 * 60;
+
+        // Initialiser Hovorka-modellen til steady-state med basal insulin.
+        // Basal-dosis konverteres til en konstant insulin-rate (mU/min).
+        // initializeSteadyState kører modellen 2000 minutter fremad med
+        // konstant basal og ingen mad, så alle kompartmenter finder ligevægt.
+        const basalRate = this.hovorka.basalToRate(this.basalDose);
+        this.hovorka.initializeSteadyState(basalRate);
+        this.hovorkaSteadyStateBasalRate = basalRate;
+
+        // Synkroniser trueBG med Hovorka-modellens steady-state glukose
+        this.trueBG = this.hovorka.glucoseConcentration;
+        this.cgmBG = this.trueBG;
     }
 
     // =========================================================================
@@ -383,233 +408,160 @@ class Simulator {
         // Uses the patient-specific rate derived from body weight.
         this.totalKcalBurnedBase += this.restingKcalPerMinute * simulatedMinutesPassed;
 
-        // Accumulate all BG changes for this tick, then apply at the end
-        let bgChangeThisFrame = 0;
-
         // Update stress hormone levels (exponential decay + auto-triggers like hypo)
         this.updateStressHormones(simulatedMinutesPassed);
-
-        // =====================================================================
-        // HEPATIC GLUCOSE PRODUCTION (HGP) — Liver glucose output
-        // =====================================================================
-        // The liver constantly releases glucose into the bloodstream to maintain
-        // a baseline BG level. This is essential for brain function.
-        //
-        // Base rate: 0.02 mmol/L per simulated minute.
-        // This rate is scaled by the combined stress multiplier:
-        //   stressMultiplier = 1.0 + acuteStress + chronicStress + circadianCortisol
-        //
-        // The dawn effect is NOT a separate mechanism — it's simply cortisol
-        // rising as part of the normal circadian rhythm, which increases HGP
-        // through the same stress pathway as illness or exercise.
-        // =====================================================================
         const currentHour = Math.floor(this.timeInMinutes / 60);
-        const stressMultiplikator = 1.0 + this.acuteStressLevel + this.chronicStressLevel + this.circadianKortisolNiveau;
-        let liverGlucoseProduction = 0.02 * stressMultiplikator;
-        bgChangeThisFrame += liverGlucoseProduction * simulatedMinutesPassed;
 
         // =====================================================================
-        // LONG-ACTING (BASAL) INSULIN — Background insulin absorption
+        // HOVORKA MODEL — Fysiologisk kerne-motor
         // =====================================================================
-        // Basal insulin (e.g., Lantus, Tresiba) provides a steady background
-        // insulin level over ~24 hours. It's modeled with a trapezoidal profile:
         //
-        //   effectFactor
-        //   1.0 |      ______________
-        //       |    /                \
-        //       |  /                    \
-        //   0.0 |/________________________\___
-        //       0  4h  ramp-up  22h  tail  duration
+        // I stedet for manuelt at beregne bgChangeThisFrame som en sum af
+        // separate lineære effekter, bruger vi nu Hovorka-modellens 11 ODE'er
+        // til at beregne glukose-dynamikken. Modellen håndterer automatisk:
         //
-        // Phase 1: Ramp-up (0 to 4 hours) — insulin gradually enters the bloodstream
-        // Phase 2: Plateau (4h to 22h) — steady state, full effect
-        // Phase 3: Tail-off (22h to end) — insulin is being cleared
+        //   - Leverproduktion (EGP) supprimeret af insulin
+        //   - Hjernens glukoseforbrug (F01)
+        //   - Renal clearance (nyrer udskiller glukose > 9 mmol/L)
+        //   - Insulin-farmakokinetik (2 subkutane kompartmenter → plasma)
+        //   - Kulhydrat-absorption (2 tarm-kompartmenter)
+        //   - Motionseffekter (E1/E2 state variables via puls)
         //
-        // The BG-lowering rate at any moment = basalRate * effectFactor
-        // where basalRate distributes the total dose effect over the duration.
+        // Vi beregner de samlede input-rates fra vores eksisterende
+        // data-strukturer (activeFood, activeFastInsulin, activeLongInsulin,
+        // activeMotion) og feeder dem ind i Hovorka-modellen.
         // =====================================================================
+
+        // --- 1. BEREGN SAMLET INSULIN-RATE [mU/min] ---
+        // Basal insulin: beregn aktuel rate baseret på trapez-profil
+        let totalInsulinRate = 0;
         this.activeLongInsulin.forEach(ins => {
             const timeSinceInjection = this.totalSimMinutes - ins.injectionTime;
-            if (timeSinceInjection < 0) return; // Not yet injected (pre-game dose)
-
+            if (timeSinceInjection < 0) return;
             let effectFactor = 0;
-            const timeToPlateau = 4 * 60; // 4 hours to reach full effect
-            const endOfPlateau = timeToPlateau + 18 * 60; // Plateau lasts 18 hours
+            const timeToPlateau = 4 * 60;
+            const endOfPlateau = timeToPlateau + 18 * 60;
             const tailOffDuration = ins.totalDuration - endOfPlateau;
-
-            // Determine which phase we're in and calculate effect factor (0-1)
             if (timeSinceInjection < timeToPlateau) effectFactor = timeSinceInjection / timeToPlateau;
             else if (timeSinceInjection < endOfPlateau) effectFactor = 1.0;
             else if (timeSinceInjection < ins.totalDuration) effectFactor = 1.0 - (timeSinceInjection - endOfPlateau) / tailOffDuration;
-
-            // Calculate BG-lowering rate: total BG effect spread over effective duration
-            // dose * ISF = total mmol/L this dose will lower BG by
-            // Divided by effective duration (accounting for ramp-up and tail-off)
-            const basalRate = (ins.dose * this.currentISF) / (ins.totalDuration - (timeToPlateau + tailOffDuration) * 0.5);
-            bgChangeThisFrame -= basalRate * Math.max(0, effectFactor) * simulatedMinutesPassed;
+            // Konverter dosis til mU/min: total dosis fordelt over varighed
+            totalInsulinRate += (ins.dose * 1000 / ins.totalDuration) * Math.max(0, effectFactor);
         });
-        // Remove expired basal insulin entries
         this.activeLongInsulin = this.activeLongInsulin.filter(ins => (this.totalSimMinutes - ins.injectionTime) < ins.totalDuration);
 
-        // =====================================================================
-        // CARBOHYDRATE AND PROTEIN ABSORPTION — Food processing
-        // =====================================================================
-        // Food absorption is modeled with a delay + linear absorption rate:
-        //
-        //   1. Delay phase: stomach emptying takes time, especially with fat/protein
-        //      carbAbsorptionStartDelay = 20 + (fat * 0.5) minutes
-        //
-        //   2. Absorption phase: carbs enter the bloodstream at a steady rate
-        //      carbAbsorptionDuration = 40 + (fat * 1.5) + (protein * 0.5) minutes
-        //      Fat significantly slows carb absorption (greasy pizza vs. juice)
-        //
-        //   3. Protein has a secondary, slower effect on BG (~25% of carb effect)
-        //      This models gluconeogenesis: the liver converts amino acids to glucose
-        //      Protein starts absorbing after 30 minutes, over a much longer duration
-        //
-        // BG impact per gram of carbs = currentCarbEffect (= ISF / ICR)
-        // BG impact per gram of protein = currentCarbEffect * 0.25
-        //
-        // COB (Carbs On Board) tracks remaining unabsorbed carbs + protein equivalent
-        // =====================================================================
-        this.cob = 0;
-        this.activeFood.forEach(food => {
-            const timeSinceConsumption = this.totalSimMinutes - food.startTime;
-
-            // Calculate absorption timing based on macronutrient composition
-            let carbAbsorptionDuration = 40 + (food.fat * 1.5) + (food.protein * 0.5);
-            let carbAbsorptionStartDelay = 20 + (food.fat * 0.5);
-
-            // Carbohydrate absorption
-            if (food.carbsAbsorbed < food.carbs && timeSinceConsumption > carbAbsorptionStartDelay) {
-                // Linear absorption: total carbs / duration = rate per minute
-                const absorbAmount = Math.min(food.carbs - food.carbsAbsorbed, (food.carbs / carbAbsorptionDuration) * simulatedMinutesPassed);
-                bgChangeThisFrame += absorbAmount * this.currentCarbEffect;
-                food.carbsAbsorbed += absorbAmount;
-            }
-
-            // Protein absorption (delayed, slower, weaker effect than carbs)
-            if (food.proteinAbsorbed < food.protein && timeSinceConsumption > 30) {
-                 // Protein absorbs over a longer window (180 min + fat delay)
-                 // and has only 25% the BG impact of an equal weight of carbs
-                 const absorbAmountProtein = Math.min(food.protein - food.proteinAbsorbed, (food.protein / (180 + food.fat * 2)) * simulatedMinutesPassed);
-                 bgChangeThisFrame += absorbAmountProtein * this.currentCarbEffect * 0.25;
-                 food.proteinAbsorbed += absorbAmountProtein;
-            }
-
-            // Update COB: remaining carbs + protein equivalent (at 25% weight)
-            this.cob += (food.carbs - food.carbsAbsorbed) + (food.protein - food.proteinAbsorbed) * 0.25;
-        });
-        // Remove fully absorbed food entries
-        this.activeFood = this.activeFood.filter(f => f.carbsAbsorbed < f.carbs || f.proteinAbsorbed < f.protein);
-
-        // =====================================================================
-        // FAST-ACTING (BOLUS) INSULIN — Meal/correction insulin
-        // =====================================================================
-        // Fast-acting insulin (e.g., NovoRapid, Humalog) has a triangular
-        // activity profile:
-        //
-        //   effectiveness
-        //   1.0 |        /\
-        //       |      /    \
-        //       |    /        \
-        //   0.0 |__/____________\___
-        //       0  onset  peak  duration
-        //
-        // Phase 1: Onset (10-15 min) — insulin enters the bloodstream, no effect yet
-        // Phase 2: Rising (onset to peak) — effect ramps up linearly
-        // Phase 3: Falling (peak to end) — effect tapers off linearly
-        //
-        // Each dose has slightly randomized timing parameters to simulate
-        // real-world variability in insulin absorption.
-        //
-        // IOB (Insulin On Board) is also calculated here — the total remaining
-        // active insulin. Important for the player to avoid "stacking" doses.
-        //
-        // BG-lowering rate = insulinRate * effectiveness
-        // where insulinRate = 2 * dose * ISF / effective_duration
-        // (the factor of 2 compensates for the triangular profile having
-        // half the area of a rectangle with the same base and height)
-        // =====================================================================
+        // Bolus insulin: beregn aktuel rate baseret på trekant-profil
         this.iob = 0;
         this.activeFastInsulin.forEach(ins => {
             const timeSinceInjection = this.totalSimMinutes - ins.injectionTime;
             if (timeSinceInjection >= ins.onset) {
                 let insulinEffectiveness = 0;
-                if (timeSinceInjection < (ins.onset + ins.timeToPeak)) insulinEffectiveness = (timeSinceInjection - ins.onset) / ins.timeToPeak;
-                else if (timeSinceInjection < ins.totalDuration) insulinEffectiveness = 1 - (timeSinceInjection - (ins.onset + ins.timeToPeak)) / (ins.totalDuration - (ins.onset + ins.timeToPeak));
+                if (timeSinceInjection < (ins.onset + ins.timeToPeak))
+                    insulinEffectiveness = (timeSinceInjection - ins.onset) / ins.timeToPeak;
+                else if (timeSinceInjection < ins.totalDuration)
+                    insulinEffectiveness = 1 - (timeSinceInjection - (ins.onset + ins.timeToPeak)) / (ins.totalDuration - (ins.onset + ins.timeToPeak));
 
-                // Rate calculation: factor of 2 because triangular area = 0.5 * base * height
-                // So to deliver the full dose effect, the peak rate must be 2x the average.
-                const insulinRate = (2 * ins.dose * this.currentISF) / (ins.totalDuration - ins.onset);
-                bgChangeThisFrame -= insulinRate * Math.max(0, insulinEffectiveness) * simulatedMinutesPassed;
+                // Trekant-profil: peak-rate = 2 * gennemsnitsrate (fordi trekantareal = 0.5*base*h)
+                const peakRate = (2 * ins.dose * 1000) / (ins.totalDuration - ins.onset);
+                totalInsulinRate += peakRate * Math.max(0, insulinEffectiveness);
 
-                // Calculate remaining IOB for this dose
+                // IOB-beregning (for UI)
                 const remainingDuration = ins.totalDuration - timeSinceInjection;
                 if (remainingDuration > 0) {
-                    // IOB decreases as insulin is used up. Before peak: full dose remains.
-                    // After peak: proportional to remaining time in the tail.
-                    let iobFactor = (timeSinceInjection < (ins.onset + ins.timeToPeak)) ? 1 : (remainingDuration / (ins.totalDuration - (ins.onset + ins.timeToPeak)));
+                    let iobFactor = (timeSinceInjection < (ins.onset + ins.timeToPeak)) ? 1 :
+                        (remainingDuration / (ins.totalDuration - (ins.onset + ins.timeToPeak)));
                     this.iob += ins.dose * Math.max(0, iobFactor);
                 }
             }
         });
-        // Remove expired fast insulin entries
-        this.activeFastInsulin = this.activeFastInsulin.filter(ins => (this.totalSimMinutes - ins.injectionTime) < ins.totalDuration);
+        this.activeFastInsulin = this.activeFastInsulin.filter(ins =>
+            (this.totalSimMinutes - ins.injectionTime) < ins.totalDuration);
 
-        // =====================================================================
-        // EXERCISE EFFECTS — Aerobic and anaerobic components
-        // =====================================================================
-        // Exercise affects BG through two competing mechanisms:
-        //
-        // 1. AEROBIC (all exercise): Muscles take up glucose directly via GLUT4
-        //    transporters, independent of insulin. This LOWERS BG.
-        //    Rate depends on intensity: Low=1.0, Medium=2.0, High=3.0 mmol/L per 10 min
-        //    Small random variation (±20%) simulates real-world variability.
-        //
-        // 2. ANAEROBIC (high intensity only): The body releases catecholamines
-        //    (adrenaline/noradrenaline) which stimulate the liver to dump glucose.
-        //    This RAISES BG and partially counteracts the aerobic effect.
-        //    Also builds up acuteStressLevel, which continues to drive liver
-        //    glucose output AFTER the exercise session ends.
-        //
-        // Net effect:
-        //   - Low/Medium intensity → BG drops (aerobic dominates)
-        //   - High intensity → BG drops less, or may even rise transiently
-        //     (anaerobic partially or fully counteracts aerobic)
-        //   - Post-exercise: increased insulin sensitivity for hours (handled by
-        //     currentISF getter, not here)
-        //
-        // Key learning point for new T1D patients:
-        //   Cardio without reducing insulin → risk of hypoglycemia!
-        //   Strength training may require correction insulin afterwards.
-        // =====================================================================
+        // --- 2. BEREGN SAMLET KULHYDRAT-RATE [mmol/min] ---
+        // Kulhydrater konverteres fra gram til mmol (180 g/mol).
+        // Fedt forsinker absorptionen (øger tmax_G effektivt).
+        // Protein bidrager med 25% af kulhydrateffekten, forsinket.
+        let totalCarbRate = 0;
+        this.cob = 0;
+        this.activeFood.forEach(food => {
+            const timeSinceConsumption = this.totalSimMinutes - food.startTime;
+            let carbAbsorptionDuration = 40 + (food.fat * 1.5) + (food.protein * 0.5);
+            let carbAbsorptionStartDelay = 20 + (food.fat * 0.5);
+
+            // Kulhydrat-absorption
+            if (food.carbsAbsorbed < food.carbs && timeSinceConsumption > carbAbsorptionStartDelay) {
+                const absorbAmount = Math.min(food.carbs - food.carbsAbsorbed,
+                    (food.carbs / carbAbsorptionDuration) * simulatedMinutesPassed);
+                // Konverter gram til mmol/min for Hovorka: gram * 1000/180 / tid
+                totalCarbRate += (absorbAmount * 1000 / 180) / simulatedMinutesPassed;
+                food.carbsAbsorbed += absorbAmount;
+            }
+
+            // Protein-absorption (som "langsomme kulhydrater" — 25% af effekten)
+            if (food.proteinAbsorbed < food.protein && timeSinceConsumption > 30) {
+                const absorbAmountProtein = Math.min(food.protein - food.proteinAbsorbed,
+                    (food.protein / (180 + food.fat * 2)) * simulatedMinutesPassed);
+                totalCarbRate += (absorbAmountProtein * 0.25 * 1000 / 180) / simulatedMinutesPassed;
+                food.proteinAbsorbed += absorbAmountProtein;
+            }
+
+            this.cob += (food.carbs - food.carbsAbsorbed) + (food.protein - food.proteinAbsorbed) * 0.25;
+        });
+        this.activeFood = this.activeFood.filter(f => f.carbsAbsorbed < f.carbs || f.proteinAbsorbed < f.protein);
+
+        // --- 3. BEREGN PULS (for motionseffekt i Hovorka E1/E2) ---
+        // Motionsintensitet mappes til puls:
+        //   Lav → 100 bpm, Medium → 130 bpm, Høj → 160 bpm
+        // Stresskatekolaminer (anaerob) håndteres via acuteStressLevel
+        let currentHeartRate = this.hovorka.HR_base;
         this.activeMotion.forEach(motion => {
-            if (this.totalSimMinutes >= motion.startTime && this.totalSimMinutes < (motion.startTime + motion.duration)) {
-                // Aerobic component: direct muscle glucose uptake → BG drops
-                let bgDropPer10min = (motion.intensity === "Lav") ? 1.0 : (motion.intensity === "Medium") ? 2.0 : 3.0;
-                bgChangeThisFrame -= (bgDropPer10min / 10) * (1 + (Math.random()*0.4-0.2)) * simulatedMinutesPassed;
+            if (this.totalSimMinutes >= motion.startTime &&
+                this.totalSimMinutes < (motion.startTime + motion.duration)) {
+                const hrMap = { "Lav": 100, "Medium": 130, "Høj": 160 };
+                currentHeartRate = Math.max(currentHeartRate, hrMap[motion.intensity] || 100);
 
-                // Anaerobic component (high intensity only):
-                // Catecholamines (adrenaline/noradrenaline) are released and do two things:
-                //   1. Directly stimulate the liver to release extra glucose (0.05 mmol/L/min)
-                //   2. Build up acute stress that persists AFTER the workout ends
-                // This means BG may rise or fall less than expected during hard training.
+                // Anaerob komponent (høj intensitet): opbyg akut stress
                 if (motion.intensity === "Høj") {
-                    // Direct catecholamine-driven liver glucose during exercise
-                    bgChangeThisFrame += 0.05 * simulatedMinutesPassed;
-                    // Build acute stress level (decays after exercise via washout)
-                    this.acuteStressLevel = Math.min(2.0, this.acuteStressLevel + 0.02 * simulatedMinutesPassed);
+                    this.acuteStressLevel = Math.min(2.0,
+                        this.acuteStressLevel + 0.02 * simulatedMinutesPassed);
                 }
             }
         });
 
-        // =====================================================================
-        // APPLY BG CHANGE AND CLAMP
-        // =====================================================================
-        // Apply the net BG change from all sources, then clamp to physiological minimum.
-        // BG below 0.1 mmol/L is not physiologically possible (you'd be dead already).
-        this.trueBG += bgChangeThisFrame;
+        // --- 4. SÆT HOVORKA-INPUTS OG KØR MODELLEN ---
+        const stressMultiplikator = 1.0 + this.acuteStressLevel +
+            this.chronicStressLevel + this.circadianKortisolNiveau;
+
+        this.hovorka.insulinRate = totalInsulinRate;
+        // carbRate sættes til 0 fordi vi allerede har absorberet kulhydrater
+        // via vores activeFood-system og feeder dem direkte ind som allerede
+        // absorberede mmol/min (bypasser Hovorka's D1/D2 kompartmenter).
+        // I stedet manipulerer vi Q1 direkte for kulhydrateffekten.
+        this.hovorka.carbRate = 0;
+        this.hovorka.heartRate = currentHeartRate;
+        this.hovorka.stressMultiplier = stressMultiplikator;
+
+        // Kør Hovorka ODE'erne for dette tidsstep
+        // Ved store tidsstep (høj simuleringshastighed) subdeler vi for stabilitet.
+        // Euler-integration er stabil op til ~1 min tidsstep for denne model.
+        const maxStepSize = 1.0; // max 1 sim-minut per Euler-step
+        let remaining = simulatedMinutesPassed;
+        while (remaining > 0) {
+            const stepDt = Math.min(remaining, maxStepSize);
+
+            // Tilføj absorberede kulhydrater direkte til Q1 (plasma-glukose)
+            // i stedet for at bruge Hovorka's tarm-kompartmenter, fordi vi
+            // allerede modellerer mad-timing via activeFood-systemet.
+            if (totalCarbRate > 0) {
+                this.hovorka.state[4] += totalCarbRate * stepDt; // Q1 += mmol
+            }
+
+            this.hovorka.step(stepDt);
+            remaining -= stepDt;
+        }
+
+        // Aflæs trueBG fra Hovorka-modellen
+        this.trueBG = this.hovorka.glucoseConcentration;
         this.trueBG = Math.max(0.1, this.trueBG);
 
         // =====================================================================

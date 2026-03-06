@@ -26,6 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Ved større ændringer: vis plan først, kód bagefter
 - Foreslå gerne forbedringer men implementer dem ikke uden godkendelse
 - Bevar altid simulationslogikken intakt ved UI-ændringer
+- **Foreslå ALTID at committe og pushe før store ændringer** — så der altid er et sikkert fallback-punkt
 
 ---
 
@@ -54,17 +55,21 @@ index.html      ← HTML-struktur og layout
 style.css       ← Al CSS-styling
 js/
   sounds.js     ← Lyd-opsætning (Tone.js) og playSound()
-  simulator.js  ← Simulator-klassen: al fysiologisk modellering og spilmekanik
+  hovorka.js    ← Hovorka 2004 glukose-insulin model (11 ODE'er, valideret)
+  simulator.js  ← Simulator-klassen: bruger HovorkaModel + spilmekanik
   ui.js         ← Tegning af graf, opdatering af UI, popups, logning, profil-popup
   game.js       ← Game loop, startGame, resetGame, togglePause
   main.js       ← Globale variable, DOM-referencer, event listeners, init
+docs/
+  FYSIOLOGI.md  ← Beskrivelse af fysiologiske modeller, videnskabelige kilder, credits
+  references/   ← Hentede videnskabelige artikler (PDF/HTML)
 tests/
   simulation.test.js  ← Automatiserede tests (28 stk), kør med: node tests/simulation.test.js
 old/            ← Original enkeltfil-version (TB1Sim v42 beta.html) + referencefiler
 ```
 
 Script-load rækkefølge i index.html (rækkefølgen er vigtig, da filer deler globalt scope):
-`sounds.js` → `simulator.js` → `ui.js` → `game.js` → `main.js`
+`sounds.js` → `hovorka.js` → `simulator.js` → `ui.js` → `game.js` → `main.js`
 
 ---
 
@@ -124,7 +129,8 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
    - TIR (4–10 mmol/L), TAR (> 10), TBR (< 4)
    - Samlet insulinforbrug
 8. Multiplayer/familie-konkurrence om bedste blodsukkerkontrol
-9. Mere prominent disclaimer med flueben der skal bekræftes før spillet starter
+9. Giv adgang til fysiologi-dokumentet (docs/FYSIOLOGI.md) et sted i spillet — fx en "Videnskab"-knap i hjælp-popuppen eller en separat side
+10. Mere prominent disclaimer med flueben der skal bekræftes før spillet starter
 10. Kønsvalg (mand/kvinde) — påvirker BMR-beregning og evt. fysiologiske parametre
 11. Sprogskift (dansk/engelsk)
 12. Avanceret debug-panel med alle interne variable synlige

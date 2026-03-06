@@ -282,12 +282,14 @@
          ===================================================================
          Each file builds on the previous ones:
            1. sounds.js   — Sound system (Tone.js synths and playSound())
-           2. simulator.js — Simulator class (uses playSound, logEvent, DOM refs)
-           3. ui.js        — Drawing and UI functions (uses Simulator state)
-           4. game.js      — Game loop (uses Simulator, UI functions)
-           5. main.js      — Initialization (uses everything above)
+           2. hovorka.js  — Hovorka 2004 fysiologisk model (ODE'er)
+           3. simulator.js — Simulator class (uses HovorkaModel, playSound, logEvent)
+           4. ui.js        — Drawing and UI functions (uses Simulator state)
+           5. game.js      — Game loop (uses Simulator, UI functions)
+           6. main.js      — Initialization (uses everything above)
          =================================================================== -->
     <script src="js/sounds.js"></script>
+    <script src="js/hovorka.js"></script>
     <script src="js/simulator.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
