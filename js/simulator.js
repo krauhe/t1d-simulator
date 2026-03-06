@@ -90,7 +90,12 @@ class Simulator {
         // Default ISF = 3.0 mmol/L per E svarer til scale = 1.0.
         // Højere ISF → mere følsom → scale > 1.0
         // Lavere ISF → mindre følsom → scale < 1.0
-        const insulinSensitivityScale = this.ISF / 3.0;
+        // Kalibreringsfaktor: Hovorka-modellens baseline insulin-parametre
+        // giver en effektiv ISF på ~3.75 mmol/L per enhed. Vi skalerer så
+        // spillerens ISF mappes korrekt: ISF=3.0 → scale=0.80.
+        // Kalibreret empirisk: 1E bolus fra BG=8 med scale=ISF/3.75 giver
+        // et BG-fald ≈ ISF mmol/L.
+        const insulinSensitivityScale = this.ISF / 3.75;
         this.hovorka = new HovorkaModel(this.weight, {
             insulinSensitivityScale: insulinSensitivityScale
         });
@@ -117,17 +122,25 @@ class Simulator {
         // trueBG: the actual blood glucose level (ground truth, not visible to player).
         // cgmBG: the CGM (Continuous Glucose Monitor) reading — what the player sees.
         // CGM has a ~5-10 minute delay and some noise vs. true BG, just like real sensors.
-        this.trueBG = 5.5;             // Starting BG: 5.5 mmol/L (normal fasting level)
-        this.cgmBG = 5.5;
-        this.cgmBGHistory = [{ time: -5 * 60, value: 5.5 }]; // History buffer for CGM delay
-        this.lastCgmCalculationTime = -5;  // Last time CGM was updated (every 5 sim-min)
+        this.trueBG = 5.5;             // Starting BG: 5.5 mmol/L (overskrives af steady-state)
+        this.cgmBG = 5.5;             // Overskrives efter steady-state init nedenfor
+        this.cgmBGHistory = [];        // Fyldes efter steady-state init
+        this.lastCgmCalculationTime = -5;  // Første CGM-update sker ved t=0
 
-        // CGM sensor characteristics — each game has slightly different sensor behavior
-        // to simulate real-world CGM variability between sensor sessions.
-        // cgmSystemicPeriod: period of the slow sine-wave drift (4-8 hours)
-        // cgmSystemicAmplitude: amplitude of the drift (0.3-0.7 mmol/L)
+        // CGM sensor characteristics — kalibreret mod rigtig Libre 2 data.
+        // Analyse af ~34.000 målinger over et år viser:
+        //   - Støj std: ~0.18 mmol/L (skalerer med BG-niveau: ~3-5% af BG)
+        //   - Støj er næsten pure random (lag-1 autokorrelation: -0.04)
+        //   - Drift: langsom systematisk afvigelse over sensorens levetid
+        //   - Diskontinuiteter: ~0.7/dag (spring > 2 mmol/L, fx kompression, kalibrering)
+        //
+        // cgmSystemicPeriod: periode for langsom sinusbølge-drift (4-8 timer)
+        // cgmSystemicAmplitude: amplitude af drift (0.3-0.7 mmol/L)
+        // cgmNoiseScale: støj som andel af BG-niveau (kalibreret fra data)
         this.cgmSystemicPeriod = (4 + Math.random() * 4) * 60;
         this.cgmSystemicAmplitude = (0.3 + Math.random() * 0.4);
+        this.cgmNoiseScale = 0.025 + Math.random() * 0.015; // 2.5-4.0% af BG
+        this.cgmDiscontinuityChance = 0.0025; // ~0.7 per dag ved 5-min intervaller (288 målinger/dag)
 
         // Steep drop detection — warns player when BG is falling dangerously fast
         this.lastTrueBGForDropCheck = this.trueBG;
@@ -225,24 +238,39 @@ class Simulator {
         this.acuteStressLevel = 0.0;
         this.chronicStressLevel = 0.0;
 
-        // Pre-administer basal insulin from 16 hours ago (simulates the patient
-        // taking their daily Lantus/Tresiba injection yesterday morning at 08:00).
-        // The dose is calculated from the patient's ISF using the 100-rule.
-        // The `true` flag makes it silent (no log entry or sound).
-        this.addLongInsulin(this.basalDose, this.totalSimMinutes - 16 * 60, true);
-        this.lastInsulinTime = this.totalSimMinutes - 16 * 60;
+        // Initialiser Hovorka-modellen til steady-state.
+        // initializeSteadyState finder automatisk den insulin-rate der giver
+        // target BG=5.5 mmol/L, uanset patientens ISF/basal-dosis.
+        // Den fundne rate gemmes som hovorkaSteadyStateBasalRate.
+        const basalRateGuess = this.hovorka.basalToRate(this.basalDose);
+        this.hovorka.initializeSteadyState(basalRateGuess, 5.5);
+        this.hovorkaSteadyStateBasalRate = this.hovorka.steadyStateBasalRate;
 
-        // Initialiser Hovorka-modellen til steady-state med basal insulin.
-        // Basal-dosis konverteres til en konstant insulin-rate (mU/min).
-        // initializeSteadyState kører modellen 2000 minutter fremad med
-        // konstant basal og ingen mad, så alle kompartmenter finder ligevægt.
-        const basalRate = this.hovorka.basalToRate(this.basalDose);
-        this.hovorka.initializeSteadyState(basalRate);
-        this.hovorkaSteadyStateBasalRate = basalRate;
+        // Pre-administer basal insulin fra 16 timer siden (patienten tog
+        // sin daglige Lantus/Tresiba i går morges kl. 08:00).
+        // Dosis justeres så trapez-profilens plateau-rate matcher den
+        // kalibrerede steady-state rate. Dette sikrer at BG er stabil ved start.
+        // (totalDuration er tilfældig 24-36 timer; vi beregner dosis baglæns)
+        this.addLongInsulin(this.basalDose, this.totalSimMinutes - 16 * 60, true);
+        // Juster den interne dosis så plateau-raten matcher Hovorka's steady-state
+        const initialBasal = this.activeLongInsulin[0];
+        initialBasal.dose = this.hovorkaSteadyStateBasalRate * initialBasal.totalDuration / 1000;
+        this.lastInsulinTime = this.totalSimMinutes - 16 * 60;
 
         // Synkroniser trueBG med Hovorka-modellens steady-state glukose
         this.trueBG = this.hovorka.glucoseConcentration;
         this.cgmBG = this.trueBG;
+
+        // Seed CGM-historik med steady-state BG så de første datapunkter
+        // har noget at referere til (undgår diskontinuitet i grafen ved start).
+        // Vi lægger 20 punkter ind med 5-minutters interval bagud fra t=0.
+        for (let t = -100; t <= 0; t += 5) {
+            this.cgmBGHistory.push({ time: t, value: this.trueBG });
+        }
+
+        // Tilføj et initialt CGM-datapunkt så grafen starter med en værdi
+        cgmDataPoints.push({ time: 0, value: this.trueBG });
+        trueBgPoints.push({ time: 0, value: this.trueBG });
     }
 
     // =========================================================================
@@ -433,7 +461,10 @@ class Simulator {
         // =====================================================================
 
         // --- 1. BEREGN SAMLET INSULIN-RATE [mU/min] ---
-        // Basal insulin: beregn aktuel rate baseret på trapez-profil
+        //
+        // BASAL insulin: trapez-profil (langsom ramp-up over 4t, plateau 18t, tail-off)
+        // leverer en jævn rate over ~24-36 timer. Feedes direkte til Hovorka's
+        // insulinRate input (bypasser S1/S2 da basal allerede er langsomt).
         let totalInsulinRate = 0;
         this.activeLongInsulin.forEach(ins => {
             const timeSinceInjection = this.totalSimMinutes - ins.injectionTime;
@@ -445,69 +476,77 @@ class Simulator {
             if (timeSinceInjection < timeToPlateau) effectFactor = timeSinceInjection / timeToPlateau;
             else if (timeSinceInjection < endOfPlateau) effectFactor = 1.0;
             else if (timeSinceInjection < ins.totalDuration) effectFactor = 1.0 - (timeSinceInjection - endOfPlateau) / tailOffDuration;
-            // Konverter dosis til mU/min: total dosis fordelt over varighed
             totalInsulinRate += (ins.dose * 1000 / ins.totalDuration) * Math.max(0, effectFactor);
         });
         this.activeLongInsulin = this.activeLongInsulin.filter(ins => (this.totalSimMinutes - ins.injectionTime) < ins.totalDuration);
 
-        // Bolus insulin: beregn aktuel rate baseret på trekant-profil
-        this.iob = 0;
+        // BOLUS (hurtigvirkende) insulin: injiceres som kort puls (5 sim-min).
+        // Hovorka-modellens S1→S2→I→x1/x2/x3 kompartmenter håndterer al
+        // farmakokinetik (absorption, distribution, effekt-forsinkelse).
+        // Vi bruger IKKE en trekant-profil oven på Hovorka — det ville give
+        // dobbelt modellering og alt for lang insulinvarighed.
+        //
+        // IOB beregnes fra Hovorka's tilstandsvariable (S1 + S2 + I*VI)
+        // i stedet for vores egen tracking, da Hovorka nu ejer al insulin-PK.
+        const BOLUS_PULSE_DURATION = 5; // minutter — simulerer subkutan injektion
         this.activeFastInsulin.forEach(ins => {
             const timeSinceInjection = this.totalSimMinutes - ins.injectionTime;
-            if (timeSinceInjection >= ins.onset) {
-                let insulinEffectiveness = 0;
-                if (timeSinceInjection < (ins.onset + ins.timeToPeak))
-                    insulinEffectiveness = (timeSinceInjection - ins.onset) / ins.timeToPeak;
-                else if (timeSinceInjection < ins.totalDuration)
-                    insulinEffectiveness = 1 - (timeSinceInjection - (ins.onset + ins.timeToPeak)) / (ins.totalDuration - (ins.onset + ins.timeToPeak));
-
-                // Trekant-profil: peak-rate = 2 * gennemsnitsrate (fordi trekantareal = 0.5*base*h)
-                const peakRate = (2 * ins.dose * 1000) / (ins.totalDuration - ins.onset);
-                totalInsulinRate += peakRate * Math.max(0, insulinEffectiveness);
-
-                // IOB-beregning (for UI)
-                const remainingDuration = ins.totalDuration - timeSinceInjection;
-                if (remainingDuration > 0) {
-                    let iobFactor = (timeSinceInjection < (ins.onset + ins.timeToPeak)) ? 1 :
-                        (remainingDuration / (ins.totalDuration - (ins.onset + ins.timeToPeak)));
-                    this.iob += ins.dose * Math.max(0, iobFactor);
-                }
+            if (timeSinceInjection >= 0 && timeSinceInjection < BOLUS_PULSE_DURATION) {
+                // Injicér hele dosen som en kort puls: dose * 1000 mU over 5 min
+                totalInsulinRate += ins.dose * 1000 / BOLUS_PULSE_DURATION;
             }
         });
+        // Fjern bolus-entries efter 6 timer (langt efter pulsen er slut, men
+        // beholdes for log/UI-formål og IOB-tracking)
         this.activeFastInsulin = this.activeFastInsulin.filter(ins =>
-            (this.totalSimMinutes - ins.injectionTime) < ins.totalDuration);
+            (this.totalSimMinutes - ins.injectionTime) < 6 * 60);
 
-        // --- 2. BEREGN SAMLET KULHYDRAT-RATE [mmol/min] ---
-        // Kulhydrater konverteres fra gram til mmol (180 g/mol).
-        // Fedt forsinker absorptionen (øger tmax_G effektivt).
-        // Protein bidrager med 25% af kulhydrateffekten, forsinket.
+        // IOB: beregn fra Hovorka's insulin-kompartmenter (mere korrekt end
+        // vores gamle lineære tracking). S1+S2 er subkutan insulin, I*VI er
+        // plasma insulin. Vi normaliserer til enheder (divider med 1000).
+        this.iob = (this.hovorka.state[2] + this.hovorka.state[3]) / 1000;
+
+        // --- 2. BEREGN KULHYDRAT-RATE til Hovorka D1/D2 [mmol/min] ---
+        //
+        // Kulhydrater feedes ind i Hovorka's D1→D2 tarm-kompartmenter via
+        // carbRate. Modellens to-kompartment tarm-model (τG=40 min) giver
+        // automatisk realistisk absorption med forsinket peak og gradvis optag.
+        //
+        // Fedt påvirker τG (mavetømningshastighed) — dette håndteres ved at
+        // justere Hovorka's tau_G parameter dynamisk baseret på måltidets
+        // fedtindhold. Protein bidrager med ~25% som forsinkede kulhydrater.
+        //
+        // Mad-items har en "spisetid" (10 min default) hvor carbRate er aktiv.
         let totalCarbRate = 0;
         this.cob = 0;
         this.activeFood.forEach(food => {
             const timeSinceConsumption = this.totalSimMinutes - food.startTime;
-            let carbAbsorptionDuration = 40 + (food.fat * 1.5) + (food.protein * 0.5);
-            let carbAbsorptionStartDelay = 20 + (food.fat * 0.5);
+            const eatingDuration = 10; // minutter det tager at spise
 
-            // Kulhydrat-absorption
-            if (food.carbsAbsorbed < food.carbs && timeSinceConsumption > carbAbsorptionStartDelay) {
-                const absorbAmount = Math.min(food.carbs - food.carbsAbsorbed,
-                    (food.carbs / carbAbsorptionDuration) * simulatedMinutesPassed);
-                // Konverter gram til mmol/min for Hovorka: gram * 1000/180 / tid
-                totalCarbRate += (absorbAmount * 1000 / 180) / simulatedMinutesPassed;
-                food.carbsAbsorbed += absorbAmount;
+            // Kulhydrat-rate: feedes ind over spisetiden
+            if (timeSinceConsumption >= 0 && timeSinceConsumption < eatingDuration && food.carbs > 0) {
+                // Konverter gram til mmol/min: gram * 1000/180 / eatingDuration
+                totalCarbRate += (food.carbs * 1000 / 180) / eatingDuration;
             }
 
-            // Protein-absorption (som "langsomme kulhydrater" — 25% af effekten)
-            if (food.proteinAbsorbed < food.protein && timeSinceConsumption > 30) {
-                const absorbAmountProtein = Math.min(food.protein - food.proteinAbsorbed,
-                    (food.protein / (180 + food.fat * 2)) * simulatedMinutesPassed);
-                totalCarbRate += (absorbAmountProtein * 0.25 * 1000 / 180) / simulatedMinutesPassed;
-                food.proteinAbsorbed += absorbAmountProtein;
+            // Protein som forsinkede kulhydrater (25% effekt, 30 min forsinkelse)
+            const proteinDelay = 30;
+            const proteinDuration = 60; // protein absorberes langsommere
+            if (food.protein > 0 &&
+                timeSinceConsumption >= proteinDelay &&
+                timeSinceConsumption < proteinDelay + proteinDuration) {
+                totalCarbRate += (food.protein * 0.25 * 1000 / 180) / proteinDuration;
             }
 
-            this.cob += (food.carbs - food.carbsAbsorbed) + (food.protein - food.proteinAbsorbed) * 0.25;
+            // COB tracking: estimer resterende kulhydrater baseret på tid.
+            // Hovorka's D1/D2 har τG=40, så ~95% absorberet efter 3*τG=120 min.
+            const carbDecay = Math.max(0, 1 - timeSinceConsumption / 120);
+            const protDecay = Math.max(0, 1 - Math.max(0, timeSinceConsumption - proteinDelay) / 120);
+            this.cob += food.carbs * carbDecay + food.protein * 0.25 * protDecay;
         });
-        this.activeFood = this.activeFood.filter(f => f.carbsAbsorbed < f.carbs || f.proteinAbsorbed < f.protein);
+        // Fjern mad-entries efter 3 timer (al absorption færdig)
+        this.activeFood = this.activeFood.filter(f =>
+            (this.totalSimMinutes - f.startTime) < 180);
 
         // --- 3. BEREGN PULS (for motionseffekt i Hovorka E1/E2) ---
         // Motionsintensitet mappes til puls:
@@ -533,11 +572,9 @@ class Simulator {
             this.chronicStressLevel + this.circadianKortisolNiveau;
 
         this.hovorka.insulinRate = totalInsulinRate;
-        // carbRate sættes til 0 fordi vi allerede har absorberet kulhydrater
-        // via vores activeFood-system og feeder dem direkte ind som allerede
-        // absorberede mmol/min (bypasser Hovorka's D1/D2 kompartmenter).
-        // I stedet manipulerer vi Q1 direkte for kulhydrateffekten.
-        this.hovorka.carbRate = 0;
+        // Kulhydrater feedes nu via Hovorka's D1→D2 tarm-model (ikke direkte Q1).
+        // D1/D2 giver realistisk 2-kompartment absorption med peak ved ~2*τG.
+        this.hovorka.carbRate = totalCarbRate;
         this.hovorka.heartRate = currentHeartRate;
         this.hovorka.stressMultiplier = stressMultiplikator;
 
@@ -548,14 +585,6 @@ class Simulator {
         let remaining = simulatedMinutesPassed;
         while (remaining > 0) {
             const stepDt = Math.min(remaining, maxStepSize);
-
-            // Tilføj absorberede kulhydrater direkte til Q1 (plasma-glukose)
-            // i stedet for at bruge Hovorka's tarm-kompartmenter, fordi vi
-            // allerede modellerer mad-timing via activeFood-systemet.
-            if (totalCarbRate > 0) {
-                this.hovorka.state[4] += totalCarbRate * stepDt; // Q1 += mmol
-            }
-
             this.hovorka.step(stepDt);
             remaining -= stepDt;
         }
@@ -604,14 +633,27 @@ class Simulator {
                 }
             }
 
-            // Add random noise (electronics noise, ±0.075 mmol/L)
-            const randomNoise = (Math.random() - 0.5) * 0.15;
+            // Proportional random støj — skalerer med BG-niveau (kalibreret fra Libre 2 data).
+            // Ved BG=5: std ≈ 0.15 mmol/L. Ved BG=10: std ≈ 0.30 mmol/L.
+            // Bruger Box-Muller transform for normalfordelt støj (mere realistisk end uniform).
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const gaussianNoise = Math.sqrt(-2 * Math.log(u1 || 0.001)) * Math.cos(2 * Math.PI * u2);
+            const noiseStd = delayedTrueBG * this.cgmNoiseScale;
+            const randomNoise = gaussianNoise * noiseStd;
 
-            // Add slow sinusoidal drift (sensor characteristic, period = 4-8 hours)
+            // Langsom sinusbølge-drift (sensor-karakteristik, periode 4-8 timer)
             let systemicDeviation = Math.sin(this.totalSimMinutes / this.cgmSystemicPeriod) * this.cgmSystemicAmplitude;
 
-            // Combine all components
-            this.cgmBG = delayedTrueBG + randomNoise + systemicDeviation;
+            // Diskontinuiteter — lejlighedsvise spring (kompression, kalibrering, sensor-fejl)
+            // Ca. 0.7 per dag (~1 per 400 CGM-målinger). Typisk 2-3 mmol/L spring.
+            let discontinuity = 0;
+            if (Math.random() < this.cgmDiscontinuityChance) {
+                discontinuity = (Math.random() - 0.5) * 4.0; // ±2 mmol/L spring
+            }
+
+            // Kombiner alle komponenter
+            this.cgmBG = delayedTrueBG + randomNoise + systemicDeviation + discontinuity;
             this.cgmBG = Math.max(2.2, Math.min(25.0, this.cgmBG)); // Sensor range limits
             this.lastCgmCalculationTime = this.totalSimMinutes;
 
@@ -648,10 +690,13 @@ class Simulator {
                 if (!existingReminder) {
                     this.graphMessages.push({
                         id: `basal_reminder_day_${this.day}`,
-                        text: "Husk Basal Insulin (Normal dosis ca. 10E)",
+                        text: "Husk basal insulin!",
                         expireTime: this.totalSimMinutes + (120 * (this.simulationSpeed/60))
                     });
                 }
+            } else {
+                // Basal er taget — fjern eventuel reminder med det samme
+                this.graphMessages = this.graphMessages.filter(msg => msg.id !== `basal_reminder_day_${this.day}`);
             }
         }
 
@@ -822,6 +867,9 @@ class Simulator {
             this.handleNightIntervention();
             logEvent(`Basal insulin: ${dose}E`, 'insulin-basal', {dose});
             this.basalReminderGivenForDay[this.day-1] = true;
+            // Fjern basal-reminder fra grafen med det samme
+            this.graphMessages = this.graphMessages.filter(msg =>
+                !msg.id || !msg.id.startsWith('basal_reminder_day_'));
             playSound('intervention', 'G3');
          }
          // Duration: 24-36 hours (randomized to simulate real-world variability)

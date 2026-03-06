@@ -280,10 +280,12 @@ function drawGraph() {
                 graphCtx.fillText(icon, x, yPos);
                 // For custom meals (not presets), show carb equivalent (KE) label
                 if (icon === '🍴') {
-                    const ke = (event.details.carbs + event.details.protein * 0.25).toFixed(0);
+                    const carbs = event.details.carbs || 0;
+                    const protein = event.details.protein || 0;
+                    const ke = (carbs + protein * 0.25).toFixed(0);
                     graphCtx.font = "bold 9px Segoe UI";
                     graphCtx.fillStyle = '#333';
-                    graphCtx.fillText(`KE:${ke}g`, x, yPos - 12);
+                    graphCtx.fillText(`${ke}g`, x, yPos - 12);
                 }
             } else if (event.type === 'motion') {
                 graphCtx.fillText(event.icon, x, yPos);
@@ -313,12 +315,17 @@ function drawGraph() {
         const textWidth = graphCtx.measureText(msg.text).width;
 
         if (msg.text.startsWith("zZzz")) {
-            // Sleep/night intervention: floating "zZzz" text with sine-wave wobble
-            graphCtx.globalAlpha = 0.6;
-            graphCtx.font = "italic bold 16px Segoe UI";
-            graphCtx.fillStyle = "#63b3ed"; // Light blue for sleepy feel
-            const xOffset = Math.sin(game.totalSimMinutes / 20) * 5; // Gentle horizontal sway
-            graphCtx.fillText(msg.text, padding.left + 50 + xOffset, padding.top + 20);
+            // Natlig intervention: vis diskret i øverste højre hjørne af grafen
+            // med en svag blå farve og let svaj-animation.
+            graphCtx.globalAlpha = 0.5;
+            graphCtx.font = "italic bold 13px Segoe UI";
+            graphCtx.fillStyle = "#63b3ed"; // Lys blå — søvnig stemning
+            graphCtx.textAlign = "right";
+            const xPos = padding.left + graphWidth - 10;
+            const yPos = padding.top + 18;
+            const xOffset = Math.sin(game.totalSimMinutes / 20) * 3; // Let vandret svaj
+            graphCtx.fillText(msg.text, xPos + xOffset, yPos);
+            graphCtx.textAlign = "center"; // Reset
             graphCtx.globalAlpha = 1.0;
         } else {
             // Standard message: yellow rounded rectangle with text
@@ -558,7 +565,7 @@ function showProfilePopup(onStartCallback) {
                     <span class="profile-unit">mmol/L / E</span>
                 </div>
                 <small>Hvor meget sænker 1 enhed hurtigvirkende insulin dit blodsukker?
-                       Typisk 1.5-5.0 for voksne. Højere tal = mere følsom for insulin.</small>
+                       Typisk 1.5-5.0 mmol/L for voksne. Højere tal = mere følsom for insulin.</small>
             </div>
 
             <div class="profile-calculated">

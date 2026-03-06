@@ -139,33 +139,62 @@ class HovorkaModel {
 
 
     // =========================================================================
-    // initializeSteadyState — Beregn ligevægtstilstand for given basal insulin
+    // initializeSteadyState — Find basal rate der giver target-BG
     // =========================================================================
     //
-    // Finder den stationære tilstand (steady state) hvor alle tidsafledede er 0.
-    // Dette svarer til en patient med stabilt blodsukker og konstant basal insulin.
+    // Finder den stationære tilstand (steady state) for en given basal insulin-rate,
+    // ELLER (hvis targetBG er angivet) søger automatisk efter den rate der giver
+    // det ønskede blodsukker-niveau.
     //
-    // I Python-implementationen bruges fsolve(). Vi bruger en simpel iterativ
-    // tilgang: kør modellen i 2000 minutter med konstant basal insulin og ingen
-    // mad, indtil den stabiliserer sig.
+    // Hovorka-modellens insulin-parametre matcher ikke nødvendigvis patientens
+    // kliniske ISF/100-regel direkte. Derfor bruger vi en simpel binær søgning
+    // til at finde den rate der giver det ønskede steady-state BG.
     //
-    // @param {number} basalRate - Basal insulin-rate [mU/min]
+    // @param {number} basalRate - Startgæt for basal insulin-rate [mU/min]
+    // @param {number} targetBG  - Ønsket steady-state BG [mmol/L] (default: 5.5)
     // @returns {number} Steady-state BG i mmol/L
     // =========================================================================
-    initializeSteadyState(basalRate) {
-        // Nulstil alle tilstandsvariable
-        this.state.fill(0);
-        this.insulinRate = basalRate;
-        this.carbRate = 0;
-        this.heartRate = this.HR_base;
-        this.stressMultiplier = 1.0;
+    initializeSteadyState(basalRate, targetBG = 5.5) {
+        // Binær søgning: find den insulin-rate der giver targetBG
+        let lo = 0.5;    // Minimum rate [mU/min]
+        let hi = 20.0;   // Maximum rate [mU/min]
+        let bestRate = basalRate;
+        let bestBG = 0;
 
-        // Kør modellen i 2000 minutter (>33 timer) for at nå steady state
-        // Det er nok tid til at alle kompartmenter stabiliserer sig.
-        const dt = 1.0; // 1 minut per step
-        for (let i = 0; i < 2000; i++) {
-            this.step(dt);
+        // 20 iterationer af binær søgning giver præcision < 0.00002 mU/min
+        for (let iter = 0; iter < 20; iter++) {
+            const mid = (lo + hi) / 2;
+
+            // Nulstil og kør til steady-state med denne rate
+            this.state.fill(0);
+            this.insulinRate = mid;
+            this.carbRate = 0;
+            this.heartRate = this.HR_base;
+            this.stressMultiplier = 1.0;
+
+            const dt = 1.0;
+            for (let i = 0; i < 2000; i++) {
+                this.step(dt);
+            }
+
+            const bg = this.glucoseConcentration;
+
+            // Mere insulin → lavere BG, så:
+            // Hvis BG > target → brug mere insulin (hæv lo)
+            // Hvis BG < target → brug mindre insulin (sænk hi)
+            if (bg > targetBG) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+
+            bestRate = mid;
+            bestBG = bg;
         }
+
+        // Gem den fundne rate til reference (kan bruges af simulator til at
+        // forstå den effektive basal-rate Hovorka-modellen kører med)
+        this.steadyStateBasalRate = bestRate;
 
         return this.glucoseConcentration;
     }

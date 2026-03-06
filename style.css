@@ -423,7 +423,7 @@ body {
 /* Statistics table: 3-column CSS Grid layout (label | 24h value | 14d value) */
 .stats-table {
     display: grid;
-    grid-template-columns: auto 1fr 1fr; /* First column auto-sized, others equal */
+    grid-template-columns: auto 1fr 1fr auto; /* Label, 24h, 14d, unit */
     gap: 8px 12px;
     align-items: center;
 }
@@ -442,7 +442,12 @@ body {
 }
 .stats-table > .value {
     text-align: right;
-    background-color: #edf2f7;           /* Light grey background for value cells */
+    background-color: #edf2f7;
+}
+.stats-table > .unit {
+    text-align: left;
+    color: #718096;
+    font-size: 0.85em;
 }
 
 
