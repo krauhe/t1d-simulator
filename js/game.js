@@ -142,6 +142,7 @@ function resetGame() {
     // Reset game state
     isPaused = true; pauseButton.textContent = "Genoptag"; game = null;
     cgmDataPoints = []; trueBgPoints = [];
+    yAxisMax = 16.0; // Nulstil y-akse til standard
 
     // Remove any active popup (e.g., game over screen)
     const existingPopup = document.querySelector('.popup-overlay');
@@ -166,6 +167,10 @@ function resetGame() {
 
     // Toggle button states: can start, can't reset
     resetButton.disabled = true; startButton.disabled = false;
+
+    // Ryd hændelsesloggen
+    const logList = document.getElementById('event-log-list');
+    if (logList) logList.innerHTML = '<div style="padding:4px; color:#a0aec0;">Ingen hændelser endnu</div>';
 
     // Redraw the empty graph
     drawGraph();

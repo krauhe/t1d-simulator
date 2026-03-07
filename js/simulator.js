@@ -743,9 +743,16 @@ class Simulator {
     // =========================================================================
     //
     // Points are earned for time spent in target BG ranges:
-    //   - Bonus range (5.0-6.0 mmol/L): 2 points per hour (tight control!)
-    //   - Normal range (4.0-10.0 mmol/L): 1 point per hour
-    //   - Outside range: 0 points per hour
+    //   - Bonus range (5.0-6.0 mmol/L): 2.0 points per hour (tight control!)
+    //   - Normal range (4.0-10.0 mmol/L): 1.0 point per hour
+    //   - Elevated hyper (10.0-14.0 mmol/L): 0.5 points per hour (orange zone)
+    //   - Hypo (<4.0) or high hyper (>14.0): 0 points per hour
+    //
+    // Asymmetrien afspejler at hypoglykæmi er akut farligt (kramper, besvimelse),
+    // mens moderat hyperglykæmi (10-14) er skadeligt på sigt men ikke akut.
+    // Baseret på International Consensus on TIR (Battelino 2019):
+    //   TAR Level 1: 10.1-13.9 mmol/L — bør være <25% af tiden
+    //   TAR Level 2: >13.9 mmol/L — bør være <5% af tiden
     //
     // @param {number} minutesPassed - Simulated minutes elapsed this tick
     // =========================================================================
@@ -760,11 +767,13 @@ class Simulator {
         // Determine point weight based on current BG
         let bgWeight = 0;
         if (inBonusNow) {
-            bgWeight = 2;       // Tight control bonus: 2x points
+            bgWeight = 2;         // Tight control bonus: 2x points
         } else if (this.trueBG >= 4.0 && this.trueBG <= 10.0) {
-            bgWeight = 1;       // In range: normal points
+            bgWeight = 1;         // In range: normal points
+        } else if (this.trueBG > 10.0 && this.trueBG <= 14.0) {
+            bgWeight = 0.5;       // Elevated hyper (orange zone): halve points
         } else {
-            bgWeight = 0;       // Out of range: no points
+            bgWeight = 0;         // Hypo (<4) eller høj hyper (>14): ingen points
         }
 
         // Accumulate points (converted from minutes to hours)
@@ -1186,7 +1195,7 @@ class Simulator {
             statusShort = 'KRITISK!';
         }
 
-        logEvent(`Keton-stik: ${measuredClamped.toFixed(1)} mmol/L — ${statusShort}`, 'event');
+        logEvent(`Keton-stik: ${measuredClamped.toFixed(1)} mmol/L — ${statusShort}`, 'ketone-test', { value: measuredClamped.toFixed(1) });
 
         // Floating label over CGM-positionen på grafen
         const popupColor = measuredClamped < 0.6 ? '#38a169' : measuredClamped < 1.5 ? '#d69e2e' : measuredClamped < 3.0 ? '#e67e22' : '#e53e3e';
@@ -1288,7 +1297,18 @@ class Simulator {
         if (this.isGameOver) return; // Don't trigger multiple game overs
 
         // Condition 1: Severe hypoglycemia — instant death
-        if (this.trueBG < 1.5) { this.gameOver("GAME OVER", `Hypoglykæmi! Dit sande blodsukker faldt under 1.5 mmol/L.<br>Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return; }
+        if (this.trueBG < 1.5) { this.gameOver("GAME OVER",
+            `<strong>Svær Hypoglykæmi</strong><br><br>` +
+            `Dit blodsukker faldt til ${this.trueBG.toFixed(1)} mmol/L — under den kritiske grænse på 1.5 mmol/L.<br><br>` +
+            `<strong>Hvad skete der?</strong><br>` +
+            `Hjernen er afhængig af glukose som energikilde. Ved meget lavt blodsukker ` +
+            `kan hjernen ikke fungere normalt, hvilket fører til kramper, bevidstløshed og i værste fald død.<br><br>` +
+            `<strong>Sådan undgår du det næste gang:</strong><br>` +
+            `• Spis hurtigt sukker (dextrose, juice) ved de første tegn på lavt blodsukker<br>` +
+            `• Hold øje med dit CGM — faldende kurve kræver handling<br>` +
+            `• Undgå for store insulindoser i forhold til maden<br>` +
+            `• Brug glukagon (✚) som nødbehandling ved alvorlig hypo<br><br>` +
+            `Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return; }
 
         // Condition 2: Extreme weight change
         if (Math.abs(this.weightChangeKg) > 5.0) { this.gameOver("GAME OVER", `Vægtændring! Din vægtændring oversteg 5 kg (${this.weightChangeKg.toFixed(1)} kg).<br>Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return; }
@@ -1318,11 +1338,31 @@ class Simulator {
         if (this.timeOfHighBGwithInsulinDeficit > 0 && (this.totalSimMinutes - this.timeOfHighBGwithInsulinDeficit > 6 * 60) && !this.dkaWarning1Given) {
             this.dkaWarning1Given = true;
             this.dkaGameOverTime = this.totalSimMinutes + 12 * 60; // 12 more hours until death
-            showPopup("Advarsel: Risiko for Ketoacidose!", "Højt blodsukker og insulinmangel i over 6 timer. Symptomer: tørst, hyppig vandladning, kvalme, træthed. Tag insulin hurtigst muligt!", false, true, false, false);
+            // shouldPause = true (sidste parameter) → pauser spillet så spilleren kan læse advarslen
+            showPopup("Advarsel: Risiko for Ketoacidose!",
+                "Du har haft højt blodsukker i lang tid. Kendte symptomer på ketoacidose:<br><br>" +
+                "<strong>Tidlige tegn:</strong> Øget tørst, hyppig vandladning, træthed, mundtørhed.<br>" +
+                "<strong>Advarselstegn:</strong> Kvalme, mavesmerter, hurtig vejrtrækning, acetonlugt fra ånde.<br><br>" +
+                "💡 <strong>Tip:</strong> Tag et keton-stik (🧪) for at tjekke dit ketonniveau. Overvej om du har fået nok insulin.",
+                false, true, false, true);
         }
         // DKA Death: 12 hours after the warning (18 hours total)
         if (this.dkaGameOverTime !== -1 && this.totalSimMinutes >= this.dkaGameOverTime) {
-             this.gameOver("GAME OVER", `Diabetisk Ketoacidose! Du reagerede ikke på advarslen om insulinmangel i tide.<br>Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return;
+             this.gameOver("GAME OVER",
+                `<strong>Diabetisk Ketoacidose (DKA)</strong><br><br>` +
+                `Dit blodsukker: ${this.trueBG.toFixed(1)} mmol/L<br>` +
+                `Dit ketonniveau: ${this.ketoneLevel.toFixed(1)} mmol/L<br><br>` +
+                `<strong>Hvad skete der?</strong><br>` +
+                `Uden tilstrækkeligt insulin kan kroppen ikke bruge glukose som energi. ` +
+                `I stedet forbrændes fedt, som producerer ketonstoffer. ` +
+                `Når ketoner ophobes i blodet, bliver det surt (acidose), ` +
+                `hvilket påvirker alle organer og kan føre til bevidstløshed og død.<br><br>` +
+                `<strong>Sådan undgår du det næste gang:</strong><br>` +
+                `• Hold øje med dit blodsukker — vedvarende høje værdier er et advarselstegn<br>` +
+                `• Tag et keton-stik (🧪) hvis dit blodsukker er højt i flere timer<br>` +
+                `• Giv insulin ved højt blodsukker — det er den vigtigste behandling<br>` +
+                `• Husk din daglige basal-insulin<br><br>` +
+                `Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return;
         }
 
         // Condition 4: Chronic complications (after 14 days of gameplay)
@@ -1371,7 +1411,7 @@ class Simulator {
     updateStats() {
         const periods = [
             { key: '24h', minutes: 24*60, displays: { tir: tir24hDisplay, titr: titr24hDisplay, avg: avgCgm24hDisplay, fast: fastInsulin24hDisplay, basal: basalInsulin24hDisplay, kcal: kcal24hDisplay }},
-            { key: '7d', minutes: 7*24*60, displays: { tir: tir14dDisplay, titr: titr14dDisplay, avg: avgCgm14dDisplay }}
+            { key: '7d', minutes: 7*24*60, displays: { tir: tir14dDisplay, titr: titr14dDisplay, avg: avgCgm14dDisplay, fast: fastInsulin7dDisplay, basal: basalInsulin7dDisplay, kcal: kcal7dDisplay }}
         ];
         periods.forEach(p => {
             const dataPoints = this.bgHistoryForStats.filter(point => point.time >= (this.totalSimMinutes - p.minutes));
@@ -1386,34 +1426,51 @@ class Simulator {
                     if (pt.trueBG >= 4 && pt.trueBG <= 10) inRangeCount++;
                     if (pt.trueBG >= 4 && pt.trueBG <= 8) inTightRangeCount++;
                 });
-                p.displays.tir.textContent = ((inRangeCount / dataPoints.length) * 100).toFixed(0) + "%";
-                p.displays.titr.textContent = ((inTightRangeCount / dataPoints.length) * 100).toFixed(0) + "%";
-                p.displays.avg.textContent = (sumCgm / dataPoints.length).toFixed(1);
+                const tirPct = (inRangeCount / dataPoints.length) * 100;
+                const titrPct = (inTightRangeCount / dataPoints.length) * 100;
+                const avgCgm = sumCgm / dataPoints.length;
 
-                // 24-hour period also shows insulin and calorie totals
-                if (p.key === '24h') {
-                    let totalFast24h = 0, totalBasal24h = 0, totalKcal24h = 0;
+                p.displays.tir.textContent = tirPct.toFixed(0) + "%";
+                p.displays.titr.textContent = titrPct.toFixed(0) + "%";
+                p.displays.avg.textContent = avgCgm.toFixed(1);
+
+                // Farveindikation baseret på kliniske mål
+                // TIR: grøn > 70%, orange 50-70%, rød < 50%
+                p.displays.tir.style.color = tirPct >= 70 ? '#38a169' : tirPct >= 50 ? '#d69e2e' : '#e53e3e';
+                // TITR: grøn > 50%, orange 30-50%, rød < 30%
+                p.displays.titr.style.color = titrPct >= 50 ? '#38a169' : titrPct >= 30 ? '#d69e2e' : '#e53e3e';
+                // Gns. CGM: grøn 5-8, orange 8-10 eller 4-5, rød > 10 eller < 4
+                p.displays.avg.style.color = (avgCgm >= 5 && avgCgm <= 8) ? '#38a169' : (avgCgm >= 4 && avgCgm <= 10) ? '#d69e2e' : '#e53e3e';
+
+                // Insulin- og kalorietotaler for perioden
+                if (p.displays.fast) {
+                    let totalFast = 0, totalBasal = 0, totalKcal = 0;
                     this.logHistory.filter(ev => ev.time >= (this.totalSimMinutes - p.minutes)).forEach(ev => {
-                        if (ev.type === 'insulin-fast') totalFast24h += ev.details.dose;
-                        if (ev.type === 'insulin-basal') totalBasal24h += ev.details.dose;
-                        if (ev.type === 'food') totalKcal24h += ev.details.kcal;
+                        if (ev.type === 'insulin-fast') totalFast += ev.details.dose;
+                        if (ev.type === 'insulin-basal') totalBasal += ev.details.dose;
+                        if (ev.type === 'food') totalKcal += ev.details.kcal;
                     });
-                    p.displays.fast.textContent = totalFast24h.toFixed(1);
-                    p.displays.basal.textContent = totalBasal24h.toFixed(0);
-                    p.displays.kcal.textContent = totalKcal24h.toFixed(0);
+
+                    // For 7d viser vi daglige gennemsnit, for 24h viser vi totaler
+                    const periodMinutes = Math.min(this.totalSimMinutes, p.minutes);
+                    const days = periodMinutes / (24 * 60);
+                    const divisor = (p.key === '7d' && days >= 1) ? days : 1;
+
+                    p.displays.fast.textContent = (totalFast / divisor).toFixed(1);
+                    p.displays.basal.textContent = (totalBasal / divisor).toFixed(0);
+                    p.displays.kcal.textContent = (totalKcal / divisor).toFixed(0);
 
                     // Kaloriebalance: indtag minus forbrug (hvile + motion)
-                    // Hvileforbrænding beregnes proportionalt med perioden
-                    const periodMinutes = Math.min(this.totalSimMinutes, p.minutes);
                     const restingBurn = this.restingKcalPerMinute * periodMinutes;
-                    let motionBurn24h = 0;
+                    let motionBurn = 0;
                     this.logHistory.filter(ev => ev.time >= (this.totalSimMinutes - p.minutes) && ev.type === 'motion').forEach(ev => {
-                        motionBurn24h += ev.details.kcalBurned || 0;
+                        motionBurn += ev.details.kcalBurned || 0;
                     });
-                    const balance = totalKcal24h - restingBurn - motionBurn24h;
-                    if (kcalBalance24hDisplay) {
-                        kcalBalance24hDisplay.textContent = (balance >= 0 ? '+' : '') + balance.toFixed(0);
-                        kcalBalance24hDisplay.style.color = balance < -200 ? '#e53e3e' : balance > 200 ? '#d69e2e' : '#38a169';
+                    const balance = (totalKcal - restingBurn - motionBurn) / divisor;
+                    const balanceDisplay = p.key === '7d' ? kcalBalance7dDisplay : kcalBalance24hDisplay;
+                    if (balanceDisplay) {
+                        balanceDisplay.textContent = (balance >= 0 ? '+' : '') + balance.toFixed(0);
+                        balanceDisplay.style.color = balance < -200 ? '#e53e3e' : balance > 200 ? '#d69e2e' : '#38a169';
                     }
                 }
             } else {

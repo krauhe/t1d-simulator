@@ -162,6 +162,18 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
     - Dehydrering forværrer DKA-forløb
     - Kunne forbedre symptom-advarsler, men risikerer at forstyrre gameplay
     - Overvej kun til "avanceret" tilstand eller baner med sygdomsscenarier
+22. Alkohol-effekt på blodsukker
+    - Akut: alkohol hæmmer glukoneogenese i leveren → hypoglykæmirisiko
+    - Forsinket effekt: op til 12-24 timer efter indtagelse
+    - Klinisk relevant: T1D-patienter skal være særligt opmærksomme
+23. Bruger-styret søvn/vågentid
+    - Spiller bestemmer selv hvornår de "går i seng" og "står op"
+    - Påvirker dawn-fænomenet, søvnkvalitet, og natlige interventioner
+24. Faste-ketose model
+    - Ketoner stiger fysiologisk ved faste (0.5 mmol/L efter nattefaste, 1-3 ved længere faste)
+    - Nuværende model: ketoner stiger kun ved insulinmangel + BG > 12
+    - Skal udvides til også at stige ved lav carb-indtag / faste, uanset insulin
+    - Vigtig skelnen: faste-ketose er IKKE farlig (vs. DKA som er insulin-mangel-drevet)
 
 ---
 

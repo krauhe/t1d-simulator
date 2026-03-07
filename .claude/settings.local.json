@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(start:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(node:*)",
+      "WebSearch",
+      "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

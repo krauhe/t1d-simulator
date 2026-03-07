@@ -35,7 +35,7 @@
 // This is similar to MATLAB's guidata or handles structure — a central place
 // where all UI element references are stored for easy access.
 // =============================================================================
-let startButton, resetButton, helpButton, pauseButton, speedSelector, dayDisplay, timeDisplay, cgmValueDisplayGraph, normoPointsDisplay, normoPointsWeighting, muteButton, carbsSlider, carbsValue, proteinSlider, proteinValue, fatSlider, fatValue, giveFoodButton, foodInfoDisplay, foodKcalDisplay, foodKeDisplay, dextroButton, burgerButton, avocadoButton, chickenButton, cakeButton, sodaButton, saladButton, cerealButton, fastInsulinSlider, fastInsulinValue, giveFastInsulinButton, longInsulinSlider, longInsulinValue, giveLongInsulinButton, motionIntensitySelect, motionDurationSelect, startMotionButton, motionKcalDisplay, fingerprickButton, ketoneTestButton, glucagonButton, debugTrueBgCheckbox, iobDisplay, cobDisplay, bgGraphCanvas, graphCtx, weightChangeSlider, weightChangeValue, steepDropWarningDiv, weightDisplay, icrDisplay, isfDisplay, carbEffectDisplay, basalDoseDisplay, restingKcalDisplay, tir24hDisplay, titr24hDisplay, avgCgm24hDisplay, fastInsulin24hDisplay, basalInsulin24hDisplay, kcal24hDisplay, tir14dDisplay, titr14dDisplay, avgCgm14dDisplay, lastBolusTimerDisplay, kcalBalance24hDisplay;
+let startButton, resetButton, helpButton, pauseButton, speedSelector, dayDisplay, timeDisplay, cgmValueDisplayGraph, normoPointsDisplay, normoPointsWeighting, muteButton, carbsSlider, carbsValue, proteinSlider, proteinValue, fatSlider, fatValue, giveFoodButton, foodInfoDisplay, foodKcalDisplay, foodKeDisplay, dextroButton, burgerButton, avocadoButton, chickenButton, cakeButton, sodaButton, saladButton, cerealButton, fastInsulinSlider, fastInsulinValue, giveFastInsulinButton, longInsulinSlider, longInsulinValue, giveLongInsulinButton, motionIntensitySelect, motionDurationSelect, startMotionButton, motionKcalDisplay, fingerprickButton, ketoneTestButton, glucagonButton, debugTrueBgCheckbox, iobDisplay, cobDisplay, bgGraphCanvas, graphCtx, weightChangeSlider, weightChangeValue, steepDropWarningDiv, weightDisplay, icrDisplay, isfDisplay, carbEffectDisplay, basalDoseDisplay, restingKcalDisplay, tir24hDisplay, titr24hDisplay, avgCgm24hDisplay, fastInsulin24hDisplay, basalInsulin24hDisplay, kcal24hDisplay, tir14dDisplay, titr14dDisplay, avgCgm14dDisplay, lastBolusTimerDisplay, kcalBalance24hDisplay, fastInsulin7dDisplay, basalInsulin7dDisplay, kcal7dDisplay, kcalBalance7dDisplay;
 
 
 // =============================================================================
@@ -190,6 +190,10 @@ function initializeApp() {
     avgCgm14dDisplay = document.getElementById('avgCgm14d');
     lastBolusTimerDisplay = document.getElementById('lastBolusTimer');
     kcalBalance24hDisplay = document.getElementById('kcalBalance24h');
+    fastInsulin7dDisplay = document.getElementById('fastInsulin7d');
+    basalInsulin7dDisplay = document.getElementById('basalInsulin7d');
+    kcal7dDisplay = document.getElementById('kcal7d');
+    kcalBalance7dDisplay = document.getElementById('kcalBalance7d');
 
     // --- Initial UI setup ---
     sizeCanvas();                  // Size the canvas to its container

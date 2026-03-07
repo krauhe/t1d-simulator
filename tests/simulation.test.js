@@ -60,7 +60,8 @@ const domGlobals = [
     'tir24hDisplay', 'titr24hDisplay', 'avgCgm24hDisplay',
     'fastInsulin24hDisplay', 'basalInsulin24hDisplay', 'kcal24hDisplay',
     'tir14dDisplay', 'titr14dDisplay', 'avgCgm14dDisplay',
-    'lastBolusTimerDisplay', 'kcalBalance24hDisplay'
+    'lastBolusTimerDisplay', 'kcalBalance24hDisplay',
+    'fastInsulin7dDisplay', 'basalInsulin7dDisplay', 'kcal7dDisplay', 'kcalBalance7dDisplay'
 ];
 
 domGlobals.forEach(name => { global[name] = mockElement(); });
@@ -392,6 +393,34 @@ test('Hoej intensitet opbygger akut stress (katekolaminer)', () => {
     // Hoej intensitet tilfojer 0.02 * simulatedMinutesPassed per tick til acuteStress
     assert(sim.acuteStressLevel > 0.1,
         `Akut stress efter hoej traening (${sim.acuteStressLevel.toFixed(3)}) skal vaere > 0.1`);
+});
+
+test('BG-fald under motion er stoerre med aktiv insulin end uden', () => {
+    // Fysiologisk: Insulin foerstaerker musklernes glukoseoptag under motion
+    // (via GLUT4 translokation). Derfor falder BG mere under motion HVIS
+    // der er aktiv insulin i kroppen — en vigtig klinisk pointe for T1D.
+    //
+    // I Hovorka-modellen ses dette via x1 og x2 (insulin-aktionsvariable)
+    // der foerstaerker glukose-transport og -disposal i muskler.
+    const simNoInsulin = createCleanSimulator();
+    setSimulatorBG(simNoInsulin, 10.0);
+    // Fjern al aktiv insulin for at isolere effekten
+    simNoInsulin.hovorka.state.S1 = 0;
+    simNoInsulin.hovorka.state.S2 = 0;
+    simNoInsulin.hovorka.state.I = 0;
+    simNoInsulin.startMotion("Lav", "30");
+    simulateMinutes(simNoInsulin, 30);
+    const dropNoInsulin = 10.0 - simNoInsulin.trueBG;
+
+    const simWithInsulin = createCleanSimulator();
+    setSimulatorBG(simWithInsulin, 10.0);
+    simWithInsulin.addFastInsulin(2); // 2 enheder aktiv insulin
+    simWithInsulin.startMotion("Lav", "30");
+    simulateMinutes(simWithInsulin, 30);
+    const dropWithInsulin = 10.0 - simWithInsulin.trueBG;
+
+    assert(dropWithInsulin > dropNoInsulin,
+        `BG-fald med insulin (${dropWithInsulin.toFixed(1)}) skal vaere stoerre end uden (${dropNoInsulin.toFixed(1)})`);
 });
 
 

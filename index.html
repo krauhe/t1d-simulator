@@ -42,10 +42,10 @@
                      x60 = 1 hour per real minute, x240 = 4 hours per real minute, etc. -->
                 <label for="speedSelector">Hastighed:</label>
                 <select id="speedSelector">
-                    <option value="60">1t / min (x60)</option>
-                    <option value="240" selected>4t / min (x240)</option>
-                    <option value="720">12t / min (x720)</option>
-                    <option value="1440">24t / min (x1440)</option>
+                    <option value="60">1t / min</option>
+                    <option value="240" selected>4t / min</option>
+                    <option value="720">12t / min</option>
+                    <option value="1440">24t / min</option>
                 </select>
                 <button id="pauseButton">Pause</button>
             </div>
@@ -223,14 +223,31 @@
                 <!-- STATS PANEL — Patient data and clinical metrics -->
                 <div id="stats-panel">
                     <!-- Fixed patient parameters (don't change during gameplay) -->
-                    <div>
+                    <div class="player-data-table">
                         <h4 title="Dine personlige diabetes-parametre. Disse er konstante i hele simulationen.">Spiller Data</h4>
-                        <div title="Din kropsvægt, indtastet ved spilstart."><span>Vægt:</span> <span id="weightDisplay">--</span> kg</div>
-                        <div title="Insulin/Kulhydrat-Ratio: Hvor mange gram kulhydrat dækker 1 enhed (E) hurtigtvirkende insulin? Bruges til at beregne insulin til måltider."><span>ICR:</span> <span id="icrDisplay">--</span> g/E</div>
-                        <div title="Insulin Sensitivitets-Faktor: Hvor meget sænker 1 enhed (E) hurtigtvirkende insulin dit blodsukker? Bruges til korrektion af højt blodsukker."><span>ISF:</span> <span id="isfDisplay">--</span> (mmol/L)/E</div>
-                        <div title="Kulhydrat-Effekt: Hvor meget stiger dit blodsukker (i mmol/L) for hvert gram kulhydrat, du spiser? Udregnes som ISF / ICR."><span>Kulh. effekt:</span> <span id="carbEffectDisplay">--</span> g/(mmol/L)</div>
-                        <div title="Anbefalet daglig basal insulin-dosis, beregnet fra din ISF via 100-reglen (TDD = 100/ISF, basal = 45% af TDD)."><span>Basal dosis:</span> <span id="basalDoseDisplay">--</span> E/dag</div>
-                        <div title="Hvileforbrug: Dit basale kalorieforbrug pr. dag, beregnet ud fra din vægt."><span>Hvileforbrug:</span> <span id="restingKcalDisplay">--</span> kcal/dag</div>
+                        <div class="label" title="Din kropsvægt, indtastet ved spilstart.">Vægt</div>
+                        <div class="value" id="weightDisplay">--</div>
+                        <div class="unit">kg</div>
+
+                        <div class="label" title="Insulin/Kulhydrat-Ratio: Hvor mange gram kulhydrat dækker 1 enhed (E) hurtigtvirkende insulin?">ICR</div>
+                        <div class="value" id="icrDisplay">--</div>
+                        <div class="unit">g/E</div>
+
+                        <div class="label" title="Insulin Sensitivitets-Faktor: Hvor meget sænker 1 enhed (E) hurtigtvirkende insulin dit blodsukker?">ISF</div>
+                        <div class="value" id="isfDisplay">--</div>
+                        <div class="unit">(mmol/L)/E</div>
+
+                        <div class="label" title="Kulhydrat-Effekt: Hvor meget stiger dit blodsukker for hvert gram kulhydrat? Udregnes som ISF / ICR.">Kulh. effekt</div>
+                        <div class="value" id="carbEffectDisplay">--</div>
+                        <div class="unit">g/(mmol/L)</div>
+
+                        <div class="label" title="Anbefalet daglig basal insulin-dosis, beregnet fra din ISF via 100-reglen.">Basal dosis</div>
+                        <div class="value" id="basalDoseDisplay">--</div>
+                        <div class="unit">E/dag</div>
+
+                        <div class="label" title="Hvileforbrug: Dit basale kalorieforbrug pr. dag, beregnet ud fra din vægt.">Hvileforbrug</div>
+                        <div class="value" id="restingKcalDisplay">--</div>
+                        <div class="unit">kcal/dag</div>
                     </div>
                     <hr>
 
@@ -247,10 +264,10 @@
 
                     <!-- Clinical statistics table: TIR, TITR, average CGM, insulin, calories -->
                     <div class="stats-table">
-                        <div class="header">Beskrivelse</div>
-                        <div class="header">24 Timer</div>
-                        <div class="header">7 Dage</div>
-                        <div class="header">Enhed</div>
+                        <div class="header"></div>
+                        <div class="header stats-middel-header" id="stats-middel-span">1 Døgn</div>
+                        <div class="header stats-middel-header">7 Døgn</div>
+                        <div class="header"></div>
 
                         <!-- TIR: Time In Range (4-10 mmol/L) — clinical standard metric -->
                         <div class="label" title="Time in Range: Procentdel af tiden hvor dit sande blodsukker har været mellem 4.0 og 10.0 mmol/L.">TIR (4-10)</div>
@@ -273,29 +290,90 @@
                         <!-- 24-hour insulin and calorie totals -->
                         <div class="label">Hurtig Insulin</div>
                         <div class="value" id="fastInsulin24h">--</div>
-                        <div class="value">--</div>
-                        <div class="unit">E</div>
+                        <div class="value" id="fastInsulin7d">--</div>
+                        <div class="unit">E/dag</div>
 
                         <div class="label">Basal Insulin</div>
                         <div class="value" id="basalInsulin24h">--</div>
-                        <div class="value">--</div>
-                        <div class="unit">E</div>
+                        <div class="value" id="basalInsulin7d">--</div>
+                        <div class="unit">E/dag</div>
 
                         <div class="label">Kalorieindtag</div>
                         <div class="value" id="kcal24h">--</div>
-                        <div class="value">--</div>
-                        <div class="unit">kcal</div>
+                        <div class="value" id="kcal7d">--</div>
+                        <div class="unit">kcal/dag</div>
 
                         <!-- Kalorieunderskud: indtag minus forbrug (hvile + motion) -->
                         <div class="label" title="Kaloriebalance: indtag minus forbrug (hvileforbrug + motion). Negativt tal = underskud → vægttab.">Kal. balance</div>
                         <div class="value" id="kcalBalance24h">--</div>
-                        <div class="value">--</div>
-                        <div class="unit">kcal</div>
+                        <div class="value" id="kcalBalance7d">--</div>
+                        <div class="unit">kcal/dag</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- ===================================================================
+         HJÆLP-TEKST — Indholdet af hjælp-popuppen.
+         ===================================================================
+         Ligger i et <template>-tag som er usynligt i browseren.
+         showHelpPopup() i ui.js henter indholdet herfra.
+         Du kan redigere teksten direkte her — ændringer vises næste gang
+         du åbner hjælp-popuppen (genindlæs siden).
+         =================================================================== -->
+    <template id="help-content-template">
+        <h2 class="info-title">Diabetes-Dysten</h2>
+
+        <h3>Formål</h3>
+        <p>
+          Jeg fik konstateret Type 1 Diabetes i februar 2025 og lavede denne simulator
+          for at forstå min nye hverdag bedre. Håbet er at andre nydiagnosticerede
+          — og deres pårørende — kan lege sig til viden om blodsukkerstyring i et
+          sikkert, simuleret miljø, hvor fejl ikke har konsekvenser i den virkelige
+          verden. Simulationen er baseret på validerede fysiologiske modeller,
+          AI-assisteret udvikling, og personlige erfaringer fra de første måneder
+          med T1D.<br>— Kristian R Harreby
+        </p>
+        <p style="color: red;">
+          <strong>Disclaimer:</strong> Simulationen er IKKE en guide til kliniske
+          beslutninger. Konsulter altid sundhedspersonale for rådgivning om din
+          egen situation.
+        </p>
+
+        <h3>Spilmekanikker</h3>
+        <ul>
+          <li><strong>Mål:</strong> Opnå så mange Normoglykæmi-points som muligt ved at holde blodsukkeret stabilt.</li>
+          <li><strong>Points:</strong> 5–6 mmol/L = 2x (grøn bonus-zone), 4–10 = 1x, 10–14 = 0.5x (orange zone), &lt;4 eller &gt;14 = 0 points.</li>
+          <li><strong>Personlig profil:</strong> Indtast din vægt, ICR og ISF ved start — simulatoren tilpasser sig dine parametre.</li>
+        </ul>
+
+        <h3>Fysiologi &amp; Interventioner</h3>
+        <ul>
+          <li><strong>Mad:</strong> Kulhydrater hæver BG hurtigt (20–60 min). Protein bidrager langsomt (~25% af kulhydrateffekt). Fedt forsinker al absorption.</li>
+          <li><strong>Hurtig insulin:</strong> Onset 10–15 min, peak 1–2 timer, varighed 3–5 timer. Sænker BG med ca. ISF pr. enhed.</li>
+          <li><strong>Basal insulin:</strong> Dækker kroppens grundbehov over 24+ timer. Husk den dagligt!</li>
+          <li><strong>Motion:</strong> Sænker BG under aktivitet og øger insulinfølsomheden i op til 30 timer efter. Effekten er størst med aktiv insulin i kroppen.</li>
+          <li><strong>Dawn-effekt:</strong> Leveren frigiver ekstra glukose om morgenen (ca. 04:00–08:00).</li>
+          <li><strong>Søvn:</strong> Natlige interventioner (22:00–07:00) forstyrrer søvnen og øger insulinresistensen næste dag.</li>
+          <li><strong>Stress:</strong> Hypoglykæmi og intensiv motion udløser stresshormoner der hæver BG (kontraregulering).</li>
+        </ul>
+
+        <h3>Målinger</h3>
+        <ul>
+          <li><strong>CGM:</strong> Viser blodsukker med 5–10 min forsinkelse og nogen usikkerhed. Ikke altid præcis!</li>
+          <li><strong>Fingerprik:</strong> Mere præcis end CGM (±5%). Brug den til at dobbelttjekke.</li>
+          <li><strong>Keton-stik:</strong> Mål ketoner ved vedvarende højt BG. Forhøjede ketoner + højt BG = risiko for ketoacidose.</li>
+        </ul>
+
+        <h3>Game Over</h3>
+        <ul>
+          <li><strong>Svær hypoglykæmi:</strong> Sandt BG falder under 1.5 mmol/L — hjernen kan ikke fungere.</li>
+          <li><strong>Ketoacidose (DKA):</strong> Vedvarende højt BG uden tilstrækkeligt insulin. Du advares med symptomer først.</li>
+          <li><strong>Vægtændring:</strong> Samlet ændring overstiger ±5 kg.</li>
+          <li><strong>Komplikationer:</strong> 14-dages gennemsnits-BG over 15 mmol/L.</li>
+        </ul>
+    </template>
 
     <!-- ===================================================================
          SCRIPT LOADING ORDER — Critical! Files share global scope.

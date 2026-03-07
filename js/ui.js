@@ -48,9 +48,14 @@ function updateUI() {
     dayDisplay.textContent = game.day;
 
     // Format time as HH:MM with zero-padding
-    // padStart(2, '0') ensures single digits get a leading zero: 7 → "07"
+    // Ved høje hastigheder rundes minuttallet ned til nærmeste 5 eller 10
+    // for at undgå at tiden blinker kaotisk hurtigt i displayet.
     const hours = String(Math.floor(game.timeInMinutes / 60)).padStart(2, '0');
-    const minutes = String(Math.floor(game.timeInMinutes % 60)).padStart(2, '0');
+    let rawMinutes = Math.floor(game.timeInMinutes % 60);
+    const speed = game.simulationSpeed || 60;
+    if (speed >= 1440) rawMinutes = Math.floor(rawMinutes / 10) * 10;       // 24t/min → vis pr. 10 min
+    else if (speed >= 720) rawMinutes = Math.floor(rawMinutes / 5) * 5;     // 12t/min → vis pr. 5 min
+    const minutes = String(rawMinutes).padStart(2, '0');
     timeDisplay.textContent = `${hours}:${minutes}`;
 
     // Display values with appropriate precision
@@ -109,9 +114,10 @@ function updatePlayerFixedDataUI() {
 //   x_pixel = padding.left + (timeInDay / 1440) * graphWidth
 // =============================================================================
 
-// yAxisMax: dynamic upper limit of the y-axis. Starts at 12 mmol/L,
-// expands when CGM readings exceed 11.5, contracts back when they drop.
-let yAxisMax = 12.0;
+// yAxisMax: dynamic upper limit of the y-axis. Starts at 16 mmol/L,
+// expands to 21 when readings exceed 15, then further in steps of 2 (max 35).
+// Contracts back to 16 when values drop below 14.
+let yAxisMax = 16.0;
 
 function drawGraph() {
     if (!bgGraphCanvas) return; // Guard against premature calls before DOM is ready
@@ -131,10 +137,11 @@ function drawGraph() {
     const visibleCGMPoints = cgmDataPoints.slice(-MAX_GRAPH_POINTS_PER_DAY);
     visibleCGMPoints.forEach(p => { if (p.value > currentMaxCGMOnGraph) currentMaxCGMOnGraph = p.value; });
 
-    // Expand y-axis if needed (in steps of 2, max 25)
-    // Contract back to 12 when values drop below 10
-    if (currentMaxCGMOnGraph > 11.5 && yAxisMax < Math.min(25, currentMaxCGMOnGraph + 2)) yAxisMax = Math.ceil((currentMaxCGMOnGraph + 2) / 2) * 2;
-    else if (currentMaxCGMOnGraph < 10.0 && yAxisMax > 12.0) yAxisMax = 12.0;
+    // Expand y-axis: først til 21 når BG > 15, derefter i trin af 2 (max 35).
+    // Contract: tilbage til 16 når BG falder under 14.
+    if (currentMaxCGMOnGraph > 15 && yAxisMax < 21) yAxisMax = 21;
+    else if (currentMaxCGMOnGraph > 19 && yAxisMax < Math.min(35, currentMaxCGMOnGraph + 2)) yAxisMax = Math.ceil((currentMaxCGMOnGraph + 2) / 2) * 2;
+    if (currentMaxCGMOnGraph < 14.0 && yAxisMax > 16.0) yAxisMax = 16.0;
     const range = yAxisMax - 0; if (range <= 0) return;
 
     // --- Chart area dimensions ---
@@ -155,12 +162,14 @@ function drawGraph() {
     graphCtx.fillRect(padding.left, padding.top, xNightEnd - padding.left, graphHeight);                  // Midnight to 07:00
 
     // --- BG zone coloring ---
-    // Green zone: 4.0-10.0 mmol/L (target range)
-    // Red zones: below 4.0 (hypoglycemia) and above 10.0 (hyperglycemia)
+    // Green zone: 4.0-10.0 mmol/L (target range, 1x points)
+    // Orange zone: 10.0-14.0 mmol/L (elevated hyper, 0.5x points)
+    // Red zones: below 4.0 (hypo, akut farligt) og above 14.0 (høj hyper, 0 points)
     const zones = [
-        { min: 4.0, max: 10.0, color: 'rgba(72, 187, 120, 0.15)' },   // Green: target
-        { min: 0, max: 3.99, color: 'rgba(229, 62, 62, 0.1)' },       // Red: hypo danger
-        { min: 10.01, max: yAxisMax, color: 'rgba(229, 62, 62, 0.1)' }, // Red: hyper danger
+        { min: 4.0, max: 10.0, color: 'rgba(72, 187, 120, 0.15)' },     // Grøn: target
+        { min: 0, max: 3.99, color: 'rgba(229, 62, 62, 0.12)' },         // Rød: hypo — akut fare
+        { min: 10.01, max: 14.0, color: 'rgba(214, 158, 46, 0.10)' },    // Orange: forhøjet hyper
+        { min: 14.01, max: yAxisMax, color: 'rgba(229, 62, 62, 0.10)' }, // Rød: høj hyper
     ];
     zones.forEach(zone => {
         // Convert BG values to pixel y-coordinates (remember: y is inverted on canvas)
@@ -170,31 +179,23 @@ function drawGraph() {
         graphCtx.fillRect(padding.left, y_min_px, graphWidth, y_max_px - y_min_px);
     });
 
-    // --- Horizontal reference lines at key BG thresholds ---
-    // 1.5: fatal hypo (red dashed)
-    // 4.0: lower target boundary
-    // 5.5: ideal center (green dashed)
-    // 8.0: upper tight range boundary
-    // 10.0: upper target boundary
-    [1.5, 4, 5.5, 8, 10].forEach(val => {
-        const y = padding.top + graphHeight - ((val) / range) * graphHeight;
-        graphCtx.beginPath();
-        graphCtx.moveTo(padding.left, y);
-        graphCtx.lineTo(padding.left + graphWidth, y);
-        if (val === 1.5) {
-            // Fatal hypo threshold: bold red dashed line
-            graphCtx.strokeStyle = 'rgba(229, 62, 62, 0.8)';
-            graphCtx.lineWidth = 2;
-            graphCtx.setLineDash([2, 2]);
-        } else {
-            // Target boundaries: light grey; ideal center: green dashed
-            graphCtx.strokeStyle = (val === 5.5) ? 'rgba(76, 175, 80, 0.7)' : 'rgba(0, 0, 0, 0.1)';
-            graphCtx.lineWidth = (val === 4 || val === 10) ? 1.5 : 1;
-            graphCtx.setLineDash((val === 5.5) ? [4, 4] : []);
-        }
-        graphCtx.stroke();
-    });
-    graphCtx.setLineDash([]); // Reset dash pattern
+    // --- Fatal hypo threshold line (1.5 mmol/L) ---
+    // Kun denne ene linje tegnes — zone-farverne kommunikerer de øvrige grænser.
+    const yHypo = padding.top + graphHeight - (1.5 / range) * graphHeight;
+    graphCtx.beginPath();
+    graphCtx.moveTo(padding.left, yHypo);
+    graphCtx.lineTo(padding.left + graphWidth, yHypo);
+    graphCtx.strokeStyle = 'rgba(229, 62, 62, 0.8)';
+    graphCtx.lineWidth = 2;
+    graphCtx.setLineDash([2, 2]);
+    graphCtx.stroke();
+    graphCtx.setLineDash([]);
+
+    // --- Bonus zone baggrund (5.0-6.0 mmol/L) — tydeligere markering ---
+    const bonusYtop = padding.top + graphHeight - (6.0 / range) * graphHeight;
+    const bonusYbot = padding.top + graphHeight - (5.0 / range) * graphHeight;
+    graphCtx.fillStyle = 'rgba(72, 187, 120, 0.12)';
+    graphCtx.fillRect(padding.left, bonusYtop, graphWidth, bonusYbot - bonusYtop);
 
     // --- Chart border ---
     graphCtx.strokeStyle = '#a0aec0'; graphCtx.lineWidth = 1;
@@ -260,10 +261,12 @@ function drawGraph() {
             graphCtx.fillText('🩸', x, y);
         } else {
             // Regular CGM reading: small colored circle
+            // Farver afspejler scoring-zoner: grøn=target, orange=forhøjet, rød=fare
             graphCtx.beginPath();
             graphCtx.arc(x, y, 3, 0, 2 * Math.PI); // 3px radius circle
-            if (p.value < 4.0 || p.value > 10.0) graphCtx.fillStyle = '#e53e3e'; // Red: danger
-            else graphCtx.fillStyle = '#38a169'; // Green: in range
+            if (p.value < 4.0 || p.value > 14.0) graphCtx.fillStyle = '#e53e3e';      // Rød: akut fare
+            else if (p.value > 10.0) graphCtx.fillStyle = '#d69e2e';                    // Orange: forhøjet
+            else graphCtx.fillStyle = '#38a169';                                         // Grøn: i target
             graphCtx.fill();
         }
     });
@@ -278,7 +281,15 @@ function drawGraph() {
             graphCtx.textAlign = "center";
             graphCtx.font = "14px Arial";
 
-            if(event.type === 'food') {
+            if(event.type === 'ketone-test') {
+                // Keton-stik: blivende ikon på x-aksen med ketonværdi
+                graphCtx.fillStyle = '#805ad5'; // Lilla — matcher keton-knappen
+                graphCtx.fillText('🧪', x, yPos);
+                graphCtx.font = "bold 9px Segoe UI";
+                graphCtx.fillStyle = '#805ad5';
+                const ketonVal = event.details.value || '';
+                graphCtx.fillText(ketonVal, x, yPos - 12);
+            } else if(event.type === 'food') {
                 const icon = event.details.icon || '🍴';
                 graphCtx.fillText(icon, x, yPos);
                 // For custom meals (not presets), show carb equivalent (KE) label
@@ -355,8 +366,9 @@ function drawGraph() {
             const x = padding.left + ((lbl.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
             const baseY = padding.top + graphHeight - ((lbl.value) / range) * graphHeight;
 
-            // Animation: svæv opad (30px over tid) og fade ud
-            const yOffset = -30 * progress;         // Bevæg op
+            // Animation: start 30px OVER kurven og svæv yderligere 25px opad
+            // Sikrer at labelen ikke dækker for data-punkterne
+            const yOffset = -30 - 25 * progress;    // Start over kurven, bevæg videre op
             const alpha = 1.0 - progress * 0.8;     // Fade: 1.0 → 0.2
             const y = baseY + yOffset;
 
@@ -405,43 +417,24 @@ function showHelpPopup() {
     if(document.querySelector('.popup-overlay')) return; // Prevent duplicate popups
     if (game && !isPaused) togglePause(); // Pause the game while reading help
 
-    // Create the popup DOM structure
     const overlay = document.createElement('div');
     overlay.className = 'popup-overlay';
     const content = document.createElement('div');
     content.className = 'popup-content';
-    content.innerHTML = `
-        <h2 class="info-title">Hjælp & Information</h2>
-        <p>Jeg fik konstateret Type 1 Diabetes i februar 2025 og har lavet denne simulator for at blive klogere på sygdommen. Simulatoren er lavet med hjælp fra AI, inspiration fra litteraturen og lidt personlige erfaringer fra de første måneder med T1D.<br>- Kristian R Harreby</p>
-        <p style="color: red;"><strong>Disclaimer:</strong> Simulationen er IKKE en guide til kliniske beslutninger vedrørende diabetesbehandling. Konsulter altid sundhedspersonale for konkret medicinsk rådgivning om din egen situation.</p>
-        <h3>Spilmekanikker</h3>
-        <ul>
-            <li><strong>Mål:</strong> Opnå så mange 'Normoglykæmi-points' som muligt ved at holde dit blodsukker stabilt i målområdet (ideelt 4-8 mmol/L).</li>
-            <li><strong>Usikkerheder:</strong> Vær opmærksom på usikkerheder! Madoptagelse varierer, insulins virkning er ikke altid ens, og CGM-målingerne er ikke 100% præcise.</li>
-            <li><strong>Mad:</strong> Kulhydrater virker hurtigt. Protein og fedt forsinker og forlænger blodsukkerstigningen.</li>
-            <li><strong>Insulin:</strong> Hurtig insulin virker 2-6 timer. Basal dækker grundbehov over 24+ timer.</li>
-            <li><strong>Motion:</strong> Sænker BG direkte og øger insulinfølsomheden i op til 30 timer efter.</li>
-            <li><strong>Dawn Effect:</strong> Leveren frigiver mere glukose om morgenen (ca. 03:00-08:00).</li>
-        </ul>
-        <h3>Game Over Scenarier</h3>
-        <ul>
-            <li><strong>Hypoglykæmi:</strong> Sandt blodsukker < 1.5 mmol/L.</li>
-            <li><strong>Ketoacidose (DKA):</strong> Vedvarende højt BG med insulinmangel. Du advares først.</li>
-            <li><strong>Vægtændring:</strong> Samlet vægtændring overstiger +/- 5 kg.</li>
-            <li><strong>Komplikationer:</strong> 14-dages gennemsnitligt BG er > 15 mmol/L.</li>
-        </ul>
-        <div class="popup-button-container">
-            <button id="help-ok-button">OK</button>
-        </div>`;
+
+    // Hjælp-teksten hentes fra <template id="help-content-template"> i index.html.
+    // Template-tags er usynlige i browseren men kan læses af JavaScript.
+    // Rediger teksten direkte i index.html under template-tagget.
+    const template = document.getElementById('help-content-template');
+    content.innerHTML = template.innerHTML + `<div class="popup-button-container"><button id="help-ok-button">OK</button></div>`;
     overlay.appendChild(content);
     document.body.appendChild(overlay);
-
-    // Close handler: remove popup and resume game
     document.getElementById('help-ok-button').addEventListener('click', () => {
         document.body.removeChild(overlay);
         if (game && isPaused && !game.isGameOver) togglePause();
     });
 }
+
 
 /**
  * showPopup — Display a general-purpose modal popup.
@@ -567,9 +560,23 @@ function updateMotionKcal() {
 // Hver entry viser: klokkeslæt, tid siden hændelsen, og beskrivelse.
 // Nyttigt for: pre-bolus timing, post-motion awareness, debugging.
 // =============================================================================
+// Holder styr på hvornår event log sidst blev opdateret (sim-minutter).
+// Bruges til at throttle opdateringerne ved høje hastigheder.
+let _lastEventLogUpdateMin = -1;
+
 function updateEventLog() {
     const logList = document.getElementById('event-log-list');
     if (!logList || !game) return;
+
+    // Throttle opdateringer ved høje hastigheder for et roligere visuelt display.
+    // Ved 720x opdateres hvert 5. sim-minut, ved 1440x hvert 10. sim-minut.
+    const speed = game.simulationSpeed || 60;
+    let updateInterval = 1; // opdater hvert minut normalt
+    if (speed >= 1440) updateInterval = 10;
+    else if (speed >= 720) updateInterval = 5;
+    const roundedNow = Math.floor(game.totalSimMinutes / updateInterval) * updateInterval;
+    if (roundedNow === _lastEventLogUpdateMin) return; // Spring over — intet nyt at vise
+    _lastEventLogUpdateMin = roundedNow;
 
     // Vis de seneste 8 events (nyeste først)
     const recentEvents = game.logHistory.slice(-8).reverse();
@@ -580,13 +587,19 @@ function updateEventLog() {
     }
 
     // Formatér "tid siden" som fx "12min", "1t 30min", "3t 15min"
+    // Ved høje hastigheder rundes til 5/10-min intervaller for roligere display.
     function formatTimeSince(eventTime) {
-        const minSince = Math.floor(game.totalSimMinutes - eventTime);
+        let minSince = Math.floor(game.totalSimMinutes - eventTime);
+        if (minSince < 1) return 'nu';
+        // Afrund til 5 eller 10 min ved høje hastigheder
+        const speed = game.simulationSpeed || 60;
+        if (speed >= 1440) minSince = Math.floor(minSince / 10) * 10;
+        else if (speed >= 720) minSince = Math.floor(minSince / 5) * 5;
         if (minSince < 1) return 'nu';
         const h = Math.floor(minSince / 60);
         const m = minSince % 60;
-        if (h > 0) return `${h}t ${m}m`;
-        return `${m}min`;
+        if (h > 0) return `${h}t ${String(m).padStart(2, '0')}m`;
+        return `${String(m).padStart(2, '0')}min`;
     }
 
     // Formatér klokkeslæt fra totalSimMinutes

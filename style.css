@@ -420,17 +420,73 @@ body {
     box-shadow: 0 0 3px rgba(0,0,0,0.3);
 }
 
+/* Player data table: same visual style as stats-table but 3 columns (label | value | unit) */
+.player-data-table {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px 12px;
+    align-items: center;
+}
+.player-data-table h4 {
+    grid-column: 1 / -1; /* Span all columns */
+    font-size: 1.1em;
+    color: #2c5282;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 5px;
+    margin: 0 0 4px 0;
+    font-weight: bold;
+}
+.player-data-table > .label {
+    font-weight: bold;
+    text-align: left;
+    padding: 4px;
+}
+.player-data-table > .value {
+    text-align: right;
+    background-color: #edf2f7;
+    padding: 4px;
+    border-radius: 3px;
+}
+.player-data-table > .unit {
+    text-align: left;
+    color: #718096;
+    font-size: 0.85em;
+    padding: 4px;
+}
+
 /* Statistics table: 3-column CSS Grid layout (label | 24h value | 14d value) */
 .stats-table {
     display: grid;
-    grid-template-columns: auto 1fr 1fr auto; /* Label, 24h, 14d, unit */
+    grid-template-columns: auto 1fr 1fr auto; /* Label, 24h, 7d, unit */
     gap: 8px 12px;
     align-items: center;
+    padding-top: 12px; /* Plads til "Middelværdi"-overskriften */
+    position: relative;
 }
 .stats-table .header {
     font-weight: bold;
     color: #2c5282;
     text-align: right;
+}
+/* "Middelværdi" label centreret over de to periode-kolonner */
+.stats-middel-header {
+    text-align: center !important;
+    font-size: 0.85em;
+    position: relative;
+}
+/* Vis "Middel" som en fælles overskrift via ::before på den første periode-header */
+#stats-middel-span::before {
+    content: "Middelværdi";
+    position: absolute;
+    top: -16px;
+    left: 0;
+    /* Spænd over begge kolonner — bredden strækker sig ud over dette element */
+    width: calc(200% + 12px); /* 2 kolonner + gap */
+    text-align: center;
+    font-size: 0.8em;
+    color: #718096;
+    font-weight: normal;
+    font-style: italic;
 }
 .stats-table > div {
      padding: 4px;
