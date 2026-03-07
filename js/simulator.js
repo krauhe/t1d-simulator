@@ -707,21 +707,25 @@ class Simulator {
         // During the first 3 days, remind the player to take their basal insulin
         // if they haven't done so by morning (8:00-12:00). This teaches the
         // fundamental importance of basal insulin in T1D management.
-        if (this.day <= 3 && !this.basalReminderGivenForDay[this.day-1] && currentHour >= 8 && currentHour < 12) {
+        if (this.day <= 3 && currentHour >= 8 && currentHour < 12) {
             const startOfDay = (this.day - 1) * 24 * 60;
             const hasTakenBasalToday = this.logHistory.some(e => e.type === 'insulin-basal' && e.time >= startOfDay);
+            const reminderId = `basal_reminder_day_${this.day}`;
             if (!hasTakenBasalToday) {
-                const existingReminder = this.graphMessages.find(msg => msg.id === `basal_reminder_day_${this.day}`);
+                // Vis reminder hvis den ikke allerede er oppe.
+                // expireTime: udløb ved kl. 12:00 (slutningen af vinduet)
+                const existingReminder = this.graphMessages.find(msg => msg.id === reminderId);
                 if (!existingReminder) {
+                    const minutesTilKl12 = (12 * 60) - this.timeInMinutes;
                     this.graphMessages.push({
-                        id: `basal_reminder_day_${this.day}`,
+                        id: reminderId,
                         text: "Husk basal insulin!",
-                        expireTime: this.totalSimMinutes + (120 * (this.simulationSpeed/60))
+                        expireTime: this.totalSimMinutes + Math.max(60, minutesTilKl12)
                     });
                 }
             } else {
                 // Basal er taget — fjern eventuel reminder med det samme
-                this.graphMessages = this.graphMessages.filter(msg => msg.id !== `basal_reminder_day_${this.day}`);
+                this.graphMessages = this.graphMessages.filter(msg => msg.id !== reminderId);
             }
         }
 

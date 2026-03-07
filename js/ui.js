@@ -457,9 +457,16 @@ function showHelpPopup() {
  * @param {boolean} shouldPause     - If true: pause the game while popup is open
  */
 function showPopup(title, message, isGameOverPopup, isEventPopup = false, isInfoPopup = false, shouldPause = true) {
-    // Prevent multiple popups from stacking
+    // Hvis en game over popup skal vises, fjern eksisterende popup først
+    // (ellers kan game over aldrig vises hvis en DKA-advarsel er åben)
     const existingPopup = document.querySelector('.popup-overlay');
-    if (existingPopup) return;
+    if (existingPopup) {
+        if (isGameOverPopup) {
+            document.body.removeChild(existingPopup);
+        } else {
+            return; // Ikke-game-over popups stacker ikke
+        }
+    }
 
     if (shouldPause && game && !isPaused) togglePause();
 
