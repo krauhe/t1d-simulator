@@ -184,12 +184,21 @@ class Simulator {
         // --- Scoring ---
         this.normoPoints = 0;          // Points earned for time spent in target BG range
 
-        // Night intervention penalty: if you eat/inject at night (22:00-07:00),
-        // point earning is halved for a period. This simulates the real-world
-        // principle that a well-managed diabetes shouldn't require frequent
-        // nighttime interventions (ideally, basal insulin handles the night).
-        this.nightInterventionPenaltyFactor = 1.0;
-        this.nightInterventionPenaltyEndTime = -1;
+        // Søvnforstyrrelses-model: natlige interventioner (22:00-07:00) koster
+        // søvn, hvilket øger kronisk stress næste dag. Baseret på:
+        //   Donga et al. 2010 (Diabetes Care): 1 nat delvis søvnrestriktion
+        //   reducerer insulinfølsomhed ~21% hos T1D.
+        //   Zheng et al. 2017 (PMC): dårlig søvnkvalitet forstærker dawn-fænomenet.
+        //
+        // Mekanik: hver vågen-hændelse om natten koster 1 times søvn.
+        //   Hændelser inden for 30 min af hinanden tæller som samme vågenhed.
+        //   Max 4 timers søvntab pr. nat (ceiling for at undgå urealistisk stress).
+        //   Søvntab konverteres til chronicStressLevel ved sovetid-slut (kl. 07):
+        //     chronicStress += lostSleepHours * 0.06
+        //   Ved max søvntab (4t): chronicStress += 0.24 → ~24% øget insulinresistens
+        this.lostSleepHoursTonight = 0;         // Akkumuleret søvntab denne nat
+        this.lastNightAwakeningTime = -Infinity; // Tidspunkt for seneste vågenhed
+        this.sleepDebtAppliedForDay = -1;        // Hvilken dag søvngæld sidst blev applied
 
         // Basal insulin reminders — one per day for the first 3 days
         this.basalReminderGivenForDay = [false, false, false];
@@ -207,6 +216,12 @@ class Simulator {
         // --- Graph messages ---
         // Temporary messages displayed on the graph (e.g., basal reminders)
         this.graphMessages = [];
+
+        // --- Floating labels ---
+        // Animerede labels der popper op over grafen og forsvinder af sig selv.
+        // Bruges til fingerprik- og ketonresultater (spil-agtigt feedback).
+        // Hvert label: { time, value, text, color, createdAt, duration }
+        this.floatingLabels = [];
 
         // --- Insulin resistance factor ---
         // Dynamically modified by chronic stress. At baseline (no stress) = 1.0.
@@ -676,6 +691,16 @@ class Simulator {
         // Clean up expired graph messages
         this.graphMessages = this.graphMessages.filter(msg => this.totalSimMinutes < msg.expireTime);
 
+        // Anvend søvngæld fra natten når klokken passerer 07:00
+        if (currentHour >= 7 && currentHour < 8) {
+            this.applySleepDebt();
+        }
+        // Nulstil søvntab-tæller ved starten af ny nat (22:00)
+        if (currentHour === 22 && this.lostSleepHoursTonight > 0 && this.sleepDebtAppliedForDay === this.day) {
+            this.lostSleepHoursTonight = 0;
+            this.lastNightAwakeningTime = -Infinity;
+        }
+
         // =====================================================================
         // BASAL INSULIN REMINDER — Nudge for new players
         // =====================================================================
@@ -718,16 +743,9 @@ class Simulator {
     //   - Normal range (4.0-10.0 mmol/L): 1 point per hour
     //   - Outside range: 0 points per hour
     //
-    // Points are halved during night intervention penalty (to discourage
-    // frequent nocturnal corrections — good diabetes management means
-    // the night largely runs itself on basal insulin).
-    //
     // @param {number} minutesPassed - Simulated minutes elapsed this tick
     // =========================================================================
     updateNormoPoints(minutesPassed) {
-        // Check if night penalty has expired
-        if (this.totalSimMinutes > this.nightInterventionPenaltyEndTime) this.nightInterventionPenaltyFactor = 1.0;
-
         // Check for entering bonus range (triggers a pleasant sound)
         const inBonusNow = this.trueBG >= 5.0 && this.trueBG <= 6.0;
         if(inBonusNow && !this.isInBonusRange) {
@@ -745,40 +763,75 @@ class Simulator {
             bgWeight = 0;       // Out of range: no points
         }
 
-        // Apply night penalty and accumulate points (converted from minutes to hours)
-        const finalWeight = this.nightInterventionPenaltyFactor * bgWeight;
-        this.normoPoints += (minutesPassed / 60) * finalWeight;
+        // Accumulate points (converted from minutes to hours)
+        this.normoPoints += (minutesPassed / 60) * bgWeight;
 
         // Update the UI display showing current point weight
-        normoPointsWeighting.textContent = `(x${finalWeight.toFixed(1)})`;
+        normoPointsWeighting.textContent = `(x${bgWeight.toFixed(1)})`;
     }
 
     // =========================================================================
-    // NIGHT INTERVENTION PENALTY
+    // SØVNFORSTYRRELSE — Natlige interventioner koster søvn → stress næste dag
     // =========================================================================
     //
-    // If the player takes an action (eating, injecting) between 22:00 and 07:00,
-    // their point earning rate is halved for `penaltyMinutes` (default: 2 hours).
+    // Når spilleren udfører en handling mellem 22:00 og 07:00, tæller det som
+    // en vågen-hændelse der koster 1 times søvn. Hændelser inden for 30 min
+    // af hinanden tæller som én vågenhed (man er allerede vågen).
     //
-    // This teaches that well-managed T1D shouldn't require frequent nighttime
-    // interventions. If you need to eat or correct at 3 AM, something went wrong
-    // earlier in the day (wrong basal dose, wrong dinner bolus, etc.).
+    // Søvntabet konverteres til kronisk stress om morgenen (kl. 07:00) via
+    // applySleepDebt(). Dette øger insulinresistens og forstærker dawn-effekten
+    // — præcis som i virkeligheden (Donga et al. 2010, Zheng et al. 2017).
     //
-    // @param {number} penaltyMinutes - Duration of the half-points penalty (default: 120)
+    // Fysiologisk grundlag:
+    //   - Søvnafbrydelse → forhøjet kortisol + katekolaminer
+    //   - Insulinfølsomhed falder ~20-30% efter dårlig søvn
+    //   - Dawn-fænomenet forstærkes (kortisol + cirkadisk effekt adderes)
+    //   - Effekten varer hele næste dag (t½ = 12 timer for chronicStressLevel)
     // =========================================================================
-    handleNightIntervention(penaltyMinutes = 120) {
+    handleNightIntervention() {
         const currentHour = Math.floor(this.timeInMinutes / 60);
         if (currentHour >= 22 || currentHour < 7) {
-            if (this.nightInterventionPenaltyFactor === 1.0) {
-                logEvent(`Natlig intervention! Pointoptjening halveret i ${penaltyMinutes/60} timer.`, 'event');
-                this.graphMessages.push({
-                    id: `night_intervention_${this.totalSimMinutes}`,
-                    text: "zZzz... Natlig intervention",
-                    expireTime: this.totalSimMinutes + penaltyMinutes
-                });
+            // Tjek om dette er en NY vågenhed (> 30 min siden sidst)
+            const timeSinceLastAwakening = this.totalSimMinutes - this.lastNightAwakeningTime;
+            if (timeSinceLastAwakening > 30) {
+                // Ny vågen-hændelse: kost 1 times søvn (max 4 timer pr. nat)
+                const MAX_LOST_SLEEP = 4;
+                if (this.lostSleepHoursTonight < MAX_LOST_SLEEP) {
+                    this.lostSleepHoursTonight = Math.min(MAX_LOST_SLEEP, this.lostSleepHoursTonight + 1);
+                    logEvent(`Søvnforstyrrelse! Mistet ${this.lostSleepHoursTonight} times søvn i nat.`, 'event');
+                    this.graphMessages.push({
+                        id: `sleep_disruption_${this.totalSimMinutes}`,
+                        text: `zZzz... -${this.lostSleepHoursTonight}t søvn`,
+                        expireTime: this.totalSimMinutes + 60 // Vis i 1 sim-time
+                    });
+                }
             }
-            this.nightInterventionPenaltyFactor = 0.5;
-            this.nightInterventionPenaltyEndTime = this.totalSimMinutes + penaltyMinutes;
+            this.lastNightAwakeningTime = this.totalSimMinutes;
+        }
+    }
+
+    // =========================================================================
+    // applySleepDebt — Konverter nattens søvntab til kronisk stress om morgenen
+    // =========================================================================
+    //
+    // Kaldes fra update() når klokken passerer 07:00. Konverterer akkumuleret
+    // søvntab til chronicStressLevel og nulstiller tælleren.
+    //
+    // Konvertering: 0.06 chronicStress per mistet time søvn
+    //   1t tabt → +0.06 stress → ~6% øget insulinresistens
+    //   4t tabt → +0.24 stress → ~24% øget insulinresistens (max)
+    //
+    // chronicStressLevel har t½ = 12 sim-timer, så effekten aftager naturligt
+    // gennem dagen og er næsten væk ved næste aften.
+    // =========================================================================
+    applySleepDebt() {
+        if (this.lostSleepHoursTonight > 0 && this.sleepDebtAppliedForDay !== this.day) {
+            const stressBoost = this.lostSleepHoursTonight * 0.06;
+            this.chronicStressLevel = Math.min(1.0, this.chronicStressLevel + stressBoost);
+            logEvent(`Dårlig søvn: ${this.lostSleepHoursTonight}t tabt → insulinresistens øget ~${(stressBoost * 100).toFixed(0)}%`, 'event');
+            this.sleepDebtAppliedForDay = this.day;
+            this.lostSleepHoursTonight = 0;
+            this.lastNightAwakeningTime = -Infinity;
         }
     }
 
@@ -1041,20 +1094,21 @@ class Simulator {
      * Incurs only a 30-minute night penalty (vs. 120 for other interventions).
      */
     performFingerprick() {
-        this.handleNightIntervention(30); // Shorter night penalty for checking BG
+        this.handleNightIntervention();
         const measuredBG = this.trueBG * (1 + (Math.random() * 0.1 - 0.05)); // ±5% error
         logEvent(`Fingerprik: ${measuredBG.toFixed(1)} mmol/L`, 'fingerprick', {value: measuredBG.toFixed(1)});
         cgmDataPoints.push({ time: this.totalSimMinutes, value: measuredBG, type: 'fingerprick' });
 
-        // Vis resultatet som popup — giver visuelt feedback udover grafikonen
+        // Floating label over målepunktet på grafen (spil-agtigt feedback)
         const bgColor = measuredBG < 4.0 ? '#e53e3e' : measuredBG > 10.0 ? '#e53e3e' : '#38a169';
-        showPopup(
-            'Fingerprik resultat',
-            `<div style="text-align:center; font-size:1.3em; margin:10px 0;">
-                <strong style="color:${bgColor}">${measuredBG.toFixed(1)} mmol/L</strong>
-            </div>`,
-            false, true, true, false  // isInfoPopup=true → ingen lyd, shouldPause=false
-        );
+        this.floatingLabels.push({
+            time: this.totalSimMinutes,
+            value: measuredBG,
+            text: `🩸 ${measuredBG.toFixed(1)}`,
+            color: bgColor,
+            createdAt: this.totalSimMinutes,
+            duration: 90  // Synlig i 90 sim-minutter
+        });
         playSound('intervention', 'B4');
     }
 
@@ -1106,7 +1160,7 @@ class Simulator {
      * Koster 30-minutters natpenalty (ligesom fingerprik).
      */
     performKetoneTest() {
-        this.handleNightIntervention(30);
+        this.handleNightIntervention();
         const measured = this.ketoneLevel * (1 + (Math.random() * 0.2 - 0.1)); // ±10% fejl
         const measuredClamped = Math.max(0, measured);
 
@@ -1117,34 +1171,29 @@ class Simulator {
         //   1.5–3.0: forhøjet — risiko for DKA hvis det skyldes insulinmangel
         //   > 3.0: høj — DKA sandsynlig hvis BG også er høj og der er insulinmangel
         // NB: Faste-ketose kan give 3-4 mmol/L uden fare — kontekst er vigtig!
-        let status;
+        let statusShort;
         if (measuredClamped < 0.6) {
-            status = 'Normal';
+            statusShort = 'OK';
         } else if (measuredClamped < 1.5) {
-            status = 'Let forhøjet — kan skyldes faste. Ved højt BG: tag ekstra insulin';
+            statusShort = 'Forhøjet';
         } else if (measuredClamped < 3.0) {
-            status = 'Forhøjet — kontrollér BG og insulin. Ved højt BG + insulinmangel: DKA-risiko';
+            statusShort = 'Høj!';
         } else {
-            status = 'Høj — ved højt BG og insulinmangel: akut DKA-risiko! Kontakt læge';
+            statusShort = 'KRITISK!';
         }
 
-        logEvent(`Keton-stik: ${measuredClamped.toFixed(1)} mmol/L — ${status}`, 'event');
+        logEvent(`Keton-stik: ${measuredClamped.toFixed(1)} mmol/L — ${statusShort}`, 'event');
 
-        // Vis resultatet som popup så spilleren faktisk kan se det
-        // (logEvent gemmer kun i logHistory som pt. ikke har en synlig liste i UI'en)
+        // Floating label over CGM-positionen på grafen
         const popupColor = measuredClamped < 0.6 ? '#38a169' : measuredClamped < 1.5 ? '#d69e2e' : measuredClamped < 3.0 ? '#e67e22' : '#e53e3e';
-        showPopup(
-            'Keton-stik resultat',
-            `<div style="text-align:center; font-size:1.3em; margin:10px 0;">
-                <strong style="color:${popupColor}">${measuredClamped.toFixed(1)} mmol/L</strong>
-            </div>
-            <p>${status}</p>
-            <p style="font-size:0.85em; color:#666;">
-                Normal: &lt; 0.6 · Let forhøjet: 0.6–1.5 · Forhøjet: 1.5–3.0 · Høj: &gt; 3.0<br>
-                NB: Faste/keto-diæt kan give 3-4 uden fare. Kontekst er vigtig.
-            </p>`,
-            false, true, false, true
-        );
+        this.floatingLabels.push({
+            time: this.totalSimMinutes,
+            value: this.cgmBG,  // Vis ved CGM-niveauet (keton er ikke BG)
+            text: `🧪 ${measuredClamped.toFixed(1)} ${statusShort}`,
+            color: popupColor,
+            createdAt: this.totalSimMinutes,
+            duration: 120  // Synlig i 120 sim-minutter (lidt længere for keton)
+        });
         playSound('intervention', 'B4');
     }
 

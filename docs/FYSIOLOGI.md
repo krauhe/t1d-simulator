@@ -115,8 +115,23 @@ Modellen skelner mellem:
 Stresshormon-systemet er vores egen udvidelse, inspireret af den fysiologiske litteratur:
 
 - **Akut stress** (adrenalin/glukagon): Halveringstid ~60 min. Triggers: hypoglykæmi, intensiv motion
-- **Kronisk stress** (kortisol): Halveringstid ~12 timer. Triggers: sygdom, søvnmangel
+- **Kronisk stress** (kortisol): Halveringstid ~12 timer. Triggers: sygdom, søvnmangel, natlige interventioner
 - **Cirkadisk kortisol** (dawn-effekt): Sinusformet peak kl. 04:00-08:00
+
+### Søvnforstyrrelse (natlige interventioner)
+
+Handlinger mellem 22:00 og 07:00 (mad, insulin, målinger) koster søvn.
+Modellen er baseret på Donga et al. 2010 (Diabetes Care) som viste at en enkelt
+nat med delvis søvnrestriktion reducerer insulinfølsomheden ~21% hos T1D-patienter.
+
+```
+Hver vågen-hændelse om natten: lostSleepHours += 1 (max 4 timer)
+Hændelser inden for 30 min: tæller som samme vågenhed
+Om morgenen (kl. 07): chronicStress += lostSleepHours * 0.06
+```
+
+Effekt: op til ~24% øget insulinresistens næste dag, aftager over ~12 timer.
+Forstærker dawn-fænomenet naturligt (kronisk stress + cirkadisk peak adderes).
 
 Alle stressparametre skalerer leverens glukoseproduktion (EGP):
 ```

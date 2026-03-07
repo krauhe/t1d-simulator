@@ -338,6 +338,56 @@ function drawGraph() {
             graphCtx.fillText(msg.text, xCenter, yPos);
         }
     });
+
+    // --- Floating labels (animerede måleresultater) ---
+    // Disse popper op fra et målepunkt på grafen og svæver opad mens de fader ud.
+    // Bruges til fingerprik og keton-stik — spil-agtigt visuelt feedback.
+    // Cleanup: fjern labels der er udløbet.
+    if (game.floatingLabels) {
+        game.floatingLabels = game.floatingLabels.filter(lbl =>
+            (game.totalSimMinutes - lbl.createdAt) < lbl.duration);
+
+        game.floatingLabels.forEach(lbl => {
+            // Kun tegn labels fra den aktuelle dag
+            if (lbl.time < currentDayStartMinutes || lbl.time >= currentDayStartMinutes + totalMinutesInView) return;
+
+            const progress = (game.totalSimMinutes - lbl.createdAt) / lbl.duration; // 0→1
+            const x = padding.left + ((lbl.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+            const baseY = padding.top + graphHeight - ((lbl.value) / range) * graphHeight;
+
+            // Animation: svæv opad (30px over tid) og fade ud
+            const yOffset = -30 * progress;         // Bevæg op
+            const alpha = 1.0 - progress * 0.8;     // Fade: 1.0 → 0.2
+            const y = baseY + yOffset;
+
+            if (y < padding.top - 20 || y > padding.top + graphHeight + 20) return;
+
+            graphCtx.save();
+            graphCtx.globalAlpha = alpha;
+            graphCtx.font = "bold 13px Segoe UI";
+            graphCtx.textAlign = "center";
+
+            // Baggrund-boks med afrundede hjørner
+            const textWidth = graphCtx.measureText(lbl.text).width;
+            const boxX = x - textWidth / 2 - 6;
+            const boxY = y - 12;
+            const boxW = textWidth + 12;
+            const boxH = 20;
+            graphCtx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            graphCtx.strokeStyle = lbl.color;
+            graphCtx.lineWidth = 1.5;
+            // Afrundet rektangel
+            graphCtx.beginPath();
+            graphCtx.roundRect(boxX, boxY, boxW, boxH, 4);
+            graphCtx.fill();
+            graphCtx.stroke();
+
+            // Tekst
+            graphCtx.fillStyle = lbl.color;
+            graphCtx.fillText(lbl.text, x, y + 2);
+            graphCtx.restore();
+        });
+    }
 }
 
 

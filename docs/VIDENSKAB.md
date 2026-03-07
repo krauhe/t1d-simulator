@@ -564,7 +564,7 @@ Feber i sig selv øger metabolismen med ca. 10-13% per °C over 37°C, hvilket �
 ---
 
 ## 17. Søvn og søvnmangel
-**[IKKE IMPLEMENTERET — planlagt via kronisk stress]**
+**[IMPLEMENTERET — natlige interventioner → kronisk stress → insulinresistens]**
 
 Søvnmangel har dokumenterede effekter på glukosemetabolisme:
 
@@ -588,11 +588,27 @@ Søvnmangel har dokumenterede effekter på glukosemetabolisme:
 - Skifteholdsarbejde er associeret med dårligere glykæmisk kontrol
 - For optimal BG-kontrol anbefales > 7 timers søvn
 
+### 17.4 Implementation i simulatoren
+
+Natlige interventioner (22:00-07:00) modelleres som søvnforstyrrelse:
+- Hver vågen-hændelse koster 1 times søvn (max 4 timer pr. nat)
+- Hændelser inden for 30 min tæller som samme vågenhed
+- Om morgenen (kl. 07) konverteres søvntab til kronisk stress:
+  `chronicStress += lostSleepHours × 0.06`
+- Ved max tab (4t): ~24% øget insulinresistens, aftager over ~12 timer
+- Forstærker dawn-fænomenet (kronisk stress adderes til cirkadisk kortisol)
+
+Kalibrering: Donga et al. 2010 viste ~21% reduktion i insulinfølsomhed ved
+delvis søvnrestriktion hos T1D. Vores max-effekt på 24% ved 4t tabt søvn
+matcher dette godt.
+
 **Kilder:**
 - Spiegel K, et al. (2005). "Sleep loss: a novel risk factor for insulin resistance and Type 2 diabetes." *J Appl Physiol*, 99(5):2008-2019. [APS](https://journals.physiology.org/doi/full/10.1152/japplphysiol.00660.2005)
 - Donga E, et al. (2010). "A single night of partial sleep deprivation induces insulin resistance in multiple metabolic pathways in healthy subjects." *J Clin Endocrinol Metab*, 95(6):2963-2968.
+- Donga E, et al. (2010). "Partial Sleep Restriction Decreases Insulin Sensitivity in Type 1 Diabetes." *Diabetes Care*, 33(7):1573-1577. [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC2890361/)
+- Zheng H, et al. (2017). "Poor Sleep Quality Is Associated with Dawn Phenomenon and Impaired Circadian Clock Gene Expression." *Int J Endocrinol*. [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC5352967/)
 - Reutrakul S, et al. (2018). "Sleep influences on obesity, insulin resistance, and risk of type 2 diabetes." *Metabolism*, 84:56-66.
-- Brouwer A, et al. (2020). "Sleep Restriction for 1 Week Reduces Insulin Sensitivity in Healthy Men." *Diabetes*, 59(9):2126-2133.
+- Buxton OM, et al. (2010). "Sleep Restriction for 1 Week Reduces Insulin Sensitivity in Healthy Men." *Diabetes*, 59(9):2126-2133.
 
 ---
 
