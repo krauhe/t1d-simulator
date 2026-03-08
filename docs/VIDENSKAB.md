@@ -31,6 +31,8 @@
 21. [CGM-teknologi](#21-cgm-teknologi-continuous-glucose-monitoring)
 22. [Stress (psykologisk)](#22-stress-psykologisk)
 23. [Injektionssted](#23-injektionssted)
+24. [Motionsinduceret inflammation](#24-motionsinduceret-inflammation)
+25. [Ikke-linearitet i insulinvirkning (tærskeleffekter)](#25-ikke-linearitet-i-insulinvirkning-tærskeleffekter)
 
 ---
 
@@ -823,6 +825,107 @@ Andre faktorer der påvirker absorption fra injektionsstedet:
 - **Massage af injektionsstedet:** Accelererer absorption markant
 
 **Kilde:** Heinemann L, et al. (2020). "Factors Influencing Insulin Absorption Around Exercise in Type 1 Diabetes." *Front Endocrinol*, 11:573275. [PMC7609903](https://pmc.ncbi.nlm.nih.gov/articles/PMC7609903/)
+
+---
+
+## 24. Motionsinduceret inflammation
+**[IKKE IMPLEMENTERET]**
+
+Overdreven eller uvant motion kan udløse en systemisk inflammationsrespons der midlertidigt øger insulinbehovet — det modsatte af den insulinsensibiliserende effekt man normalt forbinder med motion.
+
+### 24.1 Mekanisme
+
+Intense eller langvarige træningspas (fx maraton, uvant styrketræning, overtraining) forårsager mikroskopisk muskelskade. Reparationsprocessen involverer:
+
+1. **Pro-inflammatoriske cytokiner:** IL-6 stiger kraftigt under motion (op til 100× basalniveau), efterfulgt af TNF-α og IL-1β i timerne efter
+2. **Akutfase-respons:** Leveren øger produktion af C-reaktivt protein (CRP) og andre akutfaseproteiner
+3. **Insulinresistens:** TNF-α og IL-6 hæmmer insulinsignalering via interferens med IRS-1 (insulin receptor substrat-1) og GLUT4-translokation
+4. **Varighed:** Inflammationen kan vare 24-72 timer efter ekstremt belastende motion
+
+### 24.2 Paradokset: motion og inflammation
+
+- **Moderat, regelmæssig motion:** Anti-inflammatorisk nettoefffekt (reducerer basal inflammation over tid)
+- **Overdreven/uvant motion:** Pro-inflammatorisk akut effekt → øget insulinbehov i dage efter
+- Overgangen afhænger af individets træningstilstand — en uvant 10 km løbetur kan give markant inflammation hos en utrænet person men minimal effekt hos en trænet løber
+
+### 24.3 Klinisk relevans for T1D
+
+- Efter en usædvanligt hård træning kan insulinbehovet stige 10-30% i 1-2 dage
+- Muskelømhed (DOMS) er ofte ledsaget af øget insulinresistens
+- Vigtigt at skelne fra den normale post-exercise insulinsensibilisering der sker efter moderat motion
+
+**Kilder:**
+- Pedersen BK, Febbraio MA. (2008). "Muscle as an endocrine organ: focus on muscle-derived interleukin-6." *Physiol Rev*, 88(4):1379-1406.
+- Petersen AMW, Pedersen BK. (2005). "The anti-inflammatory effect of exercise." *J Appl Physiol*, 98(4):1154-1162.
+- Febbraio MA, Pedersen BK. (2002). "Muscle-derived interleukin-6: mechanisms for activation and possible biological roles." *FASEB J*, 16(11):1335-1347.
+
+---
+
+## 25. Ikke-linearitet i insulinvirkning (tærskeleffekter)
+**[IKKE IMPLEMENTERET — vigtigt klinisk fænomen]**
+
+Insulins virkning på blodsukkeret er ikke lineær — der er tærskeleffekter der gør at små doser kan have næsten ingen effekt, mens en lidt større dosis kan have en uforholdsmæssig stor effekt. Dette er et af de mest frustrerende aspekter ved daglig T1D-behandling.
+
+### 25.1 Forskellige tærskler i forskellige væv
+
+Insulin virker på flere målorganer, men disse har forskellige følsomheder (ED50 — den insulinkoncentration der giver halvmaksimal effekt):
+
+| Målvæv | Primær effekt | Relativ følsomhed |
+|--------|--------------|-------------------|
+| Lever (EGP-suppression) | Hæmmer glukoseproduktion | Høj (lav ED50) — reagerer først |
+| Fedtvæv (antilipolyse) | Hæmmer fedtnedbrydning | Høj (lav ED50) |
+| Muskler (glukoseoptag) | Øger glukoseoptag | Lav (høj ED50) — kræver mere insulin |
+
+Det betyder at ved lave insulinniveauer:
+- Leveren responderer allerede (reducerer glukoseproduktion)
+- Men musklerne optager stadig ikke glukose effektivt
+- Nettoresultatet kan være minimal BG-ændring fordi de to effekter delvist ophæver hinanden
+
+### 25.2 Dosis-respons-kurven
+
+Insulins dosis-respons-kurve følger en sigmoid (S-formet) funktion:
+
+```
+Effekt = E_max × [I]^n / (ED50^n + [I]^n)
+```
+
+Hvor `n` (Hill-koefficienten) typisk er 1.0-1.5 for insulin. Den sigmoide form betyder:
+- **Under tærskel:** Næsten ingen målbar effekt
+- **Omkring ED50:** Stærkt stigende effekt (den "bratte" del af kurven)
+- **Over mætning:** Yderligere insulin giver aftagende ekstra effekt
+
+### 25.3 Inaktivitet forstærker problemet
+
+Ved fysisk inaktivitet (stillesiddende dag, sygdom, hviledag):
+- Musklernes insulinfølsomhed falder markant (GLUT4-expression reduceres)
+- ED50 for muskel-glukoseoptag stiger → den "bratte" del af kurven rykker til højre
+- Resultatet: der skal mere insulin til før musklerne begynder at optage glukose
+- Små korrektionsdoser har ingen synlig effekt → frustration → større dosis → pludselig kraftig effekt
+
+### 25.4 Praktisk konsekvens
+
+Dette forklarer en meget almindelig T1D-oplevelse:
+1. BG er 12 mmol/L, du giver 1 E korrektion → intet sker
+2. Du venter 2 timer, giver 1 E mere → stadig intet
+3. Du giver 2 E i frustration → BG falder brat til 4 mmol/L
+4. Total 4 E har givet en effekt der svarer til langt mere end 4 × ISF
+
+Årsagen: de første 2 E var under musklernes tærskel og påvirkede primært leveren (som allerede var delvist suppresseret). De sidste 2 E bragte koncentrationen over musklernes ED50, og det samlede glukoseoptag steg dramatisk.
+
+### 25.5 Simuleringsmæssig udfordring
+
+Hovorka-modellen bruger lineære insulin-effektkompartmenter (x1, x2, x3), som ikke fanger denne tærskeladfærd. En mere realistisk model ville kræve:
+- Sigmoid dosis-respons-funktioner for hvert målvæv
+- Individuelle ED50-værdier der varierer med aktivitetsniveau
+- Muligvis en Hill-koefficient > 1 for at fange den bratte overgang
+
+Dette er en af de vigtigste begrænsninger i den nuværende simulator og en oplagt kandidat til fremtidig forbedring.
+
+**Kilder:**
+- Kolterman OG, et al. (1981). "Receptor and postreceptor defects contribute to the insulin resistance in noninsulin-dependent diabetes mellitus." *J Clin Invest*, 68(4):957-969.
+- Rizza RA, et al. (1981). "Dose-response characteristics for effects of insulin on production and utilization of glucose in man." *Am J Physiol*, 240(6):E630-E639.
+- Bergman RN. (2005). "Minimal model: perspective from 2005." *Horm Res*, 64(Suppl 3):8-15.
+- Thiebaud D, et al. (1982). "The effect of graded doses of insulin on total glucose uptake, glucose oxidation, and glucose storage in man." *Diabetes*, 31(11):957-963.
 
 ---
 

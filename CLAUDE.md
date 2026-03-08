@@ -174,6 +174,57 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
     - Nuværende model: ketoner stiger kun ved insulinmangel + BG > 12
     - Skal udvides til også at stige ved lav carb-indtag / faste, uanset insulin
     - Vigtig skelnen: faste-ketose er IKKE farlig (vs. DKA som er insulin-mangel-drevet)
+25. Kalorieindhold vist på mad (kcal-mål synligt ved måltider)
+26. Game over-betingelser skal være synlige i spillet
+    - Spilleren skal kunne se alle metrics der kan føre til game over
+    - 7-dages gennemsnit BG skal vises i statistik (allerede delvist implementeret)
+    - Vægtændring slider allerede synlig
+    - Keton-niveau bør være synligt (ikke kun ved stik)
+    - Evt. "faresignaler" i UI når man nærmer sig game over-grænser
+27. Fysiologi-dokumenter som læsbare tekster
+    - FYSIOLOGI.md og VIDENSKAB.md skal omskrives til egentlige tekster for mennesker
+    - Ikke kun interne AI-noter — skal kunne læses af patienter, pårørende og sundhedspersonale
+    - På sigt tilgængelige fra spillet (se TODO #9)
+28. UI-redesign: RTS-inspireret layout
+    - Grafen som hovedvisning (svarende til "spillefeltet")
+    - Interventioner som ikoner med undermenuer i kanterne
+    - Statistik i fold-ind/ud panel
+    - Plads til bane-valg/præsentation i fremtiden
+    - Mørkt, konsekvent farveskema (CGM-app møder spil-HUD)
+    - Mockup: `mockups/rts-layout.html`
+29. Lyd-redesign
+    - Revurder hele lydsiden som del af UI-løftet
+    - Feedback-jingles: positiv lyd i target range, advarselstoner ved farezoner
+    - Kontekstuelle lyde: insulin-injektion, madspising, motion-start
+    - Stigende intensitet ved faldende/stigende BG (ikke bare én alarm)
+    - Ambient/baggrundslyd til at indikere generel tilstand (rolig=godt, urolig=fare)
+    - Vigtigt: lyde skal være subtile og ikke irriterende — spilleren skal VILLE have dem tændt
+30. Mad-interaktion: tidligere måltider påvirker efterfølgende
+    - Fedt i et måltid forsinker mavetømning → næste måltid kort efter absorberes også langsommere?
+    - Undersøg hvad nuværende implementering understøtter (D1/D2 kompartmenter deles allerede)
+    - Fiber før kulhydrat: bremser glukoseoptag (klinisk anbefalet strategi)
+31. Differentierede sukkertyper
+    - Glukose (dextrose): absorberes direkte, hurtigst mulige BG-stigning (τG ~10-15 min)
+    - Saccharose (bordsukker, lakridskonfekt): skal spaltes først → lidt langsommere (τG ~25-35 min)
+    - Stivelse (brød, ris): endnu langsommere (τG ~40-60 min)
+    - Klinisk relevant: glukose til akut hypo-korrektion, langsommere sukker når der er tid
+    - Kunne implementeres som forskellige τG-værdier per madtype
+32. Bane-intro med fysiologi-tips
+    - Før en bane starter: vis kort beskrivelse af relevant fysiologi og tricks
+    - Fx motion-bane: "Motion sænker BG mest med aktiv insulin. Overvej at reducere bolus eller spise ekstra."
+    - Pædagogisk funktion: spilleren lærer fysiologien INDEN de møder udfordringen
+33. Glidende graf (LibreLink-stil)
+    - Når grafen er fyldt: nye data skubbes ind fra højre, gamle data glider ud til venstre
+    - Nuværende tid altid ved højre kant
+    - Giver en "levende" fornemmelse i stedet for statisk fyld-fra-venstre
+    - Som i Freestyle LibreLink appen — spilleren kender konceptet fra sin CGM
+    - Mockups: `mockups/hud-overlay.html`, `mockups/card-dock.html`
+34. "Dino-bane" — arkade-mode med forhindringer
+    - Glidende graf + forhindringer der kommer ind fra højre (som Googles offline dino-spil)
+    - Spilleren skal styre BG-kurven gennem åbninger (target range)
+    - Forhindringer tvinger til hurtige beslutninger (insulin/mad/motion)
+    - Fjollet/sjov bane der træner reaktionsevne og intuition for BG-dynamik
+    - Kræver glidende graf (TODO #33) som fundament
 
 ---
 

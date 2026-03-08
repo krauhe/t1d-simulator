@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup 3 — Card Dock (macOS Dock-stil)</title>
+    <style>
+        /* ============================================================
+           MOCKUP 3: CARD DOCK
+           Ideen: Interventioner som en "dock" i bunden (ligesom
+           macOS Dock), men med kort der folder op. Grafen dominerer.
+           Stats i et kompakt panel til hoejre der kan minimeres.
+           Fokus paa store, tydelige knapper med satisfying animations.
+           ============================================================ */
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0c1220;
+            color: #e0e0e0;
+            font-family: 'Inter', system-ui, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === TOP BAR === */
+        .top-bar {
+            height: 50px;
+            background: #111827;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 15px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .top-status {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .status-badge {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 5px 14px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            cursor: default;
+        }
+
+        .status-badge:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-1px);
+        }
+
+        .status-badge .badge-icon { font-size: 14px; }
+        .status-badge .badge-num { font-weight: 700; color: #f0f0f0; }
+        .status-badge .badge-label { color: #667; font-size: 11px; }
+
+        .status-badge.points .badge-num { color: #4ade80; }
+
+        .top-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .top-action-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #8899bb;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .top-action-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            transform: scale(1.06);
+        }
+
+        /* === MAIN AREA === */
+        .main-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* === GRAF === */
+        .graph-section {
+            flex: 1;
+            position: relative;
+            padding: 16px 16px 0 16px;
+        }
+
+        /* CGM hero */
+        .cgm-display {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .cgm-number {
+            font-size: 56px;
+            font-weight: 800;
+            color: #4ade80;
+            line-height: 1;
+            transition: all 0.3s;
+        }
+
+        .cgm-number:hover {
+            transform: scale(1.05);
+            text-shadow: 0 0 30px rgba(74, 222, 128, 0.3);
+        }
+
+        .cgm-unit-trend {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cgm-unit { font-size: 13px; color: #4a7a5a; font-weight: 600; }
+        .cgm-trend-arrow {
+            font-size: 22px;
+            color: #4ade80;
+            line-height: 1;
+        }
+
+        .live-info {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .info-pill {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: #8899bb;
+            transition: all 0.2s;
+        }
+
+        .info-pill:hover {
+            transform: scale(1.05);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .info-pill strong { color: #e0e0e0; }
+
+        /* Simuleret graf */
+        .graph-canvas {
+            width: 100%;
+            height: calc(100% - 100px);
+            background: rgba(255,255,255,0.01);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .graph-inner {
+            position: absolute;
+            inset: 30px 10px 30px 40px;
+        }
+
+        .g-zone {
+            position: absolute;
+            left: 0;
+            right: 0;
+        }
+
+        .g-zone.target {
+            top: 30%;
+            height: 30%;
+            background: rgba(74, 222, 128, 0.04);
+        }
+
+        .g-zone.bonus {
+            top: 46%;
+            height: 6%;
+            background: rgba(74, 222, 128, 0.08);
+            border-top: 1px dashed rgba(74, 222, 128, 0.15);
+            border-bottom: 1px dashed rgba(74, 222, 128, 0.15);
+        }
+
+        .graph-svg-3 {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* === HØJRE: Minimérbart statspanel === */
+        .stats-sidebar {
+            width: 240px;
+            background: rgba(17, 24, 39, 0.9);
+            border-left: 1px solid rgba(255,255,255,0.06);
+            padding: 16px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .stats-section {
+            margin-bottom: 16px;
+        }
+
+        .stats-section h5 {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #556;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .s-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+
+        .s-row .s-label { color: #778; }
+        .s-row .s-val { font-weight: 600; color: #d0d8e8; }
+        .s-row .s-val.green { color: #4ade80; }
+        .s-row .s-val.orange { color: #fb923c; }
+        .s-row .s-val.red { color: #ef4444; }
+
+        /* TIR stacked bar */
+        .tir-stack {
+            height: 14px;
+            border-radius: 7px;
+            display: flex;
+            overflow: hidden;
+            margin: 8px 0;
+            background: #1a1a2e;
+        }
+
+        .tir-stack .ts-low { background: #ef4444; width: 3%; }
+        .tir-stack .ts-target { background: #4ade80; width: 72%; }
+        .tir-stack .ts-high { background: #fb923c; width: 18%; }
+        .tir-stack .ts-vhigh { background: #ef4444; width: 7%; }
+
+        /* Game over threats med pulserende farve */
+        .go-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 8px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: all 0.3s;
+            cursor: default;
+        }
+
+        .go-row:hover {
+            background: rgba(255,255,255,0.03);
+            transform: scale(1.02);
+        }
+
+        .go-row .go-emoji { font-size: 14px; }
+        .go-row .go-name { font-size: 11px; color: #778; flex: 1; }
+
+        .go-bar-track {
+            width: 60px;
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .go-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+
+        .go-bar-fill.safe { background: linear-gradient(90deg, #166534, #4ade80); }
+        .go-bar-fill.warn { background: linear-gradient(90deg, #92400e, #fb923c); }
+        .go-bar-fill.danger { background: linear-gradient(90deg, #991b1b, #ef4444); animation: glow-danger 2s ease-in-out infinite; }
+
+        @keyframes glow-danger {
+            0%, 100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.6); }
+        }
+
+        /* === BUND DOCK === */
+        .dock-container {
+            height: auto;
+            padding: 8px 0 12px;
+            display: flex;
+            justify-content: center;
+            background: linear-gradient(0deg, rgba(12,18,32,1) 0%, rgba(12,18,32,0.8) 100%);
+            flex-shrink: 0;
+        }
+
+        .dock {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 18px;
+            backdrop-filter: blur(10px);
+        }
+
+        .dock-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 6px;
+            border-radius: 14px;
+            position: relative;
+        }
+
+        .dock-item .dock-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid transparent;
+        }
+
+        .dock-item .dock-label {
+            font-size: 9px;
+            color: #556;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        /* Hover: dock items vokser — naboer vokser lidt ogsaa (via CSS) */
+        .dock-item:hover {
+            transform: translateY(-12px) scale(1.25);
+            z-index: 5;
+        }
+
+        .dock-item:hover .dock-label {
+            color: #aab;
+        }
+
+        /* Nabo-effekt via adjacent sibling selector */
+        .dock-item:hover + .dock-item,
+        .dock-item:has(+ .dock-item:hover) {
+            transform: translateY(-5px) scale(1.08);
+        }
+
+        /* Farvetemaer per dock item */
+        .dock-item.d-insulin .dock-icon {
+            background: linear-gradient(135deg, rgba(37,99,235,0.25), rgba(37,99,235,0.1));
+            border-color: rgba(96,165,250,0.2);
+        }
+        .dock-item.d-insulin:hover .dock-icon {
+            background: linear-gradient(135deg, rgba(37,99,235,0.5), rgba(37,99,235,0.25));
+            border-color: rgba(96,165,250,0.5);
+            box-shadow: 0 8px 30px rgba(37,99,235,0.35);
+        }
+
+        .dock-item.d-food .dock-icon {
+            background: linear-gradient(135deg, rgba(234,179,8,0.25), rgba(234,179,8,0.1));
+            border-color: rgba(250,204,21,0.2);
+        }
+        .dock-item.d-food:hover .dock-icon {
+            background: linear-gradient(135deg, rgba(234,179,8,0.5), rgba(234,179,8,0.25));
+            border-color: rgba(250,204,21,0.5);
+            box-shadow: 0 8px 30px rgba(234,179,8,0.35);
+        }
+
+        .dock-item.d-exercise .dock-icon {
+            background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.1));
+            border-color: rgba(52,211,153,0.2);
+        }
+        .dock-item.d-exercise:hover .dock-icon {
+            background: linear-gradient(135deg, rgba(16,185,129,0.5), rgba(16,185,129,0.25));
+            border-color: rgba(52,211,153,0.5);
+            box-shadow: 0 8px 30px rgba(16,185,129,0.35);
+        }
+
+        .dock-item.d-measure .dock-icon {
+            background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.08));
+            border-color: rgba(248,113,113,0.2);
+        }
+        .dock-item.d-measure:hover .dock-icon {
+            background: linear-gradient(135deg, rgba(239,68,68,0.4), rgba(239,68,68,0.2));
+            border-color: rgba(248,113,113,0.5);
+            box-shadow: 0 8px 30px rgba(239,68,68,0.3);
+        }
+
+        .dock-item.d-sos .dock-icon {
+            background: linear-gradient(135deg, rgba(220,38,38,0.3), rgba(220,38,38,0.1));
+            border-color: rgba(220,38,38,0.3);
+            animation: sos-pulse 3s ease-in-out infinite;
+        }
+        .dock-item.d-sos:hover .dock-icon {
+            box-shadow: 0 8px 30px rgba(220,38,38,0.5);
+            animation: none;
+        }
+
+        @keyframes sos-pulse {
+            0%, 100% { border-color: rgba(220,38,38,0.2); }
+            50% { border-color: rgba(220,38,38,0.5); }
+        }
+
+        .dock-item.d-mission .dock-icon {
+            background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(168,85,247,0.08));
+            border-color: rgba(168,85,247,0.2);
+        }
+        .dock-item.d-mission:hover .dock-icon {
+            background: linear-gradient(135deg, rgba(168,85,247,0.4), rgba(168,85,247,0.2));
+            border-color: rgba(168,85,247,0.5);
+            box-shadow: 0 8px 30px rgba(168,85,247,0.35);
+        }
+
+        .dock-item.d-debug .dock-icon {
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+            border-color: rgba(255,255,255,0.08);
+        }
+        .dock-item.d-debug:hover .dock-icon {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.06));
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 8px 20px rgba(255,255,255,0.08);
+        }
+
+        .dock-separator {
+            width: 1px;
+            height: 36px;
+            background: rgba(255,255,255,0.08);
+            margin: 0 4px;
+            align-self: center;
+        }
+
+        /* === FOLD-OP PANEL (fra dock) === */
+        .dock-panel {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            min-width: 340px;
+            box-shadow: 0 -8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+            z-index: 100;
+        }
+
+        .dock-panel h4 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dock-panel h4 .dp-icon { font-size: 20px; }
+        .dock-panel h4 .dp-title { color: #d0d8e8; }
+
+        .dp-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .dp-row label {
+            font-size: 12px;
+            color: #8899bb;
+            min-width: 70px;
+        }
+
+        .dp-row input[type="range"] {
+            flex: 1;
+            accent-color: #60a5fa;
+        }
+
+        .dp-row .dp-val {
+            font-size: 14px;
+            font-weight: 700;
+            color: #e0e0e0;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        .dp-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .dp-btn:hover {
+            transform: scale(1.03) translateY(-2px);
+        }
+
+        .dp-btn.btn-blue {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+        .dp-btn.btn-blue:hover { box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5); }
+
+        .dp-btn.btn-purple {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+        }
+        .dp-btn.btn-purple:hover { box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5); }
+
+        /* Preset chips */
+        .preset-chips {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin: 10px 0;
+        }
+
+        .preset-chip {
+            background: rgba(234, 179, 8, 0.06);
+            border: 1px solid rgba(234, 179, 8, 0.12);
+            border-radius: 12px;
+            padding: 8px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .preset-chip:hover {
+            transform: scale(1.1) translateY(-3px);
+            background: rgba(234, 179, 8, 0.15);
+            border-color: rgba(250, 204, 21, 0.3);
+            box-shadow: 0 6px 20px rgba(234, 179, 8, 0.2);
+        }
+
+        .preset-chip .pc-emoji { font-size: 24px; display: block; }
+        .preset-chip .pc-name { font-size: 9px; color: #998; margin-top: 3px; }
+        .preset-chip .pc-kcal { font-size: 8px; color: #665; }
+
+        /* === EVENT LOG (over dock, venstre) === */
+        .event-log-float {
+            position: absolute;
+            bottom: 100px;
+            left: 16px;
+            max-width: 300px;
+            z-index: 5;
+        }
+
+        .log-entry {
+            font-size: 11px;
+            color: #556;
+            padding: 2px 0;
+            display: flex;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .log-entry:hover { color: #8899bb; }
+        .log-entry .log-time { color: #445; min-width: 35px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+    <div class="brand">DIABETES-DYSTEN</div>
+
+    <div class="top-status">
+        <div class="status-badge">
+            <span class="badge-icon">&#x1F4C5;</span>
+            <span class="badge-num">Dag 3</span>
+        </div>
+        <div class="status-badge">
+            <span class="badge-icon">&#x1F551;</span>
+            <span class="badge-num">14:35</span>
+        </div>
+        <div class="status-badge points">
+            <span class="badge-icon">&#x2B50;</span>
+            <span class="badge-num">47.2 pts</span>
+            <span class="badge-label">(x1.0)</span>
+        </div>
+        <div class="status-badge">
+            <span class="badge-label">4t/min</span>
+        </div>
+    </div>
+
+    <div class="top-actions">
+        <button class="top-action-btn">&#x23F8; Pause</button>
+        <button class="top-action-btn">? Hjaelp</button>
+        <button class="top-action-btn">&#x1F507;</button>
+    </div>
+</div>
+
+<!-- MAIN AREA -->
+<div class="main-area">
+    <!-- GRAF -->
+    <div class="graph-section">
+        <div class="cgm-display">
+            <span class="cgm-number">6.8</span>
+            <div class="cgm-unit-trend">
+                <span class="cgm-unit">mmol/L</span>
+                <span class="cgm-trend-arrow">&#x2198;</span>
+            </div>
+        </div>
+
+        <div class="live-info">
+            <span class="info-pill">IOB <strong>2.4 E</strong></span>
+            <span class="info-pill">COB <strong>18 g</strong></span>
+            <span class="info-pill">Puls <strong>72 bpm</strong></span>
+        </div>
+
+        <div class="graph-canvas">
+            <div class="graph-inner">
+                <div class="g-zone target"></div>
+                <div class="g-zone bonus"></div>
+                <svg class="graph-svg-3" viewBox="0 0 900 350" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="cg3" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="rgba(74,222,128,0.12)"/>
+                            <stop offset="100%" stop-color="rgba(74,222,128,0)"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M 0,220 Q 45,215 90,200 T 180,165 T 270,120 T 360,150 T 450,185 T 540,200 T 630,190 T 720,175 T 810,170 T 900,165 V 350 H 0 Z"
+                          fill="url(#cg3)"/>
+                    <path d="M 0,220 Q 45,215 90,200 T 180,165 T 270,120 T 360,150 T 450,185 T 540,200 T 630,190 T 720,175 T 810,170 T 900,165"
+                          fill="none" stroke="#4ade80" stroke-width="2.5"/>
+                    <circle cx="270" cy="120" r="4" fill="#fb923c"/>
+                    <circle cx="360" cy="150" r="4" fill="#4ade80"/>
+                    <circle cx="540" cy="200" r="4" fill="#4ade80"/>
+                    <circle cx="720" cy="175" r="4" fill="#4ade80"/>
+                    <circle cx="900" cy="165" r="5" fill="#4ade80" filter="drop-shadow(0 0 6px rgba(74,222,128,0.5))"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Event log floating -->
+        <div class="event-log-float">
+            <div class="log-entry"><span class="log-time">14:30</span> &#x1F489; Hurtig insulin 4.0 E</div>
+            <div class="log-entry"><span class="log-time">13:15</span> &#x1F37D; Havregryn (30g kulh, 8g prot, 2g fedt)</div>
+            <div class="log-entry"><span class="log-time">11:00</span> &#x1F3C3; Motion 30 min (medium) — 210 kcal</div>
+        </div>
+    </div>
+
+    <!-- STATS SIDEBAR -->
+    <div class="stats-sidebar">
+        <div class="stats-section">
+            <h5>Time in Range</h5>
+            <div class="tir-stack">
+                <div class="ts-low"></div>
+                <div class="ts-target"></div>
+                <div class="ts-high"></div>
+                <div class="ts-vhigh"></div>
+            </div>
+            <div class="s-row"><span class="s-label">TIR (4-10)</span><span class="s-val green">72%</span></div>
+            <div class="s-row"><span class="s-label">TITR (4-8)</span><span class="s-val">58%</span></div>
+            <div class="s-row"><span class="s-label">Gns. CGM</span><span class="s-val">7.4</span></div>
+        </div>
+
+        <div class="stats-section">
+            <h5>Forbrug (1 doegn)</h5>
+            <div class="s-row"><span class="s-label">Hurtig insulin</span><span class="s-val">12.5 E</span></div>
+            <div class="s-row"><span class="s-label">Basal insulin</span><span class="s-val">10 E</span></div>
+            <div class="s-row"><span class="s-label">Kalorier</span><span class="s-val">1450 kcal</span></div>
+            <div class="s-row"><span class="s-label">Kal. balance</span><span class="s-val orange">-320</span></div>
+        </div>
+
+        <div class="stats-section">
+            <h5>Spiller</h5>
+            <div class="s-row"><span class="s-label">Vaegt</span><span class="s-val">75 kg</span></div>
+            <div class="s-row"><span class="s-label">ICR</span><span class="s-val">12 g/E</span></div>
+            <div class="s-row"><span class="s-label">ISF</span><span class="s-val">2.5</span></div>
+        </div>
+
+        <div class="stats-section">
+            <h5>Game Over Trusler</h5>
+            <div class="go-row">
+                <span class="go-emoji">&#x1F480;</span>
+                <span class="go-name">Hypo</span>
+                <div class="go-bar-track"><div class="go-bar-fill safe" style="width: 5%;"></div></div>
+            </div>
+            <div class="go-row">
+                <span class="go-emoji">&#x26A0;</span>
+                <span class="go-name">DKA</span>
+                <div class="go-bar-track"><div class="go-bar-fill safe" style="width: 12%;"></div></div>
+            </div>
+            <div class="go-row">
+                <span class="go-emoji">&#x2696;</span>
+                <span class="go-name">Vaegt</span>
+                <div class="go-bar-track"><div class="go-bar-fill safe" style="width: 15%;"></div></div>
+            </div>
+            <div class="go-row">
+                <span class="go-emoji">&#x1F4C8;</span>
+                <span class="go-name">7d BG</span>
+                <div class="go-bar-track"><div class="go-bar-fill warn" style="width: 65%;"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DOCK med fold-op panel -->
+<div class="dock-container">
+    <!-- Eksempel: Mad-panel folder op -->
+    <div class="dock-panel">
+        <h4><span class="dp-icon">&#x1F37D;</span> <span class="dp-title">Mad</span></h4>
+        <div class="dp-row">
+            <label>Kulhydrat</label>
+            <input type="range" min="0" max="100" step="5" value="50">
+            <span class="dp-val">50 g</span>
+        </div>
+        <div class="dp-row">
+            <label>Protein</label>
+            <input type="range" min="0" max="100" step="5" value="10">
+            <span class="dp-val">10 g</span>
+        </div>
+        <div class="dp-row">
+            <label>Fedt</label>
+            <input type="range" min="0" max="50" step="5" value="5">
+            <span class="dp-val">5 g</span>
+        </div>
+        <div style="text-align:center; font-size:12px; color:#998; margin: 4px 0;">295 kcal | KE: 5.2</div>
+        <button class="dp-btn btn-blue">&#x1F37D; Spis Mad</button>
+        <div class="preset-chips">
+            <div class="preset-chip"><span class="pc-emoji">&#x1F36C;</span><span class="pc-name">Dextro</span><span class="pc-kcal">12 kcal</span></div>
+            <div class="preset-chip"><span class="pc-emoji">&#x1F354;</span><span class="pc-name">Burger</span><span class="pc-kcal">560 kcal</span></div>
+            <div class="preset-chip"><span class="pc-emoji">&#x1F951;</span><span class="pc-name">Avocado</span><span class="pc-kcal">265 kcal</span></div>
+            <div class="preset-chip"><span class="pc-emoji">&#x1F357;</span><span class="pc-name">Kylling</span><span class="pc-kcal">275 kcal</span></div>
+            <div class="preset-chip"><span class="pc-emoji">&#x1F370;</span><span class="pc-name">Lagkage</span><span class="pc-kcal">505 kcal</span></div>
+            <div class="preset-chip"><span class="pc-emoji">&#x1F964;</span><span class="pc-name">Sodavand</span><span class="pc-kcal">140 kcal</span></div>
+            <div class="preset-chip"><span class="pc-emoji">&#x1F957;</span><span class="pc-name">Salat</span><span class="pc-kcal">37 kcal</span></div>
+            <div class="preset-chip"><span class="pc-emoji">&#x1F963;</span><span class="pc-name">Havregryn</span><span class="pc-kcal">170 kcal</span></div>
+        </div>
+    </div>
+
+    <div class="dock">
+        <div class="dock-item d-insulin">
+            <div class="dock-icon">&#x1F489;</div>
+            <span class="dock-label">Insulin</span>
+        </div>
+        <div class="dock-item d-food">
+            <div class="dock-icon">&#x1F37D;</div>
+            <span class="dock-label">Mad</span>
+        </div>
+        <div class="dock-item d-exercise">
+            <div class="dock-icon">&#x1F3C3;</div>
+            <span class="dock-label">Motion</span>
+        </div>
+
+        <div class="dock-separator"></div>
+
+        <div class="dock-item d-measure">
+            <div class="dock-icon">&#x1FA78;</div>
+            <span class="dock-label">Prik</span>
+        </div>
+        <div class="dock-item d-measure">
+            <div class="dock-icon">&#x1F9EA;</div>
+            <span class="dock-label">Keton</span>
+        </div>
+        <div class="dock-item d-sos">
+            <div class="dock-icon">&#x271A;</div>
+            <span class="dock-label">SOS</span>
+        </div>
+
+        <div class="dock-separator"></div>
+
+        <div class="dock-item d-mission">
+            <div class="dock-icon">&#x1F3AF;</div>
+            <span class="dock-label">Baner</span>
+        </div>
+        <div class="dock-item d-debug">
+            <div class="dock-icon">&#x2699;</div>
+            <span class="dock-label">Debug</span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
