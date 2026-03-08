@@ -3,324 +3,415 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diabetes-Dysten C0.5</title>
-    <!-- External stylesheet for all visual styling -->
+    <title>Diabetes-Dysten</title>
+    <!-- Stylesheet med CSS-variabler for tema-skifte -->
     <link rel="stylesheet" href="style.css">
-    <!-- Tone.js: Web Audio framework for generating sound effects in the browser.
-         Loaded from CDN (Content Delivery Network) so no local install is needed.
-         Version 14.8.49 is pinned to avoid breaking changes from updates.
-         Must be loaded BEFORE sounds.js which uses the Tone.* classes. -->
+    <!-- Fonts: Inter til generel UI, Orbitron til CGM hero-tal (sci-fi look) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
+    <!-- Tone.js: Web Audio framework for lydeffekter (CDN, pinned version) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
 </head>
 <body>
+
     <!-- ===================================================================
-         MAIN GAME CONTAINER
-         ===================================================================
-         The entire game UI lives inside this container. It uses flexbox
-         (CSS) for layout: a vertical stack of header, controls, and the
-         main game area (which is itself a horizontal layout).
+         GAME CONTAINER — Hele applikationen lever her.
+         Layout: top-bar → main-area (graf + stats) → dock-paneler → dock-bar
          =================================================================== -->
     <div id="game-container">
-        <h1 id="game-title">Diabetes-Dysten C0.5</h1>
 
         <!-- ===============================================================
-             TOP CONTROL PANEL — Game controls and status bar
-             ===============================================================
-             Contains: Start/Reset/Help buttons, speed selector, pause,
-             normoglycemia points display, and mute button.
-             Displayed as a dark horizontal bar across the top.
+             TOP BAR — Kompakt header med status-badges og handlingsknapper.
+             Inspireret af spil-HUD: informationsdense badges der viser
+             dag, tid, points og hastighed i et roligt, mørkt design.
              =============================================================== -->
-        <div id="top-control-panel">
-            <div class="top-panel-section">
-                <button id="startButton">Start Simulation</button>
-                <button id="resetButton">Reset Simulation</button>
-                <button id="helpButton">Hjælp / Info</button>
+        <div id="top-bar">
+            <!-- Brand / logo -->
+            <div class="brand">DIABETES-DYSTEN</div>
+
+            <!-- Status-badges: dag, tid, points, hastighed -->
+            <div class="top-status">
+                <div class="status-badge" title="Hvilken dag i simulationen">
+                    <span class="badge-icon">&#x1F4C5;</span>
+                    <span class="badge-label">Dag</span>
+                    <span class="badge-num" id="dayDisplay">1</span>
+                </div>
+                <div class="status-badge" title="Klokkeslæt i simulationen">
+                    <span class="badge-icon">&#x1F551;</span>
+                    <span class="badge-num" id="timeDisplay">00:00</span>
+                </div>
+                <div class="status-badge points" title="Normoglykæmi-points: optjenes ved at holde BG i målområdet">
+                    <span class="badge-icon">&#x2B50;</span>
+                    <span class="badge-num" id="normoPointsDisplay">0.0</span>
+                    <small class="badge-weight" id="normoPointsWeighting">(x1.0)</small>
+                </div>
+                <div class="status-badge speed-badge" title="Simulationshastighed">
+                    <select id="speedSelector">
+                        <option value="60">1t / min</option>
+                        <option value="240" selected>4t / min</option>
+                        <option value="720">12t / min</option>
+                        <option value="1440">24t / min</option>
+                    </select>
+                </div>
             </div>
-            <div class="top-panel-section">
-                <!-- Speed selector: controls how fast simulated time passes.
-                     Values are simulation speed multipliers (sim-seconds per real-second).
-                     x60 = 1 hour per real minute, x240 = 4 hours per real minute, etc. -->
-                <label for="speedSelector">Hastighed:</label>
-                <select id="speedSelector">
-                    <option value="60">1t / min</option>
-                    <option value="240" selected>4t / min</option>
-                    <option value="720">12t / min</option>
-                    <option value="1440">24t / min</option>
-                </select>
-                <button id="pauseButton">Pause</button>
-            </div>
-             <div class="top-panel-section">
-                <!-- Normoglycemia points: the game's scoring system.
-                     Points are earned for time spent with BG in target range.
-                     The weighting factor shows the current point multiplier
-                     (affected by bonus range and night intervention penalties). -->
-                <span class="normo-hours-display" title="Optjenes ved at holde blodsukkeret i målområdet. Vægtningen afhænger af dit aktuelle blodsukker og om du foretager natlige interventioner.">Normoglykæmi-points: <span id="normoPointsDisplay">0.0</span> <small id="normoPointsWeighting">(x1.0)</small></span>
-            </div>
-            <div class="top-panel-section">
-                <button id="muteButton">Mute Lyd</button>
+
+            <!-- Handlingsknapper: start, reset, pause, hjælp, mute -->
+            <div class="top-actions">
+                <button class="top-btn" id="startButton">&#x25B6; Start</button>
+                <button class="top-btn" id="resetButton" disabled>&#x21BA; Reset</button>
+                <button class="top-btn" id="pauseButton">&#x23F8; Pause</button>
+                <button class="top-btn" id="helpButton">&#x2753; Hjælp</button>
+                <button class="top-btn icon-btn" id="muteButton" title="Slå lyd til/fra">&#x1F507;</button>
             </div>
         </div>
 
         <!-- ===============================================================
-             MAIN GAME AREA — Three-column layout
-             ===============================================================
-             Left:   Intervention panel (food, insulin, exercise controls)
-             Center: Blood glucose graph (the main visual)
-             Right:  Statistics panel (TIR, averages, weight, patient data)
+             MAIN AREA — To-kolonne layout: graf (dominerer) + stats sidebar
+             Grafen er "spillefeltet" — den fylder det meste af skærmen.
+             Stats-sidebar viser TIR, forbrug og spiller-data.
              =============================================================== -->
         <div id="main-area">
 
-            <!-- =============================================================
-                 LEFT PANEL — Player interventions (the "control panel")
-                 =============================================================
-                 This is where the player interacts with the simulation by:
-                 - Eating food (custom macros or preset meals)
-                 - Injecting insulin (fast-acting bolus or long-acting basal)
-                 - Starting exercise (at different intensities and durations)
-                 ============================================================= -->
-            <div id="intervention-panel">
+            <!-- GRAPH SECTION — Hovedvisningen med CGM-tal, info-pills og graf -->
+            <div id="graph-section">
 
-                <!-- Insulin and Exercise side by side -->
-                <div class="intervention-row">
-                     <!-- INSULIN CONTROLS -->
-                     <div class="intervention-group">
-                        <h3>Insulin</h3>
-
-                        <!-- Fast-acting (bolus) insulin slider and inject button.
-                             Range: 0.5-10 units, step: 0.5 units.
-                             Tooltip explains what bolus insulin does. -->
-                        <label for="fastInsulinSlider" title="Hurtigtvirkende insulin dækker kulhydrater i et måltid og korrigerer højt blodsukker. Begynder at virke efter 10-15 minutter og er ude af kroppen efter 2-6 timer.">Hurtig: <span id="fastInsulinValue">4.0</span> E</label>
-                        <input type="range" id="fastInsulinSlider" min="0.5" max="10" value="4" step="0.5">
-                        <button id="giveFastInsulinButton">💉 Giv Hurtig</button>
-
-                        <!-- Long-acting (basal) insulin slider and inject button.
-                             Range: 1-30 units, step: 1 unit.
-                             Tooltip explains what basal insulin does. -->
-                        <label for="longInsulinSlider" style="margin-top: 15px;" title="Basalinsulin dækker kroppens grundlæggende behov for insulin over ca. 24 timer. Det er fundamentet i din behandling og hjælper med at holde dit blodsukker stabilt mellem måltider og om natten.">Basal: <span id="longInsulinValue">10</span> E</label>
-                        <input type="range" id="longInsulinSlider" min="1" max="30" value="10" step="1">
-                        <button id="giveLongInsulinButton">🖊️ Giv Basal</button>
-                    </div>
-
-                     <!-- EXERCISE CONTROLS -->
-                     <div class="intervention-group">
-                        <h3>Motion</h3>
-                        <!-- Intensity affects BG impact:
-                             Low = mainly aerobic (BG drops)
-                             High = mixed aerobic+anaerobic (BG may rise acutely) -->
-                        <label for="motionIntensity" title="Høj intensitet sænker blodsukkeret hurtigere og øger insulinfølsomheden mere end lav intensitet.">Intensitet:</label>
-                        <select id="motionIntensity">
-                            <option value="Lav">Lav</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Høj">Høj</option>
-                        </select>
-                        <label for="motionDuration" title="Længere tids motion har en større og længerevarende effekt på dit blodsukker og insulinfølsomhed.">Varighed:</label>
-                        <select id="motionDuration">
-                            <option value="15">15 min</option>
-                            <option value="30">30 min</option>
-                            <option value="60">1 time</option>
-                        </select>
-                        <!-- Estimated calorie burn for the selected exercise -->
-                        <div class="kcal-display"><span id="motionKcalDisplay"></span> kcal</div>
-                        <button id="startMotionButton">🏃 Start Motion</button>
+                <!-- CGM Hero Display — Stort BG-tal med trend-pil (som rigtig CGM).
+                     Orbitron-font giver et sci-fi/gamer-look.
+                     Farven skifter med BG-niveau: grøn=target, orange=forhøjet, rød=fare. -->
+                <div id="cgm-hero">
+                    <span id="cgmValueDisplayGraph" class="cgm-number">-.-</span>
+                    <div class="cgm-meta">
+                        <span class="cgm-unit">mmol/L</span>
+                        <span id="cgm-trend" class="cgm-trend">&#x2192;</span>
                     </div>
                 </div>
 
-                <!-- FOOD CONTROLS -->
-                <div class="intervention-group">
-                    <h3>Mad</h3>
-                    <div class="intervention-row inner-row">
-                        <!-- Left side: macronutrient sliders for custom meals -->
-                        <div style="display:flex; flex-direction:column; gap: 5px;">
-                            <!-- Carb slider: primary BG impact (fastest absorption) -->
-                            <label for="carbsSlider" title="Kulhydrater hæver blodsukkeret hurtigst. Effekten starter typisk efter 20 minutter.">Kulhydrat: <span id="carbsValue">50</span> g</label>
-                            <input type="range" id="carbsSlider" min="0" max="100" value="50" step="5">
-
-                            <!-- Protein slider: secondary BG impact (~25% of carb effect, delayed) -->
-                            <label for="proteinSlider" title="Protein har en mindre og langsommere effekt på blodsukkeret end kulhydrater.">Protein: <span id="proteinValue">10</span> g</label>
-                            <input type="range" id="proteinSlider" min="0" max="100" value="10" step="5">
-
-                            <!-- Fat slider: no direct BG impact, but slows carb absorption -->
-                            <label for="fatSlider" title="Fedt påvirker ikke blodsukkeret direkte, men forsinker optagelsen af kulhydrater og protein markant.">Fedt: <span id="fatValue">5</span> g</label>
-                            <input type="range" id="fatSlider" min="0" max="50" value="5" step="5">
-
-                            <!-- Calorie and carb-equivalent display for the custom meal -->
-                            <div class="kcal-display" id="foodInfoDisplay" title="Kalorier og kulhydrat-ækvivalenter for det sammensatte måltid."><span id="foodKcalDisplay"></span> | KE: <span id="foodKeDisplay"></span></div>
-                            <button id="giveFoodButton" style="margin-top: 10px;">🍴 Spis Mad</button>
-                        </div>
-
-                        <!-- Right side: preset meal buttons (quick access to common foods) -->
-                        <div>
-                             <div class="food-presets">
-                                <!-- Each preset has fixed macros matching a typical portion.
-                                     Tooltips show the macronutrient breakdown. -->
-                                <button id="dextroButton" title="3g Kulhydrater">🍬 Dextro</button>
-                                <button id="burgerButton" title="~40g Kulhydrat, 30g Protein, 30g Fedt">🍔 Burger</button>
-                                <button id="avocadoButton" title="~5g Kulhydrat, 5g Protein, 25g Fedt">🥑 Avocado</button>
-                                <button id="chickenButton" title="~2g Kulhydrat, 30g Protein, 15g Fedt">🍗 Kyl. lår</button>
-                                <button id="cakeButton" title="~60g Kulhydrat, 5g Protein, 25g Fedt">🍰 Lagkage</button>
-                                <button id="sodaButton" title="~35g Kulhydrater">🥤 Sodavand</button>
-                                <button id="saladButton" title="~5g Kulhydrat, 2g Protein, 1g Fedt">🥗 Salat</button>
-                                <button id="cerealButton" title="~30g Kulhydrat, 8g Protein, 2g Fedt">🥣 Havregryn</button>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Live info-pills: IOB og COB som kompakte badges over grafen.
+                     Disse er vigtige for insulin-stacking og timing af måltider. -->
+                <div id="info-pills">
+                    <span class="info-pill" title="Insulin On Board — aktiv insulin i kroppen. Vigtigt for at undgå insulin-stacking.">
+                        IOB <strong id="iobDisplay">0.0</strong> E
+                    </span>
+                    <span class="info-pill" title="Carbs On Board — kulhydrater der endnu ikke er optaget. Tager 20-60 min.">
+                        COB <strong id="cobDisplay">0</strong> g
+                    </span>
                 </div>
 
-                <!-- DEBUG PANEL — Developer tools (show true BG on graph) -->
-                 <div id="debug-panel" class="intervention-group">
-                    <h3>Debug</h3>
-                    <label>
-                        <!-- When checked, the graph shows the true BG as a blue line
-                             alongside the CGM dots, revealing the sensor inaccuracy. -->
-                        <input type="checkbox" id="debugTrueBgCheckbox"> Vis Sandt BG
-                    </label>
+                <!-- Graf-canvas: Alt BG-data renderes her via drawGraph() i ui.js.
+                     Canvasset er responsivt og håndterer høj-DPI skærme. -->
+                <div id="graph-area-container">
+                    <canvas id="bg-graph"></canvas>
+                    <!-- Advarsel: vises ved hurtigt faldende BG (skjult som standard) -->
+                    <div id="steep-drop-warning">&#x26A0; ADVARSEL: Hurtigt faldende BG!</div>
+                </div>
+
+                <!-- Hændelseslog: viser seneste 8 events. Collapsible. -->
+                <div id="event-log" class="collapsed">
+                    <div id="event-log-header">&#x1F4CB; Hændelseslog</div>
+                    <div id="event-log-list"></div>
                 </div>
             </div>
 
-            <!-- =============================================================
-                 CENTER + RIGHT AREA — Graph and statistics
-                 =============================================================
-                 On wide screens (>1200px), this becomes a horizontal layout
-                 with the graph on the left and stats panel on the right.
-                 On narrow screens, they stack vertically.
-                 ============================================================= -->
-            <div id="center-and-right-area">
+            <!-- STATS SIDEBAR — Statistik, spiller-data og vægtændring.
+                 TIR (Time in Range) vises øverst som den vigtigste metrik.
+                 Panelet kan foldes ind/ud med toggle-knappen. -->
+            <div id="stats-panel">
+                <button id="stats-toggle" title="Fold statistikpanelet ind/ud">&#x25C0;</button>
 
-                <!-- GRAPH AREA — The main blood glucose chart -->
-                <div id="graph-area-container">
-                    <!-- Overlay panel showing current day, time, CGM value, IOB, and COB -->
-                    <div id="iob-cob-panel">
-                        Dag: <span id="dayDisplay">1</span> - <span id="timeDisplay">00:00</span><br>
-                        CGM: <span id="cgmValueDisplayGraph">-.-</span><br>
-                        IOB: <span id="iobDisplay">0.0</span> E |
-                        COB: <span id="cobDisplay">0</span> g
+                <!-- Time in Range: den vigtigste kliniske metrik for blodsukkerkontrol -->
+                <div class="stats-section">
+                    <h5>Time in Range</h5>
+                    <!-- TIR stacked bar: visuelt overblik over tid i/over/under target -->
+                    <div class="tir-bar-container">
+                        <div class="tir-bar" id="tir-bar">
+                            <!-- Udfyldes dynamisk af updateUI() -->
+                        </div>
                     </div>
-
-                    <!-- HTML5 Canvas element: all graph rendering happens here via JavaScript.
-                         The canvas is sized dynamically by sizeCanvas() in main.js.
-                         drawGraph() in ui.js handles all the actual drawing. -->
-                    <canvas id="bg-graph"></canvas>
-
-                    <!-- Finger prick, ketone test, and glucagon emergency buttons below the graph -->
-                    <div id="other-interventions-container">
-                        <button id="fingerprickButton" title="En manuel blodsukkermåling. Den er mere præcis end CGM'en og kan bruges til at dobbelttjekke din CGM-værdi, især hvis du har mistanke om, at den viser forkert.">🩸 Fingerprik</button>
-                        <button id="ketoneTestButton" title="Mål blod-ketoner med et ketonstik. Vigtigt ved højt blodsukker og mistanke om insulinmangel. Normal: &lt; 0.6 mmol/L. Forhøjet: 0.6-1.5. Farligt: &gt; 1.5.">🧪 Keton-stik</button>
-                        <button id="glucagonButton" title="Nødbehandling ved meget lavt blodsukker. Giver en kraftig og hurtig stigning i blodsukker. Har en 24-timers cooldown.">✚ Brug Glycagon</button>
-                    </div>
-
-                    <!-- Warning overlay: shown when BG is dropping dangerously fast.
-                         Hidden by default (display:none), made visible by showSteepDropWarning(). -->
-                    <div id="steep-drop-warning">ADVARSEL: Hurtigt faldende BG!</div>
-
-                    <!-- Event log: viser de seneste hændelser med tidsstempler.
-                         Hjælper med timing (pre-bolus, post-motion) og debugging. -->
-                    <div id="event-log">
-                        <div id="event-log-header">Hændelseslog</div>
-                        <div id="event-log-list"></div>
-                    </div>
-                </div>
-
-                <!-- STATS PANEL — Patient data and clinical metrics -->
-                <div id="stats-panel">
-                    <!-- Fixed patient parameters (don't change during gameplay) -->
-                    <div class="player-data-table">
-                        <h4 title="Dine personlige diabetes-parametre. Disse er konstante i hele simulationen.">Spiller Data</h4>
-                        <div class="label" title="Din kropsvægt, indtastet ved spilstart.">Vægt</div>
-                        <div class="value" id="weightDisplay">--</div>
-                        <div class="unit">kg</div>
-
-                        <div class="label" title="Insulin/Kulhydrat-Ratio: Hvor mange gram kulhydrat dækker 1 enhed (E) hurtigtvirkende insulin?">ICR</div>
-                        <div class="value" id="icrDisplay">--</div>
-                        <div class="unit">g/E</div>
-
-                        <div class="label" title="Insulin Sensitivitets-Faktor: Hvor meget sænker 1 enhed (E) hurtigtvirkende insulin dit blodsukker?">ISF</div>
-                        <div class="value" id="isfDisplay">--</div>
-                        <div class="unit">(mmol/L)/E</div>
-
-                        <div class="label" title="Kulhydrat-Effekt: Hvor meget stiger dit blodsukker for hvert gram kulhydrat? Udregnes som ISF / ICR.">Kulh. effekt</div>
-                        <div class="value" id="carbEffectDisplay">--</div>
-                        <div class="unit">g/(mmol/L)</div>
-
-                        <div class="label" title="Anbefalet daglig basal insulin-dosis, beregnet fra din ISF via 100-reglen.">Basal dosis</div>
-                        <div class="value" id="basalDoseDisplay">--</div>
-                        <div class="unit">E/dag</div>
-
-                        <div class="label" title="Hvileforbrug: Dit basale kalorieforbrug pr. dag, beregnet ud fra din vægt.">Hvileforbrug</div>
-                        <div class="value" id="restingKcalDisplay">--</div>
-                        <div class="unit">kcal/dag</div>
-                    </div>
-                    <hr>
-
-                    <!-- Weight change indicator (visual slider showing net weight gain/loss) -->
-                     <div>
-                        <h4>Vægtændring</h4>
-                        <label for="weightChangeSlider"><span id="weightChangeValue">0.0</span> kg</label>
-                        <!-- Disabled slider used as a visual indicator (not interactive).
-                             Thumb color changes: green=stable, yellow=warning, red=danger.
-                             Game over at +/- 5 kg. -->
-                        <input type="range" id="weightChangeSlider" min="-5" max="5" value="0" step="0.1" disabled>
-                    </div>
-                    <hr>
-
-                    <!-- Clinical statistics table: TIR, TITR, average CGM, insulin, calories -->
                     <div class="stats-table">
                         <div class="header"></div>
                         <div class="header stats-middel-header" id="stats-middel-span">1 Døgn</div>
                         <div class="header stats-middel-header">7 Døgn</div>
                         <div class="header"></div>
 
-                        <!-- TIR: Time In Range (4-10 mmol/L) — clinical standard metric -->
-                        <div class="label" title="Time in Range: Procentdel af tiden hvor dit sande blodsukker har været mellem 4.0 og 10.0 mmol/L.">TIR (4-10)</div>
+                        <div class="label" title="Time in Range: procentdel af tiden med BG mellem 4.0-10.0 mmol/L">TIR (4-10)</div>
                         <div class="value" id="tir24h">--</div>
                         <div class="value" id="tir14d">--</div>
                         <div class="unit">%</div>
 
-                        <!-- TITR: Time In Tight Range (4-8 mmol/L) — stricter target -->
-                        <div class="label" title="Time in Tight Range: Procentdel af tiden hvor dit sande blodsukker har været i det ideelle interval mellem 4.0 og 8.0 mmol/L.">TITR (4-8)</div>
+                        <div class="label" title="Time in Tight Range: procentdel med BG 4.0-8.0 mmol/L (ideelt)">TITR (4-8)</div>
                         <div class="value" id="titr24h">--</div>
                         <div class="value" id="titr14d">--</div>
                         <div class="unit">%</div>
 
-                        <!-- Average CGM glucose -->
-                        <div class="label" title="Gennemsnitlig CGM-værdi over perioden. Giver en indikation af den generelle blodsukkerkontrol.">Gns. CGM</div>
+                        <div class="label" title="Gennemsnitlig CGM-værdi over perioden">Gns. CGM</div>
                         <div class="value" id="avgCgm24h">--</div>
                         <div class="value" id="avgCgm14d">--</div>
                         <div class="unit">mmol/L</div>
+                    </div>
+                </div>
 
-                        <!-- 24-hour insulin and calorie totals -->
-                        <div class="label">Hurtig Insulin</div>
+                <div class="stats-divider"></div>
+
+                <!-- Forbrug: insulin og kalorier -->
+                <div class="stats-section">
+                    <h5>Forbrug</h5>
+                    <div class="stats-table">
+                        <div class="header"></div>
+                        <div class="header">1 Døgn</div>
+                        <div class="header">7 Døgn</div>
+                        <div class="header"></div>
+
+                        <div class="label">Hurtig insulin</div>
                         <div class="value" id="fastInsulin24h">--</div>
                         <div class="value" id="fastInsulin7d">--</div>
                         <div class="unit">E/dag</div>
 
-                        <div class="label">Basal Insulin</div>
+                        <div class="label">Basal insulin</div>
                         <div class="value" id="basalInsulin24h">--</div>
                         <div class="value" id="basalInsulin7d">--</div>
                         <div class="unit">E/dag</div>
 
-                        <div class="label">Kalorieindtag</div>
+                        <div class="label">Kalorier</div>
                         <div class="value" id="kcal24h">--</div>
                         <div class="value" id="kcal7d">--</div>
                         <div class="unit">kcal/dag</div>
 
-                        <!-- Kalorieunderskud: indtag minus forbrug (hvile + motion) -->
-                        <div class="label" title="Kaloriebalance: indtag minus forbrug (hvileforbrug + motion). Negativt tal = underskud → vægttab.">Kal. balance</div>
+                        <div class="label" title="Kaloriebalance: indtag minus forbrug. Negativt = underskud → vægttab.">Kal. balance</div>
                         <div class="value" id="kcalBalance24h">--</div>
                         <div class="value" id="kcalBalance7d">--</div>
                         <div class="unit">kcal/dag</div>
                     </div>
                 </div>
+
+                <div class="stats-divider"></div>
+
+                <!-- Spiller Data: faste parametre fra profilen -->
+                <div class="stats-section">
+                    <h5>Spiller Data</h5>
+                    <div class="player-data-table">
+                        <div class="label" title="Din kropsvægt, indtastet ved spilstart.">Vægt</div>
+                        <div class="value" id="weightDisplay">--</div>
+                        <div class="unit">kg</div>
+
+                        <div class="label" title="Insulin/Kulhydrat-Ratio: gram kulhydrat dækket af 1 E insulin">ICR</div>
+                        <div class="value" id="icrDisplay">--</div>
+                        <div class="unit">g/E</div>
+
+                        <div class="label" title="Insulin Sensitivitets-Faktor: hvor meget 1 E insulin sænker BG">ISF</div>
+                        <div class="value" id="isfDisplay">--</div>
+                        <div class="unit">(mmol/L)/E</div>
+
+                        <div class="label" title="Kulhydrat-Effekt: hvor meget BG stiger pr. gram kulhydrat">Kulh. effekt</div>
+                        <div class="value" id="carbEffectDisplay">--</div>
+                        <div class="unit">g/(mmol/L)</div>
+
+                        <div class="label" title="Anbefalet daglig basal insulin-dosis (100-reglen)">Basal dosis</div>
+                        <div class="value" id="basalDoseDisplay">--</div>
+                        <div class="unit">E/dag</div>
+
+                        <div class="label" title="Hvileforbrug: basalt kalorieforbrug pr. dag">Hvileforbrug</div>
+                        <div class="value" id="restingKcalDisplay">--</div>
+                        <div class="unit">kcal/dag</div>
+                    </div>
+                </div>
+
+                <div class="stats-divider"></div>
+
+                <!-- Vægtændring: visuelt slider-indikator (ikke interaktiv) -->
+                <div class="stats-section">
+                    <h5>Vægtændring</h5>
+                    <div class="weight-change-display">
+                        <span id="weightChangeValue">0.0</span> kg
+                    </div>
+                    <input type="range" id="weightChangeSlider" min="-5" max="5" value="0" step="0.1" disabled>
+                </div>
             </div>
         </div>
+
+        <!-- ===============================================================
+             DOCK PANELS — Fold-op paneler der vises når man klikker på
+             et dock-item. Positioneret absolut over dock'en.
+             Hvert panel indeholder de samme kontroller som før,
+             men i et kompakt, mørkt design med slide-animationer.
+             =============================================================== -->
+
+        <!-- INSULIN PANEL -->
+        <div id="dock-panel-insulin" class="dock-panel">
+            <h4><span class="dp-icon">&#x1F489;</span> <span class="dp-title">Insulin</span></h4>
+            <div class="dp-section">
+                <div class="dp-row">
+                    <label title="Hurtigtvirkende insulin: dækker måltider og korrigerer højt BG. Onset 10-15 min, varighed 3-5 timer.">Hurtig</label>
+                    <input type="range" id="fastInsulinSlider" min="0.5" max="10" value="4" step="0.5">
+                    <span class="dp-val"><span id="fastInsulinValue">4.0</span> E</span>
+                </div>
+                <button id="giveFastInsulinButton" class="dp-btn btn-red">&#x1F489; Giv Hurtig</button>
+            </div>
+            <div class="dp-divider"></div>
+            <div class="dp-section">
+                <div class="dp-row">
+                    <label title="Basalinsulin: dækker kroppens grundbehov over 24+ timer. Husk dagligt!">Basal</label>
+                    <input type="range" id="longInsulinSlider" min="1" max="30" value="10" step="1">
+                    <span class="dp-val"><span id="longInsulinValue">10</span> E</span>
+                </div>
+                <button id="giveLongInsulinButton" class="dp-btn btn-blue">&#x1F58A;&#xFE0F; Giv Basal</button>
+            </div>
+        </div>
+
+        <!-- FOOD PANEL (bredere — har slider + preset-chips) -->
+        <div id="dock-panel-food" class="dock-panel dock-panel-wide">
+            <h4><span class="dp-icon">&#x1F37D;&#xFE0F;</span> <span class="dp-title">Mad</span></h4>
+            <div class="dp-food-layout">
+                <!-- Venstre: makronæring-sliders -->
+                <div class="dp-food-sliders">
+                    <div class="dp-row">
+                        <label title="Kulhydrater hæver blodsukkeret hurtigst. Effekten starter typisk efter 20 minutter.">Kulhydrat</label>
+                        <input type="range" id="carbsSlider" min="0" max="100" value="50" step="5">
+                        <span class="dp-val"><span id="carbsValue">50</span> g</span>
+                    </div>
+                    <div class="dp-row">
+                        <label title="Protein har en mindre og langsommere effekt på BG end kulhydrater (~25%).">Protein</label>
+                        <input type="range" id="proteinSlider" min="0" max="100" value="10" step="5">
+                        <span class="dp-val"><span id="proteinValue">10</span> g</span>
+                    </div>
+                    <div class="dp-row">
+                        <label title="Fedt forsinker optagelsen af kulhydrater og protein markant.">Fedt</label>
+                        <input type="range" id="fatSlider" min="0" max="50" value="5" step="5">
+                        <span class="dp-val"><span id="fatValue">5</span> g</span>
+                    </div>
+                    <div class="dp-food-info" id="foodInfoDisplay" title="Kalorier og kulhydrat-ækvivalenter">
+                        <span id="foodKcalDisplay"></span> kcal | KE: <span id="foodKeDisplay"></span>
+                    </div>
+                    <button id="giveFoodButton" class="dp-btn btn-yellow">&#x1F37D;&#xFE0F; Spis Mad</button>
+                </div>
+                <!-- Højre: preset mad-chips (hurtig adgang til typiske måltider) -->
+                <div class="dp-food-presets">
+                    <div class="preset-chip" id="dextroButton" title="3g Kulhydrater (12 kcal)">
+                        <span class="pc-emoji">&#x1F36C;</span><span class="pc-name">Dextro</span>
+                    </div>
+                    <div class="preset-chip" id="burgerButton" title="40g Kulhydrat, 30g Protein, 30g Fedt (550 kcal)">
+                        <span class="pc-emoji">&#x1F354;</span><span class="pc-name">Burger</span>
+                    </div>
+                    <div class="preset-chip" id="avocadoButton" title="5g Kulhydrat, 5g Protein, 25g Fedt (265 kcal)">
+                        <span class="pc-emoji">&#x1F951;</span><span class="pc-name">Avocado</span>
+                    </div>
+                    <div class="preset-chip" id="chickenButton" title="2g Kulhydrat, 30g Protein, 15g Fedt (263 kcal)">
+                        <span class="pc-emoji">&#x1F357;</span><span class="pc-name">Kylling</span>
+                    </div>
+                    <div class="preset-chip" id="cakeButton" title="60g Kulhydrat, 5g Protein, 25g Fedt (485 kcal)">
+                        <span class="pc-emoji">&#x1F370;</span><span class="pc-name">Lagkage</span>
+                    </div>
+                    <div class="preset-chip" id="sodaButton" title="35g Kulhydrater (140 kcal)">
+                        <span class="pc-emoji">&#x1F964;</span><span class="pc-name">Sodavand</span>
+                    </div>
+                    <div class="preset-chip" id="saladButton" title="5g Kulhydrat, 2g Protein, 1g Fedt (37 kcal)">
+                        <span class="pc-emoji">&#x1F957;</span><span class="pc-name">Salat</span>
+                    </div>
+                    <div class="preset-chip" id="cerealButton" title="30g Kulhydrat, 8g Protein, 2g Fedt (170 kcal)">
+                        <span class="pc-emoji">&#x1F963;</span><span class="pc-name">Havregryn</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOTION PANEL -->
+        <div id="dock-panel-motion" class="dock-panel">
+            <h4><span class="dp-icon">&#x1F3C3;</span> <span class="dp-title">Motion</span></h4>
+            <div class="dp-row">
+                <label title="Intensitet påvirker BG-fald og kalorieforbrænding. Høj intensitet kan give akut BG-stigning.">Intensitet</label>
+                <select id="motionIntensity">
+                    <option value="Lav">Lav</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Høj">Høj</option>
+                </select>
+            </div>
+            <div class="dp-row">
+                <label title="Længere tids motion har større og længerevarende effekt på BG og insulinfølsomhed.">Varighed</label>
+                <select id="motionDuration">
+                    <option value="15">15 min</option>
+                    <option value="30">30 min</option>
+                    <option value="60">1 time</option>
+                </select>
+            </div>
+            <div class="dp-food-info"><span id="motionKcalDisplay"></span> kcal</div>
+            <button id="startMotionButton" class="dp-btn btn-green">&#x1F3C3; Start Motion</button>
+        </div>
+
+        <!-- MÅLINGER PANEL (fingerprik + keton-stik) -->
+        <div id="dock-panel-measure" class="dock-panel">
+            <h4><span class="dp-icon">&#x1F52C;</span> <span class="dp-title">Målinger</span></h4>
+            <div class="dp-measure-grid">
+                <button id="fingerprickButton" class="dp-btn btn-red"
+                    title="Manuel blodsukkermåling. Mere præcis end CGM — brug til dobbelttjek.">
+                    &#x1FA78; Fingerprik
+                </button>
+                <button id="ketoneTestButton" class="dp-btn btn-purple"
+                    title="Mål blod-ketoner. Vigtigt ved højt BG + mistanke om insulinmangel. Normal: < 0.6, Farligt: > 1.5">
+                    &#x1F9EA; Keton-stik
+                </button>
+            </div>
+        </div>
+
+        <!-- DEBUG PANEL -->
+        <div id="dock-panel-debug" class="dock-panel">
+            <h4><span class="dp-icon">&#x2699;&#xFE0F;</span> <span class="dp-title">Debug</span></h4>
+            <label class="dp-checkbox">
+                <input type="checkbox" id="debugTrueBgCheckbox">
+                <span>Vis Sandt BG (blå linje)</span>
+            </label>
+        </div>
+
+        <!-- ===============================================================
+             DOCK BAR — macOS Dock-inspireret interventions-bar i bunden.
+             Ikoner vokser ved hover (+ nabo-effekt som i macOS Dock).
+             Klik åbner fold-op paneler med kontroller.
+             Separatorer grupperer relaterede handlinger.
+             =============================================================== -->
+        <div id="dock-container">
+            <div class="dock">
+                <!-- Primære interventioner: insulin, mad, motion -->
+                <div class="dock-item d-insulin" data-panel="dock-panel-insulin" title="Giv insulin (hurtig eller basal)">
+                    <div class="dock-icon">&#x1F489;</div>
+                    <span class="dock-label">Insulin</span>
+                </div>
+                <div class="dock-item d-food" data-panel="dock-panel-food" title="Spis mad (custom eller preset)">
+                    <div class="dock-icon">&#x1F37D;&#xFE0F;</div>
+                    <span class="dock-label">Mad</span>
+                </div>
+                <div class="dock-item d-exercise" data-panel="dock-panel-motion" title="Start motion (forskellige intensiteter)">
+                    <div class="dock-icon">&#x1F3C3;</div>
+                    <span class="dock-label">Motion</span>
+                </div>
+
+                <div class="dock-separator"></div>
+
+                <!-- Målinger og nødhjælp -->
+                <div class="dock-item d-measure" data-panel="dock-panel-measure" title="Fingerprik og keton-stik">
+                    <div class="dock-icon">&#x1FA78;</div>
+                    <span class="dock-label">Målinger</span>
+                </div>
+                <div class="dock-item d-sos" id="glucagonDockItem" title="Nødbehandling: glucagon-injektion (24t cooldown)">
+                    <div class="dock-icon">&#x271A;</div>
+                    <span class="dock-label">SOS</span>
+                </div>
+
+                <div class="dock-separator"></div>
+
+                <!-- Værktøjer -->
+                <div class="dock-item d-debug" data-panel="dock-panel-debug" title="Debug-værktøjer">
+                    <div class="dock-icon">&#x2699;&#xFE0F;</div>
+                    <span class="dock-label">Debug</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skjult glucagon-knap: den rigtige knap der håndterer cooldown-logik.
+             SOS dock-item'et trigger denne via JavaScript. -->
+        <button id="glucagonButton" style="display:none;"></button>
     </div>
 
     <!-- ===================================================================
          HJÆLP-TEKST — Indholdet af hjælp-popuppen.
-         ===================================================================
          Ligger i et <template>-tag som er usynligt i browseren.
          showHelpPopup() i ui.js henter indholdet herfra.
-         Du kan redigere teksten direkte her — ændringer vises næste gang
-         du åbner hjælp-popuppen (genindlæs siden).
          =================================================================== -->
     <template id="help-content-template">
         <h2 class="info-title">Diabetes-Dysten</h2>
@@ -335,7 +426,7 @@
           AI-assisteret udvikling, og personlige erfaringer fra de første måneder
           med T1D.<br>— Kristian R Harreby
         </p>
-        <p style="color: red;">
+        <p style="color: #ef4444;">
           <strong>Disclaimer:</strong> Simulationen er IKKE en guide til kliniske
           beslutninger. Konsulter altid sundhedspersonale for rådgivning om din
           egen situation.
@@ -344,24 +435,24 @@
         <h3>Spilmekanikker</h3>
         <ul>
           <li><strong>Mål:</strong> Opnå så mange Normoglykæmi-points som muligt ved at holde blodsukkeret stabilt.</li>
-          <li><strong>Points:</strong> 5–6 mmol/L = 2x (grøn bonus-zone), 4–10 = 1x, 10–14 = 0.5x (orange zone), &lt;4 eller &gt;14 = 0 points.</li>
+          <li><strong>Points:</strong> 5-6 mmol/L = 2x (grøn bonus-zone), 4-10 = 1x, 10-14 = 0.5x (orange zone), &lt;4 eller &gt;14 = 0 points.</li>
           <li><strong>Personlig profil:</strong> Indtast din vægt, ICR og ISF ved start — simulatoren tilpasser sig dine parametre.</li>
         </ul>
 
         <h3>Fysiologi &amp; Interventioner</h3>
         <ul>
-          <li><strong>Mad:</strong> Kulhydrater hæver BG hurtigt (20–60 min). Protein bidrager langsomt (~25% af kulhydrateffekt). Fedt forsinker al absorption.</li>
-          <li><strong>Hurtig insulin:</strong> Onset 10–15 min, peak 1–2 timer, varighed 3–5 timer. Sænker BG med ca. ISF pr. enhed.</li>
+          <li><strong>Mad:</strong> Kulhydrater hæver BG hurtigt (20-60 min). Protein bidrager langsomt (~25% af kulhydrateffekt). Fedt forsinker al absorption.</li>
+          <li><strong>Hurtig insulin:</strong> Onset 10-15 min, peak 1-2 timer, varighed 3-5 timer. Sænker BG med ca. ISF pr. enhed.</li>
           <li><strong>Basal insulin:</strong> Dækker kroppens grundbehov over 24+ timer. Husk den dagligt!</li>
           <li><strong>Motion:</strong> Sænker BG under aktivitet og øger insulinfølsomheden i op til 30 timer efter. Effekten er størst med aktiv insulin i kroppen.</li>
-          <li><strong>Dawn-effekt:</strong> Leveren frigiver ekstra glukose om morgenen (ca. 04:00–08:00).</li>
-          <li><strong>Søvn:</strong> Natlige interventioner (22:00–07:00) forstyrrer søvnen og øger insulinresistensen næste dag.</li>
+          <li><strong>Dawn-effekt:</strong> Leveren frigiver ekstra glukose om morgenen (ca. 04:00-08:00).</li>
+          <li><strong>Søvn:</strong> Natlige interventioner (22:00-07:00) forstyrrer søvnen og øger insulinresistensen næste dag.</li>
           <li><strong>Stress:</strong> Hypoglykæmi og intensiv motion udløser stresshormoner der hæver BG (kontraregulering).</li>
         </ul>
 
         <h3>Målinger</h3>
         <ul>
-          <li><strong>CGM:</strong> Viser blodsukker med 5–10 min forsinkelse og nogen usikkerhed. Ikke altid præcis!</li>
+          <li><strong>CGM:</strong> Viser blodsukker med 5-10 min forsinkelse og nogen usikkerhed. Ikke altid præcis!</li>
           <li><strong>Fingerprik:</strong> Mere præcis end CGM (±5%). Brug den til at dobbelttjekke.</li>
           <li><strong>Keton-stik:</strong> Mål ketoner ved vedvarende højt BG. Forhøjede ketoner + højt BG = risiko for ketoacidose.</li>
         </ul>
@@ -376,15 +467,7 @@
     </template>
 
     <!-- ===================================================================
-         SCRIPT LOADING ORDER — Critical! Files share global scope.
-         ===================================================================
-         Each file builds on the previous ones:
-           1. sounds.js   — Sound system (Tone.js synths and playSound())
-           2. hovorka.js  — Hovorka 2004 fysiologisk model (ODE'er)
-           3. simulator.js — Simulator class (uses HovorkaModel, playSound, logEvent)
-           4. ui.js        — Drawing and UI functions (uses Simulator state)
-           5. game.js      — Game loop (uses Simulator, UI functions)
-           6. main.js      — Initialization (uses everything above)
+         SCRIPT LOADING ORDER — Kritisk! Filerne deler globalt scope.
          =================================================================== -->
     <script src="js/sounds.js"></script>
     <script src="js/hovorka.js"></script>

@@ -1,620 +1,1148 @@
 /* =============================================================================
-   STYLE.CSS — Complete visual styling for Diabetes-Dysten
+   STYLE.CSS — Komplet styling for Diabetes-Dysten (UI-redesign v2)
    =============================================================================
 
-   This file controls ALL visual presentation of the game. It uses standard CSS
-   (Cascading Style Sheets) with no preprocessor (no SASS/LESS/etc.).
+   DESIGN-PRINCIPPER:
+   - Mørkt tema (gamer/sci-fi æstetik, CGM-app møder spil-HUD)
+   - Grafen dominerer — den er "spillefeltet"
+   - macOS Dock-inspireret interventions-bar i bunden
+   - CSS-variabler til alle farver (tema-skifte-klart)
+   - Satisfying hover-animationer med bounce-effekt
 
-   Layout system: CSS Flexbox and CSS Grid
-   ----------------------------------------
-   Flexbox (`display: flex`) arranges elements in a row or column. Think of it
-   like MATLAB's uipanel with a horizontal or vertical layout.
-   - flex-direction: row (default) = horizontal, column = vertical
-   - justify-content: alignment along the main axis
-   - align-items: alignment along the cross axis
-   - flex-grow: 1 means "take up remaining space"
+   LAYOUT:
+   ┌──────────────────────────────────────────────────────┐
+   │ TOP BAR                                              │
+   ├──────────────────────────────────────────┬───────────┤
+   │  CGM Hero + Info Pills                   │  STATS    │
+   │  ┌──────────────────────────────────┐    │  SIDEBAR  │
+   │  │         GRAF (canvas)            │    │           │
+   │  └──────────────────────────────────┘    │           │
+   │  Event Log                               │           │
+   ├──────────────────────────────────────────┴───────────┤
+   │ DOCK: [Insulin] [Mad] [Motion] | [Målinger] [SOS]   │
+   └──────────────────────────────────────────────────────┘
 
-   CSS Grid (`display: grid`) creates a 2D table-like layout.
-   - grid-template-columns: defines column widths
-   - gap: spacing between grid cells
+   CSS-VARIABLER:
+   Alle farver er defineret i :root. Skift til lyst tema ved at override
+   variablerne i en alternativ klasse (fx body.light-theme).
 
-   CSS Variables
-   ----------------------------------------
-   var(--thumb-color) is a CSS custom property. It's set dynamically from
-   JavaScript (weightChangeSlider.style.setProperty('--thumb-color', color))
-   to change the weight slider thumb color based on weight change severity.
-
-   Responsive design
-   ----------------------------------------
-   The @media query at the bottom adapts the layout for different screen widths.
-   On screens wider than 1200px, the graph and stats panel sit side by side.
-   On narrower screens, they stack vertically.
+   FONTS:
+   - Inter: generel UI-tekst (Google Fonts, loadet i HTML)
+   - Orbitron: CGM hero-tal (sci-fi/gamer-look)
 
    ============================================================================= */
 
 
 /* =============================================================================
-   BODY AND MAIN CONTAINER
+   CSS-VARIABLER — Centralt definerede farver for hele temaet.
+   Override disse for at skifte tema (fx lyst/mørkt).
    ============================================================================= */
+:root {
+    /* Baggrundsfarver (mørkt tema) */
+    --bg-primary: #0c1220;                          /* Hovedbaggrund */
+    --bg-secondary: #111827;                        /* Top bar, sidebar */
+    --bg-card: rgba(17, 24, 39, 0.95);             /* Paneler/kort */
+    --bg-elevated: rgba(255, 255, 255, 0.03);      /* Subtil elevation */
+    --bg-hover: rgba(255, 255, 255, 0.08);         /* Hover-baggrund */
 
-/* General body: centered layout with a neutral background */
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #eef1f5;           /* Light grey-blue background */
-    display: flex;
-    justify-content: center;             /* Center the game container horizontally */
-    align-items: flex-start;             /* Align to top (not vertically centered) */
-    min-height: 100vh;                   /* Fill the full viewport height */
-    overflow-x: hidden;                  /* Prevent horizontal scrollbar */
-    color: #333;                         /* Default text color: dark grey */
+    /* Tekstfarver */
+    --text-primary: #e0e8f0;                        /* Primær tekst */
+    --text-secondary: #8899bb;                      /* Sekundær tekst */
+    --text-muted: #556677;                          /* Dæmpet tekst */
+
+    /* Accent-farver (brugt til kategorisering) */
+    --green: #4ade80;                               /* Target range, gode værdier */
+    --green-dim: rgba(74, 222, 128, 0.15);
+    --green-glow: rgba(74, 222, 128, 0.3);
+    --red: #ef4444;                                 /* Fare, hypo/DKA */
+    --red-dim: rgba(239, 68, 68, 0.15);
+    --orange: #fb923c;                              /* Forhøjede værdier */
+    --orange-dim: rgba(251, 146, 60, 0.12);
+    --blue: #60a5fa;                                /* Insulin */
+    --blue-dim: rgba(96, 165, 250, 0.15);
+    --purple: #a78bfa;                              /* Keton-målinger */
+    --purple-dim: rgba(167, 139, 250, 0.15);
+    --yellow: #fbbf24;                              /* Mad/kalorier */
+    --yellow-dim: rgba(251, 191, 36, 0.12);
+
+    /* Grænser og effekter */
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-medium: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+
+    /* Border radius */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 18px;
+
+    /* Animation */
+    --bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Main game container: white card with shadow, full width up to 1920px */
+
+/* =============================================================================
+   BODY OG GAME CONTAINER
+   ============================================================================= */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Game container fylder hele viewporten */
 #game-container {
     width: 100%;
-    max-width: 1920px;
-    min-height: 95vh;
-    background-color: #ffffff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Subtle drop shadow */
+    height: 100vh;
     display: flex;
-    flex-direction: column;              /* Stack children vertically */
-    border-radius: 8px;
-    margin: 10px;
-}
-
-/* Game title styling (currently unused container) */
-#game-title-container {
-    text-align: center;
-    padding: 10px 0;
-}
-#game-title {
-    margin: 0;
-    font-size: 1.8em;
-    color: #2c5282;                      /* Dark blue */
-    font-weight: 600;
+    flex-direction: column;
+    position: relative;          /* Ankerpoint for absolut-positionerede dock-paneler */
 }
 
 
 /* =============================================================================
-   TOP CONTROL PANEL — Dark header bar with game controls
+   TOP BAR — Kompakt header med status-badges og handlingsknapper
    ============================================================================= */
 
-#top-control-panel {
-    background-color: #4a5568;           /* Dark grey background */
-    color: white;
-    padding: 10px 15px;
-    display: flex;
-    justify-content: space-between;      /* Spread sections across the full width */
-    align-items: center;
-    flex-wrap: wrap;                      /* Allow wrapping on narrow screens */
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}
-
-/* Each section within the top panel (groups related controls) */
-.top-panel-section {
+#top-bar {
+    height: 50px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+    z-index: 20;
 }
 
-/* Spacing for all interactive elements in the top panel */
-#top-control-panel button, #top-control-panel select, #top-control-panel label, #top-control-panel span {
-    margin: 5px 7px;
+/* Brand-logo med gradient-tekst */
+.brand {
+    font-weight: 800;
+    font-size: 15px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 1.5px;
+    cursor: default;
 }
 
-/* Top panel buttons: blue with hover darkening */
-#top-control-panel button {
-    background-color: #63b3ed;           /* Medium blue */
+/* Status-badges: kompakte info-elementer i toppen */
+.top-status {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.status-badge {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 5px 14px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s var(--smooth);
+    cursor: default;
+}
+
+.status-badge:hover {
+    background: var(--bg-hover);
+    transform: translateY(-1px);
+}
+
+.badge-icon { font-size: 14px; }
+.badge-num { font-weight: 700; color: var(--text-primary); }
+.badge-label { color: var(--text-muted); font-size: 11px; }
+.badge-weight { color: var(--text-muted); font-size: 10px; margin-left: 2px; }
+
+/* Points-badge: grøn farve for scoring */
+.status-badge.points .badge-num { color: var(--green); }
+
+/* Hastigheds-dropdown i top bar */
+.speed-badge select {
+    background: transparent;
     border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
-    transition: background-color 0.2s;   /* Smooth color transition on hover */
+    outline: none;
 }
-#top-control-panel button:hover {
-    background-color: #4299e1;           /* Darker blue on hover */
-}
-
-/* Speed selector dropdown */
-#speedSelector {
-    padding: 6px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    color: #333;
+.speed-badge select option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
-/* Version indicator (currently unused but kept for future use) */
-.version-indicator {
-    font-weight: bold;
-    margin-right: 10px;
-    font-size: 0.9em;
-    opacity: 0.8;
+/* Handlingsknapper i top bar */
+.top-actions {
+    display: flex;
+    gap: 6px;
 }
 
-/* Normoglycemia points display: prominent yellow text in the top bar */
-.normo-hours-display {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #f6e05e;                      /* Bright yellow for visibility on dark background */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.4); /* Shadow for readability */
-    margin: 0 15px;
+.top-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s var(--bounce);
 }
-.normo-hours-display small {
-    font-size: 0.7em;
-    font-weight: normal;
-    opacity: 0.8;
+
+.top-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    transform: scale(1.06);
+}
+
+.top-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.icon-btn {
+    padding: 6px 10px;
 }
 
 
 /* =============================================================================
-   MAIN LAYOUT — Three-column structure (interventions | graph | stats)
+   MAIN AREA — To-kolonne layout med graf og stats sidebar
    ============================================================================= */
 
 #main-area {
+    flex: 1;
     display: flex;
-    flex-grow: 1;                        /* Take up all remaining vertical space */
-    padding: 10px;
     overflow: hidden;
 }
 
 
 /* =============================================================================
-   LEFT PANEL — Intervention controls (food, insulin, exercise)
+   GRAPH SECTION — CGM-hero, info-pills og graf-canvas
    ============================================================================= */
 
-#intervention-panel {
-    width: 480px;                        /* Fixed width for the control panel */
-    padding: 15px;
-    background-color: #f7fafc;           /* Very light grey background */
-    border-right: 1px solid #e2e8f0;     /* Subtle border separating from graph */
-    overflow-y: auto;                    /* Scrollable if content is too tall */
+#graph-section {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px;                           /* Spacing between intervention groups */
+    padding: 16px 16px 8px 16px;
+    overflow: hidden;
 }
 
-/* Horizontal row layout for side-by-side groups (insulin + exercise) */
-.intervention-row {
+/* --- CGM Hero Display ---
+   Stort BG-tal med Orbitron-font (sci-fi/gamer look).
+   Farven ændres dynamisk via JavaScript baseret på BG-niveau:
+   grøn = target (4-10), orange = forhøjet (10-14), rød = fare (<4 / >14). */
+#cgm-hero {
     display: flex;
-    gap: 10px;
-    width: 100%;
-}
-
-/* Individual intervention group (card-like container) */
-.intervention-group {
-    border: 1px solid #cbd5e0;
-    padding: 12px;
-    border-radius: 6px;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Very subtle shadow */
-    width: 100%;
-    box-sizing: border-box;             /* Include padding in width calculation */
-    margin-bottom: 10px;
-    display: flex;
-    flex-direction: column;
-}
-
-/* When intervention groups are in a row, each takes 50% width minus gap */
-.intervention-row > .intervention-group, .inner-row > div {
-     width: calc(50% - 10px);
-     margin-bottom: 0;
-}
-.inner-row {
-     gap: 20px;
-}
-
-/* Preset food buttons: 2-column grid layout */
-.food-presets {
-    display: grid;
-    grid-template-columns: 1fr 1fr;     /* Two equal-width columns */
+    align-items: baseline;
     gap: 12px;
-    margin-top: 10px;
-}
-.food-presets button {
-    width: 100%;
-    margin: 0;
-    padding: 8px 5px;
-    font-size: 0.8em;
-    background-color: #e2e8f0;           /* Light grey */
-    color: #4a5568;
-    border: 1px solid #cbd5e0;
-}
-.food-presets button:hover {
-    background-color: #cbd5e0;           /* Slightly darker on hover */
-}
-
-/* Debug panel: separated from other controls with a top border */
-#debug-panel {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #e2e8f0;
-}
-
-/* Group headings: blue text, consistent sizing */
-.intervention-group h3, .intervention-group h4 {
-    margin-top: 0;
-    font-size: 1.1em;
-    color: #2c5282;
-    font-weight: bold;
-}
- .intervention-group h4 {
-    font-size: 1.0em;
     margin-bottom: 8px;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 8px;
- }
-
-/* Labels for sliders and dropdowns */
-.intervention-group label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 0.9em;
-    font-weight: bold;
 }
 
-/* Sliders and dropdowns: full width within their container */
-.intervention-group input[type="range"], .intervention-group select {
-    width: 100%;
-    margin-bottom: 8px;
-    box-sizing: border-box;
+.cgm-number {
+    font-family: 'Orbitron', monospace;
+    font-size: 52px;
+    font-weight: 800;
+    color: var(--green);
+    line-height: 1;
+    transition: all 0.3s var(--smooth);
+    cursor: default;
 }
 
-/* Action buttons within intervention groups: green with white text */
-.intervention-group button {
-    width: 100%;
-    padding: 10px;
-    background-color: #48bb78;           /* Green */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s;
-    margin-top: auto;                    /* Push button to the bottom of the flex container */
-}
-.intervention-group button:hover {
-    background-color: #38a169;           /* Darker green on hover */
+/* Subtil glow-effekt ved hover på CGM-tallet */
+.cgm-number:hover {
+    transform: scale(1.05);
+    text-shadow: 0 0 30px var(--green-glow);
 }
 
-/* Disabled state for buttons (greyed out, no pointer cursor) */
-#other-interventions-container button:disabled {
-    background-color: #a0aec0;
-    cursor: not-allowed;
-}
+/* Farve-klasser til BG-niveauer (sat dynamisk af updateUI) */
+.cgm-number.bg-target { color: var(--green); }
+.cgm-number.bg-elevated { color: var(--orange); }
+.cgm-number.bg-danger { color: var(--red); }
 
-/* Ketone test button: purple/violet to indicate metabolic measurement */
-#ketoneTestButton {
-    background-color: #805ad5;           /* Purple */
-}
-#ketoneTestButton:hover {
-    background-color: #6b46c1;           /* Darker purple on hover */
-}
-
-/* Glucagon button: red to indicate emergency/danger */
-#glucagonButton {
-    background-color: #e53e3e;           /* Red */
-}
-#glucagonButton:hover {
-    background-color: #c53030;           /* Darker red on hover */
-}
-
-
-/* =============================================================================
-   CENTER AND RIGHT AREA — Graph and statistics panel
-   ============================================================================= */
-
-#center-and-right-area {
-    flex-grow: 1;                        /* Take up remaining horizontal space */
-    display: flex;
-    flex-direction: column;              /* Default: stack vertically */
-    overflow: hidden;
-}
-
-/* Graph container with relative positioning (for absolute-positioned overlays) */
-#graph-area-container {
-    flex-grow: 1;
-    padding: 10px 15px;
+.cgm-meta {
     display: flex;
     flex-direction: column;
-    position: relative;                  /* Needed for absolute children (IOB panel, warning) */
+    gap: 2px;
 }
 
-/* Finger prick and glucagon buttons below the graph */
-#other-interventions-container {
+.cgm-unit {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Trend-pil: viser BG-retning (som rigtig CGM: ↑↗→↘↓) */
+.cgm-trend {
+    font-size: 22px;
+    color: var(--green);
+    line-height: 1;
+    transition: color 0.3s;
+}
+
+/* --- Live Info Pills ---
+   Kompakte IOB/COB badges over grafen. */
+#info-pills {
     display: flex;
     gap: 10px;
-    justify-content: center;
-    padding-top: 10px;
-}
-#other-interventions-container button {
-    width: 150px;
+    margin-bottom: 10px;
 }
 
-/* IOB/COB overlay panel: positioned in the top-right corner of the graph */
-#iob-cob-panel {
-    position: absolute;
-    top: 15px;
-    right: 25px;
-    background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent white */
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-    font-size: 0.9em;
-    z-index: 10;                         /* Above the graph canvas */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+.info-pill {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: all 0.2s var(--smooth);
+    cursor: default;
 }
 
-/* The main blood glucose graph canvas */
+.info-pill:hover {
+    transform: scale(1.05);
+    background: var(--bg-hover);
+}
+
+.info-pill strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+/* --- Graf Canvas Container ---
+   Canvas-elementet fylder containeren. Relative positioning
+   for absolut-positionerede overlays (advarsel, etc). */
+#graph-area-container {
+    flex: 1;
+    position: relative;
+    min-height: 200px;
+}
+
 #bg-graph {
     width: 100%;
-    height: 438px;
-    border: 1px solid #cbd5e0;
-    background-color: #fff;
-    border-radius: 6px;
+    height: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.01);
 }
 
-
-/* =============================================================================
-   STATS PANEL — Right-side statistics display
-   ============================================================================= */
-
-#stats-panel {
-    width: 280px;
-    padding: 15px;
-    background-color: #f7fafc;
-    border-left: 1px solid #e2e8f0;
-    overflow-y: auto;
-    font-size: 0.9em;
-}
-
-/* Responsive layout: on wide screens (>1200px), graph and stats sit side by side */
-@media (min-width: 1201px) {
-     #center-and-right-area {
-        flex-direction: row;             /* Switch to horizontal layout */
-    }
-}
-
-/* Stats panel headings */
-#stats-panel h4 {
-    font-size: 1.1em;
-    color: #2c5282;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 5px;
-    margin-bottom: 10px;
-    font-weight: bold;
-}
-#stats-panel div {
-    margin-bottom: 8px;
-    line-height: 1.4;
-}
-
-/* Weight change slider: styled as a visual indicator (not interactive) */
-#weightChangeSlider {
-    width: 90%;
-    max-width: 250px;
-    margin: 5px auto;
-    -webkit-appearance: none;            /* Remove default browser styling */
-    appearance: none;
-    height: 10px;
-    background: #ddd;                    /* Light grey track */
-    outline: none;
-    border-radius: 5px;
-}
-
-/* Custom slider thumb: circular, color controlled by --thumb-color CSS variable.
-   The color is set dynamically from JavaScript based on weight change:
-   green = stable (<1.5 kg), yellow = warning (1.5-3.5 kg), red = danger (>3.5 kg) */
-#weightChangeSlider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    background: var(--thumb-color, #4CAF50); /* CSS variable with green fallback */
-    cursor: default;
-    border-radius: 50%;                  /* Circular shape */
-    border: 2px solid white;
-    box-shadow: 0 0 3px rgba(0,0,0,0.3);
-}
-
-/* Player data table: same visual style as stats-table but 3 columns (label | value | unit) */
-.player-data-table {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 8px 12px;
-    align-items: center;
-}
-.player-data-table h4 {
-    grid-column: 1 / -1; /* Span all columns */
-    font-size: 1.1em;
-    color: #2c5282;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 5px;
-    margin: 0 0 4px 0;
-    font-weight: bold;
-}
-.player-data-table > .label {
-    font-weight: bold;
-    text-align: left;
-    padding: 4px;
-}
-.player-data-table > .value {
-    text-align: right;
-    background-color: #edf2f7;
-    padding: 4px;
-    border-radius: 3px;
-}
-.player-data-table > .unit {
-    text-align: left;
-    color: #718096;
-    font-size: 0.85em;
-    padding: 4px;
-}
-
-/* Statistics table: 3-column CSS Grid layout (label | 24h value | 14d value) */
-.stats-table {
-    display: grid;
-    grid-template-columns: auto 1fr 1fr auto; /* Label, 24h, 7d, unit */
-    gap: 8px 12px;
-    align-items: center;
-    padding-top: 12px; /* Plads til "Middelværdi"-overskriften */
-    position: relative;
-}
-.stats-table .header {
-    font-weight: bold;
-    color: #2c5282;
-    text-align: right;
-}
-/* "Middelværdi" label centreret over de to periode-kolonner */
-.stats-middel-header {
-    text-align: center !important;
-    font-size: 0.85em;
-    position: relative;
-}
-/* Vis "Middel" som en fælles overskrift via ::before på den første periode-header */
-#stats-middel-span::before {
-    content: "Middelværdi";
-    position: absolute;
-    top: -16px;
-    left: 0;
-    /* Spænd over begge kolonner — bredden strækker sig ud over dette element */
-    width: calc(200% + 12px); /* 2 kolonner + gap */
-    text-align: center;
-    font-size: 0.8em;
-    color: #718096;
-    font-weight: normal;
-    font-style: italic;
-}
-.stats-table > div {
-     padding: 4px;
-     border-radius: 3px;
-}
- .stats-table > .label {
-    font-weight: bold;
-    text-align: left;
-}
-.stats-table > .value {
-    text-align: right;
-    background-color: #edf2f7;
-}
-.stats-table > .unit {
-    text-align: left;
-    color: #718096;
-    font-size: 0.85em;
-}
-
-
-/* =============================================================================
-   POPUPS AND WARNINGS — Modal dialogs and alert overlays
-   ============================================================================= */
-
-/* Popup overlay: full-screen semi-transparent backdrop */
-.popup-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.6);   /* 60% black overlay */
-    display: flex;
-    justify-content: center; align-items: center;
-    z-index: 1000;                       /* Above everything else */
-    padding: 15px;
-}
-
-/* Popup content card: white box with rounded corners */
-.popup-content {
-    background-color: white; padding: 25px 35px; border-radius: 10px;
-    text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 600px;
-    max-height: 90vh; overflow-y: auto;  /* Scrollable if content exceeds viewport */
-}
-.popup-content h2 { margin-top: 0; color: #e53e3e; font-size: 1.8em; text-align: center;}
-.popup-content h2.event-title, .popup-content h2.info-title { color: #3182ce; } /* Blue for non-fatal events */
-.popup-content p, .popup-content li { font-size: 1.0em; line-height: 1.5; margin-bottom: 15px; }
-.popup-content ul { padding-left: 20px; }
-.popup-content h3 { color: #2c5282; margin-top: 20px; }
-.popup-content .popup-button-container { text-align: center; margin-top: 20px; }
-.popup-content button {
-    padding: 12px 25px; background-color: #48bb78; color: white;
-    border: none; border-radius: 6px; cursor: pointer;
-    font-size: 1.1em; font-weight: bold; transition: background-color 0.2s;
-}
-.popup-content button:hover { background-color: #38a169; }
-
-/* Steep drop warning: red overlay centered on the graph area.
-   Hidden by default (display: none). Shown by showSteepDropWarning()
-   when BG is dropping dangerously fast (< 4.0 mmol/L and > 0.15/min). */
+/* Advarsel ved hurtigt faldende BG — rød overlay centreret over grafen */
 #steep-drop-warning {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);    /* Center precisely in the graph area */
-    background-color: rgba(255, 0, 0, 0.85);
+    transform: translate(-50%, -50%);
+    background-color: rgba(239, 68, 68, 0.9);
     color: white;
     padding: 15px 25px;
-    border-radius: 8px;
-    font-size: 1.2em;
+    border-radius: var(--radius-md);
+    font-size: 1.1em;
     font-weight: bold;
     z-index: 100;
     text-align: center;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    display: none;                       /* Hidden until triggered */
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    display: none;
 }
 
 
 /* =============================================================================
-   EVENT LOG — Hændelseslog under grafen
+   EVENT LOG — Collapsible hændelseslog under grafen
    ============================================================================= */
+
 #event-log {
-    margin-top: 8px;
-    background: rgba(0,0,0,0.03);
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    max-height: 120px;
-    overflow-y: auto;
+    margin-top: 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
     font-size: 0.8em;
     font-family: 'Consolas', 'Courier New', monospace;
+    overflow: hidden;
+    transition: max-height 0.3s var(--smooth);
+    max-height: 120px;
 }
+
+/* Collapsed state: kun header synlig */
+#event-log.collapsed {
+    max-height: 24px;
+}
+
 #event-log-header {
     font-weight: bold;
     font-size: 0.85em;
     padding: 4px 8px;
-    background: #edf2f7;
-    border-bottom: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-subtle);
     position: sticky;
     top: 0;
-    color: #4a5568;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
 }
+
+#event-log-header:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
 #event-log-list {
     padding: 2px 8px;
+    max-height: 90px;
+    overflow-y: auto;
 }
+
 .event-log-entry {
     padding: 2px 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     display: flex;
     gap: 8px;
     align-items: baseline;
+    color: var(--text-secondary);
 }
 .event-log-entry:last-child { border-bottom: none; }
+
 .event-log-time {
-    color: #718096;
+    color: var(--text-muted);
     white-space: nowrap;
     min-width: 45px;
 }
+
 .event-log-ago {
-    color: #a0aec0;
+    color: var(--text-muted);
     font-size: 0.9em;
     white-space: nowrap;
     min-width: 55px;
+    opacity: 0.6;
 }
+
 .event-log-msg {
     flex: 1;
+    color: var(--text-secondary);
 }
 
+
 /* =============================================================================
-   PROFILE FORM — Patient profile setup popup
+   STATS SIDEBAR — Højre panel med statistik, spiller-data og vægtændring
    ============================================================================= */
 
-/* Container for all profile form fields */
+#stats-panel {
+    width: 250px;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-subtle);
+    padding: 14px;
+    overflow-y: auto;
+    flex-shrink: 0;
+    font-size: 0.85em;
+    transition: width 0.4s var(--bounce), padding 0.4s var(--bounce);
+    position: relative;
+}
+
+/* Collapsed state */
+#stats-panel.collapsed {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+    border-left: none;
+}
+
+/* Toggle-knap til at folde sidebaren ind/ud */
+#stats-toggle {
+    position: absolute;
+    left: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 50px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    color: var(--text-muted);
+    font-size: 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: all 0.2s;
+}
+
+#stats-toggle:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+/* Stats sektioner */
+.stats-section {
+    margin-bottom: 12px;
+}
+
+.stats-section h5 {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.stats-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 10px 0;
+}
+
+/* TIR stacked bar: visuelt overblik over tidfordeling */
+.tir-bar-container {
+    margin: 8px 0;
+}
+
+.tir-bar {
+    height: 14px;
+    border-radius: 7px;
+    display: flex;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* Stats-tabel: 4-kolonne grid (label | 1d | 7d | unit) */
+.stats-table {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr auto;
+    gap: 6px 8px;
+    align-items: center;
+}
+
+.stats-table .header {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 10px;
+    text-align: center;
+}
+
+/* "Middelværdi" label (bruges via CSS ::before i den oprindelige version) */
+.stats-middel-header {
+    text-align: center !important;
+    font-size: 0.85em;
+}
+
+.stats-table .label {
+    font-weight: 600;
+    text-align: left;
+    color: var(--text-secondary);
+    font-size: 11px;
+    padding: 3px 0;
+}
+
+.stats-table .value {
+    text-align: right;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.stats-table .unit {
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+/* Spiller-data tabel: 3-kolonne grid (label | value | unit) */
+.player-data-table {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 5px 8px;
+    align-items: center;
+}
+
+.player-data-table .label {
+    font-weight: 600;
+    text-align: left;
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.player-data-table .value {
+    text-align: right;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.player-data-table .unit {
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+/* Vægtændring slider (visual indicator, ikke interaktiv) */
+.weight-change-display {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+#weightChangeSlider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    outline: none;
+    border-radius: 4px;
+}
+
+#weightChangeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--thumb-color, var(--green));
+    cursor: default;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+
+/* =============================================================================
+   DOCK CONTAINER — macOS Dock-inspireret bar i bunden
+   ============================================================================= */
+
+#dock-container {
+    padding: 8px 0 12px;
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(0deg, var(--bg-primary) 0%, rgba(12, 18, 32, 0.8) 100%);
+    flex-shrink: 0;
+    z-index: 20;
+}
+
+.dock {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(10px);
+}
+
+/* Dock item: ikon + label med hover-animation */
+.dock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    transition: all 0.3s var(--bounce);
+    padding: 6px;
+    border-radius: 14px;
+    position: relative;
+}
+
+.dock-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.3s var(--bounce);
+    border: 1px solid transparent;
+}
+
+.dock-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+}
+
+/* === DOCK HOVER-EFFEKT ===
+   Hoveret item vokser og løftes. Naboer vokser en smule
+   (macOS Dock magnification effect via CSS adjacent sibling selectors). */
+.dock-item:hover {
+    transform: translateY(-12px) scale(1.25);
+    z-index: 5;
+}
+
+.dock-item:hover .dock-label {
+    color: var(--text-secondary);
+}
+
+/* Nabo-effekt: items ved siden af det hoverete item skalerer en smule */
+.dock-item:hover + .dock-item,
+.dock-item:has(+ .dock-item:hover) {
+    transform: translateY(-5px) scale(1.08);
+}
+
+/* Aktiv dock item (panel åbent): lysere baggrund og en prik under */
+.dock-item.active .dock-icon {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.dock-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-primary);
+}
+
+/* Separator mellem dock-grupper */
+.dock-separator {
+    width: 1px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0 4px;
+    align-self: center;
+}
+
+
+/* === DOCK ITEM FARVETEMAER ===
+   Hver interventionstype har sin egen farveprofil.
+   Subtile baggrunde normalt, tydeligere med glow ved hover. */
+
+/* Insulin: blå */
+.dock-item.d-insulin .dock-icon {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(37, 99, 235, 0.1));
+    border-color: rgba(96, 165, 250, 0.2);
+}
+.dock-item.d-insulin:hover .dock-icon {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.5), rgba(37, 99, 235, 0.25));
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.35);
+}
+
+/* Mad: gul/orange */
+.dock-item.d-food .dock-icon {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(234, 179, 8, 0.1));
+    border-color: rgba(250, 204, 21, 0.2);
+}
+.dock-item.d-food:hover .dock-icon {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.5), rgba(234, 179, 8, 0.25));
+    border-color: rgba(250, 204, 21, 0.5);
+    box-shadow: 0 8px 30px rgba(234, 179, 8, 0.35);
+}
+
+/* Motion: grøn */
+.dock-item.d-exercise .dock-icon {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.1));
+    border-color: rgba(52, 211, 153, 0.2);
+}
+.dock-item.d-exercise:hover .dock-icon {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.5), rgba(16, 185, 129, 0.25));
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.35);
+}
+
+/* Målinger: rød/rosa */
+.dock-item.d-measure .dock-icon {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.08));
+    border-color: rgba(248, 113, 113, 0.2);
+}
+.dock-item.d-measure:hover .dock-icon {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(239, 68, 68, 0.2));
+    border-color: rgba(248, 113, 113, 0.5);
+    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.3);
+}
+
+/* SOS: rød med pulserende animation (indikerer nødhjælp) */
+.dock-item.d-sos .dock-icon {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(220, 38, 38, 0.1));
+    border-color: rgba(220, 38, 38, 0.3);
+    animation: sos-pulse 3s ease-in-out infinite;
+}
+.dock-item.d-sos:hover .dock-icon {
+    box-shadow: 0 8px 30px rgba(220, 38, 38, 0.5);
+    animation: none;
+}
+.dock-item.d-sos.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+@keyframes sos-pulse {
+    0%, 100% { border-color: rgba(220, 38, 38, 0.2); }
+    50% { border-color: rgba(220, 38, 38, 0.5); }
+}
+
+/* Debug: grå/neutral */
+.dock-item.d-debug .dock-icon {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    border-color: rgba(255, 255, 255, 0.08);
+}
+.dock-item.d-debug:hover .dock-icon {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.06));
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.08);
+}
+
+
+/* =============================================================================
+   DOCK PANELS — Fold-op paneler der vises over dock'en
+   ============================================================================= */
+
+.dock-panel {
+    position: absolute;
+    bottom: 95px;                                    /* Over dock'en */
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);    /* Start en smule nede (til animation) */
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    min-width: 320px;
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.03);
+    z-index: 50;
+    /* Animation: fade+slide ind */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s var(--smooth), transform 0.25s var(--bounce);
+}
+
+/* Synligt panel */
+.dock-panel.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Bredt panel (til mad med presets) */
+.dock-panel-wide {
+    min-width: 560px;
+}
+
+/* Panel-header */
+.dock-panel h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+}
+
+.dp-icon { font-size: 20px; }
+.dp-title { color: var(--text-primary); }
+
+/* Panel-rækker (label + slider/select + value) */
+.dp-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.dp-row label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-width: 70px;
+    font-weight: 600;
+}
+
+.dp-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--blue);
+    height: 6px;
+}
+
+.dp-row select {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-medium);
+    color: var(--text-primary);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+}
+.dp-row select option {
+    background: var(--bg-secondary);
+}
+
+.dp-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 50px;
+    text-align: right;
+}
+
+/* Panel-sektioner og dividers */
+.dp-section { margin-bottom: 4px; }
+
+.dp-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 12px 0;
+}
+
+/* Knapper i paneler */
+.dp-btn {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: all 0.25s var(--bounce);
+}
+
+.dp-btn:hover {
+    transform: scale(1.03) translateY(-2px);
+}
+
+.dp-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Knapfarver */
+.btn-blue {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+.btn-blue:hover { box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5); }
+
+.btn-red {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+.btn-red:hover { box-shadow: 0 8px 25px rgba(220, 38, 38, 0.5); }
+
+.btn-green {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+}
+.btn-green:hover { box-shadow: 0 8px 25px rgba(22, 163, 74, 0.5); }
+
+.btn-yellow {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
+}
+.btn-yellow:hover { box-shadow: 0 8px 25px rgba(217, 119, 6, 0.5); }
+
+.btn-purple {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+}
+.btn-purple:hover { box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5); }
+
+
+/* --- Mad-panel specifikt layout --- */
+.dp-food-layout {
+    display: flex;
+    gap: 20px;
+}
+
+.dp-food-sliders {
+    flex: 1;
+    min-width: 220px;
+}
+
+.dp-food-info {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 6px 0;
+    font-weight: 600;
+}
+
+/* Preset mad-chips (2x4 grid) */
+.dp-food-presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    align-content: start;
+}
+
+.preset-chip {
+    background: var(--yellow-dim);
+    border: 1px solid rgba(234, 179, 8, 0.12);
+    border-radius: var(--radius-md);
+    padding: 8px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s var(--bounce);
+}
+
+.preset-chip:hover {
+    transform: scale(1.1) translateY(-3px);
+    background: rgba(234, 179, 8, 0.2);
+    border-color: rgba(250, 204, 21, 0.3);
+    box-shadow: 0 6px 20px rgba(234, 179, 8, 0.2);
+}
+
+.preset-chip:active {
+    transform: scale(0.95);
+}
+
+.pc-emoji {
+    font-size: 24px;
+    display: block;
+}
+
+.pc-name {
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-weight: 600;
+}
+
+/* --- Målinger panel grid --- */
+.dp-measure-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* --- Debug panel checkbox --- */
+.dp-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.dp-checkbox input[type="checkbox"] {
+    accent-color: var(--blue);
+    width: 16px;
+    height: 16px;
+}
+
+
+/* =============================================================================
+   POPUPS OG ADVARSLER — Modale dialoger (hjælp, events, game over)
+   ============================================================================= */
+
+/* Popup overlay: fuld-skærm mørkt backdrop */
+.popup-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 15px;
+}
+
+/* Popup indhold: mørkt kort med afrundede hjørner */
+.popup-content {
+    background-color: #1a2332;
+    color: var(--text-primary);
+    padding: 25px 35px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-medium);
+    text-align: left;
+    box-shadow: var(--shadow-lg);
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.popup-content h2 {
+    margin-top: 0;
+    color: var(--red);
+    font-size: 1.8em;
+    text-align: center;
+}
+.popup-content h2.event-title,
+.popup-content h2.info-title {
+    color: var(--blue);
+}
+
+.popup-content p,
+.popup-content li {
+    font-size: 1.0em;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    color: var(--text-secondary);
+}
+
+.popup-content ul { padding-left: 20px; }
+
+.popup-content h3 {
+    color: var(--blue);
+    margin-top: 20px;
+}
+
+.popup-content strong {
+    color: var(--text-primary);
+}
+
+.popup-content .popup-button-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.popup-content button {
+    padding: 12px 25px;
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s var(--bounce);
+    box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+}
+
+.popup-content button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(22, 163, 74, 0.5);
+}
+
+
+/* =============================================================================
+   PROFIL POPUP — Patient-profil opsætning før spilstart
+   ============================================================================= */
+
 .profile-form {
     display: flex;
     flex-direction: column;
@@ -622,7 +1150,6 @@ body {
     margin-top: 15px;
 }
 
-/* Individual form field: label + input + help text */
 .profile-field {
     display: flex;
     flex-direction: column;
@@ -632,10 +1159,9 @@ body {
 .profile-field label {
     font-weight: bold;
     font-size: 1.0em;
-    color: #2c5282;
+    color: var(--blue);
 }
 
-/* Input + unit side by side */
 .profile-input-row {
     display: flex;
     align-items: center;
@@ -646,34 +1172,36 @@ body {
     width: 100px;
     padding: 8px 10px;
     font-size: 1.1em;
-    border: 2px solid #cbd5e0;
-    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-sm);
     text-align: center;
     transition: border-color 0.2s;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
 }
 
 .profile-input-row input[type="number"]:focus {
     outline: none;
-    border-color: #4299e1;              /* Blue highlight on focus */
+    border-color: var(--blue);
 }
 
 .profile-unit {
     font-size: 0.95em;
-    color: #4a5568;
+    color: var(--text-secondary);
     font-weight: bold;
 }
 
 .profile-field small {
-    color: #718096;
+    color: var(--text-muted);
     font-size: 0.85em;
     line-height: 1.3;
 }
 
-/* Calculated values section: shows TDD, basal dose, resting kcal */
 .profile-calculated {
-    background-color: #f7fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
     padding: 12px 15px;
     margin-top: 5px;
 }
@@ -681,8 +1209,8 @@ body {
 .profile-calculated h4 {
     margin: 0 0 8px 0;
     font-size: 0.95em;
-    color: #2c5282;
-    border-bottom: 1px solid #e2e8f0;
+    color: var(--blue);
+    border-bottom: 1px solid var(--border-subtle);
     padding-bottom: 5px;
 }
 
@@ -691,4 +1219,20 @@ body {
     justify-content: space-between;
     padding: 3px 0;
     font-size: 0.95em;
+    color: var(--text-secondary);
+}
+
+/* Scrollbar styling for mørkt tema (WebKit browsers) */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }

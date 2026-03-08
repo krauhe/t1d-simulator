@@ -59,10 +59,48 @@ function updateUI() {
     timeDisplay.textContent = `${hours}:${minutes}`;
 
     // Display values with appropriate precision
-    cgmValueDisplayGraph.textContent = game.cgmBG.toFixed(1);  // 1 decimal (e.g., "6.3")
+    const cgmVal = game.cgmBG.toFixed(1);
+    cgmValueDisplayGraph.textContent = cgmVal;
     iobDisplay.textContent = game.iob.toFixed(1);              // 1 decimal (e.g., "2.4")
     cobDisplay.textContent = game.cob.toFixed(0);              // Integer (e.g., "45")
     normoPointsDisplay.textContent = game.normoPoints.toFixed(1);
+
+    // --- CGM Hero farve baseret på BG-niveau ---
+    // Fjern alle BG-klasser og tilføj den aktuelle
+    cgmValueDisplayGraph.classList.remove('bg-target', 'bg-elevated', 'bg-danger');
+    if (game.cgmBG < 4.0 || game.cgmBG > 14.0) {
+        cgmValueDisplayGraph.classList.add('bg-danger');
+    } else if (game.cgmBG > 10.0) {
+        cgmValueDisplayGraph.classList.add('bg-elevated');
+    } else {
+        cgmValueDisplayGraph.classList.add('bg-target');
+    }
+
+    // --- CGM Trend-pil ---
+    // Beregn trend fra de seneste CGM-målinger (som rigtig CGM: ↑↗→↘↓).
+    // Trend = ændringsrate i mmol/L pr. minut over de sidste ~15 minutter.
+    const cgmTrendEl = document.getElementById('cgm-trend');
+    if (cgmTrendEl && cgmDataPoints.length >= 2) {
+        // Brug de sidste 3 punkter (ca. 15 sim-minutter) til trend-beregning
+        const recentPoints = cgmDataPoints.slice(-4);
+        const first = recentPoints[0];
+        const last = recentPoints[recentPoints.length - 1];
+        const timeDiff = last.time - first.time;
+        if (timeDiff > 0) {
+            const rate = (last.value - first.value) / timeDiff; // mmol/L pr. minut
+            // Trend-pile baseret på ændringsrate (klinisk CGM-standard)
+            let arrow, arrowColor;
+            if (rate > 0.1) { arrow = '\u2191\u2191'; arrowColor = 'var(--red)'; }         // ↑↑ hurtigt stigende
+            else if (rate > 0.05) { arrow = '\u2191'; arrowColor = 'var(--orange)'; }      // ↑ stigende
+            else if (rate > 0.02) { arrow = '\u2197'; arrowColor = 'var(--orange)'; }      // ↗ langsomt stigende
+            else if (rate > -0.02) { arrow = '\u2192'; arrowColor = 'var(--green)'; }      // → stabil
+            else if (rate > -0.05) { arrow = '\u2198'; arrowColor = 'var(--orange)'; }     // ↘ langsomt faldende
+            else if (rate > -0.1) { arrow = '\u2193'; arrowColor = 'var(--orange)'; }      // ↓ faldende
+            else { arrow = '\u2193\u2193'; arrowColor = 'var(--red)'; }                     // ↓↓ hurtigt faldende
+            cgmTrendEl.textContent = arrow;
+            cgmTrendEl.style.color = arrowColor;
+        }
+    }
 
     // Opdater hændelsesloggen under grafen
     updateEventLog();
@@ -153,11 +191,12 @@ function drawGraph() {
     if (graphWidth <= 0 || graphHeight <= 0) return;
 
     // --- Night shading (22:00-07:00) ---
-    // Light grey-blue overlay to indicate nighttime hours
+    // Mørkere overlay for at indikere nattetimer — tydeligere i det mørke tema.
+    // Giver visuel rytme til døgnet (dag/nat) og minder spilleren om søvn-mekanikken.
     const totalMinutesInView = 24 * 60; // 1440 minutes = one full day
     const xNightStart = padding.left + ((22 * 60) / totalMinutesInView) * graphWidth;
     const xNightEnd = padding.left + ((7 * 60) / totalMinutesInView) * graphWidth;
-    graphCtx.fillStyle = 'rgba(60, 60, 80, 0.1)';
+    graphCtx.fillStyle = 'rgba(20, 20, 50, 0.35)';
     graphCtx.fillRect(xNightStart, padding.top, graphWidth - (xNightStart - padding.left), graphHeight); // 22:00 to midnight
     graphCtx.fillRect(padding.left, padding.top, xNightEnd - padding.left, graphHeight);                  // Midnight to 07:00
 
@@ -197,12 +236,12 @@ function drawGraph() {
     graphCtx.fillStyle = 'rgba(72, 187, 120, 0.12)';
     graphCtx.fillRect(padding.left, bonusYtop, graphWidth, bonusYbot - bonusYtop);
 
-    // --- Chart border ---
-    graphCtx.strokeStyle = '#a0aec0'; graphCtx.lineWidth = 1;
+    // --- Chart border (mørkt tema: subtil lys kant) ---
+    graphCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; graphCtx.lineWidth = 1;
     graphCtx.strokeRect(padding.left, padding.top, graphWidth, graphHeight);
 
-    // --- X-axis labels (time of day, every 2 hours) ---
-    graphCtx.fillStyle = '#4a5568'; graphCtx.font = "bold 12px Segoe UI";
+    // --- X-axis labels (time of day, every 2 hours) — lys tekst til mørkt tema ---
+    graphCtx.fillStyle = 'rgba(160, 180, 210, 0.7)'; graphCtx.font = "bold 12px Inter, Segoe UI";
     for (let i = 0; i <= 24; i += 2) {
         const x = padding.left + ( (i*60 / totalMinutesInView ) * graphWidth );
         graphCtx.fillText(`${String(i).padStart(2,'0')}:00`, x - 15, padding.top + graphHeight + 20);
@@ -220,7 +259,9 @@ function drawGraph() {
     // --- Y-axis label (rotated text: "Blodsukker (mmol/L)") ---
     // save/restore preserves the current canvas state around the rotation
     graphCtx.save(); graphCtx.translate(12, padding.top + graphHeight/2); graphCtx.rotate(-Math.PI/2);
-    graphCtx.textAlign = "center"; graphCtx.font = "bold 12px Segoe UI"; graphCtx.fillText("Blodsukker (mmol/L)", 0, 0); graphCtx.restore();
+    graphCtx.textAlign = "center"; graphCtx.font = "bold 12px Inter, Segoe UI";
+    graphCtx.fillStyle = 'rgba(160, 180, 210, 0.7)';
+    graphCtx.fillText("Blodsukker (mmol/L)", 0, 0); graphCtx.restore();
 
     if (!game) return; // No data to plot if game hasn't started
 
@@ -264,9 +305,9 @@ function drawGraph() {
             // Farver afspejler scoring-zoner: grøn=target, orange=forhøjet, rød=fare
             graphCtx.beginPath();
             graphCtx.arc(x, y, 3, 0, 2 * Math.PI); // 3px radius circle
-            if (p.value < 4.0 || p.value > 14.0) graphCtx.fillStyle = '#e53e3e';      // Rød: akut fare
-            else if (p.value > 10.0) graphCtx.fillStyle = '#d69e2e';                    // Orange: forhøjet
-            else graphCtx.fillStyle = '#38a169';                                         // Grøn: i target
+            if (p.value < 4.0 || p.value > 14.0) graphCtx.fillStyle = '#ef4444';      // Rød: akut fare
+            else if (p.value > 10.0) graphCtx.fillStyle = '#fb923c';                    // Orange: forhøjet
+            else graphCtx.fillStyle = '#4ade80';                                         // Grøn: i target (lysere til mørk bg)
             graphCtx.fill();
         }
     });
@@ -297,8 +338,8 @@ function drawGraph() {
                     const carbs = event.details.carbs || 0;
                     const protein = event.details.protein || 0;
                     const ke = (carbs + protein * 0.25).toFixed(0);
-                    graphCtx.font = "bold 9px Segoe UI";
-                    graphCtx.fillStyle = '#333';
+                    graphCtx.font = "bold 9px Inter, Segoe UI";
+                    graphCtx.fillStyle = 'rgba(200, 210, 230, 0.8)';
                     graphCtx.fillText(`${ke}g`, x, yPos - 12);
                 }
             } else if (event.type === 'motion') {
@@ -321,11 +362,11 @@ function drawGraph() {
      game.graphMessages.forEach(msg => {
         const xCenter = padding.left + graphWidth / 2;
         const yPos = padding.top + 25;
-        graphCtx.fillStyle = "rgba(255, 240, 150, 0.9)";
-        graphCtx.strokeStyle = "#FFC107";
+        graphCtx.fillStyle = "rgba(50, 40, 10, 0.85)";
+        graphCtx.strokeStyle = "rgba(251, 191, 36, 0.6)";
         graphCtx.lineWidth = 2;
         graphCtx.textAlign = "center";
-        graphCtx.font = "bold 13px Segoe UI";
+        graphCtx.font = "bold 13px Inter, Segoe UI";
         const textWidth = graphCtx.measureText(msg.text).width;
 
         if (msg.text.startsWith("zZzz")) {
@@ -345,7 +386,7 @@ function drawGraph() {
             // Standard message: yellow rounded rectangle with text
             graphCtx.fillRect(xCenter - textWidth/2 - 10, yPos - 20, textWidth + 20, 30);
             graphCtx.strokeRect(xCenter - textWidth/2 - 10, yPos - 20, textWidth + 20, 30);
-            graphCtx.fillStyle = "#333";
+            graphCtx.fillStyle = "rgba(251, 191, 36, 0.9)";
             graphCtx.fillText(msg.text, xCenter, yPos);
         }
     });
@@ -376,16 +417,16 @@ function drawGraph() {
 
             graphCtx.save();
             graphCtx.globalAlpha = alpha;
-            graphCtx.font = "bold 13px Segoe UI";
+            graphCtx.font = "bold 13px Inter, Segoe UI";
             graphCtx.textAlign = "center";
 
-            // Baggrund-boks med afrundede hjørner
+            // Baggrund-boks med afrundede hjørner (mørkt tema)
             const textWidth = graphCtx.measureText(lbl.text).width;
             const boxX = x - textWidth / 2 - 6;
             const boxY = y - 12;
             const boxW = textWidth + 12;
             const boxH = 20;
-            graphCtx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            graphCtx.fillStyle = "rgba(17, 24, 39, 0.9)";
             graphCtx.strokeStyle = lbl.color;
             graphCtx.lineWidth = 1.5;
             // Afrundet rektangel
