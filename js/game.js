@@ -110,7 +110,7 @@ function startGame() {
 
         // Unpause and start the loop
         isPaused = false;
-        pauseButton.textContent = "Pause";
+        pauseButton.innerHTML = "&#x23F8; Pause";
 
         // Record the current time as the reference point for deltaTime calculations
         // performance.now() returns a high-resolution timestamp in milliseconds
@@ -120,9 +120,16 @@ function startGame() {
         if (gameLoopIntervalId) cancelAnimationFrame(gameLoopIntervalId);
         gameLoopIntervalId = requestAnimationFrame(mainGameLoop);
 
-        // Update the patient data display and enable/disable appropriate buttons
+        // Update the patient data display
         updatePlayerFixedDataUI();
-        resetButton.disabled = false; startButton.disabled = true;
+
+        // Konverter start-knap til rød stop-knap
+        startButton.innerHTML = '&#x23F9; Afslut';
+        startButton.title = 'Afslut simulationen og se resultater';
+        startButton.classList.add('game-running');
+
+        // (#12) Sæt lyd-knap til korrekt initial ikon
+        muteButton.textContent = isMuted ? '\u{1F507}' : '\u{1F50A}';
     });
 }
 
@@ -140,7 +147,7 @@ function resetGame() {
     if (gameLoopIntervalId) { cancelAnimationFrame(gameLoopIntervalId); gameLoopIntervalId = null; }
 
     // Reset game state
-    isPaused = true; pauseButton.textContent = "Genoptag"; game = null;
+    isPaused = true; pauseButton.innerHTML = "&#x25B6; Genoptag"; game = null;
     cgmDataPoints = []; trueBgPoints = [];
     yAxisMax = 16.0; // Nulstil y-akse til standard
 
@@ -165,8 +172,10 @@ function resetGame() {
     weightChangeSlider.value = 0; weightChangeValue.textContent = "0.0";
     weightChangeSlider.style.setProperty('--thumb-color', '#4CAF50');
 
-    // Toggle button states: can start, can't reset
-    resetButton.disabled = true; startButton.disabled = false;
+    // Gendan start-knap fra stop til start
+    startButton.innerHTML = '&#x25B6; Start';
+    startButton.title = 'Start en ny simulation';
+    startButton.classList.remove('game-running');
 
     // Ryd hændelsesloggen
     const logList = document.getElementById('event-log-list');
@@ -189,7 +198,7 @@ function togglePause() {
     if (!game || game.isGameOver) return; // Can't pause if no game or already dead
 
     isPaused = !isPaused;
-    pauseButton.textContent = isPaused ? "Genoptag" : "Pause";
+    pauseButton.innerHTML = isPaused ? "&#x25B6; Genoptag" : "&#x23F8; Pause";
 
     if (!isPaused) {
         // Reset the frame timer to prevent a time jump after unpausing

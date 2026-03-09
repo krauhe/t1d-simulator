@@ -38,37 +38,37 @@
    Override disse for at skifte tema (fx lyst/mørkt).
    ============================================================================= */
 :root {
-    /* Baggrundsfarver (mørkt tema) */
-    --bg-primary: #0c1220;                          /* Hovedbaggrund */
-    --bg-secondary: #111827;                        /* Top bar, sidebar */
-    --bg-card: rgba(17, 24, 39, 0.95);             /* Paneler/kort */
-    --bg-elevated: rgba(255, 255, 255, 0.03);      /* Subtil elevation */
-    --bg-hover: rgba(255, 255, 255, 0.08);         /* Hover-baggrund */
+    /* Baggrundsfarver (mørkt tema — høj kontrast) */
+    --bg-primary: #0d1526;                          /* Hovedbaggrund */
+    --bg-secondary: #141d2f;                        /* Top bar, sidebar */
+    --bg-card: rgba(20, 29, 47, 0.97);             /* Paneler/kort */
+    --bg-elevated: rgba(255, 255, 255, 0.07);      /* Subtil elevation */
+    --bg-hover: rgba(255, 255, 255, 0.14);         /* Hover-baggrund */
 
-    /* Tekstfarver */
-    --text-primary: #e0e8f0;                        /* Primær tekst */
-    --text-secondary: #8899bb;                      /* Sekundær tekst */
-    --text-muted: #556677;                          /* Dæmpet tekst */
+    /* Tekstfarver (høj kontrast — næsten hvid) */
+    --text-primary: #f5f8fc;                        /* Primær tekst — næsten hvid */
+    --text-secondary: #c4d5e8;                      /* Sekundær tekst — tydelig */
+    --text-muted: #8fa8c8;                          /* Dæmpet tekst — stadig læsbar */
 
-    /* Accent-farver (brugt til kategorisering) */
-    --green: #4ade80;                               /* Target range, gode værdier */
-    --green-dim: rgba(74, 222, 128, 0.15);
-    --green-glow: rgba(74, 222, 128, 0.3);
-    --red: #ef4444;                                 /* Fare, hypo/DKA */
-    --red-dim: rgba(239, 68, 68, 0.15);
-    --orange: #fb923c;                              /* Forhøjede værdier */
-    --orange-dim: rgba(251, 146, 60, 0.12);
-    --blue: #60a5fa;                                /* Insulin */
-    --blue-dim: rgba(96, 165, 250, 0.15);
-    --purple: #a78bfa;                              /* Keton-målinger */
-    --purple-dim: rgba(167, 139, 250, 0.15);
-    --yellow: #fbbf24;                              /* Mad/kalorier */
-    --yellow-dim: rgba(251, 191, 36, 0.12);
+    /* Accent-farver (lysere og mere mættede for høj kontrast) */
+    --green: #4ade80;                               /* Target range — matcher grafens punkter */
+    --green-dim: rgba(94, 234, 212, 0.15);
+    --green-glow: rgba(94, 234, 212, 0.35);
+    --red: #ef4444;                                 /* Fare — matcher grafens punkter */
+    --red-dim: rgba(248, 113, 113, 0.15);
+    --orange: #fb923c;                              /* Forhøjede værdier — matcher grafens punkter */
+    --orange-dim: rgba(253, 186, 116, 0.14);
+    --blue: #7dd3fc;                                /* Insulin — lysere blå */
+    --blue-dim: rgba(125, 211, 252, 0.15);
+    --purple: #c4b5fd;                              /* Keton-målinger — lysere */
+    --purple-dim: rgba(196, 181, 253, 0.15);
+    --yellow: #fde047;                              /* Mad/kalorier — lysere gul */
+    --yellow-dim: rgba(253, 224, 71, 0.14);
 
-    /* Grænser og effekter */
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-medium: rgba(255, 255, 255, 0.1);
-    --border-strong: rgba(255, 255, 255, 0.15);
+    /* Grænser og effekter (høj synlighed) */
+    --border-subtle: rgba(255, 255, 255, 0.12);
+    --border-medium: rgba(255, 255, 255, 0.20);
+    --border-strong: rgba(255, 255, 255, 0.28);
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
@@ -95,6 +95,7 @@ body {
     background: var(--bg-primary);
     color: var(--text-primary);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-variant-numeric: tabular-nums;       /* Alle tal har fast bredde — ingen hop */
     height: 100vh;
     overflow: hidden;
     display: flex;
@@ -122,21 +123,65 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px;
+    padding: 0 16px;
     flex-shrink: 0;
     z-index: 20;
 }
 
-/* Brand-logo med gradient-tekst */
+/* Top-bar tre-zone layout med faste bredder så elementer ikke rykker */
+.top-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 240px;
+    flex-shrink: 0;
+}
+.top-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+}
+.top-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 120px;
+    flex-shrink: 0;
+    justify-content: flex-end;
+}
+
+/* Brand-logo: Orbitron sci-fi font med animeret gradient + kraftig glow */
 .brand {
-    font-weight: 800;
-    font-size: 15px;
-    background: linear-gradient(135deg, var(--blue), var(--purple));
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 20px;
+    background: linear-gradient(135deg, #93c5fd, #d8b4fe, #a5b4fc, #93c5fd);
+    background-size: 200% 200%;
+    animation: brand-shimmer 4s ease-in-out infinite;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    letter-spacing: 1.5px;
+    letter-spacing: 3px;
     cursor: default;
+    line-height: 1.1;
+    filter: drop-shadow(0 0 14px rgba(147, 197, 253, 0.8))
+            drop-shadow(0 0 30px rgba(167, 139, 250, 0.5))
+            drop-shadow(0 0 50px rgba(147, 197, 253, 0.25));
+}
+@keyframes brand-shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+.brand-slogan {
+    font-family: 'Orbitron', monospace;
+    font-weight: 500;
+    font-size: 8.5px;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    line-height: 1;
 }
 
 /* Status-badges: kompakte info-elementer i toppen */
@@ -165,33 +210,174 @@ body {
 }
 
 .badge-icon { font-size: 14px; }
-.badge-num { font-weight: 700; color: var(--text-primary); }
+.badge-num { font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .badge-label { color: var(--text-muted); font-size: 11px; }
-.badge-weight { color: var(--text-muted); font-size: 10px; margin-left: 2px; }
+.badge-weight { color: var(--text-muted); font-size: 10px; margin-left: 2px; transition: color 0.3s; }
+/* Points-weight farve følger scoring-tilstand */
+.status-badge.points.pts-on .badge-weight { color: var(--green); }
+.status-badge.points.pts-bonus .badge-weight { color: #fbbf24; text-shadow: 0 0 6px rgba(250, 204, 21, 0.4); }
 
-/* Points-badge: grøn farve for scoring */
-.status-badge.points .badge-num { color: var(--green); }
+/* Dag+Tid samlet i én badge — separator mellem dem */
+.badge-separator {
+    color: var(--text-muted);
+    opacity: 0.3;
+    font-size: 14px;
+    margin: 0 2px;
+}
+/* Fast bredde på tid-tal: Inter har ægte tabular-nums (Orbitron har det ikke) */
+.datetime-badge .badge-num {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+}
+/* Dag-nummer: fast bredde */
+.datetime-badge #dayDisplay {
+    min-width: 16px;
+    text-align: center;
+    display: inline-block;
+}
+/* Tid: fast bredde */
+.datetime-badge #timeDisplay {
+    min-width: 52px;
+    text-align: center;
+    display: inline-block;
+}
 
-/* Hastigheds-dropdown i top bar */
-.speed-badge select {
+/* Points-badge: grøn farve for scoring, fast bredde */
+.status-badge.points .badge-num {
+    color: var(--green);
+    min-width: 42px;
+    text-align: right;
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Dag-badge: fast bredde */
+.status-badge .badge-label + .badge-num {
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Points-stjerne animationer baseret på scoring-tilstand --- */
+/* Ingen points (bgWeight=0): faded ud, grå */
+.status-badge.points.pts-off {
+    opacity: 0.35;
+}
+.status-badge.points.pts-off .badge-icon {
+    filter: grayscale(1);
+}
+
+/* Halve points (bgWeight=0.5): svag orange */
+.status-badge.points.pts-half {
+    opacity: 0.7;
+}
+.status-badge.points.pts-half .badge-icon {
+    filter: hue-rotate(-20deg);
+}
+
+/* Normal points (bgWeight=1): standard grøn, stjerne lyser */
+.status-badge.points.pts-on {
+    opacity: 1;
+}
+.status-badge.points.pts-on .badge-icon {
+    animation: star-glow 2s ease-in-out infinite;
+}
+
+/* Bonus 2x points: gul pulserende, større, bling-bling */
+.status-badge.points.pts-bonus {
+    opacity: 1;
+    animation: star-badge-pulse 0.8s ease-in-out infinite;
+}
+.status-badge.points.pts-bonus .badge-icon {
+    font-size: 18px;
+    animation: star-bling 1s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8));
+}
+.status-badge.points.pts-bonus .badge-num {
+    color: #fbbf24;
+    text-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+}
+
+@keyframes star-glow {
+    0%, 100% { filter: drop-shadow(0 0 2px rgba(74, 222, 128, 0.3)); }
+    50% { filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.6)); }
+}
+@keyframes star-bling {
+    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8)); }
+    25% { transform: scale(1.2) rotate(8deg); filter: drop-shadow(0 0 10px rgba(250, 204, 21, 1)); }
+    50% { transform: scale(1) rotate(-4deg); }
+    75% { transform: scale(1.15) rotate(4deg); filter: drop-shadow(0 0 12px rgba(250, 204, 21, 1)); }
+}
+@keyframes star-badge-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+    50% { box-shadow: 0 0 12px 2px rgba(250, 204, 21, 0.3); }
+}
+
+/* Dag/nat-ikon efter uret — med zZz-animation om natten */
+.daynight-icon {
+    font-size: 12px;
+    margin-left: 2px;
+    display: inline-block;
+    position: relative;
+    transition: all 0.5s;
+}
+/* zZz-container placeret ved siden af måne-ikonet */
+.zzz-container {
+    position: absolute;
+    left: 14px;
+    top: -8px;
+    pointer-events: none;
+    width: 20px;
+    height: 16px;
+}
+.zzz-container span {
+    position: absolute;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: var(--text-muted);
+    opacity: 0;
+    bottom: 0;
+    left: 0;
+}
+/* Tre z'er der svæver op forskudt i tid og størrelse */
+.zzz-container .z1 {
+    font-size: 7px;
+    animation: zzz-float 3s ease-in-out infinite;
+}
+.zzz-container .z2 {
+    font-size: 8px;
+    animation: zzz-float 3s ease-in-out 1s infinite;
+}
+.zzz-container .z3 {
+    font-size: 9px;
+    animation: zzz-float 3s ease-in-out 2s infinite;
+}
+@keyframes zzz-float {
+    0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    15%  { opacity: 0.7; }
+    50%  { opacity: 0.5; transform: translate(6px, -10px) scale(1); }
+    100% { opacity: 0; transform: translate(12px, -18px) scale(0.7); }
+}
+
+/* Hastigheds-dropdown inline i tid-badge */
+.speed-select-inline {
     background: transparent;
     border: none;
-    color: var(--text-secondary);
-    font-size: 12px;
+    color: var(--text-muted);
+    font-size: 13px;
     font-family: 'Inter', sans-serif;
+    font-weight: 600;
     cursor: pointer;
     outline: none;
+    padding: 0 2px;
 }
-.speed-badge select option {
+.speed-select-inline option {
     background: var(--bg-secondary);
     color: var(--text-primary);
 }
 
-/* Handlingsknapper i top bar */
-.top-actions {
-    display: flex;
-    gap: 6px;
-}
+/* (top-actions er nu erstattet af top-center) */
 
 .top-btn {
     background: var(--bg-elevated);
@@ -241,29 +427,44 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 16px 16px 8px 16px;
+    padding: 8px 16px 4px 16px;
     overflow: hidden;
 }
 
-/* --- CGM Hero Display ---
-   Stort BG-tal med Orbitron-font (sci-fi/gamer look).
-   Farven ændres dynamisk via JavaScript baseret på BG-niveau:
-   grøn = target (4-10), orange = forhøjet (10-14), rød = fare (<4 / >14). */
+/* --- CGM Hero Display — Overlay i øverste venstre hjørne af grafen ---
+   Flyder over graf-canvaset med semi-transparent baggrund.
+   Viser BG-tal, trend-pil, IOB og COB. */
 #cgm-hero {
+    position: absolute;
+    top: 8px;
+    left: 66px;
+    z-index: 10;
+    background: rgba(12, 18, 32, 0.45);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    backdrop-filter: blur(4px);
+}
+
+.cgm-hero-row {
     display: flex;
-    align-items: baseline;
-    gap: 12px;
-    margin-bottom: 8px;
+    align-items: center;
+    gap: 8px;
 }
 
 .cgm-number {
-    font-family: 'Orbitron', monospace;
-    font-size: 52px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 32px;
     font-weight: 800;
     color: var(--green);
     line-height: 1;
     transition: all 0.3s var(--smooth);
     cursor: default;
+    /* Fast bredde: Inter har ægte tabular-nums så cifre er lige brede */
+    min-width: 80px;
+    text-align: right;
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
 }
 
 /* Subtil glow-effekt ved hover på CGM-tallet */
@@ -289,20 +490,26 @@ body {
     font-weight: 600;
 }
 
-/* Trend-pil: viser BG-retning (som rigtig CGM: ↑↗→↘↓) */
+/* Trend-pil: viser BG-retning (som rigtig CGM: ↑↗→↘↓) — tykkere og mere synlig */
 .cgm-trend {
-    font-size: 22px;
+    font-size: 28px;
+    font-weight: 900;
     color: var(--green);
     line-height: 1;
     transition: color 0.3s;
+    text-shadow: 0 0 8px currentColor;
+    -webkit-text-stroke: 1px currentColor;
+    /* Fast bredde: pilen rykker ikke når symbolet skifter */
+    min-width: 32px;
+    text-align: center;
+    display: inline-block;
 }
 
-/* --- Live Info Pills ---
-   Kompakte IOB/COB badges over grafen. */
+/* --- Live Info Pills — Under BG-tallet i overlay --- */
 #info-pills {
     display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 6px;
+    margin-top: 4px;
 }
 
 .info-pill {
@@ -324,6 +531,10 @@ body {
 .info-pill strong {
     color: var(--text-primary);
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 28px;
+    display: inline-block;
+    text-align: right;
 }
 
 /* --- Graf Canvas Container ---
@@ -340,7 +551,7 @@ body {
     height: 100%;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-subtle);
-    background: rgba(255, 255, 255, 0.01);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 /* Advarsel ved hurtigt faldende BG — rød overlay centreret over grafen */
@@ -363,55 +574,47 @@ body {
 
 
 /* =============================================================================
-   EVENT LOG — Collapsible hændelseslog under grafen
+   BOTTOM BAR — Event log + Dock deler bunden af skærmen
+   ============================================================================= */
+
+/* Bottom bar: event log tv, dock centreret, balanceret layout.
+   Bruger 3-kolonne grid så dock'en altid er centreret på skærmen. */
+#bottom-bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;                      /* Event-log strækkes til samme højde som dock */
+    flex-shrink: 0;
+    background: linear-gradient(0deg, var(--bg-primary) 0%, rgba(12, 18, 32, 0.8) 100%);
+}
+
+/* =============================================================================
+   EVENT LOG — Altid synlig, til venstre for dock-baren
    ============================================================================= */
 
 #event-log {
-    margin-top: 6px;
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: 0.8em;
+    border-radius: var(--radius-md);
+    font-size: 0.72em;
     font-family: 'Consolas', 'Courier New', monospace;
     overflow: hidden;
-    transition: max-height 0.3s var(--smooth);
-    max-height: 120px;
-}
-
-/* Collapsed state: kun header synlig */
-#event-log.collapsed {
-    max-height: 24px;
-}
-
-#event-log-header {
-    font-weight: bold;
-    font-size: 0.85em;
-    padding: 4px 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border-bottom: 1px solid var(--border-subtle);
-    position: sticky;
-    top: 0;
-    color: var(--text-secondary);
-    cursor: pointer;
-    user-select: none;
-}
-
-#event-log-header:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
+    margin: 8px 0 12px 12px;                    /* Top+bund matcher dock-container padding */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
 
 #event-log-list {
-    padding: 2px 8px;
-    max-height: 90px;
+    padding: 2px 6px;
+    max-height: 78px;
     overflow-y: auto;
 }
 
 .event-log-entry {
-    padding: 2px 0;
+    padding: 1px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     display: flex;
-    gap: 8px;
+    gap: 5px;
     align-items: baseline;
     color: var(--text-secondary);
 }
@@ -420,15 +623,20 @@ body {
 .event-log-time {
     color: var(--text-muted);
     white-space: nowrap;
-    min-width: 45px;
+    width: 40px;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
 }
 
 .event-log-ago {
     color: var(--text-muted);
-    font-size: 0.9em;
+    font-size: 0.85em;
     white-space: nowrap;
-    min-width: 55px;
+    width: 52px;
+    flex-shrink: 0;
+    text-align: right;
     opacity: 0.6;
+    font-variant-numeric: tabular-nums;
 }
 
 .event-log-msg {
@@ -443,13 +651,17 @@ body {
 
 #stats-panel {
     width: 250px;
-    background: var(--bg-secondary);
-    border-left: 1px solid var(--border-subtle);
+    /* Mac-stil: afrundet ramme med glasmorfisme, matcher dock-bar æstetik */
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(10px);
+    margin: 8px 8px 8px 0;
     padding: 14px;
     overflow-y: auto;
     flex-shrink: 0;
     font-size: 0.85em;
-    transition: width 0.4s var(--bounce), padding 0.4s var(--bounce);
+    transition: width 0.4s var(--bounce), padding 0.4s var(--bounce), margin 0.4s var(--bounce);
     position: relative;
 }
 
@@ -457,8 +669,9 @@ body {
 #stats-panel.collapsed {
     width: 0;
     padding: 0;
+    margin-right: 0;
     overflow: hidden;
-    border-left: none;
+    border: none;
 }
 
 /* Toggle-knap til at folde sidebaren ind/ud */
@@ -635,10 +848,9 @@ body {
    ============================================================================= */
 
 #dock-container {
-    padding: 8px 0 12px;
+    padding: 8px 12px 12px;
     display: flex;
     justify-content: center;
-    background: linear-gradient(0deg, var(--bg-primary) 0%, rgba(12, 18, 32, 0.8) 100%);
     flex-shrink: 0;
     z-index: 20;
 }
@@ -735,58 +947,69 @@ body {
    Hver interventionstype har sin egen farveprofil.
    Subtile baggrunde normalt, tydeligere med glow ved hover. */
 
-/* Insulin: blå */
+/* Insulin: cyan-blå — mellemting mellem basal-blå og hurtig-teal */
 .dock-item.d-insulin .dock-icon {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(37, 99, 235, 0.1));
-    border-color: rgba(96, 165, 250, 0.2);
+    background: linear-gradient(135deg, #0e7490, #155e75);
+    border-color: rgba(14, 165, 210, 0.4);
+}
+/* Farve-filter på sprøjte-emoji: drejer rød→teal/cyan */
+.insulin-icon-teal {
+    filter: hue-rotate(160deg) saturate(1.3) brightness(1.1);
 }
 .dock-item.d-insulin:hover .dock-icon {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.5), rgba(37, 99, 235, 0.25));
-    border-color: rgba(96, 165, 250, 0.5);
-    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.35);
+    background: linear-gradient(135deg, #0891b2, #0e7490);
+    border-color: rgba(14, 165, 210, 0.7);
+    box-shadow: 0 8px 30px rgba(14, 116, 144, 0.45);
 }
 
-/* Mad: gul/orange */
+/* Mad: gul/orange — solide farver */
 .dock-item.d-food .dock-icon {
-    background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(234, 179, 8, 0.1));
-    border-color: rgba(250, 204, 21, 0.2);
+    background: linear-gradient(135deg, #92400e, #78350f);
+    border-color: rgba(250, 204, 21, 0.4);
 }
 .dock-item.d-food:hover .dock-icon {
-    background: linear-gradient(135deg, rgba(234, 179, 8, 0.5), rgba(234, 179, 8, 0.25));
-    border-color: rgba(250, 204, 21, 0.5);
-    box-shadow: 0 8px 30px rgba(234, 179, 8, 0.35);
+    background: linear-gradient(135deg, #b45309, #92400e);
+    border-color: rgba(250, 204, 21, 0.7);
+    box-shadow: 0 8px 30px rgba(234, 179, 8, 0.45);
 }
 
-/* Motion: grøn */
+/* Motion: grøn — solide farver */
 .dock-item.d-exercise .dock-icon {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.1));
-    border-color: rgba(52, 211, 153, 0.2);
+    background: linear-gradient(135deg, #065f46, #064e3b);
+    border-color: rgba(52, 211, 153, 0.4);
 }
 .dock-item.d-exercise:hover .dock-icon {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.5), rgba(16, 185, 129, 0.25));
-    border-color: rgba(52, 211, 153, 0.5);
-    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.35);
+    background: linear-gradient(135deg, #047857, #065f46);
+    border-color: rgba(52, 211, 153, 0.7);
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.45);
 }
 
-/* Målinger: rød/rosa */
+/* Målinger: rød/rosa — solide farver */
 .dock-item.d-measure .dock-icon {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.08));
-    border-color: rgba(248, 113, 113, 0.2);
+    background: linear-gradient(135deg, #991b1b, #7f1d1d);
+    border-color: rgba(248, 113, 113, 0.4);
 }
 .dock-item.d-measure:hover .dock-icon {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(239, 68, 68, 0.2));
-    border-color: rgba(248, 113, 113, 0.5);
-    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.3);
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
+    border-color: rgba(248, 113, 113, 0.7);
+    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.4);
 }
 
-/* SOS: rød med pulserende animation (indikerer nødhjælp) */
+/* Glukagon: hvid/lys baggrund med stort rødt kryds-ikon (nødhjælp) */
 .dock-item.d-sos .dock-icon {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(220, 38, 38, 0.1));
-    border-color: rgba(220, 38, 38, 0.3);
+    background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+    border-color: rgba(220, 38, 38, 0.4);
     animation: sos-pulse 3s ease-in-out infinite;
 }
+.dock-item.d-sos .dock-icon.sos-icon {
+    color: #dc2626;
+    font-size: 30px;
+    font-weight: 900;
+    -webkit-text-stroke: 2px #dc2626;
+}
 .dock-item.d-sos:hover .dock-icon {
-    box-shadow: 0 8px 30px rgba(220, 38, 38, 0.5);
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    box-shadow: 0 8px 30px rgba(220, 38, 38, 0.4);
     animation: none;
 }
 .dock-item.d-sos.disabled {
@@ -797,6 +1020,43 @@ body {
 @keyframes sos-pulse {
     0%, 100% { border-color: rgba(220, 38, 38, 0.2); }
     50% { border-color: rgba(220, 38, 38, 0.5); }
+}
+
+/* SOS aktiveret: kort flash-effekt som feedback */
+.dock-item.d-sos.sos-activated .dock-icon {
+    background: rgba(220, 38, 38, 0.6) !important;
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.7);
+    animation: none;
+    transition: all 0.15s;
+}
+
+/* SOS cooldown overlay: simpel dækning der gradvist forsvinder oppefra */
+.sos-cooldown-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 0%;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 14px;
+    pointer-events: none;
+    transition: height 0.5s linear;
+}
+/* Cooldown timer-tekst centreret på ikonet — høj kontrast */
+.sos-cooldown-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 1px 3px rgba(0, 0, 0, 0.9);
+    white-space: nowrap;
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+    z-index: 2;
 }
 
 /* Debug: grå/neutral */
@@ -824,11 +1084,13 @@ body {
     backdrop-filter: blur(20px);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-lg);
-    padding: 20px;
+    padding: 14px 18px;                              /* (#13) Reduceret vertikal padding */
     min-width: 320px;
-    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.03);
+    /* (#13) Stærkere aura/glow-effekt bag panelerne */
+    box-shadow: var(--shadow-lg), 0 0 40px rgba(0, 0, 0, 0.6), 0 0 80px rgba(96, 165, 250, 0.08);
     z-index: 50;
-    /* Animation: fade+slide ind */
+    max-height: calc(100vh - 200px);                 /* (#13) Forhindrer at paneler dækker grafen */
+    overflow-y: auto;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s var(--smooth), transform 0.25s var(--bounce);
@@ -841,10 +1103,7 @@ body {
     transform: translateX(-50%) translateY(0);
 }
 
-/* Bredt panel (til mad med presets) */
-.dock-panel-wide {
-    min-width: 560px;
-}
+/* (dock-panel-wide fjernet — mad-panelet bruger nu standard bredde med 5-kolonne grid) */
 
 /* Panel-header */
 .dock-panel h4 {
@@ -969,17 +1228,93 @@ body {
 }
 .btn-purple:hover { box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5); }
 
+/* Teal: neutral farve for hurtig insulin (hverken rød=fare eller blå=basal) */
+.btn-teal {
+    background: linear-gradient(135deg, #0d9488, #0f766e);
+    box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3);
+}
+.btn-teal:hover { box-shadow: 0 8px 25px rgba(13, 148, 136, 0.5); }
 
-/* --- Mad-panel specifikt layout --- */
-.dp-food-layout {
+/* --- Insulin panel: preset-chips og layout --- */
+.dp-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 6px;
+}
+/* (dp-shortcut-hint fjernet — genveje vises nu via title/mouseover) */
+.dp-insulin-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dp-preset-chips {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.insulin-preset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(96, 165, 250, 0.25);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s var(--bounce);
+    min-width: 48px;
+    white-space: nowrap;
+}
+.insulin-preset:hover {
+    background: rgba(37, 99, 235, 0.3);
+    border-color: rgba(96, 165, 250, 0.5);
+    transform: scale(1.08);
+}
+.insulin-preset-fast {
+    background: rgba(13, 148, 136, 0.15);
+    border-color: rgba(45, 212, 191, 0.25);
+}
+.insulin-preset-fast:hover {
+    background: rgba(13, 148, 136, 0.3);
+    border-color: rgba(45, 212, 191, 0.5);
+}
+.ip-dose {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.ip-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    line-height: 1;
+}
+.dp-custom-dose {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+.dp-custom-dose input[type="range"] {
+    flex: 1;
+    min-width: 60px;
+}
+.dp-btn-compact {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    min-width: 50px;
+    white-space: nowrap;
 }
 
-.dp-food-sliders {
-    flex: 1;
-    min-width: 220px;
-}
+
+/* --- Mad-panel: rent preset-grid, ingen custom sektion synlig --- */
 
 .dp-food-info {
     text-align: center;
@@ -989,10 +1324,10 @@ body {
     font-weight: 600;
 }
 
-/* Preset mad-chips (2x4 grid) */
+/* Preset mad-chips (2x5 grid) */
 .dp-food-presets {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 6px;
     align-content: start;
 }
@@ -1030,11 +1365,33 @@ body {
     font-weight: 600;
 }
 
+/* --- Custom food panel: forgrening fra mad-panelet --- */
+#dock-panel-custom-food {
+    min-width: 340px;
+}
+/* Neutral farvekodning for makronæringsstoffer (blå/lilla/gul — ingen "god/dårlig") */
+#customCarbsSlider { accent-color: #60a5fa; }   /* Kulhydrat: blå */
+#customProteinSlider { accent-color: #a78bfa; }  /* Protein: lilla */
+#customFatSlider { accent-color: #fbbf24; }      /* Fedt: gul */
+
 /* --- Målinger panel grid --- */
 .dp-measure-grid {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+/* --- Debug panel: vises under corner-tools i top-right --- */
+#dock-panel-debug {
+    left: auto;
+    right: 16px;
+    top: 60px;
+    bottom: auto;
+    transform: translateX(0) translateY(-10px);
+    min-width: 250px;
+}
+#dock-panel-debug.visible {
+    transform: translateX(0) translateY(0);
 }
 
 /* --- Debug panel checkbox --- */
@@ -1070,18 +1427,26 @@ body {
     padding: 15px;
 }
 
-/* Popup indhold: mørkt kort med afrundede hjørner */
+/* Popup indhold: mørkt kort med afrundede hjørner + pop-animation */
 .popup-content {
     background-color: #1a2332;
     color: var(--text-primary);
     padding: 25px 35px;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     border: 1px solid var(--border-medium);
     text-align: left;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-lg), 0 0 60px rgba(96, 165, 250, 0.1);
     max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
+    /* Pop-animation: starter lille og vokser til fuld størrelse med overshoot */
+    animation: popup-pop 0.4s var(--bounce) forwards;
+}
+
+@keyframes popup-pop {
+    0% { transform: scale(0.3); opacity: 0; }
+    70% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 .popup-content h2 {
@@ -1124,7 +1489,7 @@ body {
     background: linear-gradient(135deg, #16a34a, #15803d);
     color: white;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 1.1em;
     font-weight: bold;
@@ -1235,4 +1600,263 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
+}
+
+
+/* =============================================================================
+   TILFØJELSER — UI/UX forbedringer
+   ============================================================================= */
+
+/* --- #9: Tidsstyring grupperet i top-bar --- */
+.time-control-group {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 2px 4px;
+}
+.time-control-group .status-badge {
+    border: none;
+    background: none;
+    padding: 4px 8px;
+}
+.time-control-group .top-btn {
+    border: none;
+    background: none;
+}
+/* Pause-knap: fast bredde så layout ikke rykker ved Pause↔Genoptag */
+#pauseButton {
+    min-width: 100px;
+    text-align: center;
+}
+/* Afslut-knap: fast bredde */
+#startButton.game-running {
+    min-width: 80px;
+    text-align: center;
+}
+
+/* --- #16: Start-knap prominent før spilstart --- */
+.start-btn-prominent {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+    color: white !important;
+    border: 1px solid rgba(74, 222, 128, 0.3) !important;
+    font-weight: 700 !important;
+    padding: 6px 18px !important;
+    animation: start-pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+.start-btn-prominent:hover {
+    box-shadow: 0 0 25px rgba(74, 222, 128, 0.5) !important;
+    animation: none;
+}
+/* Når spillet kører: rød stop-knap */
+.start-btn-prominent.game-running {
+    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+    color: white !important;
+    border: 1px solid rgba(239, 68, 68, 0.4) !important;
+    animation: none;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.3);
+    padding: 6px 18px !important;
+}
+.start-btn-prominent.game-running:hover {
+    box-shadow: 0 0 25px rgba(220, 38, 38, 0.5) !important;
+}
+
+@keyframes start-pulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(74, 222, 128, 0.2); }
+    50% { box-shadow: 0 0 25px rgba(74, 222, 128, 0.5); }
+}
+
+/* "Lav selv" chip: speciel styling med stiplet kant */
+.preset-chip-custom {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+.preset-chip-custom:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* --- #3: Basal dosis hint --- */
+.dp-basal-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 4px 0;
+    cursor: help;
+}
+.dp-basal-hint strong {
+    color: var(--blue);
+}
+
+/* --- #8: Motion intensitets-chips --- */
+.dp-chip-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.intensity-chip {
+    flex: 1;
+    background: var(--green-dim);
+    border: 1px solid rgba(16, 185, 129, 0.15);
+    border-radius: var(--radius-md);
+    padding: 8px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s var(--bounce);
+}
+.intensity-chip:hover {
+    transform: scale(1.05) translateY(-2px);
+    background: rgba(16, 185, 129, 0.2);
+}
+.intensity-chip.selected {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+.ic-emoji {
+    font-size: 20px;
+    display: block;
+}
+.ic-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-weight: 600;
+    display: block;
+}
+.intensity-chip.selected .ic-label {
+    color: var(--text-primary);
+}
+
+/* --- #8: Målings-chips --- */
+.dp-measure-chips {
+    display: flex;
+    gap: 8px;
+}
+.measure-chip {
+    flex: 1;
+    background: var(--red-dim);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    border-radius: var(--radius-md);
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s var(--bounce);
+}
+.measure-chip:hover {
+    transform: scale(1.05) translateY(-3px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.2);
+}
+.measure-chip:nth-child(2) {
+    background: var(--purple-dim);
+    border-color: rgba(167, 139, 250, 0.15);
+}
+.measure-chip:nth-child(2):hover {
+    box-shadow: 0 6px 20px rgba(167, 139, 250, 0.2);
+}
+.mc-emoji {
+    font-size: 24px;
+    display: block;
+}
+.mc-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-weight: 600;
+    display: block;
+}
+
+/* --- Corner tools (debug + fysiologi) — nu i top-bar højre side --- */
+.corner-tool-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s var(--bounce);
+    opacity: 0.6;
+}
+.corner-tool-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    background: var(--bg-hover);
+    border-color: var(--border-medium);
+}
+
+/* --- #15: Sammenklappelige stats-sektioner --- */
+.stats-collapse-toggle {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.stats-collapse-toggle:hover {
+    color: var(--text-secondary) !important;
+}
+.collapse-arrow {
+    font-size: 10px;
+    transition: transform 0.2s;
+}
+.stats-section.collapsible .stats-collapse-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s var(--smooth);
+}
+.stats-section.collapsible:not(.collapsed) .stats-collapse-content {
+    max-height: 300px;
+}
+.stats-section.collapsible:not(.collapsed) .collapse-arrow {
+    transform: rotate(90deg);
+}
+
+/* --- #17: Badge-numre mere synlige --- */
+.badge-num {
+    font-weight: 700;
+    color: #e8f0f8;
+}
+
+/* --- Points max-dag display (ved siden af score) --- */
+.points-best {
+    font-size: 9px;
+    color: var(--yellow);
+    margin-left: 4px;
+    opacity: 0.8;
+}
+
+/* --- Flyvende ikon-animation: fra panel til graf ved handling --- */
+.flying-icon {
+    position: fixed;
+    z-index: 1000;
+    font-size: 28px;
+    pointer-events: none;
+    transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+}
+.flying-icon.animate {
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+/* --- Stjernedryss animation for ny daglig high score --- */
+@keyframes star-burst {
+    0% { opacity: 1; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.3); }
+    100% { opacity: 0; transform: scale(1.5) translateY(-15px); }
+}
+.star-burst {
+    position: absolute;
+    pointer-events: none;
+    font-size: 14px;
+    animation: star-burst 0.8s ease-out forwards;
 }

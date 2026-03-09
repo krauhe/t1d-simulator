@@ -58,6 +58,21 @@ function updateUI() {
     const minutes = String(rawMinutes).padStart(2, '0');
     timeDisplay.textContent = `${hours}:${minutes}`;
 
+    // Opdater dag/nat-ikon baseret på klokkeslæt + zZz-animation om natten
+    const dayNightIcon = document.getElementById('dayNightIcon');
+    if (dayNightIcon) {
+        const h = Math.floor(game.timeInMinutes / 60);
+        const isNight = (h >= 22 || h < 7);
+        // Sæt ikon: sol om dagen, måne om natten
+        if (isNight && !dayNightIcon.querySelector('.zzz-container')) {
+            dayNightIcon.innerHTML = '\uD83C\uDF19<span class="zzz-container"><span class="z1">z</span><span class="z2">z</span><span class="z3">z</span></span>';
+        } else if (!isNight && dayNightIcon.querySelector('.zzz-container')) {
+            dayNightIcon.innerHTML = '\u2600\uFE0F';
+        } else if (!isNight && dayNightIcon.textContent.trim() === '') {
+            dayNightIcon.innerHTML = '\u2600\uFE0F';
+        }
+    }
+
     // Display values with appropriate precision
     const cgmVal = game.cgmBG.toFixed(1);
     cgmValueDisplayGraph.textContent = cgmVal;
@@ -78,13 +93,16 @@ function updateUI() {
 
     // --- CGM Trend-pil ---
     // Beregn trend fra de seneste CGM-målinger (som rigtig CGM: ↑↗→↘↓).
-    // Trend = ændringsrate i mmol/L pr. minut over de sidste ~15 minutter.
+    // Trend = ændringsrate i mmol/L pr. minut over de sidste 15 sim-minutter.
+    // Bruger tidsstempel-baseret filtrering (ikke antal punkter) for stabilitet.
     const cgmTrendEl = document.getElementById('cgm-trend');
     if (cgmTrendEl && cgmDataPoints.length >= 2) {
-        // Brug de sidste 3 punkter (ca. 15 sim-minutter) til trend-beregning
-        const recentPoints = cgmDataPoints.slice(-4);
-        const first = recentPoints[0];
-        const last = recentPoints[recentPoints.length - 1];
+        // Filtrer punkter fra de sidste 15 sim-minutter for stabil trend
+        const currentTime = cgmDataPoints[cgmDataPoints.length - 1].time;
+        const trendWindow = 15; // sim-minutter
+        const trendPoints = cgmDataPoints.filter(p => p.time >= currentTime - trendWindow);
+        const first = trendPoints[0];
+        const last = trendPoints[trendPoints.length - 1];
         const timeDiff = last.time - first.time;
         if (timeDiff > 0) {
             const rate = (last.value - first.value) / timeDiff; // mmol/L pr. minut
@@ -104,6 +122,69 @@ function updateUI() {
 
     // Opdater hændelsesloggen under grafen
     updateEventLog();
+
+    // --- #3: Opdater anbefalet basal dosis i insulin-panelet ---
+    const basalRecommendedDose = document.getElementById('basalRecommendedDose');
+    if (basalRecommendedDose) {
+        basalRecommendedDose.textContent = game.basalDose;
+    }
+    // Opdater basal preset-knapper med doser baseret på anbefalet
+    const bp1 = document.getElementById('basalPreset1Dose');
+    const bp2 = document.getElementById('basalPreset2Dose');
+    const bp3 = document.getElementById('basalPreset3Dose');
+    if (bp1) bp1.textContent = Math.round(game.basalDose / 3);
+    if (bp2) bp2.textContent = Math.round(game.basalDose * 2 / 3);
+    if (bp3) bp3.textContent = game.basalDose;
+
+    // Skaler basal slider max til 2× anbefalet dosis
+    const longSlider = document.getElementById('longInsulinSlider');
+    if (longSlider) {
+        const newMax = Math.max(30, game.basalDose * 2);
+        longSlider.max = newMax;
+    }
+
+    // --- Glukagon cooldown-indikator ---
+    updateGlucagonCooldownUI();
+
+    // --- Daglig max points tracking + stjernedryss ---
+    updateDailyMaxPoints();
+}
+
+
+// =============================================================================
+// updateGlucagonCooldownUI — Opdater glukagon-ikonets cooldown-overlay og tekst
+// =============================================================================
+//
+// Viser en grå overlay der gradvist forsvinder oppefra og ned,
+// plus en nedtælling i timer under ikonet.
+// =============================================================================
+function updateGlucagonCooldownUI() {
+    if (!game) return;
+    const overlay = document.getElementById('sosCooldownOverlay');
+    const text = document.getElementById('sosCooldownText');
+    const dockItem = document.getElementById('glucagonDockItem');
+    if (!overlay || !text || !dockItem) return;
+
+    const cooldownMinutes = 24 * 60;
+    const timeSinceUsed = game.totalSimMinutes - game.glucagonUsedTime;
+    const remaining = cooldownMinutes - timeSinceUsed;
+
+    if (remaining > 0) {
+        // Cooldown aktiv: vis overlay (procentdel = resterende tid)
+        const pct = (remaining / cooldownMinutes) * 100;
+        overlay.style.height = pct + '%';
+        dockItem.classList.add('disabled');
+
+        // Nedtælling: altid i format "HH:MM" for fast bredde
+        const hrs = Math.floor(remaining / 60);
+        const mins = Math.floor(remaining % 60);
+        text.textContent = `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+    } else {
+        // Klar til brug
+        overlay.style.height = '0%';
+        text.textContent = '';
+        dockItem.classList.remove('disabled');
+    }
 }
 
 // =============================================================================
@@ -196,19 +277,35 @@ function drawGraph() {
     const totalMinutesInView = 24 * 60; // 1440 minutes = one full day
     const xNightStart = padding.left + ((22 * 60) / totalMinutesInView) * graphWidth;
     const xNightEnd = padding.left + ((7 * 60) / totalMinutesInView) * graphWidth;
-    graphCtx.fillStyle = 'rgba(20, 20, 50, 0.35)';
+    // Nat-shading: tydeligt mørkere overlay for klar visuel forskel dag/nat
+    graphCtx.fillStyle = 'rgba(10, 10, 40, 0.40)';
     graphCtx.fillRect(xNightStart, padding.top, graphWidth - (xNightStart - padding.left), graphHeight); // 22:00 to midnight
     graphCtx.fillRect(padding.left, padding.top, xNightEnd - padding.left, graphHeight);                  // Midnight to 07:00
+
+    // (#4) NAT-label centreret i nat-overlay (midnat = midt mellem 22:00 og 07:00)
+    // Tegnes i begge nat-zoner for synlighed
+    graphCtx.save();
+    graphCtx.font = "bold 14px Inter, Segoe UI";
+    graphCtx.fillStyle = 'rgba(120, 140, 200, 0.5)';
+    graphCtx.textAlign = 'center';
+    graphCtx.textBaseline = 'middle';
+    // Venstre nat-zone (midnat til 07:00): centrer ved 03:30
+    const xNatLeft = padding.left + ((3.5 * 60) / totalMinutesInView) * graphWidth;
+    graphCtx.fillText('\u{1F319} NAT', xNatLeft, padding.top + graphHeight / 2);
+    // Højre nat-zone (22:00 til midnat): centrer ved 23:00
+    const xNatRight = padding.left + ((23 * 60) / totalMinutesInView) * graphWidth;
+    graphCtx.fillText('\u{1F319} NAT', xNatRight, padding.top + graphHeight / 2);
+    graphCtx.restore();
 
     // --- BG zone coloring ---
     // Green zone: 4.0-10.0 mmol/L (target range, 1x points)
     // Orange zone: 10.0-14.0 mmol/L (elevated hyper, 0.5x points)
     // Red zones: below 4.0 (hypo, akut farligt) og above 14.0 (høj hyper, 0 points)
     const zones = [
-        { min: 4.0, max: 10.0, color: 'rgba(72, 187, 120, 0.15)' },     // Grøn: target
-        { min: 0, max: 3.99, color: 'rgba(229, 62, 62, 0.12)' },         // Rød: hypo — akut fare
-        { min: 10.01, max: 14.0, color: 'rgba(214, 158, 46, 0.10)' },    // Orange: forhøjet hyper
-        { min: 14.01, max: yAxisMax, color: 'rgba(229, 62, 62, 0.10)' }, // Rød: høj hyper
+        { min: 4.0, max: 10.0, color: 'rgba(72, 187, 120, 0.22)' },     // Grøn: target — lysere
+        { min: 0, max: 3.99, color: 'rgba(229, 62, 62, 0.18)' },         // Rød: hypo — akut fare
+        { min: 10.01, max: 14.0, color: 'rgba(214, 158, 46, 0.15)' },    // Orange: forhøjet hyper
+        { min: 14.01, max: yAxisMax, color: 'rgba(229, 62, 62, 0.14)' }, // Rød: høj hyper
     ];
     zones.forEach(zone => {
         // Convert BG values to pixel y-coordinates (remember: y is inverted on canvas)
@@ -236,12 +333,12 @@ function drawGraph() {
     graphCtx.fillStyle = 'rgba(72, 187, 120, 0.12)';
     graphCtx.fillRect(padding.left, bonusYtop, graphWidth, bonusYbot - bonusYtop);
 
-    // --- Chart border (mørkt tema: subtil lys kant) ---
-    graphCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; graphCtx.lineWidth = 1;
+    // --- Chart border (mørkt tema: lysere kant) ---
+    graphCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; graphCtx.lineWidth = 1;
     graphCtx.strokeRect(padding.left, padding.top, graphWidth, graphHeight);
 
-    // --- X-axis labels (time of day, every 2 hours) — lys tekst til mørkt tema ---
-    graphCtx.fillStyle = 'rgba(160, 180, 210, 0.7)'; graphCtx.font = "bold 12px Inter, Segoe UI";
+    // --- X-axis labels (time of day, every 2 hours) — lysere tekst ---
+    graphCtx.fillStyle = 'rgba(190, 210, 235, 0.85)'; graphCtx.font = "bold 12px Inter, Segoe UI";
     for (let i = 0; i <= 24; i += 2) {
         const x = padding.left + ( (i*60 / totalMinutesInView ) * graphWidth );
         graphCtx.fillText(`${String(i).padStart(2,'0')}:00`, x - 15, padding.top + graphHeight + 20);
@@ -253,14 +350,14 @@ function drawGraph() {
     for (let i = Math.ceil(0); i <= yAxisMax; i += yStep) {
         if (i === 0 && yAxisMax > 2) continue; // Skip 0 label if axis is large
         const y = padding.top + graphHeight - ((i) / range) * graphHeight;
-        graphCtx.fillText(i.toFixed(0), padding.left - 30, y + 4);
+        graphCtx.fillText(i.toFixed(0), padding.left - 22, y + 4);
     }
 
     // --- Y-axis label (rotated text: "Blodsukker (mmol/L)") ---
     // save/restore preserves the current canvas state around the rotation
-    graphCtx.save(); graphCtx.translate(12, padding.top + graphHeight/2); graphCtx.rotate(-Math.PI/2);
+    graphCtx.save(); graphCtx.translate(16, padding.top + graphHeight/2); graphCtx.rotate(-Math.PI/2);
     graphCtx.textAlign = "center"; graphCtx.font = "bold 12px Inter, Segoe UI";
-    graphCtx.fillStyle = 'rgba(160, 180, 210, 0.7)';
+    graphCtx.fillStyle = 'rgba(190, 210, 235, 0.85)';
     graphCtx.fillText("Blodsukker (mmol/L)", 0, 0); graphCtx.restore();
 
     if (!game) return; // No data to plot if game hasn't started
@@ -320,16 +417,16 @@ function drawGraph() {
             const x = padding.left + ((event.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
             let yPos = padding.top + graphHeight - 10; // Near the bottom of the chart
             graphCtx.textAlign = "center";
-            graphCtx.font = "14px Arial";
+            graphCtx.font = "16px Arial";
 
             if(event.type === 'ketone-test') {
                 // Keton-stik: blivende ikon på x-aksen med ketonværdi
                 graphCtx.fillStyle = '#805ad5'; // Lilla — matcher keton-knappen
                 graphCtx.fillText('🧪', x, yPos);
-                graphCtx.font = "bold 9px Segoe UI";
+                graphCtx.font = "bold 11px Inter, Segoe UI";
                 graphCtx.fillStyle = '#805ad5';
                 const ketonVal = event.details.value || '';
-                graphCtx.fillText(ketonVal, x, yPos - 12);
+                graphCtx.fillText(ketonVal, x, yPos - 14);
             } else if(event.type === 'food') {
                 const icon = event.details.icon || '🍴';
                 graphCtx.fillText(icon, x, yPos);
@@ -338,20 +435,41 @@ function drawGraph() {
                     const carbs = event.details.carbs || 0;
                     const protein = event.details.protein || 0;
                     const ke = (carbs + protein * 0.25).toFixed(0);
-                    graphCtx.font = "bold 9px Inter, Segoe UI";
-                    graphCtx.fillStyle = 'rgba(200, 210, 230, 0.8)';
-                    graphCtx.fillText(`${ke}g`, x, yPos - 12);
+                    graphCtx.font = "bold 11px Inter, Segoe UI";
+                    graphCtx.fillStyle = 'rgba(200, 210, 230, 0.9)';
+                    graphCtx.fillText(`${ke}g`, x, yPos - 14);
                 }
             } else if (event.type === 'motion') {
                 graphCtx.fillText(event.icon, x, yPos);
+            } else if(event.type === 'glucagon') {
+                // Glukagon: hvid/lys baggrund med rødt kryds (matcher dock-ikonet)
+                const iconSize = 24;
+                const boxTop = yPos - iconSize;
+                graphCtx.fillStyle = '#e5e7eb';
+                graphCtx.beginPath();
+                graphCtx.roundRect(x - iconSize/2, boxTop, iconSize, iconSize, 5);
+                graphCtx.fill();
+                graphCtx.strokeStyle = 'rgba(220, 38, 38, 0.5)';
+                graphCtx.lineWidth = 1;
+                graphCtx.stroke();
+                // Kryds centreret i boksen
+                graphCtx.fillStyle = '#dc2626';
+                graphCtx.font = "bold 18px Arial";
+                graphCtx.textBaseline = 'middle';
+                graphCtx.fillText('\u271A', x, boxTop + iconSize/2);
+                graphCtx.textBaseline = 'alphabetic';
+                // "GLU" label OVER boksen
+                graphCtx.font = "bold 10px Inter, Segoe UI";
+                graphCtx.fillStyle = '#dc2626';
+                graphCtx.fillText('GLU', x, boxTop - 4);
             } else if(event.type.includes('insulin')) {
-                // Color-coded: blue for basal, red for fast-acting
-                graphCtx.fillStyle = event.type === 'insulin-basal' ? '#2b6cb0' : '#c53030';
+                // Color-coded: blue for basal, teal/cyan for fast-acting (neutral)
+                graphCtx.fillStyle = event.type === 'insulin-basal' ? '#2b6cb0' : '#0d9488';
                 graphCtx.fillText(event.icon, x, yPos);
                 // Show dose amount above the icon
-                graphCtx.font = "bold 10px Segoe UI";
+                graphCtx.font = "bold 11px Inter, Segoe UI";
                 const doseText = event.details.dose.toFixed(event.type === 'insulin-fast' ? 1 : 0);
-                graphCtx.fillText(doseText, x, yPos - 12);
+                graphCtx.fillText(doseText, x, yPos - 14);
             }
         }
     });
@@ -383,10 +501,44 @@ function drawGraph() {
             graphCtx.textAlign = "center"; // Reset
             graphCtx.globalAlpha = 1.0;
         } else {
-            // Standard message: yellow rounded rectangle with text
-            graphCtx.fillRect(xCenter - textWidth/2 - 10, yPos - 20, textWidth + 20, 30);
-            graphCtx.strokeRect(xCenter - textWidth/2 - 10, yPos - 20, textWidth + 20, 30);
-            graphCtx.fillStyle = "rgba(251, 191, 36, 0.9)";
+            // Standard message (fx "Husk basal insulin"): Mac-stil afrundet boks
+            // med pulserende gul glow-animation for at vise at det er relevant NU.
+            const boxX = xCenter - textWidth / 2 - 14;
+            const boxY = yPos - 18;
+            const boxW = textWidth + 28;
+            const boxH = 34;
+            const radius = 12;
+
+            // Pulserende glow: sinusbølge der varierer glow-intensitet
+            const pulsePhase = Math.sin(game.totalSimMinutes * 0.8) * 0.5 + 0.5; // 0→1
+            const glowAlpha = 0.15 + pulsePhase * 0.25; // 0.15 → 0.40
+            const glowSpread = 8 + pulsePhase * 12;     // 8px → 20px
+
+            // Ydre gul glow (tegnes først, bag boksen)
+            graphCtx.save();
+            graphCtx.shadowColor = `rgba(251, 191, 36, ${glowAlpha})`;
+            graphCtx.shadowBlur = glowSpread;
+            graphCtx.shadowOffsetX = 0;
+            graphCtx.shadowOffsetY = 0;
+
+            // Baggrund: mørk med subtil gennemsigtighed (matcher dock-panel)
+            graphCtx.beginPath();
+            graphCtx.roundRect(boxX, boxY, boxW, boxH, radius);
+            graphCtx.fillStyle = "rgba(21, 30, 48, 0.92)";
+            graphCtx.fill();
+            graphCtx.restore();
+
+            // Kant: pulserende gul border
+            const borderAlpha = 0.4 + pulsePhase * 0.3; // 0.4 → 0.7
+            graphCtx.beginPath();
+            graphCtx.roundRect(boxX, boxY, boxW, boxH, radius);
+            graphCtx.strokeStyle = `rgba(251, 191, 36, ${borderAlpha})`;
+            graphCtx.lineWidth = 1.5;
+            graphCtx.stroke();
+
+            // Tekst: pulserer svagt i lysstyrke
+            const textAlpha = 0.85 + pulsePhase * 0.15; // 0.85 → 1.0
+            graphCtx.fillStyle = `rgba(251, 191, 36, ${textAlpha})`;
             graphCtx.fillText(msg.text, xCenter, yPos);
         }
     });
@@ -394,16 +546,23 @@ function drawGraph() {
     // --- Floating labels (animerede måleresultater) ---
     // Disse popper op fra et målepunkt på grafen og svæver opad mens de fader ud.
     // Bruges til fingerprik og keton-stik — spil-agtigt visuelt feedback.
-    // Cleanup: fjern labels der er udløbet.
+    // Bruger real-tid (performance.now) til smooth animation uafhængig af sim-hastighed.
+    // Cleanup: fjern labels der har levet i mere end 3 real-sekunder.
+    const FLOAT_DURATION_MS = 3000; // 3 sekunder real-tid for smooth animation
+    const nowMs = performance.now();
     if (game.floatingLabels) {
-        game.floatingLabels = game.floatingLabels.filter(lbl =>
-            (game.totalSimMinutes - lbl.createdAt) < lbl.duration);
+        game.floatingLabels = game.floatingLabels.filter(lbl => {
+            // Initialiser real-tid-timestamp ved første rendering
+            if (!lbl._realCreatedAt) lbl._realCreatedAt = nowMs;
+            return (nowMs - lbl._realCreatedAt) < FLOAT_DURATION_MS;
+        });
 
         game.floatingLabels.forEach(lbl => {
             // Kun tegn labels fra den aktuelle dag
             if (lbl.time < currentDayStartMinutes || lbl.time >= currentDayStartMinutes + totalMinutesInView) return;
 
-            const progress = (game.totalSimMinutes - lbl.createdAt) / lbl.duration; // 0→1
+            // Smooth animation baseret på real-tid (ikke sim-tid)
+            const progress = Math.min(1, (nowMs - lbl._realCreatedAt) / FLOAT_DURATION_MS); // 0→1
             const x = padding.left + ((lbl.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
             const baseY = padding.top + graphHeight - ((lbl.value) / range) * graphHeight;
 
@@ -639,8 +798,8 @@ function updateEventLog() {
         if (minSince < 1) return 'nu';
         const h = Math.floor(minSince / 60);
         const m = minSince % 60;
-        if (h > 0) return `${h}t ${String(m).padStart(2, '0')}m`;
-        return `${String(m).padStart(2, '0')}min`;
+        if (h > 0) return `${h}t${String(m).padStart(2, '0')}m`;
+        return `${m}m`;
     }
 
     // Formatér klokkeslæt fra totalSimMinutes
@@ -662,6 +821,68 @@ function updateEventLog() {
         </div>`;
     });
     logList.innerHTML = html;
+}
+
+
+// =============================================================================
+// DAGLIG MAX POINTS — Tracking og stjernedryss ved ny high score
+// =============================================================================
+//
+// Holder styr på den højeste points-score spilleren har opnået i løbet af
+// en dag. Når spilleren slår sin daglige high score, vises en kort
+// stjernedryss-animation ved points-displayet, og der spilles en lyd.
+// =============================================================================
+
+// Gemmer den daglige max og hvilken dag den tilhører
+let _dailyMaxPoints = 0;
+let _dailyMaxPointsDay = 1;
+
+function updateDailyMaxPoints() {
+    if (!game) return;
+
+    // Nulstil ved dagsskifte
+    if (game.day !== _dailyMaxPointsDay) {
+        _dailyMaxPoints = 0;
+        _dailyMaxPointsDay = game.day;
+    }
+
+    // Tjek om spilleren har slået sin daglige high score
+    if (game.normoPoints > _dailyMaxPoints) {
+        const wasZero = _dailyMaxPoints === 0;
+        const improvement = game.normoPoints - _dailyMaxPoints;
+        _dailyMaxPoints = game.normoPoints;
+
+        // Vis stjernedryss kun ved mærkbare stigninger (mindst 5 points)
+        // og ikke ved spilstart (wasZero)
+        if (!wasZero && improvement >= 5) {
+            spawnStarBurst();
+            playSound('intervention', 'E5');
+        }
+    }
+}
+
+/**
+ * spawnStarBurst — Animér stjernedryss omkring points-displayet.
+ * Skaber 5-8 stjerne-elementer der flyver ud fra points-badgen.
+ */
+function spawnStarBurst() {
+    const pointsBadge = normoPointsDisplay;
+    if (!pointsBadge) return;
+
+    const rect = pointsBadge.getBoundingClientRect();
+    const stars = ['\u2B50', '\u2728', '\u{1F31F}']; // ⭐, ✨, 🌟
+    const count = 5 + Math.floor(Math.random() * 4);
+
+    for (let i = 0; i < count; i++) {
+        const star = document.createElement('span');
+        star.className = 'star-burst';
+        star.textContent = stars[Math.floor(Math.random() * stars.length)];
+        star.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * 40) + 'px';
+        star.style.top = (rect.top + (Math.random() - 0.5) * 20) + 'px';
+        document.body.appendChild(star);
+        // Fjern efter animation
+        setTimeout(() => star.remove(), 900);
+    }
 }
 
 

@@ -207,6 +207,12 @@ class Simulator {
         this.bgHistoryForStats = [];   // BG history for TIR/TITR/average calculations
         this.logHistory = [];          // Event log (food, insulin, exercise) for display
 
+        // --- Daglig max points tracking ---
+        // Holder styr på den højeste points-score spilleren opnår per dag.
+        // Bruges til stjernedryss-animation når ny high score opnås.
+        this.dailyMaxPoints = 0;
+        this.lastTrackedPointsDay = 1;
+
         // --- Calorie tracking (for weight change calculation) ---
         this.totalKcalConsumed = 0;        // Total calories eaten
         this.totalKcalBurnedBase = 0;      // Calories burned at rest (BMR)
@@ -260,6 +266,11 @@ class Simulator {
         const basalRateGuess = this.hovorka.basalToRate(this.basalDose);
         this.hovorka.initializeSteadyState(basalRateGuess, 5.5);
         this.hovorkaSteadyStateBasalRate = this.hovorka.steadyStateBasalRate;
+
+        // Gem steady-state basal IOB (S1+S2 ved ligevægt) så vi kan trække
+        // den fra total IOB. Vi viser kun BOLUS-IOB til spilleren — basal
+        // insulin er en stabil baggrund der ikke er relevant for doserings-beslutninger.
+        this.basalIOBbaseline = (this.hovorka.state[2] + this.hovorka.state[3]) / 1000;
 
         // Pre-administer basal insulin fra 16 timer siden (patienten tog
         // sin daglige Lantus/Tresiba i går morges kl. 08:00).
@@ -516,10 +527,12 @@ class Simulator {
         this.activeFastInsulin = this.activeFastInsulin.filter(ins =>
             (this.totalSimMinutes - ins.injectionTime) < 6 * 60);
 
-        // IOB: beregn fra Hovorka's insulin-kompartmenter (mere korrekt end
-        // vores gamle lineære tracking). S1+S2 er subkutan insulin, I*VI er
-        // plasma insulin. Vi normaliserer til enheder (divider med 1000).
-        this.iob = (this.hovorka.state[2] + this.hovorka.state[3]) / 1000;
+        // IOB: beregn fra Hovorka's insulin-kompartmenter. S1+S2 er total
+        // subkutan insulin (basal + bolus). Vi trækker basal-baseline fra
+        // så IOB kun viser BOLUS-insulin — det er det spilleren har brug for
+        // at se for at undgå insulin-stacking. Basal er stabil baggrund.
+        const totalIOB = (this.hovorka.state[2] + this.hovorka.state[3]) / 1000;
+        this.iob = Math.max(0, totalIOB - this.basalIOBbaseline);
 
         // --- 2. BEREGN KULHYDRAT-RATE til Hovorka D1/D2 [mmol/min] ---
         //
@@ -676,6 +689,12 @@ class Simulator {
             cgmDataPoints.push({ time: this.totalSimMinutes, value: this.cgmBG });
             trueBgPoints.push({ time: this.totalSimMinutes, value: this.trueBG });
             this.bgHistoryForStats.push({time: this.totalSimMinutes, cgmBG: this.cgmBG, trueBG: this.trueBG });
+
+            // Daglig max points tracking — nulstilles ved dagsskifte
+            if (this.day !== this.lastTrackedPointsDay) {
+                this.dailyMaxPoints = 0;
+                this.lastTrackedPointsDay = this.day;
+            }
             this.cgmBGHistory.push({ time: this.totalSimMinutes, value: this.trueBG });
 
             // Keep history buffers from growing indefinitely
@@ -684,8 +703,8 @@ class Simulator {
             if (trueBgPoints.length > MAX_GRAPH_POINTS_PER_DAY * 2) trueBgPoints.shift();
             if (this.bgHistoryForStats.length > (14 * MAX_GRAPH_POINTS_PER_DAY + 10)) this.bgHistoryForStats.shift();
 
-            // Play a tick sound at high simulation speeds for auditory feedback
-            if (this.simulationSpeed >= 240) playSound('tick');
+            // Spil tick-lyd ved hvert CGM-update (hvert 5. sim-minut) for feedback
+            playSound('tick');
         }
 
         // Clean up expired graph messages
@@ -781,6 +800,17 @@ class Simulator {
 
         // Update the UI display showing current point weight
         normoPointsWeighting.textContent = `(x${bgWeight.toFixed(1)})`;
+
+        // Opdater visuelt feedback på points-badge baseret på weight
+        const pointsBadge = normoPointsWeighting && normoPointsWeighting.closest
+            ? normoPointsWeighting.closest('.status-badge') : null;
+        if (pointsBadge) {
+            pointsBadge.classList.remove('pts-off', 'pts-half', 'pts-on', 'pts-bonus');
+            if (bgWeight === 0) pointsBadge.classList.add('pts-off');
+            else if (bgWeight === 0.5) pointsBadge.classList.add('pts-half');
+            else if (bgWeight >= 2) pointsBadge.classList.add('pts-bonus');
+            else pointsBadge.classList.add('pts-on');
+        }
     }
 
     // =========================================================================
@@ -1234,8 +1264,18 @@ class Simulator {
      */
     useGlucagon() {
         this.handleNightIntervention();
-        logEvent("Glycagon brugt! BG stiger hurtigt.", 'event');
-        this.trueBG = Math.min(25, this.trueBG + 8 + Math.random() * 4); // +8 to +12 mmol/L
+        logEvent("Glukagon brugt! BG stiger hurtigt.", 'glucagon');
+
+        // Glucagon stimulerer leverens glykogenolyse → glukose dumpes i plasma.
+        // Vi tilføjer glukose direkte til Hovorka-modellens Q1 (plasma-glukose)
+        // i stedet for at sætte trueBG, da trueBG overskrides af modellen hvert tick.
+        // Q1 er i mmol, så deltaBG (mmol/L) * V_G (L) = deltaQ1 (mmol).
+        const deltaBG = 8 + Math.random() * 4; // +8 til +12 mmol/L
+        const deltaQ1 = deltaBG * this.hovorka.V_G;
+        this.hovorka.state[4] += deltaQ1;
+        // Opdater trueBG fra modellen med det samme
+        this.trueBG = this.hovorka.glucoseConcentration;
+
         this.glucagonUsedTime = this.totalSimMinutes;
         this.updateGlucagonStatus();
     }
