@@ -98,39 +98,54 @@ function startGame() {
     // We attempt to start it here on the first button click.
     if (sounds && Tone.context.state !== 'running') Tone.start();
 
-    // Show the profile setup popup. The callback is called with the profile
-    // when the player clicks "Start Simulation" in the popup.
-    showProfilePopup((profile) => {
-        // Create a new Simulator with the player's personal parameters
-        game = new Simulator(profile);
+    // Hent gemt profil fra localStorage (eller brug defaults).
+    // Start-knappen starter DIREKTE uden popup — profilen redigeres via Profil-knappen.
+    let profile = { weight: 70, icr: 10, isf: 3.0 };
+    try {
+        const stored = localStorage.getItem('diabetesDystenProfile');
+        if (stored) profile = JSON.parse(stored);
+    } catch (e) { /* localStorage utilgængeligt — brug defaults */ }
 
-        // Initialize the graph data arrays with the starting BG value
-        cgmDataPoints = [{ time: 0, value: game.cgmBG }];
-        trueBgPoints = [{ time: 0, value: game.trueBG }];
+    // Start spillet med den gemte/default profil
+    startGameWithProfile(profile);
+}
 
-        // Unpause and start the loop
-        isPaused = false;
-        pauseButton.innerHTML = "&#x23F8; Pause";
+// =============================================================================
+// startGameWithProfile — Starter spillet med en given profil
+// =============================================================================
+// Separeret fra startGame() så både Start-knap (direkte) og Profil-popup
+// (efter redigering) kan starte spillet via samme funktion.
+// =============================================================================
+function startGameWithProfile(profile) {
+    // Create a new Simulator with the player's personal parameters
+    game = new Simulator(profile);
 
-        // Record the current time as the reference point for deltaTime calculations
-        // performance.now() returns a high-resolution timestamp in milliseconds
-        lastFrameTime = performance.now();
+    // Initialize the graph data arrays with the starting BG value
+    cgmDataPoints = [{ time: 0, value: game.cgmBG }];
+    trueBgPoints = [{ time: 0, value: game.trueBG }];
 
-        // Cancel any existing loop before starting a new one (safety measure)
-        if (gameLoopIntervalId) cancelAnimationFrame(gameLoopIntervalId);
-        gameLoopIntervalId = requestAnimationFrame(mainGameLoop);
+    // Unpause and start the loop
+    isPaused = false;
+    pauseButton.innerHTML = "&#x23F8; Pause";
 
-        // Update the patient data display
-        updatePlayerFixedDataUI();
+    // Record the current time as the reference point for deltaTime calculations
+    lastFrameTime = performance.now();
 
-        // Konverter start-knap til rød stop-knap
-        startButton.innerHTML = '&#x23F9; Afslut';
-        startButton.title = 'Afslut simulationen og se resultater';
-        startButton.classList.add('game-running');
+    // Cancel any existing loop before starting a new one (safety measure)
+    if (gameLoopIntervalId) cancelAnimationFrame(gameLoopIntervalId);
+    gameLoopIntervalId = requestAnimationFrame(mainGameLoop);
 
-        // (#12) Sæt lyd-knap til korrekt initial ikon
-        muteButton.textContent = isMuted ? '\u{1F507}' : '\u{1F50A}';
-    });
+    // Update the patient data display
+    updatePlayerFixedDataUI();
+
+    // Konverter start-knap til rød stop-knap
+    startButton.innerHTML = '&#x23F9; Afslut';
+    startButton.title = 'Afslut simulationen og se resultater';
+    startButton.classList.add('game-running');
+
+    // (#12) Sæt lyd-knap til korrekt initial ikon
+    const muteIcon = document.getElementById('muteIcon');
+    if (muteIcon) muteIcon.textContent = isMuted ? '\u{1F507}' : '\u{1F50A}';
 }
 
 
@@ -168,9 +183,8 @@ function resetGame() {
     document.querySelector('#kcal24h').textContent = '--';
     [weightDisplay, icrDisplay, isfDisplay, carbEffectDisplay, basalDoseDisplay, restingKcalDisplay].forEach(el => el.textContent="--");
 
-    // Reset weight slider
-    weightChangeSlider.value = 0; weightChangeValue.textContent = "0.0";
-    weightChangeSlider.style.setProperty('--thumb-color', '#4CAF50');
+    // Reset vægtændring
+    if (weightChangeValue) { weightChangeValue.textContent = "0.0"; weightChangeValue.style.color = ''; }
 
     // Gendan start-knap fra stop til start
     startButton.innerHTML = '&#x25B6; Start';

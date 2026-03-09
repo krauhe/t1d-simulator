@@ -39,9 +39,47 @@ try {
     // The note and duration are configurable per event (passed to playSound()).
     sounds.interventionSynth = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 }, volume: -12 }).toDestination();
 
-    // Bonus sound: plays when BG enters the tight "bonus range" (5.0-6.0 mmol/L).
-    // Sine wave is the purest tone — a brief, rewarding "ping".
-    sounds.bonusSynth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 }, volume: -10 }).toDestination();
+    // Bonus sound: "stjernedrys" — spilles når BG rammer 2x bonus-zonen (5.0-6.0 mmol/L).
+    // Bruger en PolySynth (kan spille flere toner samtidig) med en høj, klokkeklar sine-lyd.
+    // Effekten er en hurtig opadgående arpeggio (C6→E6→G6→C7) der lyder som glitrende stjerner.
+    // Reverb tilføjer rumklang så tonerne "hænger" i luften.
+    sounds.bonusReverb = new Tone.Reverb({ decay: 1.5, wet: 0.4 }).toDestination();
+    sounds.bonusSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.005, decay: 0.3, sustain: 0, release: 0.4 },
+        volume: -14
+    }).connect(sounds.bonusReverb);
+
+    // In-range lyd: positiv, let opadgående to-tone når BG vender tilbage til 4-10 mmol/L.
+    // Sine-bølge med kort envelope — venlig "ding-ding" der belønner spilleren.
+    sounds.inRangeSynth = new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.2 },
+        volume: -14
+    }).toDestination();
+
+    // Hypo-fare lyd: dyb, faretruende lyd når BG < 4.5 og faldende.
+    // FMSynth giver en mørk, urolig klang — lav frekvens med FM-modulation
+    // skaber en "vibrerende" fornemmelse der signalerer fare.
+    // Lav harmonicity (1.5) + høj modulationIndex (6) = dyb, grumset tone.
+    sounds.hypoWarnSynth = new Tone.FMSynth({
+        harmonicity: 1.5, modulationIndex: 6,
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.1, decay: 0.6, sustain: 0.15, release: 0.8 },
+        modulation: { type: 'sine' },
+        modulationEnvelope: { attack: 0.1, decay: 0.4, sustain: 0.2, release: 0.5 },
+        volume: -8
+    }).toDestination();
+
+    // Hyper-zone lyd: kort, "nedern" nedadgående motiv når BG krydser over 10.
+    // Triangle-bølge giver en blødere, mindre dramatisk tone end FM-synthen.
+    // To nedadgående toner (moll-interval) — signalerer "det går den forkerte vej"
+    // men uden panik.
+    sounds.hyperWarnSynth = new Tone.Synth({
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.02, decay: 0.3, sustain: 0.05, release: 0.3 },
+        volume: -14
+    }).toDestination();
 
     // Game over sound: plays a descending three-note sequence (G3 → E3 → C3).
     // FMSynth uses frequency modulation for a richer, more dramatic timbre.
@@ -63,7 +101,7 @@ try {
 /**
  * playSound — Triggers a sound effect for a given game event type.
  *
- * @param {string} type      - The event type: 'tick', 'bonus', 'intervention', or 'gameOver'
+ * @param {string} type      - The event type: 'tick', 'bonus', 'hypoWarn', 'hyperWarn', 'intervention', or 'gameOver'
  * @param {string} note      - Musical note in scientific pitch notation (e.g., 'C4', 'A5').
  *                              Only used for 'intervention' type. Default: 'C4'
  * @param {string} duration  - Tone.js duration string (e.g., '8n' = eighth note, '16n' = sixteenth).
@@ -85,7 +123,34 @@ function playSound(type, note = 'C4', duration = '8n') {
         const now = Tone.now();
 
         if (type === 'tick' && sounds.tickSynth) sounds.tickSynth.triggerAttackRelease("C2", "32n", now);
-        else if (type === 'bonus' && sounds.bonusSynth) sounds.bonusSynth.triggerAttackRelease("A5", "16n", now);
+        else if (type === 'bonus' && sounds.bonusSynth) {
+            // "Stjernedrys" — hurtig opadgående arpeggio med glitrende høje toner.
+            // Tonerne C6→E6→G6→C7 danner en C-dur akkord der stiger opad,
+            // med 70ms mellem hver tone. Lyder som magisk glitter/stjernestøv.
+            const notes = ['C6', 'E6', 'G6', 'C7'];
+            notes.forEach((n, i) => {
+                sounds.bonusSynth.triggerAttackRelease(n, '16n', now + i * 0.07);
+            });
+        }
+        else if (type === 'inRange' && sounds.inRangeSynth) {
+            // Positiv opadgående to-tone: C5 → E5 (stor terts op).
+            // Let og venlig — "godt klaret, du er tilbage i grøn zone".
+            sounds.inRangeSynth.triggerAttackRelease('C5', '16n', now);
+            sounds.inRangeSynth.triggerAttackRelease('E5', '16n', now + 0.1);
+        }
+        else if (type === 'hypoWarn' && sounds.hypoWarnSynth) {
+            // Faretruende nedadgående to-tone motiv: E2 → C2 (dybt moll-fald).
+            // Oktav 2 giver en virkelig dyb, truende klang. Længere toner (4n)
+            // og mere afstand (250ms) giver en langsom, uhyggelig fornemmelse.
+            sounds.hypoWarnSynth.triggerAttackRelease('E2', '4n', now);
+            sounds.hypoWarnSynth.triggerAttackRelease('C2', '2n', now + 0.25);
+        }
+        else if (type === 'hyperWarn' && sounds.hyperWarnSynth) {
+            // "Nedern" nedadgående to-tone motiv: A3 → F3 (dybere, mere mættet).
+            // Signalerer "du er over 10, det er ikke godt" uden akut panik.
+            sounds.hyperWarnSynth.triggerAttackRelease('A3', '8n', now);
+            sounds.hyperWarnSynth.triggerAttackRelease('F3', '8n', now + 0.15);
+        }
         else if (type === 'intervention' && sounds.interventionSynth) sounds.interventionSynth.triggerAttackRelease(note, duration, now);
         else if (type === 'gameOver' && sounds.gameOverSynth) {
             // Descending three-note sequence with 100ms spacing between notes.

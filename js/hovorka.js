@@ -304,9 +304,10 @@ class HovorkaModel {
         //   Leveren frigiver glykogen trods aktiv insulin. Fysiologisk korrekt:
         //   under hypo dominerer glukagon-signalet ved leverens glukagon-receptorer.
         //
-        // Svær hypo + massiv kontraregulering (stress=2.0, x3=1.3):
-        //   EGP = EGP_0 * 0.7 — kraftig leverproduktion (emergency respons)
-        //
+        // Svær hypo + kontraregulering ved T1D (stress=0.4, x3=1.3):
+        //   EGP = EGP_0 * max(0, 1.4 - 1.3) = EGP_0 * 0.1 (meget svag T1D-respons)
+        //   Stress capped ved 0.4 for T1D (glukagon tabt, kun svag adrenalin aktiv).
+        //   Ved overdosis: x3 >> stress → EGP ≈ 0 → BG crasher → game over.
         // Tidligere formel var: EGP_0 * stressMultiplier * (1 - x3)
         // Problem: når x3 > 1.0 blev EGP clamped til 0, og stressMultiplier
         // kunne ALDRIG override — glukagon var virkningsløs under hypo!
@@ -337,20 +338,38 @@ class HovorkaModel {
         // Subkutant insulin depot 2: fra depot 1, absorption til plasma
         const dS2 = S1 / this.tau_I - U_I;
 
+        // --- Insulinvirkning ved lav BG (T1D) ---
+        // BEMÆRK: Hypo-guard er FJERNET for T1D-simulering.
+        //
+        // Hos raske personer reducerer kroppen perifær glukoseoptagelse ved
+        // hypoglykæmi via glukagon-medieret hepatisk insulinresistens og
+        // nedregulering af GLUT4. Men ved T1D er denne beskyttelse svækket:
+        //   - Glukagon-respons tabt inden 1-5 år efter diagnose
+        //   - Adrenalin-respons ofte svækket (HAAF)
+        //   - Ved suprafysiologisk insulin (>50-60 μU/mL) supprimeres EGP
+        //     fuldstændigt uanset kontraregulatoriske hormoner
+        //
+        // Konsekvens: Massiv insulinoverdosis (fx 9E fra BG=6) bør være
+        // dødelig fordi insulins clearance-effekt forbliver aktiv selv ved
+        // meget lav BG. Kontrareguleringen (via stressMultiplier i EGP)
+        // er det eneste forsvar, og det er utilstrækkeligt ved store doser.
+        //
+        // Kilder: Bengtsen 2021, Reno 2013, Rzepczyk 2022
+
         // Plasma-glukose (Q1): DEN centrale ligning
         //   + U_G: glukose fra tarmen (mad)
         //   + EGP: glukose fra leveren
         //   + k_12 * Q2: glukose der vender tilbage fra perifere væv
         //   - F_01c: hjernens forbrug
         //   - F_R: nyrernes udskillelse
-        //   - exerciseFactor * x1 * Q1: insulin-drevet transport til muskler
+        //   - exerciseFactor * x1 * Q1: insulin-drevet transport til periferi
         const dQ1 = -(F_01c + F_R) - exerciseFactor * x1 * Q1
                     + this.k_12 * Q2 + U_G + EGP;
 
         // Perifær glukose (Q2): muskler og fedtvæv
         //   + exerciseFactor * x1 * Q1: ind fra plasma (insulin-drevet)
         //   - k_12 * Q2: tilbage til plasma
-        //   - x2 * Q2: forbrænding i musklerne (insulin-drevet disposal)
+        //   - x2 * Q2: forbrænding i musklerne
         //   - beta * E1 / HRbase: direkte muskeloptag under motion (insulin-uafhængigt)
         const dQ2 = exerciseFactor * x1 * Q1 - (this.k_12 + x2) * Q2
                     - this.beta * E1 * HR_effect;

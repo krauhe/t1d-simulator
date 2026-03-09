@@ -30,6 +30,11 @@
 //   logEvent(), updateFoodDisplay(), updateMotionKcal(), updatePlayerFixedDataUI()
 // =============================================================================
 
+// Genanvendeligt offscreen canvas til hue-roterede emoji-ikoner på grafen.
+// Oprettes én gang og genbruges i drawGraph() for at undgå memory churn.
+const _emojiOffCanvas = document.createElement('canvas');
+const _emojiOffCtx = _emojiOffCanvas.getContext('2d');
+
 
 // =============================================================================
 // updateUI — Refresh the numeric displays in the top bar
@@ -58,18 +63,14 @@ function updateUI() {
     const minutes = String(rawMinutes).padStart(2, '0');
     timeDisplay.textContent = `${hours}:${minutes}`;
 
-    // Opdater dag/nat-ikon baseret på klokkeslæt + zZz-animation om natten
+    // Opdater dag/nat-ikon baseret på klokkeslæt (simpelt ikon, ingen animation)
     const dayNightIcon = document.getElementById('dayNightIcon');
     if (dayNightIcon) {
         const h = Math.floor(game.timeInMinutes / 60);
         const isNight = (h >= 22 || h < 7);
-        // Sæt ikon: sol om dagen, måne om natten
-        if (isNight && !dayNightIcon.querySelector('.zzz-container')) {
-            dayNightIcon.innerHTML = '\uD83C\uDF19<span class="zzz-container"><span class="z1">z</span><span class="z2">z</span><span class="z3">z</span></span>';
-        } else if (!isNight && dayNightIcon.querySelector('.zzz-container')) {
-            dayNightIcon.innerHTML = '\u2600\uFE0F';
-        } else if (!isNight && dayNightIcon.textContent.trim() === '') {
-            dayNightIcon.innerHTML = '\u2600\uFE0F';
+        const currentIcon = isNight ? '\uD83C\uDF19' : '\u2600\uFE0F';
+        if (dayNightIcon.textContent.trim() !== currentIcon) {
+            dayNightIcon.textContent = currentIcon;
         }
     }
 
@@ -93,30 +94,35 @@ function updateUI() {
 
     // --- CGM Trend-pil ---
     // Beregn trend fra de seneste CGM-målinger (som rigtig CGM: ↑↗→↘↓).
-    // Trend = ændringsrate i mmol/L pr. minut over de sidste 15 sim-minutter.
-    // Bruger tidsstempel-baseret filtrering (ikke antal punkter) for stabilitet.
+    // Bruger 30 min vindue med gennemsnit af 2 målinger i hver ende for støj-robusthed.
+    // Rate = ændringsrate i mmol/L pr. minut.
     const cgmTrendEl = document.getElementById('cgm-trend');
-    if (cgmTrendEl && cgmDataPoints.length >= 2) {
-        // Filtrer punkter fra de sidste 15 sim-minutter for stabil trend
+    if (cgmTrendEl && cgmDataPoints.length >= 4) {
         const currentTime = cgmDataPoints[cgmDataPoints.length - 1].time;
-        const trendWindow = 15; // sim-minutter
+        const trendWindow = 30; // sim-minutter — længere vindue = mere stabilt
         const trendPoints = cgmDataPoints.filter(p => p.time >= currentTime - trendWindow);
-        const first = trendPoints[0];
-        const last = trendPoints[trendPoints.length - 1];
-        const timeDiff = last.time - first.time;
-        if (timeDiff > 0) {
-            const rate = (last.value - first.value) / timeDiff; // mmol/L pr. minut
-            // Trend-pile baseret på ændringsrate (klinisk CGM-standard)
-            let arrow, arrowColor;
-            if (rate > 0.1) { arrow = '\u2191\u2191'; arrowColor = 'var(--red)'; }         // ↑↑ hurtigt stigende
-            else if (rate > 0.05) { arrow = '\u2191'; arrowColor = 'var(--orange)'; }      // ↑ stigende
-            else if (rate > 0.02) { arrow = '\u2197'; arrowColor = 'var(--orange)'; }      // ↗ langsomt stigende
-            else if (rate > -0.02) { arrow = '\u2192'; arrowColor = 'var(--green)'; }      // → stabil
-            else if (rate > -0.05) { arrow = '\u2198'; arrowColor = 'var(--orange)'; }     // ↘ langsomt faldende
-            else if (rate > -0.1) { arrow = '\u2193'; arrowColor = 'var(--orange)'; }      // ↓ faldende
-            else { arrow = '\u2193\u2193'; arrowColor = 'var(--red)'; }                     // ↓↓ hurtigt faldende
-            cgmTrendEl.textContent = arrow;
-            cgmTrendEl.style.color = arrowColor;
+        if (trendPoints.length >= 4) {
+            // Gennemsnit af de 2 ældste og 2 nyeste punkter i vinduet
+            const firstAvgVal = (trendPoints[0].value + trendPoints[1].value) / 2;
+            const firstAvgTime = (trendPoints[0].time + trendPoints[1].time) / 2;
+            const n = trendPoints.length;
+            const lastAvgVal = (trendPoints[n - 1].value + trendPoints[n - 2].value) / 2;
+            const lastAvgTime = (trendPoints[n - 1].time + trendPoints[n - 2].time) / 2;
+            const timeDiff = lastAvgTime - firstAvgTime;
+            if (timeDiff > 0) {
+                const rate = (lastAvgVal - firstAvgVal) / timeDiff; // mmol/L pr. minut
+                // Trend-pile baseret på ændringsrate (klinisk CGM-standard)
+                let arrow, arrowColor;
+                if (rate > 0.1) { arrow = '\u2191\u2191'; arrowColor = 'var(--red)'; }         // ↑↑ hurtigt stigende
+                else if (rate > 0.05) { arrow = '\u2191'; arrowColor = 'var(--orange)'; }      // ↑ stigende
+                else if (rate > 0.02) { arrow = '\u2197'; arrowColor = 'var(--orange)'; }      // ↗ langsomt stigende
+                else if (rate > -0.02) { arrow = '\u2192'; arrowColor = 'var(--green)'; }      // → stabil
+                else if (rate > -0.05) { arrow = '\u2198'; arrowColor = 'var(--orange)'; }     // ↘ langsomt faldende
+                else if (rate > -0.1) { arrow = '\u2193'; arrowColor = 'var(--orange)'; }      // ↓ faldende
+                else { arrow = '\u2193\u2193'; arrowColor = 'var(--red)'; }                     // ↓↓ hurtigt faldende
+                cgmTrendEl.textContent = arrow;
+                cgmTrendEl.style.color = arrowColor;
+            }
         }
     }
 
@@ -148,6 +154,10 @@ function updateUI() {
 
     // --- Daglig max points tracking + stjernedryss ---
     updateDailyMaxPoints();
+
+    // --- Debug: log data + opdater live-værdier ---
+    if (typeof debugLogTick === 'function') debugLogTick();
+    if (typeof debugUpdateLiveValues === 'function') debugUpdateLiveValues();
 }
 
 
@@ -271,6 +281,15 @@ function drawGraph() {
     const graphHeight = rect.height - padding.top - padding.bottom;
     if (graphWidth <= 0 || graphHeight <= 0) return;
 
+    // --- Rounded clip for chart area ---
+    // Alle fills/strokes inden for chart-området klippes til afrundede hjørner,
+    // så zoner, nat-shading osv. matcher grafens border-radius.
+    const chartRadius = 12;
+    graphCtx.save();
+    graphCtx.beginPath();
+    graphCtx.roundRect(padding.left, padding.top, graphWidth, graphHeight, chartRadius);
+    graphCtx.clip();
+
     // --- Night shading (22:00-07:00) ---
     // Mørkere overlay for at indikere nattetimer — tydeligere i det mørke tema.
     // Giver visuel rytme til døgnet (dag/nat) og minder spilleren om søvn-mekanikken.
@@ -282,30 +301,17 @@ function drawGraph() {
     graphCtx.fillRect(xNightStart, padding.top, graphWidth - (xNightStart - padding.left), graphHeight); // 22:00 to midnight
     graphCtx.fillRect(padding.left, padding.top, xNightEnd - padding.left, graphHeight);                  // Midnight to 07:00
 
-    // (#4) NAT-label centreret i nat-overlay (midnat = midt mellem 22:00 og 07:00)
-    // Tegnes i begge nat-zoner for synlighed
-    graphCtx.save();
-    graphCtx.font = "bold 14px Inter, Segoe UI";
-    graphCtx.fillStyle = 'rgba(120, 140, 200, 0.5)';
-    graphCtx.textAlign = 'center';
-    graphCtx.textBaseline = 'middle';
-    // Venstre nat-zone (midnat til 07:00): centrer ved 03:30
-    const xNatLeft = padding.left + ((3.5 * 60) / totalMinutesInView) * graphWidth;
-    graphCtx.fillText('\u{1F319} NAT', xNatLeft, padding.top + graphHeight / 2);
-    // Højre nat-zone (22:00 til midnat): centrer ved 23:00
-    const xNatRight = padding.left + ((23 * 60) / totalMinutesInView) * graphWidth;
-    graphCtx.fillText('\u{1F319} NAT', xNatRight, padding.top + graphHeight / 2);
-    graphCtx.restore();
+
 
     // --- BG zone coloring ---
     // Green zone: 4.0-10.0 mmol/L (target range, 1x points)
     // Orange zone: 10.0-14.0 mmol/L (elevated hyper, 0.5x points)
     // Red zones: below 4.0 (hypo, akut farligt) og above 14.0 (høj hyper, 0 points)
     const zones = [
-        { min: 4.0, max: 10.0, color: 'rgba(72, 187, 120, 0.22)' },     // Grøn: target — lysere
-        { min: 0, max: 3.99, color: 'rgba(229, 62, 62, 0.18)' },         // Rød: hypo — akut fare
-        { min: 10.01, max: 14.0, color: 'rgba(214, 158, 46, 0.15)' },    // Orange: forhøjet hyper
-        { min: 14.01, max: yAxisMax, color: 'rgba(229, 62, 62, 0.14)' }, // Rød: høj hyper
+        { min: 4.0, max: 10.0, color: 'rgba(72, 187, 120, 0.28)' },     // Grøn: target
+        { min: 0, max: 3.99, color: 'rgba(229, 62, 62, 0.23)' },         // Rød: hypo — akut fare
+        { min: 10.01, max: 14.0, color: 'rgba(214, 158, 46, 0.19)' },    // Orange: forhøjet hyper
+        { min: 14.01, max: yAxisMax, color: 'rgba(229, 62, 62, 0.18)' }, // Rød: høj hyper
     ];
     zones.forEach(zone => {
         // Convert BG values to pixel y-coordinates (remember: y is inverted on canvas)
@@ -333,9 +339,14 @@ function drawGraph() {
     graphCtx.fillStyle = 'rgba(72, 187, 120, 0.12)';
     graphCtx.fillRect(padding.left, bonusYtop, graphWidth, bonusYbot - bonusYtop);
 
-    // --- Chart border (mørkt tema: lysere kant) ---
+    // --- Afslut rounded clip (zoner/shading er nu klippet) ---
+    graphCtx.restore();
+
+    // --- Chart border med runde hjørner ---
     graphCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; graphCtx.lineWidth = 1;
-    graphCtx.strokeRect(padding.left, padding.top, graphWidth, graphHeight);
+    graphCtx.beginPath();
+    graphCtx.roundRect(padding.left, padding.top, graphWidth, graphHeight, chartRadius);
+    graphCtx.stroke();
 
     // --- X-axis labels (time of day, every 2 hours) — lysere tekst ---
     graphCtx.fillStyle = 'rgba(190, 210, 235, 0.85)'; graphCtx.font = "bold 12px Inter, Segoe UI";
@@ -412,7 +423,10 @@ function drawGraph() {
     // --- Event icons along the bottom of the graph ---
     // Food (emoji), insulin (syringe/pen), and exercise icons are drawn at
     // the x-position corresponding to their timestamp, near the bottom of the chart.
+    const nowMsIcons = performance.now();
     game.logHistory.forEach(event => {
+        // Vent med at vise graf-ikon til fly-animationen er færdig
+        if (event._visibleAfter && nowMsIcons < event._visibleAfter) return;
         if (event.time >= currentDayStartMinutes && event.time < currentDayStartMinutes + totalMinutesInView) {
             const x = padding.left + ((event.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
             let yPos = padding.top + graphHeight - 10; // Near the bottom of the chart
@@ -463,12 +477,27 @@ function drawGraph() {
                 graphCtx.fillStyle = '#dc2626';
                 graphCtx.fillText('GLU', x, boxTop - 4);
             } else if(event.type.includes('insulin')) {
-                // Color-coded: blue for basal, teal/cyan for fast-acting (neutral)
-                graphCtx.fillStyle = event.type === 'insulin-basal' ? '#2b6cb0' : '#0d9488';
-                graphCtx.fillText(event.icon, x, yPos);
-                // Show dose amount above the icon
+                // Hue-roteret sprøjte-emoji via offscreen canvas med CSS filter.
+                // Canvas API kan ikke filtrere emoji direkte, så vi tegner emoji på
+                // et midlertidigt canvas med filter og kopierer resultatet tilbage.
+                const isBasal = event.type === 'insulin-basal';
+                const insulinColor = isBasal ? '#2563eb' : '#0d9488';
+                const hueRotate = isBasal ? 220 : 170;
+                const emojiSize = 22;
+                // Genanvend global offscreen canvas (undgår at oprette ny per ikon per frame)
+                _emojiOffCanvas.width = emojiSize * 2;
+                _emojiOffCanvas.height = emojiSize * 2;
+                _emojiOffCtx.filter = `hue-rotate(${hueRotate}deg) saturate(1.3) brightness(1.1)`;
+                _emojiOffCtx.font = "16px Arial";
+                _emojiOffCtx.textAlign = "center";
+                _emojiOffCtx.textBaseline = "middle";
+                _emojiOffCtx.fillText(event.icon, emojiSize, emojiSize);
+                // Tegn det filtrerede emoji på hovedcanvas
+                graphCtx.drawImage(_emojiOffCanvas, x - emojiSize, yPos - 6 - emojiSize, emojiSize * 2, emojiSize * 2);
+                // Dosis-label over ikonet
                 graphCtx.font = "bold 11px Inter, Segoe UI";
-                const doseText = event.details.dose.toFixed(event.type === 'insulin-fast' ? 1 : 0);
+                graphCtx.fillStyle = insulinColor;
+                const doseText = event.details.dose.toFixed(isBasal ? 0 : 1);
                 graphCtx.fillText(doseText, x, yPos - 14);
             }
         }
@@ -578,25 +607,25 @@ function drawGraph() {
             graphCtx.globalAlpha = alpha;
             graphCtx.font = "bold 13px Inter, Segoe UI";
             graphCtx.textAlign = "center";
+            graphCtx.textBaseline = "middle";
 
             // Baggrund-boks med afrundede hjørner (mørkt tema)
             const textWidth = graphCtx.measureText(lbl.text).width;
-            const boxX = x - textWidth / 2 - 6;
-            const boxY = y - 12;
             const boxW = textWidth + 12;
             const boxH = 20;
+            const boxX = x - boxW / 2;
+            const boxY = y - boxH / 2;
             graphCtx.fillStyle = "rgba(17, 24, 39, 0.9)";
             graphCtx.strokeStyle = lbl.color;
             graphCtx.lineWidth = 1.5;
-            // Afrundet rektangel
             graphCtx.beginPath();
             graphCtx.roundRect(boxX, boxY, boxW, boxH, 4);
             graphCtx.fill();
             graphCtx.stroke();
 
-            // Tekst
+            // Tekst — centreret i boksen via textBaseline='middle'
             graphCtx.fillStyle = lbl.color;
-            graphCtx.fillText(lbl.text, x, y + 2);
+            graphCtx.fillText(lbl.text, x, y);
             graphCtx.restore();
         });
     }
@@ -620,13 +649,13 @@ function showHelpPopup() {
     const overlay = document.createElement('div');
     overlay.className = 'popup-overlay';
     const content = document.createElement('div');
-    content.className = 'popup-content';
+    content.className = 'popup-content help-popup';
 
     // Hjælp-teksten hentes fra <template id="help-content-template"> i index.html.
     // Template-tags er usynlige i browseren men kan læses af JavaScript.
     // Rediger teksten direkte i index.html under template-tagget.
     const template = document.getElementById('help-content-template');
-    content.innerHTML = template.innerHTML + `<div class="popup-button-container"><button id="help-ok-button">OK</button></div>`;
+    content.innerHTML = template.innerHTML + `<div class="popup-button-container"><button id="help-ok-button">Luk</button></div>`;
     overlay.appendChild(content);
     document.body.appendChild(overlay);
     document.getElementById('help-ok-button').addEventListener('click', () => {
@@ -694,6 +723,70 @@ function showPopup(title, message, isGameOverPopup, isEventPopup = false, isInfo
 
 
 // =============================================================================
+// GAME OVER POPUP — Struktureret game over-skærm med stjerne-animation
+// =============================================================================
+//
+// Vist i rækkefølgen:
+//   1. "Game over på grund af: [årsag]"
+//   2. Points med pulserende stjerne-animation
+//   3. Forklaring (hvad skete der)
+//   4. Tips (sådan undgår du det)
+//   5. Reset-knap
+//
+// @param {string} cause     - Årsagsnavn (fx "Svær Hypoglykæmi")
+// @param {object} details   - { cause, explanation, tips[] }
+// @param {number} points    - Spillerens Normoglykæmi-points
+// =============================================================================
+function showGameOverPopup(cause, details, points) {
+    // Fjern eksisterende popup (fx DKA-advarsel)
+    const existing = document.querySelector('.popup-overlay');
+    if (existing) document.body.removeChild(existing);
+
+    if (game && !isPaused) togglePause();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'popup-overlay';
+    const content = document.createElement('div');
+    content.className = 'popup-content game-over-popup';
+
+    // Byg indhold
+    content.innerHTML = `
+        <h2 class="go-title">Game Over</h2>
+        <div class="go-cause">${cause}</div>
+        <p class="go-cause-detail">${details.cause}</p>
+
+        <div class="go-points-container">
+            <div class="go-star">&#x2B50;</div>
+            <div class="go-points-num">${points.toFixed(1)}</div>
+            <div class="go-points-label">Normoglykæmi-points</div>
+        </div>
+
+        <div class="go-section">
+            <div class="go-section-title">Hvad skete der?</div>
+            <p>${details.explanation}</p>
+        </div>
+
+        <div class="go-section">
+            <div class="go-section-title">Sådan undgår du det næste gang</div>
+            <ul>${details.tips.map(t => `<li>${t}</li>`).join('')}</ul>
+        </div>
+
+        <div class="popup-button-container">
+            <button id="gameOverResetBtn">Prøv igen</button>
+        </div>
+    `;
+
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+
+    document.getElementById('gameOverResetBtn').addEventListener('click', () => {
+        document.body.removeChild(overlay);
+        resetGame();
+    });
+}
+
+
+// =============================================================================
 // EVENT LOGGING — Record game events for the graph and history
 // =============================================================================
 
@@ -715,10 +808,12 @@ function logEvent(message, type = 'info', details = {}) {
     switch(type) {
         case 'food': icon = details.icon || '🍴'; break;
         case 'motion': icon = '🏃'; break;
-        case 'insulin-fast': icon = '💉'; break;   // Syringe for bolus insulin
-        case 'insulin-basal': icon = '🖊️'; break;  // Pen for basal insulin
+        case 'insulin-fast': icon = '💉'; break;   // Sprøjte for hurtig insulin
+        case 'insulin-basal': icon = '💉'; break;  // Sprøjte for basal insulin
     }
-    game.logHistory.push({ time: game.totalSimMinutes, message, type, icon, details });
+    // _visibleAfter: forsinker graf-ikon-rendering til fly-animationen er færdig (1200ms)
+    const visibleAfter = performance.now() + 1200;
+    game.logHistory.push({ time: game.totalSimMinutes, message, type, icon, details, _visibleAfter: visibleAfter });
 }
 
 
@@ -810,14 +905,17 @@ function updateEventLog() {
         return `${hh}:${mm}`;
     }
 
-    // Byg HTML for alle entries
+    // Byg HTML for alle entries — insulin-ikoner wraps i farvet span
     let html = '';
     recentEvents.forEach(ev => {
-        const icon = ev.icon || '';
+        let iconHtml = ev.icon || '';
+        // Farvekodet sprøjte-ikon: blå for basal, teal for hurtig
+        if (ev.type === 'insulin-basal') iconHtml = `<span class="insulin-icon-blue">${ev.icon}</span>`;
+        else if (ev.type === 'insulin-fast') iconHtml = `<span class="insulin-icon-teal">${ev.icon}</span>`;
         html += `<div class="event-log-entry">
             <span class="event-log-time">${formatClock(ev.time)}</span>
             <span class="event-log-ago">${formatTimeSince(ev.time)}</span>
-            <span class="event-log-msg">${icon} ${ev.message}</span>
+            <span class="event-log-msg">${iconHtml} ${ev.message}</span>
         </div>`;
     });
     logList.innerHTML = html;
@@ -887,43 +985,42 @@ function spawnStarBurst() {
 
 
 // =============================================================================
-// PROFILE POPUP — Patient profile setup before starting the game
+// PROFILE POPUP — Rediger personprofil (åbnes via Profil-knappen)
 // =============================================================================
 //
-// Shows a modal form where the player enters their personal diabetes parameters:
-//   - Weight (kg) — used for resting calorie calculation
-//   - ICR (Insulin-to-Carb Ratio) — grams of carbs per unit of insulin
-//   - ISF (Insulin Sensitivity Factor) — BG drop per unit of insulin
+// Viser en modal formular hvor spilleren indtaster diabetes-parametre:
+//   - Vægt (kg) — bruges til kalorieforbrug
+//   - ICR (Insulin-to-Carb Ratio) — gram kulhydrat per enhed insulin
+//   - ISF (Insulin Sensitivity Factor) — BG-fald per enhed insulin
 //
-// The form also displays calculated values (TDD, basal dose, resting kcal)
-// that update live as the player adjusts the inputs.
+// Beregnede værdier (TDD, basal, kcal) opdateres live.
+// Profilen gemmes i localStorage ved "Gem".
 //
-// Previous values are saved to localStorage and restored as defaults.
-//
-// @param {function} onStartCallback - Called with the profile object when
-//                                     the player clicks "Start Simulation"
+// @param {object} options - Valgfri indstillinger
+// @param {boolean} options.showStartButton - Vis "Start Simulation"-knap (true under spilstart)
 // =============================================================================
-function showProfilePopup(onStartCallback) {
-    // Prevent duplicate popups
+function showProfilePopup(options) {
+    options = options || {};
+
+    // Forhindrer dobbelt-popup
     if (document.querySelector('.popup-overlay')) return;
 
-    // Load previously saved profile from localStorage (or use defaults)
+    // Hent gemt profil fra localStorage (eller brug defaults)
     let savedProfile = { weight: 70, icr: 10, isf: 3.0 };
     try {
         const stored = localStorage.getItem('diabetesDystenProfile');
         if (stored) savedProfile = JSON.parse(stored);
-    } catch (e) { /* localStorage not available or corrupted — use defaults */ }
+    } catch (e) { /* localStorage utilgængeligt — brug defaults */ }
 
-    // Build the popup DOM
+    // Byg popup DOM
     const overlay = document.createElement('div');
     overlay.className = 'popup-overlay';
     const content = document.createElement('div');
-    content.className = 'popup-content';
+    content.className = 'popup-content profile-popup';
 
     content.innerHTML = `
-        <h2 class="info-title">Personprofil</h2>
-        <p>Indtast dine diabetes-parametre for en personlig simulation.
-           Værdierne bruges til at beregne din insulin-dosering og kaloriebehov.</p>
+        <h5 class="profile-title">Personprofil</h5>
+        <p class="profile-desc">Indtast dine diabetes-parametre for en personlig simulation.</p>
 
         <div class="profile-form">
             <div class="profile-field">
@@ -941,8 +1038,7 @@ function showProfilePopup(onStartCallback) {
                     <input type="number" id="profileICR" min="3" max="30" step="1" value="${savedProfile.icr}">
                     <span class="profile-unit">g / E</span>
                 </div>
-                <small>Hvor mange gram kulhydrat dækker 1 enhed hurtigvirkende insulin?
-                       Typisk 8-15 for voksne. Lavere tal = mere insulin pr. måltid.</small>
+                <small>Gram kulhydrat per enhed insulin. Typisk 8–15 for voksne.</small>
             </div>
 
             <div class="profile-field">
@@ -951,27 +1047,44 @@ function showProfilePopup(onStartCallback) {
                     <input type="number" id="profileISF" min="0.5" max="10" step="0.1" value="${savedProfile.isf}">
                     <span class="profile-unit">mmol/L / E</span>
                 </div>
-                <small>Hvor meget sænker 1 enhed hurtigvirkende insulin dit blodsukker?
-                       Typisk 1.5-5.0 mmol/L for voksne. Højere tal = mere følsom for insulin.</small>
+                <small>BG-fald per enhed insulin. Typisk 1.5–5.0 mmol/L for voksne.</small>
             </div>
 
             <div class="profile-calculated">
-                <h4>Beregnede værdier</h4>
-                <div><span>Estimeret TDD:</span> <span id="profileTDD">--</span> E/dag</div>
-                <div><span>Anbefalet basal:</span> <span id="profileBasal">--</span> E/dag</div>
-                <div><span>Hvileforbrug:</span> <span id="profileKcal">--</span> kcal/dag</div>
+                <div class="profile-calc-row">
+                    <span class="label">Total Daily Dose (TDD)</span>
+                    <span class="value" id="profileTDD">--</span>
+                    <span class="unit">E/dag</span>
+                </div>
+                <div class="profile-calc-row">
+                    <span class="label">Anbefalet basal</span>
+                    <span class="value" id="profileBasal">--</span>
+                    <span class="unit">E/dag</span>
+                </div>
+                <div class="profile-calc-row">
+                    <span class="label">Hvileforbrug</span>
+                    <span class="value" id="profileKcal">--</span>
+                    <span class="unit">kcal/dag</span>
+                </div>
             </div>
         </div>
 
         <div class="popup-button-container">
-            <button id="profileStartButton">Start Simulation</button>
+            <button id="profileSaveButton" class="profile-save-btn">Gem profil</button>
         </div>
     `;
 
     overlay.appendChild(content);
     document.body.appendChild(overlay);
 
-    // References to the form inputs and calculated displays
+    // Klik på overlay (uden for popup) lukker popup
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    });
+
+    // Referencer til form-inputs og beregnede displays
     const weightInput = document.getElementById('profileWeight');
     const icrInput = document.getElementById('profileICR');
     const isfInput = document.getElementById('profileISF');
@@ -979,42 +1092,48 @@ function showProfilePopup(onStartCallback) {
     const basalDisplay = document.getElementById('profileBasal');
     const kcalDisplay = document.getElementById('profileKcal');
 
-    // Live-update calculated values whenever an input changes
+    // Live-opdater beregnede værdier når input ændres
     function updateCalculatedValues() {
         const w = parseFloat(weightInput.value) || 70;
         const isf = parseFloat(isfInput.value) || 3.0;
         const tdd = 100 / isf;
         const basal = Math.round(tdd * 0.45);
-        const kcal = Math.round(w * (2200 / 70));
+        // Afrund kcal til nærmeste 100
+        const kcal = Math.round(w * (2200 / 70) / 100) * 100;
 
         tddDisplay.textContent = tdd.toFixed(0);
         basalDisplay.textContent = basal;
         kcalDisplay.textContent = kcal;
     }
 
-    // Attach input listeners for live calculation updates
+    // Tilknyt input-lyttere for live beregning
     [weightInput, icrInput, isfInput].forEach(input => {
         input.addEventListener('input', updateCalculatedValues);
     });
 
-    // Show initial calculated values
+    // Vis initiale beregnede værdier
     updateCalculatedValues();
 
-    // Start button handler: collect values, save to localStorage, and start the game
-    document.getElementById('profileStartButton').addEventListener('click', () => {
-        const profile = {
+    // Hjælpefunktion: saml profil-værdier fra inputfelterne
+    function collectProfile() {
+        return {
             weight: Math.max(30, Math.min(200, parseFloat(weightInput.value) || 70)),
             icr: Math.max(3, Math.min(30, parseInt(icrInput.value) || 10)),
             isf: Math.max(0.5, Math.min(10, parseFloat(isfInput.value) || 3.0))
         };
+    }
 
-        // Save profile for next session
+    // Hjælpefunktion: gem profil til localStorage
+    function saveProfile(profile) {
         try {
             localStorage.setItem('diabetesDystenProfile', JSON.stringify(profile));
-        } catch (e) { /* localStorage not available — that's OK */ }
+        } catch (e) { /* localStorage utilgængeligt */ }
+    }
 
-        // Remove the popup and start the game with the profile
+    // "Gem profil"-knap: gem og luk popup
+    document.getElementById('profileSaveButton').addEventListener('click', () => {
+        const profile = collectProfile();
+        saveProfile(profile);
         document.body.removeChild(overlay);
-        onStartCallback(profile);
     });
 }

@@ -79,6 +79,9 @@
     --radius-lg: 16px;
     --radius-xl: 18px;
 
+    /* Spacing — ensartet afstand mellem alle paneler og til browserens kant */
+    --panel-gap: 20px;
+
     /* Animation */
     --bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --smooth: cubic-bezier(0.4, 0, 0.2, 1);
@@ -116,47 +119,94 @@ body {
    TOP BAR — Kompakt header med status-badges og handlingsknapper
    ============================================================================= */
 
+/* =============================================================================
+   TOP-BAR LAYOUT — Tre-kolonne grid: brand | tid (centreret) | start/pause
+   =============================================================================
+   Grid med 1fr auto 1fr centrerer tid-panelet præcist.
+   Brand tv, start/pause th. Panelerne svæver frit (ingen top-bar baggrund).
+   ============================================================================= */
 #top-bar {
-    height: 50px;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-subtle);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
+    background: transparent;
+    border-bottom: none;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;           /* Brand | Tid (centreret) | Start/pause */
+    align-items: stretch;
+    gap: var(--panel-gap);
+    padding: var(--panel-gap) var(--panel-gap) 0;
     flex-shrink: 0;
     z-index: 20;
 }
 
-/* Top-bar tre-zone layout med faste bredder så elementer ikke rykker */
+/* Brand + start/pause (tv i top-bar) — vandret rækkefølge: logo → start */
 .top-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Settings-gruppe — dock-stil i bottom-bar th.
+   Formateret som Mac-menu dock-items med ikon + label. */
+.settings-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(10px);
+    justify-self: end;                           /* Højre-aligner i sin grid-kolonne */
+}
+/* Individuelle settings-items: ikon + label (som dock-items) */
+.settings-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    transition: all 0.3s var(--bounce);
+    padding: 6px;
+    border-radius: 14px;
+}
+.settings-item:hover {
+    transform: translateY(-6px) scale(1.1);
+}
+.settings-item .settings-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: var(--bg-elevated);
+    border: 1px solid transparent;
+    transition: all 0.3s var(--bounce);
+}
+.settings-item:hover .settings-icon {
+    border-color: var(--border-medium);
+    background: var(--bg-hover);
+}
+.settings-item .settings-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Brand-gruppe: logo + slogan stables lodret */
+.brand-group {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: 240px;
-    flex-shrink: 0;
-}
-.top-center {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-    justify-content: center;
-}
-.top-right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 120px;
-    flex-shrink: 0;
-    justify-content: flex-end;
 }
 
 /* Brand-logo: Orbitron sci-fi font med animeret gradient + kraftig glow */
 .brand {
     font-family: 'Orbitron', monospace;
     font-weight: 900;
-    font-size: 20px;
+    font-size: 28px;
     background: linear-gradient(135deg, #93c5fd, #d8b4fe, #a5b4fc, #93c5fd);
     background-size: 200% 200%;
     animation: brand-shimmer 4s ease-in-out infinite;
@@ -188,17 +238,17 @@ body {
 .top-status {
     display: flex;
     gap: 6px;
-    align-items: center;
+    align-items: stretch;                          /* Stretch så badge fylder fuld højde */
 }
 
 .status-badge {
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
-    padding: 5px 14px;
+    padding: 0 14px;                               /* Ingen top/bund-padding — højden styres af parent */
     font-size: 13px;
     display: flex;
-    align-items: center;
+    align-items: center;                           /* Centrér indhold vertikalt */
     gap: 6px;
     transition: all 0.2s var(--smooth);
     cursor: default;
@@ -254,64 +304,66 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* Points overlay — svæver i øverste højre hjørne af grafen (spejlvendt af cgm-hero) */
+#pointsOverlay {
+    position: absolute;
+    top: 32px;
+    right: 30px;
+    z-index: 10;
+    background: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    padding: 8px 14px;
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 0, 0, 0.4);
+}
+
 /* Dag-badge: fast bredde */
 .status-badge .badge-label + .badge-num {
     font-variant-numeric: tabular-nums;
 }
 
 /* --- Points-stjerne animationer baseret på scoring-tilstand --- */
-/* Ingen points (bgWeight=0): faded ud, grå */
-.status-badge.points.pts-off {
-    opacity: 0.35;
-}
+/* Ingen points (bgWeight=0): normal udseende, stjerne statisk og dæmpet */
 .status-badge.points.pts-off .badge-icon {
-    filter: grayscale(1);
+    opacity: 0.5;
 }
 
-/* Halve points (bgWeight=0.5): svag orange */
-.status-badge.points.pts-half {
-    opacity: 0.7;
-}
+/* Halve points (bgWeight=0.5): svag orange nuance */
 .status-badge.points.pts-half .badge-icon {
     filter: hue-rotate(-20deg);
+    opacity: 0.75;
 }
 
-/* Normal points (bgWeight=1): standard grøn, stjerne lyser */
-.status-badge.points.pts-on {
-    opacity: 1;
-}
+/* Normal points (bgWeight=1): subtil, langsom glow */
 .status-badge.points.pts-on .badge-icon {
-    animation: star-glow 2s ease-in-out infinite;
+    animation: star-glow 4s ease-in-out infinite;
 }
 
-/* Bonus 2x points: gul pulserende, større, bling-bling */
+/* Bonus 2x points: gul pulserende */
 .status-badge.points.pts-bonus {
-    opacity: 1;
-    animation: star-badge-pulse 0.8s ease-in-out infinite;
+    animation: star-badge-pulse 1.5s ease-in-out infinite;
 }
 .status-badge.points.pts-bonus .badge-icon {
-    font-size: 18px;
-    animation: star-bling 1s ease-in-out infinite;
-    filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8));
+    animation: star-bling 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.6));
 }
 .status-badge.points.pts-bonus .badge-num {
     color: #fbbf24;
-    text-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+    text-shadow: 0 0 6px rgba(250, 204, 21, 0.4);
 }
 
 @keyframes star-glow {
-    0%, 100% { filter: drop-shadow(0 0 2px rgba(74, 222, 128, 0.3)); }
-    50% { filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.6)); }
+    0%, 100% { filter: drop-shadow(0 0 1px rgba(74, 222, 128, 0.2)); }
+    50% { filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.4)); }
 }
 @keyframes star-bling {
-    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8)); }
-    25% { transform: scale(1.2) rotate(8deg); filter: drop-shadow(0 0 10px rgba(250, 204, 21, 1)); }
-    50% { transform: scale(1) rotate(-4deg); }
-    75% { transform: scale(1.15) rotate(4deg); filter: drop-shadow(0 0 12px rgba(250, 204, 21, 1)); }
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.6)); }
+    50% { transform: scale(1.1) rotate(4deg); filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.8)); }
 }
 @keyframes star-badge-pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
-    50% { box-shadow: 0 0 12px 2px rgba(250, 204, 21, 0.3); }
+    50% { box-shadow: 0 0 8px 2px rgba(250, 204, 21, 0.2); }
 }
 
 /* Dag/nat-ikon efter uret — med zZz-animation om natten */
@@ -360,21 +412,81 @@ body {
     100% { opacity: 0; transform: translate(12px, -18px) scale(0.7); }
 }
 
-/* Hastigheds-dropdown inline i tid-badge */
-.speed-select-inline {
+/* Hastigheds-dropdown — custom Mac-stil popup-menu */
+.speed-dropdown {
+    position: relative;
+    display: inline-block;
+}
+.speed-trigger {
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     color: var(--text-muted);
     font-size: 13px;
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     cursor: pointer;
     outline: none;
-    padding: 0 2px;
+    padding: 2px 6px;
+    border-radius: var(--radius-md);
+    transition: background 0.15s, border-color 0.15s;
 }
-.speed-select-inline option {
-    background: var(--bg-secondary);
+.speed-trigger:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-subtle);
     color: var(--text-primary);
+}
+.speed-dropdown.open .speed-trigger {
+    background: var(--bg-elevated);
+    border-color: var(--border-medium);
+    color: var(--text-primary);
+}
+/* Popup-menu: folder ned under trigger-knappen */
+.speed-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+    min-width: 90px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    /* Animeret åbning */
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px) scale(0.96);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.speed-dropdown.open .speed-menu {
+    display: block;
+    /* Trigger reflow for transition — display:block → opacity animeres */
+}
+.speed-dropdown.open .speed-menu.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+}
+/* Individuelle menu-rækker */
+.speed-option {
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: center;
+    transition: background 0.1s, color 0.1s;
+}
+.speed-option:hover {
+    background: var(--accent);
+    color: #fff;
+}
+.speed-option.selected {
+    color: var(--text-primary);
+    font-weight: 700;
 }
 
 /* (top-actions er nu erstattet af top-center) */
@@ -383,18 +495,20 @@ body {
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
-    padding: 6px 14px;
+    padding: 0 14px;                               /* Ingen top/bund-padding — højden styres af parent */
     border-radius: 8px;
     font-size: 12px;
     font-family: 'Inter', sans-serif;
     cursor: pointer;
     transition: all 0.2s var(--bounce);
+    display: flex;
+    align-items: center;                           /* Centrér indhold vertikalt */
 }
 
 .top-btn:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
-    transform: scale(1.06);
+    transform: scale(1.02);
 }
 
 .top-btn:disabled {
@@ -427,23 +541,25 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 8px 16px 4px 16px;
+    padding: var(--panel-gap);
     overflow: hidden;
 }
 
 /* --- CGM Hero Display — Overlay i øverste venstre hjørne af grafen ---
    Flyder over graf-canvaset med semi-transparent baggrund.
    Viser BG-tal, trend-pil, IOB og COB. */
+/* BG-panel: placeret inde i chart-området (padding.left=58px + 12px margin) */
 #cgm-hero {
     position: absolute;
-    top: 8px;
-    left: 66px;
+    top: 32px;
+    left: 70px;
     z-index: 10;
-    background: rgba(12, 18, 32, 0.45);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 6px 12px;
-    backdrop-filter: blur(4px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    padding: 8px 14px;
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 0, 0, 0.4);
 }
 
 .cgm-hero-row {
@@ -549,9 +665,9 @@ body {
 #bg-graph {
     width: 100%;
     height: 100%;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-xl);
     border: 1px solid var(--border-subtle);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* Advarsel ved hurtigt faldende BG — rød overlay centreret over grafen */
@@ -581,10 +697,11 @@ body {
    Bruger 3-kolonne grid så dock'en altid er centreret på skærmen. */
 #bottom-bar {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: stretch;                      /* Event-log strækkes til samme højde som dock */
+    grid-template-columns: 1fr auto 1fr;       /* Event-log | Dock (centreret) | Settings th */
+    align-items: end;
+    gap: var(--panel-gap);
+    padding: 0 var(--panel-gap) var(--panel-gap);
     flex-shrink: 0;
-    background: linear-gradient(0deg, var(--bg-primary) 0%, rgba(12, 18, 32, 0.8) 100%);
 }
 
 /* =============================================================================
@@ -598,14 +715,13 @@ body {
     font-size: 0.72em;
     font-family: 'Consolas', 'Courier New', monospace;
     overflow: hidden;
-    margin: 8px 0 12px 12px;                    /* Top+bund matcher dock-container padding */
+    align-self: stretch;                         /* Stræk til fuld højde af grid-rækken */
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
 }
 
 #event-log-list {
-    padding: 2px 6px;
+    padding: 2px 3px;
     max-height: 78px;
     overflow-y: auto;
 }
@@ -621,21 +737,21 @@ body {
 .event-log-entry:last-child { border-bottom: none; }
 
 .event-log-time {
-    color: var(--text-muted);
+    color: var(--text-secondary);
     white-space: nowrap;
-    width: 40px;
+    width: 38px;
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
 }
 
 .event-log-ago {
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: 0.85em;
     white-space: nowrap;
-    width: 52px;
+    width: 48px;
     flex-shrink: 0;
     text-align: right;
-    opacity: 0.6;
+    margin-left: 2px;
     font-variant-numeric: tabular-nums;
 }
 
@@ -656,7 +772,7 @@ body {
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     backdrop-filter: blur(10px);
-    margin: 8px 8px 8px 0;
+    margin: var(--panel-gap) var(--panel-gap) var(--panel-gap) 0;
     padding: 14px;
     overflow-y: auto;
     flex-shrink: 0;
@@ -750,10 +866,12 @@ body {
     text-align: center;
 }
 
-/* "Middelværdi" label (bruges via CSS ::before i den oprindelige version) */
+/* Kolonne-overskrifter i stats-tabellen ("I dag", "Uge") */
 .stats-middel-header {
     text-align: center !important;
-    font-size: 0.85em;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .stats-table .label {
@@ -848,7 +966,6 @@ body {
    ============================================================================= */
 
 #dock-container {
-    padding: 8px 12px 12px;
     display: flex;
     justify-content: center;
     flex-shrink: 0;
@@ -952,9 +1069,12 @@ body {
     background: linear-gradient(135deg, #0e7490, #155e75);
     border-color: rgba(14, 165, 210, 0.4);
 }
-/* Farve-filter på sprøjte-emoji: drejer rød→teal/cyan */
+/* Farve-filter på sprøjte-emoji: drejer rød→blå (basal) eller teal (hurtig) */
+.insulin-icon-blue {
+    filter: hue-rotate(220deg) saturate(1.4) brightness(1.1);
+}
 .insulin-icon-teal {
-    filter: hue-rotate(160deg) saturate(1.3) brightness(1.1);
+    filter: hue-rotate(170deg) saturate(1.3) brightness(1.1);
 }
 .dock-item.d-insulin:hover .dock-icon {
     background: linear-gradient(135deg, #0891b2, #0e7490);
@@ -1382,16 +1502,59 @@ body {
 }
 
 /* --- Debug panel: vises under corner-tools i top-right --- */
-#dock-panel-debug {
-    left: auto;
-    right: 16px;
-    top: 60px;
-    bottom: auto;
-    transform: translateX(0) translateY(-10px);
-    min-width: 250px;
+/* Debug-sidebar: flow-element i main-area, til højre for stats-panel.
+   Vises/skjules via .visible klasse. Forbliver åben under interaktion. */
+#debug-sidebar {
+    width: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-elevated);
+    border: none;
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(10px);
+    font-size: 12px;
+    transition: width 0.3s var(--bounce), padding 0.3s var(--bounce), margin 0.3s var(--bounce);
 }
-#dock-panel-debug.visible {
-    transform: translateX(0) translateY(0);
+#debug-sidebar.visible {
+    width: 260px;
+    padding: 10px 10px;
+    margin: var(--panel-gap) var(--panel-gap) var(--panel-gap) 0;
+    border: 1px solid var(--border-subtle);
+    overflow-y: auto;
+}
+#debug-sidebar h5 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin: 0 0 6px 0;
+}
+#debug-sidebar .dp-row {
+    padding: 1px 0;
+}
+#debug-sidebar .dp-label {
+    font-size: 10px;
+}
+#debug-sidebar .dp-val {
+    font-size: 10px;
+}
+#debug-sidebar .dp-checkbox {
+    font-size: 11px;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+#debug-sidebar .dp-checkbox input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+}
+#debug-sidebar .dp-btn {
+    font-size: 10px;
+    padding: 3px 6px;
+}
+#debug-sidebar .dp-divider {
+    margin: 4px 0;
 }
 
 /* --- Debug panel checkbox --- */
@@ -1408,6 +1571,65 @@ body {
     accent-color: var(--blue);
     width: 16px;
     height: 16px;
+}
+
+/* Debug panel: log-kontroller og live-værdier */
+.dp-divider {
+    border-top: 1px solid var(--border-subtle);
+    margin: 8px 0;
+}
+
+.dp-log-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.dp-log-status {
+    display: flex;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--text-muted);
+    flex: 1;
+}
+
+.dp-btn {
+    padding: 3px 8px;
+    font-size: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.2s;
+}
+.dp-btn:hover { background: rgba(255, 255, 255, 0.12); }
+.dp-btn-clear { color: var(--text-muted); }
+
+/* Live debug-værdier: kompakt grid */
+.dp-live {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 12px;
+}
+
+.dp-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+}
+
+.dp-label {
+    color: var(--text-muted);
+}
+
+.dp-val {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
 
@@ -1439,13 +1661,12 @@ body {
     max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
-    /* Pop-animation: starter lille og vokser til fuld størrelse med overshoot */
-    animation: popup-pop 0.4s var(--bounce) forwards;
+    /* Pop-animation: rolig fade-in med let skalering */
+    animation: popup-pop 0.6s ease-out forwards;
 }
 
 @keyframes popup-pop {
-    0% { transform: scale(0.3); opacity: 0; }
-    70% { transform: scale(1.05); opacity: 1; }
+    0% { transform: scale(0.85); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
 }
 
@@ -1505,45 +1726,274 @@ body {
 
 
 /* =============================================================================
-   PROFIL POPUP — Patient-profil opsætning før spilstart
+   GAME OVER POPUP — Struktureret layout med stjerne-animation
    ============================================================================= */
+
+.game-over-popup {
+    max-width: 520px;
+    text-align: center;
+}
+
+/* Titel: "Game Over" i rød (måling-tone) */
+.go-title {
+    font-size: 1.6em !important;
+    color: #b91c1c !important;
+    margin-bottom: 4px !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Årsag: fremhævet under titlen */
+.go-cause {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.go-cause-detail {
+    font-size: 0.9em !important;
+    color: var(--text-secondary) !important;
+    margin-bottom: 16px !important;
+}
+
+/* Points-container: centreret med pulserende stjerne */
+.go-points-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin: 16px 0 20px;
+    padding: 16px;
+    background: rgba(255, 200, 50, 0.06);
+    border: 1px solid rgba(255, 200, 50, 0.15);
+    border-radius: var(--radius-lg);
+}
+
+.go-star {
+    font-size: 40px;
+    animation: go-star-pulse 2s ease-in-out infinite, go-star-spin 6s linear infinite;
+    filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.6));
+}
+
+@keyframes go-star-pulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.4)); }
+    50% { transform: scale(1.15); filter: drop-shadow(0 0 24px rgba(255, 200, 50, 0.8)); }
+}
+
+@keyframes go-star-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Kombiner pulse + spin korrekt */
+.go-star {
+    animation: go-star-combo 6s ease-in-out infinite;
+}
+
+@keyframes go-star-combo {
+    0%   { transform: rotate(0deg) scale(1);   filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.4)); }
+    25%  { transform: rotate(90deg) scale(1.15); filter: drop-shadow(0 0 24px rgba(255, 200, 50, 0.8)); }
+    50%  { transform: rotate(180deg) scale(1);  filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.4)); }
+    75%  { transform: rotate(270deg) scale(1.15); filter: drop-shadow(0 0 24px rgba(255, 200, 50, 0.8)); }
+    100% { transform: rotate(360deg) scale(1);  filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.4)); }
+}
+
+.go-points-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.2em;
+    font-weight: 800;
+    color: #fbbf24;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+.go-points-label {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+/* Forklaring og tips sektioner */
+.go-section {
+    text-align: left;
+    margin-bottom: 12px;
+}
+
+.go-section-title {
+    font-weight: 700;
+    font-size: 0.9em;
+    color: var(--blue);
+    margin-bottom: 4px;
+}
+
+.go-section p {
+    font-size: 0.85em !important;
+    line-height: 1.5 !important;
+    margin-bottom: 6px !important;
+}
+
+.go-section ul {
+    padding-left: 18px;
+    margin: 0;
+}
+
+.go-section li {
+    font-size: 0.85em !important;
+    line-height: 1.5 !important;
+    margin-bottom: 3px !important;
+}
+
+
+/* =============================================================================
+   PROFIL POPUP — Patient-profil opsætning
+   Matcher stats-panelets skriftstørrelser og layout for konsistens.
+   ============================================================================= */
+
+/* =============================================================================
+   HJÆLP POPUP — Matcher profil-popuppens typografi for konsistens.
+   Overskrifter: 10px uppercase med letter-spacing (som profile-title).
+   Brødtekst: 11px (som profile-desc).
+   ============================================================================= */
+.popup-content.help-popup {
+    max-width: 520px;
+    padding: 18px 24px;
+}
+/* Disclaimer: altid rød uanset help-popup's generelle farve-regler */
+.popup-content.help-popup .disclaimer {
+    color: #ef4444 !important;
+}
+.popup-content.help-popup .disclaimer strong {
+    color: #ef4444 !important;
+}
+.popup-content.help-popup h3 {
+    font-size: 10px !important;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted) !important;
+    margin: 12px 0 4px 0 !important;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.popup-content.help-popup p,
+.popup-content.help-popup li {
+    font-size: 11px !important;
+    line-height: 1.5 !important;
+    margin-bottom: 6px !important;
+    color: var(--text-secondary) !important;
+}
+.popup-content.help-popup ul {
+    padding-left: 16px;
+    margin: 0;
+}
+.popup-content.help-popup strong {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
+
+/* Collapsible sektioner i hjælp-popup via <details>/<summary> */
+.popup-content.help-popup details.help-section {
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 2px;
+    margin-bottom: 6px;
+}
+.popup-content.help-popup details.help-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+.popup-content.help-popup details.help-section summary {
+    font-size: 10px !important;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted) !important;
+    cursor: pointer;
+    padding: 5px 0;
+    list-style: none;           /* Fjern default trekant */
+    user-select: none;
+}
+/* Tilpasset pil-indikator der roterer ved åbning */
+.popup-content.help-popup details.help-section summary::before {
+    content: '\25B8';           /* ▸ højrepil */
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform 0.2s ease;
+    font-size: 27px;
+    vertical-align: middle;
+    line-height: 0;
+}
+.popup-content.help-popup details.help-section[open] summary::before {
+    transform: rotate(90deg);   /* ▸ → ▾ nedadpil */
+}
+/* Safari kræver denne for at fjerne default-markør */
+.popup-content.help-popup details.help-section summary::-webkit-details-marker {
+    display: none;
+}
+.popup-content.help-popup details.help-section > ul,
+.popup-content.help-popup details.help-section > p {
+    margin-top: 4px;
+}
+
+/* Profil-popup: kompakt med stats-panel-lignende typografi */
+.popup-content.profile-popup {
+    max-width: 420px;
+    padding: 18px 24px;
+}
+
+.profile-title {
+    font-size: 10px !important;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted) !important;
+    margin: 0 0 6px 0 !important;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-subtle);
+    text-align: left !important;
+}
+
+.profile-desc {
+    font-size: 11px !important;
+    color: var(--text-secondary) !important;
+    margin-bottom: 12px !important;
+    line-height: 1.4 !important;
+}
 
 .profile-form {
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    margin-top: 15px;
+    gap: 12px;
 }
 
 .profile-field {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
 }
 
 .profile-field label {
-    font-weight: bold;
-    font-size: 1.0em;
-    color: var(--blue);
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--text-secondary);
 }
 
 .profile-input-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .profile-input-row input[type="number"] {
-    width: 100px;
-    padding: 8px 10px;
-    font-size: 1.1em;
-    border: 2px solid rgba(255, 255, 255, 0.15);
+    width: 80px;
+    padding: 4px 6px;
+    font-size: 11px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-sm);
     text-align: center;
     transition: border-color 0.2s;
     background: rgba(255, 255, 255, 0.06);
     color: var(--text-primary);
     font-family: 'Inter', sans-serif;
+    font-weight: 600;
 }
 
 .profile-input-row input[type="number"]:focus {
@@ -1552,39 +2002,64 @@ body {
 }
 
 .profile-unit {
-    font-size: 0.95em;
-    color: var(--text-secondary);
-    font-weight: bold;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
 }
 
 .profile-field small {
     color: var(--text-muted);
-    font-size: 0.85em;
+    font-size: 10px;
     line-height: 1.3;
 }
 
+/* Beregnede værdier — grid-layout aligned som stats-panel */
 .profile-calculated {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
-    padding: 12px 15px;
-    margin-top: 5px;
+    padding: 8px 10px;
+    margin-top: 4px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 4px 8px;
+    align-items: center;
 }
 
-.profile-calculated h4 {
-    margin: 0 0 8px 0;
-    font-size: 0.95em;
-    color: var(--blue);
-    border-bottom: 1px solid var(--border-subtle);
-    padding-bottom: 5px;
+.profile-calc-row {
+    display: contents;
 }
 
-.profile-calculated div {
-    display: flex;
-    justify-content: space-between;
-    padding: 3px 0;
-    font-size: 0.95em;
+.profile-calc-row .label {
+    font-weight: 600;
+    font-size: 11px;
     color: var(--text-secondary);
+}
+
+.profile-calc-row .value {
+    text-align: right;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.profile-calc-row .unit {
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+/* Gem-knap: kompakt og afdæmpet */
+.profile-popup .popup-button-container {
+    margin-top: 12px;
+}
+
+.profile-save-btn {
+    padding: 6px 18px !important;
+    font-size: 11px !important;
 }
 
 /* Scrollbar styling for mørkt tema (WebKit browsers) */
@@ -1611,11 +2086,11 @@ body {
 .time-control-group {
     display: flex;
     gap: 4px;
-    align-items: center;
+    align-items: stretch;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
-    padding: 2px 4px;
+    padding: 0 4px;
 }
 .time-control-group .status-badge {
     border: none;
@@ -1653,20 +2128,29 @@ body {
 }
 /* Når spillet kører: rød stop-knap */
 .start-btn-prominent.game-running {
-    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+    background: linear-gradient(135deg, #991b1b, #7f1d1d) !important;
     color: white !important;
-    border: 1px solid rgba(239, 68, 68, 0.4) !important;
+    border: 1px solid rgba(248, 113, 113, 0.4) !important;
     animation: none;
-    box-shadow: 0 0 15px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 0 15px rgba(153, 27, 27, 0.3);
     padding: 6px 18px !important;
 }
 .start-btn-prominent.game-running:hover {
-    box-shadow: 0 0 25px rgba(220, 38, 38, 0.5) !important;
+    box-shadow: 0 0 25px rgba(153, 27, 27, 0.5) !important;
 }
 
 @keyframes start-pulse {
     0%, 100% { box-shadow: 0 0 15px rgba(74, 222, 128, 0.2); }
     50% { box-shadow: 0 0 25px rgba(74, 222, 128, 0.5); }
+}
+
+/* Profil-knap: neutral stil der passer til top-bar */
+.profile-btn {
+    opacity: 0.7;
+    font-size: 11px !important;
+}
+.profile-btn:hover {
+    opacity: 1;
 }
 
 /* "Lav selv" chip: speciel styling med stiplet kant */
@@ -1834,18 +2318,25 @@ body {
 }
 
 /* --- Flyvende ikon-animation: fra panel til graf ved handling --- */
+/* Flyvende ikon: animeres via JS (blød bue fra dock-ikon til graf) */
 .flying-icon {
     position: fixed;
     z-index: 1000;
     font-size: 28px;
     pointer-events: none;
-    transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
     opacity: 1;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+    will-change: left, top, opacity, transform;
 }
-.flying-icon.animate {
-    opacity: 0;
-    transform: scale(0.5);
+/* Hue-rotate + drop-shadow kombineret (CSS filter overskriver, stacker ikke) */
+.flying-icon.insulin-icon-teal {
+    filter: hue-rotate(170deg) saturate(1.3) brightness(1.1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+}
+.flying-icon.insulin-icon-blue {
+    filter: hue-rotate(220deg) saturate(1.4) brightness(1.1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+}
+/* Ikke-insulin flyvende ikoner: kun drop-shadow */
+.flying-icon:not(.insulin-icon-teal):not(.insulin-icon-blue) {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
 }
 
 /* --- Stjernedryss animation for ny daglig high score --- */

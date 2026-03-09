@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T1D Simulator – Practice before it counts</title>
+    <title>T1D Simulator – Play it safe, before it really counts</title>
     <!-- Stylesheet med CSS-variabler for tema-skifte -->
     <link rel="stylesheet" href="style.css">
     <!-- Fonts: Inter til generel UI, Orbitron til CGM hero-tal (sci-fi look) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
     <!-- Tone.js: Web Audio framework for lydeffekter (CDN, pinned version) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <!-- html2canvas: Screenshot af DOM-elementer (CDN, pinned version) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -25,53 +27,45 @@
              dag, tid, points og hastighed i et roligt, mørkt design.
              =============================================================== -->
         <div id="top-bar">
-            <!-- Venstre: Brand logo + slogan -->
+            <!-- Venstre: Logo → Start/pause → (tid centreret i midten) -->
             <div class="top-left">
-                <div class="brand">T1D SIMULATOR</div>
-                <div class="brand-slogan">Practice before it counts</div>
-            </div>
-
-            <!-- Midt: Tidsstyring + start/pause + hjælp — alt gameplay-kontrol samlet -->
-            <div class="top-center">
+                <div class="brand-group">
+                    <div class="brand">T1D SIMULATOR</div>
+                    <div class="brand-slogan">Play it safe, before it really counts</div>
+                </div>
                 <div class="time-control-group">
                     <button class="top-btn start-btn-prominent" id="startButton" title="Start en ny simulation">&#x25B6; Start</button>
                     <button class="top-btn" id="pauseButton" title="Pause/Resume (Space)">&#x25B6; Genoptag</button>
+                    <button class="top-btn profile-btn" id="profileButton" title="Rediger personprofil">&#x1F464; Profil</button>
+                    <button class="top-btn profile-btn" id="helpButton" title="Hjælp og information">&#x2139;&#xFE0F; Hjælp</button>
                 </div>
-
-                <!-- Status-badges: dag+tid+hastighed samlet, points -->
-                <div class="top-status">
-                    <div class="status-badge datetime-badge" title="Dag, klokkeslæt og hastighed">
-                        <span class="badge-icon">&#x1F4C5;</span>
-                        <span class="badge-label">Dag</span>
-                        <span class="badge-num" id="dayDisplay">1</span>
-                        <span class="badge-separator">|</span>
-                        <span class="badge-icon">&#x1F551;</span>
-                        <span class="badge-num" id="timeDisplay">00:00</span>
-                        <span class="daynight-icon" id="dayNightIcon" title="Tidspunkt på døgnet">&#x1F319;</span>
-                        <span class="badge-separator">|</span>
-                        <select id="speedSelector" class="speed-select-inline" title="Simulationshastighed">
-                            <option value="60">1t/min</option>
-                            <option value="240" selected>4t/min</option>
-                            <option value="720">12t/min</option>
-                            <option value="1440">24t/min</option>
-                        </select>
-                    </div>
-                    <div class="status-badge points" title="Normoglykæmi-points: optjenes ved at holde BG i målområdet">
-                        <span class="badge-icon">&#x2B50;</span>
-                        <span class="badge-num" id="normoPointsDisplay">0.0</span>
-                        <small class="badge-weight" id="normoPointsWeighting">(x1.0)</small>
-                    </div>
-                </div>
-
-                <button class="top-btn" id="helpButton">&#x2753; Hjælp</button>
             </div>
 
-            <!-- Højre: Fysiologi + Debug + lyd -->
-            <div class="top-right">
-                <div class="corner-tool-btn" title="Fysiologi (kommer snart)">&#x1F9EC;</div>
-                <div class="corner-tool-btn" data-panel="dock-panel-debug" title="Debug-værktøjer">&#x2699;&#xFE0F;</div>
-                <button class="top-btn icon-btn" id="muteButton" title="Slå lyd til/fra (lydstatus vises med ikon)">&#x1F507;</button>
+            <!-- Centreret: Dag + tid + hastighed -->
+            <div class="top-status">
+                <div class="status-badge datetime-badge" title="Dag, klokkeslæt og hastighed">
+                    <span class="badge-icon">&#x1F4C5;</span>
+                    <span class="badge-label">Dag</span>
+                    <span class="badge-num" id="dayDisplay">1</span>
+                    <span class="badge-separator">|</span>
+                    <span class="badge-icon">&#x1F551;</span>
+                    <span class="badge-num" id="timeDisplay">00:00</span>
+                    <span class="daynight-icon" id="dayNightIcon" title="Tidspunkt på døgnet">&#x1F319;</span>
+                    <span class="badge-separator">|</span>
+                    <div class="speed-dropdown" id="speedDropdown" title="Simulationshastighed">
+                        <button class="speed-trigger" id="speedTrigger">4t/min ▾</button>
+                        <div class="speed-menu" id="speedMenu">
+                            <div class="speed-option" data-value="60">1t/min</div>
+                            <div class="speed-option selected" data-value="240">4t/min</div>
+                            <div class="speed-option" data-value="720">12t/min</div>
+                            <div class="speed-option" data-value="1440">24t/min</div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Højre: tom (balancerer grid) -->
+            <div></div>
         </div>
 
         <!-- ===============================================================
@@ -110,6 +104,13 @@
                         </div>
                     </div>
 
+                    <!-- Points overlay — øverste højre hjørne af grafen -->
+                    <div class="status-badge points" id="pointsOverlay" title="Normoglykæmi-points: optjenes ved at holde BG i målområdet">
+                        <span class="badge-icon">&#x2B50;</span>
+                        <span class="badge-num" id="normoPointsDisplay">0.0</span>
+                        <small class="badge-weight" id="normoPointsWeighting">(x1.0)</small>
+                    </div>
+
                     <!-- Advarsel: vises ved hurtigt faldende BG (skjult som standard) -->
                     <div id="steep-drop-warning">&#x26A0; ADVARSEL: Hurtigt faldende BG!</div>
                 </div>
@@ -122,16 +123,45 @@
             <div id="stats-panel">
                 <button id="stats-toggle" title="Fold statistikpanelet ind/ud">&#x25C0;</button>
 
-                <!-- Time in Range: den vigtigste kliniske metrik (altid synlig) -->
-                <div class="stats-section">
-                    <h5>Time in Range</h5>
-                    <div class="tir-bar-container">
-                        <div class="tir-bar" id="tir-bar"></div>
+                <!-- Spiller Data: altid synlig, øverst -->
+                <div class="stats-section" id="stats-player">
+                    <h5>Spiller Data</h5>
+                    <div class="player-data-table">
+                        <div class="label" title="Din kropsvægt, indtastet ved spilstart.">Vægt</div>
+                        <div class="value" id="weightDisplay">--</div>
+                        <div class="unit">kg</div>
+
+                        <div class="label" title="Insulin/Kulhydrat-Ratio: gram kulhydrat dækket af 1 E insulin">ICR</div>
+                        <div class="value" id="icrDisplay">--</div>
+                        <div class="unit">g/E</div>
+
+                        <div class="label" title="Insulin Sensitivitets-Faktor: hvor meget 1 E insulin sænker BG">ISF</div>
+                        <div class="value" id="isfDisplay">--</div>
+                        <div class="unit">(mmol/L)/E</div>
+
+                        <div class="label" title="Kulhydrat-Effekt: hvor meget BG stiger pr. gram kulhydrat">Kulh. effekt</div>
+                        <div class="value" id="carbEffectDisplay">--</div>
+                        <div class="unit">g/(mmol/L)</div>
+
+                        <div class="label" title="Anbefalet daglig basal insulin-dosis (100-reglen)">Basal dosis</div>
+                        <div class="value" id="basalDoseDisplay">--</div>
+                        <div class="unit">E/dag</div>
+
+                        <div class="label" title="Hvileforbrug: basalt kalorieforbrug pr. dag">Hvileforbrug</div>
+                        <div class="value" id="restingKcalDisplay">--</div>
+                        <div class="unit">kcal/dag</div>
                     </div>
+                </div>
+
+                <div class="stats-divider"></div>
+
+                <!-- Statistik: TIR + forbrug samlet i én sektion -->
+                <div class="stats-section" id="stats-statistik">
+                    <h5>Statistik</h5>
                     <div class="stats-table">
                         <div class="header"></div>
-                        <div class="header stats-middel-header" id="stats-middel-span">1 Døgn</div>
-                        <div class="header stats-middel-header">7 Døgn</div>
+                        <div class="header stats-middel-header" id="stats-middel-span">I dag</div>
+                        <div class="header stats-middel-header">Uge</div>
                         <div class="header"></div>
 
                         <div class="label" title="Time in Range: procentdel af tiden med BG mellem 4.0-10.0 mmol/L">TIR (4-10)</div>
@@ -148,87 +178,79 @@
                         <div class="value" id="avgCgm24h">--</div>
                         <div class="value" id="avgCgm14d">--</div>
                         <div class="unit">mmol/L</div>
+
+                        <div class="label">Hurtig insulin</div>
+                        <div class="value" id="fastInsulin24h">--</div>
+                        <div class="value" id="fastInsulin7d">--</div>
+                        <div class="unit">E/dag</div>
+
+                        <div class="label">Basal insulin</div>
+                        <div class="value" id="basalInsulin24h">--</div>
+                        <div class="value" id="basalInsulin7d">--</div>
+                        <div class="unit">E/dag</div>
+
+                        <div class="label">En. indtag</div>
+                        <div class="value" id="kcal24h">--</div>
+                        <div class="value" id="kcal7d">--</div>
+                        <div class="unit">kcal/dag</div>
+
+                        <div class="label" title="Energibalance: indtag minus forbrug. Negativt = underskud → vægttab.">En. balance</div>
+                        <div class="value" id="kcalBalance24h">--</div>
+                        <div class="value" id="kcalBalance7d">--</div>
+                        <div class="unit">kcal/dag</div>
+
+                        <div class="label" title="Akkumuleret vægtændring baseret på kaloriebalance">Vægtændring</div>
+                        <div class="value" id="weightChangeValue">0.0</div>
+                        <div class="value"></div>
+                        <div class="unit">kg</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="stats-divider"></div>
-
-                <!-- Forbrug: sammenklappelig (#15, lukket som default) -->
-                <div class="stats-section collapsible collapsed" id="stats-forbrug">
-                    <h5 class="stats-collapse-toggle">Forbrug <span class="collapse-arrow">&#x25B8;</span></h5>
-                    <div class="stats-collapse-content">
-                        <div class="stats-table">
-                            <div class="header"></div>
-                            <div class="header">1 Døgn</div>
-                            <div class="header">7 Døgn</div>
-                            <div class="header"></div>
-
-                            <div class="label">Hurtig insulin</div>
-                            <div class="value" id="fastInsulin24h">--</div>
-                            <div class="value" id="fastInsulin7d">--</div>
-                            <div class="unit">E/dag</div>
-
-                            <div class="label">Basal insulin</div>
-                            <div class="value" id="basalInsulin24h">--</div>
-                            <div class="value" id="basalInsulin7d">--</div>
-                            <div class="unit">E/dag</div>
-
-                            <div class="label">Kalorier</div>
-                            <div class="value" id="kcal24h">--</div>
-                            <div class="value" id="kcal7d">--</div>
-                            <div class="unit">kcal/dag</div>
-
-                            <div class="label" title="Kaloriebalance: indtag minus forbrug. Negativt = underskud → vægttab.">Kal. balance</div>
-                            <div class="value" id="kcalBalance24h">--</div>
-                            <div class="value" id="kcalBalance7d">--</div>
-                            <div class="unit">kcal/dag</div>
-                        </div>
+            <!-- DEBUG SIDEBAR — Udviklerværktøjer, vises som sidebar th. i main-area.
+                 Togles via debug-knappen i settings-gruppen (bunden).
+                 Forbliver åben når man interagerer med resten af spillet. -->
+            <div id="debug-sidebar">
+                <h5>Debug</h5>
+                <label class="dp-checkbox">
+                    <input type="checkbox" id="debugTrueBgCheckbox">
+                    <span>Sandt BG</span>
+                </label>
+                <label class="dp-checkbox">
+                    <input type="checkbox" id="debugLogCheckbox">
+                    <span>CSV log</span>
+                </label>
+                <div class="dp-log-controls" id="debugLogControls" style="display:none;">
+                    <div class="dp-log-status">
+                        <span id="debugLogStatus">Klar</span>
+                        <span id="debugLogCount">0 rækker</span>
                     </div>
+                    <button class="dp-btn" id="debugLogDownload" title="Download logfil som CSV">&#x1F4BE; CSV</button>
+                    <button class="dp-btn dp-btn-clear" id="debugLogClear" title="Ryd logdata">&#x1F5D1; Ryd</button>
                 </div>
-
-                <div class="stats-divider"></div>
-
-                <!-- Spiller Data: sammenklappelig (#15, lukket som default) -->
-                <div class="stats-section collapsible collapsed" id="stats-player">
-                    <h5 class="stats-collapse-toggle">Spiller Data <span class="collapse-arrow">&#x25B8;</span></h5>
-                    <div class="stats-collapse-content">
-                        <div class="player-data-table">
-                            <div class="label" title="Din kropsvægt, indtastet ved spilstart.">Vægt</div>
-                            <div class="value" id="weightDisplay">--</div>
-                            <div class="unit">kg</div>
-
-                            <div class="label" title="Insulin/Kulhydrat-Ratio: gram kulhydrat dækket af 1 E insulin">ICR</div>
-                            <div class="value" id="icrDisplay">--</div>
-                            <div class="unit">g/E</div>
-
-                            <div class="label" title="Insulin Sensitivitets-Faktor: hvor meget 1 E insulin sænker BG">ISF</div>
-                            <div class="value" id="isfDisplay">--</div>
-                            <div class="unit">(mmol/L)/E</div>
-
-                            <div class="label" title="Kulhydrat-Effekt: hvor meget BG stiger pr. gram kulhydrat">Kulh. effekt</div>
-                            <div class="value" id="carbEffectDisplay">--</div>
-                            <div class="unit">g/(mmol/L)</div>
-
-                            <div class="label" title="Anbefalet daglig basal insulin-dosis (100-reglen)">Basal dosis</div>
-                            <div class="value" id="basalDoseDisplay">--</div>
-                            <div class="unit">E/dag</div>
-
-                            <div class="label" title="Hvileforbrug: basalt kalorieforbrug pr. dag">Hvileforbrug</div>
-                            <div class="value" id="restingKcalDisplay">--</div>
-                            <div class="unit">kcal/dag</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="stats-divider"></div>
-
-                <!-- Vægtændring: altid synlig (vigtigt for game over) -->
-                <div class="stats-section">
-                    <h5>Vægtændring</h5>
-                    <div class="weight-change-display">
-                        <span id="weightChangeValue">0.0</span> kg
-                    </div>
-                    <input type="range" id="weightChangeSlider" min="-5" max="5" value="0" step="0.1" disabled>
+                <button class="dp-btn" id="debugScreenshot" title="Download screenshot som PNG" style="margin-top:4px;width:100%;">&#x1F4F7; Screenshot</button>
+                <div class="dp-divider"></div>
+                <div class="dp-live" id="debugLiveValues">
+                    <div class="dp-row" title="Sandt blodsukker (mmol/L) — den reelle værdi i modellen, uden CGM-forsinkelse eller støj"><span class="dp-label">True BG</span><span class="dp-val" id="dbgTrueBG">--</span></div>
+                    <div class="dp-row" title="CGM blodsukker (mmol/L) — hvad sensoren viser, med ~10 min forsinkelse og tilfældig støj"><span class="dp-label">CGM BG</span><span class="dp-val" id="dbgCgmBG">--</span></div>
+                    <div class="dp-row" title="Bolus Insulin On Board (E) — resterende aktivt hurtigvirkende insulin fra injektioner"><span class="dp-label">Bolus IOB</span><span class="dp-val" id="dbgIOB">--</span></div>
+                    <div class="dp-row" title="Subkutant depot (mU) — insulin der stadig sidder under huden og venter på at blive optaget (Hovorka S1+S2)"><span class="dp-label">SubQ depot</span><span class="dp-val" id="dbgSubQ">--</span></div>
+                    <div class="dp-row" title="Plasma-insulin (mU/L) — insulin i blodbanen der aktivt virker på cellerne (Hovorka state[6])"><span class="dp-label">Plasma I</span><span class="dp-val" id="dbgPlasmaI">--</span></div>
+                    <div class="dp-row" title="Carbs On Board (g) — resterende kulhydrater der endnu ikke er optaget fra tarmen"><span class="dp-label">COB</span><span class="dp-val" id="dbgCOB">--</span></div>
+                    <div class="dp-row" title="Ketonniveau (mmol/L) — stiger ved insulinmangel. Over 3.0 = fare for ketoacidose (DKA)"><span class="dp-label">Ketoner</span><span class="dp-val" id="dbgKetone">--</span></div>
+                    <div class="dp-row" title="x1: Insulineffekt på glukosetransport — driver glukose fra plasma ind i perifere væv (muskler, fedt)"><span class="dp-label">x1 (transport)</span><span class="dp-val" id="dbgX1">--</span></div>
+                    <div class="dp-row" title="x2: Insulineffekt på glukoseforbrug — øger cellernes forbrænding af glukose i perifere væv"><span class="dp-label">x2 (disposal)</span><span class="dp-val" id="dbgX2">--</span></div>
+                    <div class="dp-row" title="x3: Insulineffekt på leverens glukoseproduktion — undertrykker EGP (endogen glukoseproduktion)"><span class="dp-label">x3 (EGP-sup)</span><span class="dp-val" id="dbgX3">--</span></div>
+                    <div class="dp-row" title="Endogen Glukose Produktion (mmol/min) — leverens frigivelse af glukose. Beregnes som EGP₀ × max(0, StressMult − x3)"><span class="dp-label">EGP</span><span class="dp-val" id="dbgEGP">--</span></div>
+                    <div class="dp-row" title="Exercise Factor — multiplikator på insulineffekten under motion. Beregnes som 1 + α × E2². Højere = insulin virker stærkere"><span class="dp-label">ExerciseFac</span><span class="dp-val" id="dbgExFac">--</span></div>
+                    <div class="dp-row" title="Effektiv ISF (mmol/L per enhed insulin) — hvor meget 1E insulin sænker BG lige nu. Beregnes som profilISF × ExerciseFac. Stiger under motion."><span class="dp-label">ISF (eff.)</span><span class="dp-val" id="dbgISFeff">--</span></div>
+                    <div class="dp-row" title="Akut stressniveau (adrenalin/glukagon) — stiger ved hypo og hård motion. Halveringstid ~60 sim-min. Max 0.4"><span class="dp-label">Stress (akut)</span><span class="dp-val" id="dbgAcute">--</span></div>
+                    <div class="dp-row" title="Kronisk stressniveau (kortisol) — stiger ved sygdom og søvnmangel. Halveringstid ~12 sim-timer"><span class="dp-label">Stress (kron.)</span><span class="dp-val" id="dbgChronic">--</span></div>
+                    <div class="dp-row" title="Stress-multiplikator = 1.0 + akut + kronisk + cirkadisk kortisol. Driver leverens glukoseproduktion (EGP)"><span class="dp-label">StressMult</span><span class="dp-val" id="dbgStressMult">--</span></div>
+                    <div class="dp-row" title="Simuleret puls (BPM) — stiger ved motion, falder gradvist efter. Påvirker insulinabsorptionshastighed"><span class="dp-label">Puls</span><span class="dp-val" id="dbgHR">--</span></div>
+                    <div class="dp-row" title="Normoglykæmi-point — optjenes når BG er i målzonen (4–10 mmol/L). Bruges til scoring"><span class="dp-label">Points</span><span class="dp-val" id="dbgPoints">--</span></div>
+                    <div class="dp-row" title="HAAF hypo-areal — akkumuleret hypo-eksponering (tid × dybde under 3.5 mmol/L). Højere = mere skade på kontraregulering"><span class="dp-label">HAAF area</span><span class="dp-val" id="dbgHypoArea">--</span></div>
+                    <div class="dp-row" title="Kontrareguleringsfaktor (0–1) — kroppens evne til at modvirke hypo. Falder ved gentagen hypo (HAAF). 1.0 = fuld, 0.0 = ingen"><span class="dp-label">CounterReg</span><span class="dp-val" id="dbgCounterReg">--</span></div>
                 </div>
             </div>
         </div>
@@ -244,7 +266,7 @@
         <div id="dock-panel-insulin" class="dock-panel">
             <!-- BASAL INSULIN — øverst -->
             <div class="dp-section dp-insulin-basal">
-                <label class="dp-section-label">Basal</label>
+                <label class="dp-section-label"><span class="insulin-icon-blue">💉</span> Basal</label>
                 <div class="dp-insulin-row">
                     <div class="dp-preset-chips">
                         <div class="insulin-preset" id="basalPreset1" title="A">
@@ -271,7 +293,7 @@
             <div class="dp-divider"></div>
             <!-- HURTIG INSULIN — nederst (tættest på cursor) -->
             <div class="dp-section dp-insulin-fast">
-                <label class="dp-section-label">Hurtig</label>
+                <label class="dp-section-label"><span class="insulin-icon-teal">💉</span> Hurtig</label>
                 <div class="dp-insulin-row">
                     <div class="dp-preset-chips">
                         <div class="insulin-preset insulin-preset-fast" id="fastPreset1" title="Z">
@@ -414,13 +436,7 @@
             </div>
         </div>
 
-        <!-- DEBUG PANEL (#14: flyttes til lille ikon i nederste venstre hjørne) -->
-        <div id="dock-panel-debug" class="dock-panel">
-            <label class="dp-checkbox">
-                <input type="checkbox" id="debugTrueBgCheckbox">
-                <span>Vis Sandt BG (blå linje)</span>
-            </label>
-        </div>
+        <!-- DEBUG PANEL er flyttet ind i #main-area som sidebar -->
 
         <!-- ===============================================================
              DOCK BAR — macOS Dock-inspireret interventions-bar i bunden.
@@ -468,6 +484,22 @@
                 </div>
             </div>
         </div>
+            <!-- Settings-gruppe th: dock-stil med ikon + label -->
+            <div class="settings-group">
+                <!-- Hjælp-knap flyttet op til top-bar ved siden af Profil -->
+                <div class="settings-item" title="Fysiologi (kommer snart)">
+                    <div class="settings-icon">&#x1F52C;</div>
+                    <span class="settings-label">Fysiologi</span>
+                </div>
+                <div class="settings-item" id="debugToggleButton" title="Debug-værktøjer">
+                    <div class="settings-icon">&#x2699;&#xFE0F;</div>
+                    <span class="settings-label">Debug</span>
+                </div>
+                <div class="settings-item" id="muteButton" title="Slå lyd til/fra">
+                    <div class="settings-icon" id="muteIcon">&#x1F50A;</div>
+                    <span class="settings-label">Lyd</span>
+                </div>
+            </div>
         </div><!-- /bottom-bar -->
 
         <!-- Skjult glucagon-knap: den rigtige knap der håndterer cooldown-logik.
@@ -481,56 +513,80 @@
          showHelpPopup() i ui.js henter indholdet herfra.
          =================================================================== -->
     <template id="help-content-template">
-        <h2 class="info-title">T1D Simulator</h2>
+        <div class="brand-group" style="align-self:center; margin-bottom:14px;">
+            <div class="brand">T1D SIMULATOR</div>
+            <div class="brand-slogan">Play it safe, before it really counts</div>
+        </div>
 
-        <h3>Formål</h3>
-        <p>
-          Jeg fik konstateret Type 1 Diabetes i februar 2025 og lavede denne simulator
-          for at forstå min nye hverdag bedre. Håbet er at andre nydiagnosticerede
-          — og deres pårørende — kan lege sig til viden om blodsukkerstyring i et
-          sikkert, simuleret miljø, hvor fejl ikke har konsekvenser i den virkelige
-          verden. Simulationen er baseret på validerede fysiologiske modeller,
-          AI-assisteret udvikling, og personlige erfaringer fra de første måneder
-          med T1D.<br>— Kristian R Harreby
-        </p>
-        <p style="color: #ef4444;">
-          <strong>Disclaimer:</strong> Simulationen er IKKE en guide til kliniske
-          beslutninger. Konsulter altid sundhedspersonale for rådgivning om din
-          egen situation.
-        </p>
+        <details class="help-section" open>
+          <summary>Formål</summary>
+          <p>
+            Jeg fik konstateret Type 1 Diabetes i februar 2025 og lavede denne simulator
+            for at forstå min nye hverdag bedre. Håbet er at andre nydiagnosticerede
+            — og deres pårørende — kan lege sig til viden om blodsukkerstyring i et
+            sikkert, simuleret miljø, hvor fejl ikke har konsekvenser i den virkelige
+            verden. Simulationen er baseret på validerede fysiologiske modeller,
+            AI-assisteret udvikling, og personlige erfaringer fra de første måneder
+            med T1D.<br>— Kristian R Harreby
+          </p>
+          <p class="disclaimer" style="color: #ef4444;">
+            <strong>Disclaimer:</strong> Simulationen er IKKE en guide til kliniske
+            beslutninger. Konsulter altid sundhedspersonale for rådgivning om din
+            egen situation.
+          </p>
+        </details>
 
-        <h3>Spilmekanikker</h3>
-        <ul>
-          <li><strong>Mål:</strong> Opnå så mange Normoglykæmi-points som muligt ved at holde blodsukkeret stabilt.</li>
-          <li><strong>Points:</strong> 5-6 mmol/L = 2x (grøn bonus-zone), 4-10 = 1x, 10-14 = 0.5x (orange zone), &lt;4 eller &gt;14 = 0 points.</li>
-          <li><strong>Personlig profil:</strong> Indtast din vægt, ICR og ISF ved start — simulatoren tilpasser sig dine parametre.</li>
-        </ul>
+        <details class="help-section">
+          <summary>Spilmekanikker</summary>
+          <ul>
+            <li><strong>Mål:</strong> Hold blodsukkeret stabilt og optjen points.</li>
+            <li><strong>Points:</strong> Jo tættere på målzonen, jo flere points.</li>
+            <li><strong>Personlig profil:</strong> Indtast din vægt, ICR og ISF ved start — simulatoren tilpasser sig dine parametre.</li>
+          </ul>
+        </details>
 
-        <h3>Fysiologi &amp; Interventioner</h3>
-        <ul>
-          <li><strong>Mad:</strong> Kulhydrater hæver BG hurtigt (20-60 min). Protein bidrager langsomt (~25% af kulhydrateffekt). Fedt forsinker al absorption.</li>
-          <li><strong>Hurtig insulin:</strong> Onset 10-15 min, peak 1-2 timer, varighed 3-5 timer. Sænker BG med ca. ISF pr. enhed.</li>
-          <li><strong>Basal insulin:</strong> Dækker kroppens grundbehov over 24+ timer. Husk den dagligt!</li>
-          <li><strong>Motion:</strong> Sænker BG under aktivitet og øger insulinfølsomheden i op til 30 timer efter. Effekten er størst med aktiv insulin i kroppen.</li>
-          <li><strong>Dawn-effekt:</strong> Leveren frigiver ekstra glukose om morgenen (ca. 04:00-08:00).</li>
-          <li><strong>Søvn:</strong> Natlige interventioner (22:00-07:00) forstyrrer søvnen og øger insulinresistensen næste dag.</li>
-          <li><strong>Stress:</strong> Hypoglykæmi og intensiv motion udløser stresshormoner der hæver BG (kontraregulering).</li>
-        </ul>
+        <details class="help-section">
+          <summary>Game Over</summary>
+          <ul>
+            <li><strong>Svær hypoglykæmi:</strong> Sandt BG falder under 1.5 mmol/L — hjernen kan ikke fungere.</li>
+            <li><strong>Ketoacidose (DKA):</strong> Vedvarende højt BG uden tilstrækkeligt insulin. Du advares med symptomer først.</li>
+            <li><strong>Vægtændring:</strong> Samlet ændring overstiger ±5 kg.</li>
+            <li><strong>Komplikationer:</strong> 14-dages gennemsnits-BG over 15 mmol/L.</li>
+          </ul>
+        </details>
 
-        <h3>Målinger</h3>
-        <ul>
-          <li><strong>CGM:</strong> Viser blodsukker med 5-10 min forsinkelse og nogen usikkerhed. Ikke altid præcis!</li>
-          <li><strong>Fingerprik:</strong> Mere præcis end CGM (±5%). Brug den til at dobbelttjekke.</li>
-          <li><strong>Keton-stik:</strong> Mål ketoner ved vedvarende højt BG. Forhøjede ketoner + højt BG = risiko for ketoacidose.</li>
-        </ul>
+        <details class="help-section">
+          <summary>Keyboard Shortcuts</summary>
+          <ul>
+            <li><strong>Space</strong> — Pause / Fortsæt</li>
+            <li><strong>Z</strong> — Insulin &nbsp; <strong>X</strong> — Mad &nbsp; <strong>C</strong> — Motion</li>
+            <li><strong>V</strong> — Målinger &nbsp; <strong>B</strong> — Glucagon (nødhjælp)</li>
+          </ul>
+        </details>
 
-        <h3>Game Over</h3>
-        <ul>
-          <li><strong>Svær hypoglykæmi:</strong> Sandt BG falder under 1.5 mmol/L — hjernen kan ikke fungere.</li>
-          <li><strong>Ketoacidose (DKA):</strong> Vedvarende højt BG uden tilstrækkeligt insulin. Du advares med symptomer først.</li>
-          <li><strong>Vægtændring:</strong> Samlet ændring overstiger ±5 kg.</li>
-          <li><strong>Komplikationer:</strong> 14-dages gennemsnits-BG over 15 mmol/L.</li>
-        </ul>
+        <details class="help-section">
+          <summary>Fysiologi &amp; Interventioner</summary>
+          <ul>
+            <li><strong>Mad:</strong> Kulhydrater hæver BG hurtigt (20-60 min). Protein bidrager langsomt (~25% af kulhydrateffekt). Fedt forsinker al absorption.</li>
+            <li><strong>Hurtig insulin:</strong> Onset 10-15 min, peak 1-2 timer, varighed 3-5 timer. Sænker BG med ca. ISF pr. enhed.</li>
+            <li><strong>Basal insulin:</strong> Dækker kroppens grundbehov over 24+ timer. Husk den dagligt!</li>
+            <li><strong>Motion:</strong> Sænker BG under aktivitet og øger insulinfølsomheden i op til 30 timer efter. Pas på — motion forstærker aktiv insulin markant!</li>
+            <li><strong>Glucagon:</strong> Nødbehandling ved svær hypoglykæmi. Hæver BG kraftigt over 20-30 min. Brug kun i nødsituationer.</li>
+            <li><strong>Dawn-effekt:</strong> Leveren frigiver ekstra glukose om morgenen (ca. 04:00-08:00) pga. kortisol-stigning.</li>
+            <li><strong>Søvn:</strong> Natlige interventioner (22:00-07:00) forstyrrer søvnen og øger insulinresistensen næste dag.</li>
+            <li><strong>Kontraregulering:</strong> Hypoglykæmi udløser stresshormoner der hæver BG — men ved T1D er denne respons svag.</li>
+            <li><strong>HAAF:</strong> Gentagen hypoglykæmi svækker kroppens evne til at modvirke lavt blodsukker yderligere. Undgå hypo for at bevare denne beskyttelse!</li>
+          </ul>
+        </details>
+
+        <details class="help-section">
+          <summary>Målinger</summary>
+          <ul>
+            <li><strong>CGM:</strong> Viser blodsukker med 5-10 min forsinkelse og nogen usikkerhed. Ikke altid præcis!</li>
+            <li><strong>Fingerprik:</strong> Mere præcis end CGM (±5%). Brug den til at dobbelttjekke.</li>
+            <li><strong>Keton-stik:</strong> Mål ketoner ved vedvarende højt BG. Forhøjede ketoner + højt BG = risiko for ketoacidose.</li>
+          </ul>
+        </details>
     </template>
 
     <!-- ===================================================================

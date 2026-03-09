@@ -20,6 +20,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Saml al fysiologisk modellering i `js/simulator.js`
 - Skriv kode der er nem at udvide (tænk fremad mod baner og sandkasse)
 
+### Ændringsregler
+- **Ændr KUN det brugeren specifikt beder om** — lav ikke ekstra rettelser, refaktoreringer eller "forbedringer" medmindre de er direkte nødvendige for opgaven
+- Ved tvivl: spørg i stedet for at antage
+
 ### Kommunikation
 - Svar altid på dansk
 - Forklar hvad du har ændret og hvorfor efter hver opgave
@@ -47,6 +51,14 @@ Projektet har to tilstande (fremtidigt):
 - HTML / CSS / JavaScript (ingen frameworks, ingen build-trin)
 - Åbn `index.html` direkte i en browser — ingen server eller npm nødvendigt
 - Ekstern afhængighed: Tone.js 14.8.49 (lyd, loaded fra CDN)
+
+### Layout-regler
+- **Alle UI-elementer har runde hjørner** — paneler, graf, chart-område, knapper, badges. Brug CSS-variablerne `--radius-sm` (6px), `--radius-md` (10px), `--radius-lg` (14px), `--radius-xl` (18px).
+- Canvas-grafens interne chart-område (zoner, nat-shading) klippes med `roundRect` clip-path så det matcher grafens border-radius.
+- BG-panelet (#cgm-hero) er placeret INDEN FOR det farvede chart-område, ikke uden for det.
+- Alle tal-displays bruger `font-variant-numeric: tabular-nums` med Inter-fonten (Orbitron understøtter IKKE tabular-nums og må kun bruges til logo/brand).
+- **Top-bar paneler skal have samme højde og flugte i top og bund.** Top-bar har ingen baggrund — de individuelle paneler (time-control, datetime-badge, points, settings) svæver frit med egen baggrund/border.
+- **Ensartet spacing:** Alle paneler skal have den samme afstand imellem hinanden OG imellem panelerne og browserens ydre kant. Brug CSS-variablen `--panel-gap` til dette.
 
 ---
 

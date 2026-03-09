@@ -76,11 +76,18 @@ global.RESTING_KCAL_PER_DAY = 2200;
 global.RESTING_KCAL_PER_MINUTE = RESTING_KCAL_PER_DAY / (24 * 60);
 
 // Mock-funktioner der normalt lever i andre JS-filer (ui.js, sounds.js)
-global.logEvent = () => {};     // Logger spilhaendelser — vi ignorerer i tests
-global.showPopup = () => {};    // Viser popup-beskeder — vi ignorerer i tests
-global.playSound = () => {};    // Afspiller lyde — vi ignorerer i tests
-global.drawGraph = () => {};    // Tegner graf — vi ignorerer i tests
-global.updateUI = () => {};     // Opdaterer UI — vi ignorerer i tests
+global.logEvent = () => {};             // Logger spilhaendelser — vi ignorerer i tests
+global.showPopup = () => {};            // Viser popup-beskeder — vi ignorerer i tests
+global.showGameOverPopup = () => {};    // Viser game over popup — vi ignorerer i tests
+global.playSound = () => {};            // Afspiller lyde — vi ignorerer i tests
+global.drawGraph = () => {};            // Tegner graf — vi ignorerer i tests
+global.updateUI = () => {};             // Opdaterer UI — vi ignorerer i tests
+
+// Mock document.getElementById — bruges af updateWeight() i simulator.js
+global.document = {
+    getElementById: () => mockElement(),
+    body: { appendChild: () => {} }
+};
 
 // --- Indlaes Hovorka-modellen og Simulator-klassen ---
 // Hovorka skal loades foerst, da Simulator bruger HovorkaModel i sin constructor.
@@ -773,6 +780,190 @@ test('Kulhydrateffekt aendres med ISF og ICR', () => {
     global.trueBgPoints = [];
     const sim2 = new Simulator({ isf: 5.0, icr: 15, weight: 70 });
     assertInRange(sim2.currentCarbEffect, 0.32, 0.34, 'CarbEffect ved ISF=5, ICR=15');
+});
+
+
+// =============================================================================
+// TEST 8: INSULINOVERDOSIS — 9E FRA BG=6 SKAL VAERE DOEDELIG
+// =============================================================================
+//
+// Fysiologisk baggrund:
+//   - 9E med ISF=3.0 giver et forventet BG-fald paa ~27 mmol/L
+//   - Fra start-BG=6 er der kun 4.5 mmol/L til doedelig graense (1.5)
+//   - T1D-patienter har svaekket kontraregulering (tabt glukagon-respons)
+//   - Kontrareguleringen kan IKKE kompensere for massiv overdosis
+//   - Kilde: Bengtsen 2021, Rzepczyk 2022, Megarbane 2007
+// =============================================================================
+
+// Hjælpefunktion: opret simulator MED intakt basal insulin.
+// Koerer modellen 60 min fremad saa Hovorka-tilstanden er i sync med
+// den aktive basal-insulin. Bruges til overdosis- og HAAF-tests.
+function createSimulatorWithBasal() {
+    global.cgmDataPoints = [];
+    global.trueBgPoints = [];
+
+    const sim = new Simulator(); // Beholder basal insulin fra constructor
+
+    // Koer 60 ticks (1 sim-minut hver) for at stabilisere Hovorka
+    sim.simulationSpeed = 60;
+    for (let i = 0; i < 60; i++) sim.update(1.0);
+
+    // Nulstil stress og HAAF (hypo under init kan have trigget noget)
+    sim.acuteStressLevel = 0.0;
+    sim.chronicStressLevel = 0.0;
+    sim.hypoArea = 0.0;
+    sim.counterRegFactor = 1.0;
+    sim.isGameOver = false;
+
+    return sim;
+}
+
+console.log('\n--- Test 8: Insulinoverdosis (9E fra BG=6 er doedelig) ---');
+
+test('9E bolus fra BG=6 uden mad giver game over (doedelig overdosis)', () => {
+    // Brug simulator MED basal insulin — realistisk scenarie
+    const sim = createSimulatorWithBasal();
+    setSimulatorBG(sim, 6.0);
+
+    // Giv 9E hurtigvirkende insulin uden mad
+    sim.addFastInsulin(9);
+
+    // Simuler op til 6 timer (360 min) — death bor ske langt foer
+    let gameOverTriggered = false;
+    sim.simulationSpeed = 60;
+    for (let i = 0; i < 360; i++) {
+        sim.update(1.0);
+        if (sim.isGameOver) {
+            gameOverTriggered = true;
+            break;
+        }
+    }
+
+    assert(gameOverTriggered,
+        `9E fra BG=6 SKAL vaere doedelig (BG naaede ${sim.trueBG.toFixed(2)} mmol/L)`);
+});
+
+test('3E bolus fra BG=8 uden mad giver IKKE game over (svaer hypo men overlevelig)', () => {
+    // Brug simulator MED basal insulin
+    const sim = createSimulatorWithBasal();
+    setSimulatorBG(sim, 8.0);
+
+    // Giv 3E — forventet fald ~9 mmol/L, men fra BG=8 med kontraregulering
+    // burde spilleren overleve (BG falder til ~2-3 med stress-respons)
+    sim.addFastInsulin(3);
+
+    // Simuler 6 timer
+    let gameOverTriggered = false;
+    sim.simulationSpeed = 60;
+    for (let i = 0; i < 360; i++) {
+        sim.update(1.0);
+        if (sim.isGameOver) {
+            gameOverTriggered = true;
+            break;
+        }
+    }
+
+    assert(!gameOverTriggered,
+        `3E fra BG=8 bor vaere overlevelig (BG: ${sim.trueBG.toFixed(2)}, ` +
+        `stress: ${sim.acuteStressLevel.toFixed(2)})`);
+});
+
+
+// =============================================================================
+// TEST 9: HYPOGLYKAEMI-UNAWARENESS (HAAF) — Kontinuert areal-baseret model
+// =============================================================================
+//
+// Fysiologisk baggrund:
+//   - Gentagne/langvarige hypoer svaekker den kontraregulatoriske respons
+//   - hypoArea akkumulerer: integral af max(0, 3.0 - BG) over tid
+//   - counterRegFactor = 0.3 + 0.7 * exp(-hypoArea / HAAF_DAMAGE_SCALE)
+//   - Recovery: hypoArea henfader eksponentielt naar BG > 4.0 (t½ = 3 sim-dage)
+//   - Kilder: Dagogo-Jack 1993, Cryer 2001/2013, Reno 2013, Rickels 2019
+// =============================================================================
+
+console.log('\n--- Test 9: Hypoglykaemi-unawareness (HAAF) — areal-baseret ---');
+
+test('counterRegFactor starter ved 1.0 og hypoArea ved 0', () => {
+    const sim = createCleanSimulator();
+    assert(sim.counterRegFactor === 1.0,
+        `counterRegFactor skal starte ved 1.0, fik ${sim.counterRegFactor}`);
+    assert(sim.hypoArea === 0.0,
+        `hypoArea skal starte ved 0, fik ${sim.hypoArea}`);
+});
+
+test('hypoArea akkumuleres naar BG < 3.0 (HAAF skade)', () => {
+    // Hold BG ved 2.0 i 15 min → forventet areal: (3.0-2.0) × 15 = 15 mmol·min/L
+    const sim = createCleanSimulator();
+
+    for (let i = 0; i < 15; i++) {
+        sim.trueBG = 2.0;
+        sim.hovorka.state[4] = 2.0 * sim.hovorka.V_G;
+        sim.simulationSpeed = 60;
+        sim.update(1.0);
+        if (sim.isGameOver) sim.isGameOver = false;
+    }
+
+    // hypoArea skal vaere ca. 15 (1.0 deficit × 15 min)
+    assert(sim.hypoArea > 10,
+        `hypoArea skal vaere > 10 efter 15 min ved BG=2.0 (fik ${sim.hypoArea.toFixed(1)})`);
+    assert(sim.counterRegFactor < 0.8,
+        `counterRegFactor skal vaere reduceret (${sim.counterRegFactor.toFixed(2)})`);
+});
+
+test('Dyb hypo giver mere skade end mild hypo', () => {
+    // BG=1.5 (deficit 1.5) vs BG=2.5 (deficit 0.5) i 10 min
+    const simDeep = createCleanSimulator();
+    const simMild = createCleanSimulator();
+
+    for (let i = 0; i < 10; i++) {
+        // Dyb hypo
+        simDeep.trueBG = 1.5;
+        simDeep.hovorka.state[4] = 1.5 * simDeep.hovorka.V_G;
+        simDeep.simulationSpeed = 60;
+        simDeep.update(1.0);
+        if (simDeep.isGameOver) simDeep.isGameOver = false;
+
+        // Mild hypo
+        simMild.trueBG = 2.5;
+        simMild.hovorka.state[4] = 2.5 * simMild.hovorka.V_G;
+        simMild.simulationSpeed = 60;
+        simMild.update(1.0);
+        if (simMild.isGameOver) simMild.isGameOver = false;
+    }
+
+    assert(simDeep.hypoArea > simMild.hypoArea * 2,
+        `Dyb hypo (${simDeep.hypoArea.toFixed(1)}) skal give mindst 2x mere skade end mild (${simMild.hypoArea.toFixed(1)})`);
+    assert(simDeep.counterRegFactor < simMild.counterRegFactor,
+        `Dyb hypo skal give lavere counterRegFactor (${simDeep.counterRegFactor.toFixed(2)} vs ${simMild.counterRegFactor.toFixed(2)})`);
+});
+
+test('HAAF recovery: hypoArea falder naar BG > 4.0', () => {
+    const sim = createCleanSimulator();
+
+    // Opbyg hypoArea: hold BG ved 2.0 i 20 min → ca. 20 mmol·min/L
+    for (let i = 0; i < 20; i++) {
+        sim.trueBG = 2.0;
+        sim.hovorka.state[4] = 2.0 * sim.hovorka.V_G;
+        sim.simulationSpeed = 60;
+        sim.update(1.0);
+        if (sim.isGameOver) sim.isGameOver = false;
+    }
+    const peakArea = sim.hypoArea;
+    assert(peakArea > 15, `hypoArea skal vaere > 15 (fik ${peakArea.toFixed(1)})`);
+
+    // Nu recovery: hold BG ved 7.0 i 3 sim-dage (4320 min = t½)
+    // Efter 1 t½ burde hypoArea vaere ca. halveret
+    for (let i = 0; i < 4320; i++) {
+        sim.trueBG = 7.0;
+        sim.hovorka.state[4] = 7.0 * sim.hovorka.V_G;
+        sim.simulationSpeed = 60;
+        sim.update(1.0);
+    }
+
+    assert(sim.hypoArea < peakArea * 0.6,
+        `hypoArea skal vaere faldet efter 3 sim-dage recovery (${sim.hypoArea.toFixed(1)} vs peak ${peakArea.toFixed(1)})`);
+    assert(sim.counterRegFactor > 0.8,
+        `counterRegFactor skal vaere naesten genoprettet (${sim.counterRegFactor.toFixed(2)})`);
 });
 
 

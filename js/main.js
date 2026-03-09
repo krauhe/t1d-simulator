@@ -25,7 +25,7 @@
 // Holdes som `let` (uinitialiseret) og tildeles i initializeApp() efter DOM er klar.
 // Andre filer (simulator.js, ui.js) tilgår disse direkte via variabelnavne.
 // =============================================================================
-let startButton, helpButton, pauseButton, speedSelector, dayDisplay,
+let startButton, helpButton, pauseButton, profileButton, speedSelector, dayDisplay,
     timeDisplay, cgmValueDisplayGraph, normoPointsDisplay, normoPointsWeighting,
     muteButton, carbsSlider, carbsValue, proteinSlider, proteinValue, fatSlider,
     fatValue, giveFoodButton, foodInfoDisplay, foodKcalDisplay, foodKeDisplay,
@@ -34,13 +34,192 @@ let startButton, helpButton, pauseButton, speedSelector, dayDisplay,
     giveFastInsulinButton, longInsulinSlider, longInsulinValue, giveLongInsulinButton,
     motionIntensitySelect, motionDurationSelect, startMotionButton, motionKcalDisplay,
     fingerprickButton, ketoneTestButton, glucagonButton, debugTrueBgCheckbox,
-    iobDisplay, cobDisplay, bgGraphCanvas, graphCtx, weightChangeSlider,
+    iobDisplay, cobDisplay, bgGraphCanvas, graphCtx,
     weightChangeValue, steepDropWarningDiv, weightDisplay, icrDisplay, isfDisplay,
     carbEffectDisplay, basalDoseDisplay, restingKcalDisplay, tir24hDisplay,
     titr24hDisplay, avgCgm24hDisplay, fastInsulin24hDisplay, basalInsulin24hDisplay,
     kcal24hDisplay, tir14dDisplay, titr14dDisplay, avgCgm14dDisplay,
-    lastBolusTimerDisplay, kcalBalance24hDisplay, fastInsulin7dDisplay,
+    kcalBalance24hDisplay, fastInsulin7dDisplay,
     basalInsulin7dDisplay, kcal7dDisplay, kcalBalance7dDisplay;
+
+// =============================================================================
+// DEBUG LOG SYSTEM — Samler interne simulationsdata i en CSV-buffer.
+// Bruges til fejlfinding: download filen og del den med udvikleren.
+// Logges hvert 5. simulationsminut for at holde størrelsen håndterbar.
+// =============================================================================
+let debugLogEnabled = false;         // Aktiveret via checkbox i debug-panelet
+let debugLogData = [];               // Array af CSV-rækker (strings)
+let debugLogLastTime = -Infinity;    // Sidste loggede sim-tid (undgå duplikater)
+const DEBUG_LOG_INTERVAL = 5;        // Log hvert 5. sim-minut
+
+// CSV-header med alle relevante interne parametre
+const DEBUG_LOG_HEADER = 'Dag,Tid,SimMin,TrueBG,CgmBG,IOB,SubQ,PlasmaI,COB,Ketoner,x1,x2,x3,EGP,ExFac,StressMult,Stress_akut,Stress_kron,Puls,Points,VægtÆndring,Motion,HypoArea,CounterReg';
+
+// debugLogTick() — kaldes fra updateUI() hvert frame. Logger kun hvis aktiveret
+// og der er gået mindst DEBUG_LOG_INTERVAL sim-minutter siden sidst.
+function debugLogTick() {
+    if (!debugLogEnabled || !game) return;
+
+    // Log kun hvert 5. sim-minut
+    if (game.totalSimMinutes - debugLogLastTime < DEBUG_LOG_INTERVAL) return;
+    debugLogLastTime = game.totalSimMinutes;
+
+    const day = game.day || 1;
+    const h = String(Math.floor(game.timeInMinutes / 60)).padStart(2, '0');
+    const m = String(Math.floor(game.timeInMinutes % 60)).padStart(2, '0');
+    // Tjek om der er aktiv motion (ikke afsluttet endnu)
+    const activeEx = game.activeMotion.find(m => game.totalSimMinutes < (m.startTime + m.duration));
+    const isExercising = activeEx ? activeEx.intensity : 'nej';
+
+    const hov = game.hovorka;
+    const stressMult = hov ? (1.0 + game.acuteStressLevel + game.chronicStressLevel + game.circadianKortisolNiveau) : 1.0;
+    const subQ = hov ? (hov.state[2] + hov.state[3]) / 1000 : 0;
+    const plasmaI = hov ? hov.state[6] : 0;
+    const x1 = hov ? hov.state[7] : 0;
+    const x2 = hov ? hov.state[8] : 0;
+    const x3 = hov ? hov.state[9] : 0;
+    const egp = hov ? Math.max(0, hov.EGP_0 * (stressMult - x3)) : 0;
+    const E2 = hov ? hov.state[12] : 0;
+    const exFac = hov ? 1 + hov.alpha * E2 * E2 : 1;
+
+    const row = [
+        day,
+        `${h}:${m}`,
+        game.totalSimMinutes.toFixed(0),
+        game.trueBG.toFixed(2),
+        game.cgmBG.toFixed(2),
+        game.iob.toFixed(2),
+        subQ.toFixed(2),
+        plasmaI.toFixed(1),
+        game.cob.toFixed(1),
+        game.ketoneLevel.toFixed(2),
+        x1.toFixed(4),
+        x2.toFixed(4),
+        x3.toFixed(4),
+        egp.toFixed(3),
+        exFac.toFixed(2),
+        stressMult.toFixed(3),
+        game.acuteStressLevel.toFixed(3),
+        game.chronicStressLevel.toFixed(3),
+        (hov ? hov.heartRate : 60).toFixed(0),
+        game.normoPoints.toFixed(1),
+        game.weightChangeKg.toFixed(2),
+        isExercising,
+        game.hypoArea.toFixed(1),
+        game.counterRegFactor.toFixed(3)
+    ].join(',');
+
+    debugLogData.push(row);
+
+    // Opdater tæller i UI
+    const countEl = document.getElementById('debugLogCount');
+    if (countEl) countEl.textContent = debugLogData.length + ' rækker';
+}
+
+// debugUpdateLiveValues() — opdaterer live debug-værdier i panelet
+function debugUpdateLiveValues() {
+    if (!game) return;
+    const el = (id) => document.getElementById(id);
+    const set = (id, val) => { const e = el(id); if (e) e.textContent = val; };
+
+    set('dbgTrueBG', game.trueBG.toFixed(2));
+    set('dbgCgmBG', game.cgmBG.toFixed(2));
+    set('dbgIOB', game.iob.toFixed(2));
+    // Subkutant depot: S1+S2 i Hovorka [mU] → konverter til enheder [E]
+    const subQ = game.hovorka ? (game.hovorka.state[2] + game.hovorka.state[3]) / 1000 : 0;
+    set('dbgSubQ', subQ.toFixed(2));
+    // Plasma insulin: I i Hovorka [mU/L]
+    const plasmaI = game.hovorka ? game.hovorka.state[6] : 0;
+    set('dbgPlasmaI', plasmaI.toFixed(1));
+    set('dbgCOB', game.cob.toFixed(1));
+    set('dbgKetone', game.ketoneLevel.toFixed(2));
+
+    // Hovorka insulin-aktionsvariable (de reelle drivere af BG-ændring)
+    // x1: driver glukose-transport plasma→periferi (højere = hurtigere transport)
+    // x2: driver glukose-disposal i periferi (højere = hurtigere forbrug)
+    // x3: undertrykker leverens glukoseproduktion (højere = mere suppression)
+    // Alle tre stiger med aktiv insulin og falder når insulin klares.
+    const h = game.hovorka;
+    if (h) {
+        set('dbgX1', h.state[7].toFixed(4));
+        set('dbgX2', h.state[8].toFixed(4));
+        set('dbgX3', h.state[9].toFixed(4));
+
+        // EGP: leverens aktuelle glukoseproduktion [mmol/min]
+        // = EGP_0 × max(0, stressMultiplier - x3)
+        const stressMult = 1.0 + game.acuteStressLevel + game.chronicStressLevel + game.circadianKortisolNiveau;
+        const egp = Math.max(0, h.EGP_0 * (stressMult - h.state[9]));
+        set('dbgEGP', egp.toFixed(3));
+
+        // ExerciseFactor: multiplikator på insulinvirkning fra motion
+        // 1.0 = ingen motion, >1 = insulin virker stærkere
+        const E2 = h.state[12];
+        const exFac = 1 + h.alpha * E2 * E2;
+        set('dbgExFac', exFac.toFixed(2));
+
+        // ISF (effektiv): profilISF × ExerciseFac — viser hvor meget 1E insulin
+        // reelt sænker BG lige nu. ExerciseFac er den primære dynamiske modulator
+        // fra Hovorka-modellen (motion forstærker insulinvirkning).
+        const isfEff = game.ISF * exFac;
+        set('dbgISFeff', isfEff.toFixed(1));
+
+        set('dbgStressMult', stressMult.toFixed(3));
+    }
+
+    set('dbgAcute', game.acuteStressLevel.toFixed(3));
+    set('dbgChronic', game.chronicStressLevel.toFixed(3));
+    set('dbgHR', (h ? h.heartRate : 60).toFixed(0));
+    set('dbgPoints', game.normoPoints.toFixed(1));
+    set('dbgHypoArea', game.hypoArea.toFixed(1));
+    set('dbgCounterReg', (game.counterRegFactor * 100).toFixed(0) + '%');
+}
+
+// debugDownloadLog() — genererer CSV-fil og trigger download i browseren
+function debugDownloadLog() {
+    if (debugLogData.length === 0) return;
+    const csv = DEBUG_LOG_HEADER + '\n' + debugLogData.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    // Filnavn med dato/tid
+    const now = new Date();
+    const ts = now.toISOString().slice(0, 16).replace(/[T:]/g, '-');
+    a.download = `t1d-debug-${ts}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+
+// debugDownloadScreenshot() — tager screenshot af hele spilvinduet via html2canvas-fallback.
+// Bruger canvas-elementets toDataURL() for grafen, og html2canvas for resten.
+// Simpel implementation: screenshot af hele game-container via DOM→canvas.
+function debugDownloadScreenshot() {
+    const container = document.getElementById('game-container');
+    if (!container) return;
+
+    // Brug html2canvas hvis tilgængeligt, ellers fallback til ren graf-screenshot
+    if (typeof html2canvas !== 'undefined') {
+        html2canvas(container, { backgroundColor: '#0f1923' }).then(canvas => {
+            triggerCanvasDownload(canvas);
+        });
+    } else {
+        // Fallback: download kun graf-canvas
+        if (!bgGraphCanvas) return;
+        triggerCanvasDownload(bgGraphCanvas);
+    }
+}
+
+// Hjælpefunktion: trigger download af et canvas-element som PNG
+function triggerCanvasDownload(canvas) {
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    const now = new Date();
+    const ts = now.toISOString().slice(0, 16).replace(/[T:]/g, '-');
+    a.download = `t1d-screenshot-${ts}.png`;
+    a.click();
+}
 
 
 // =============================================================================
@@ -101,46 +280,90 @@ const sizeCanvas = () => {
 // @param {string} emoji — Ikon-tegnet der skal animeres (fx '💉', '🍔')
 // @param {string} panelId — ID på dock-panelet handlingen kom fra
 // =============================================================================
-function flyIconToGraph(emoji, sourceId) {
-    const source = document.getElementById(sourceId);
+function flyIconToGraph(emoji, sourceId, insulinType) {
     const graph = document.getElementById('bg-graph');
-    if (!source || !graph) return;
+    if (!graph) return;
 
-    // Start-position: midten af kilde-elementet (panel eller ikon)
-    const panelRect = source.getBoundingClientRect();
+    // Find startposition: dock-ikonet for den pågældende type (ikke panelet)
+    const dockMap = {
+        'dock-panel-insulin': '.dock-item.d-insulin',
+        'dock-panel-food': '.dock-item.d-food',
+        'dock-panel-motion': '.dock-item.d-exercise',
+        'dock-panel-measure': '.dock-item.d-measure'
+    };
+    const dockSelector = dockMap[sourceId];
+    const dockItem = dockSelector ? document.querySelector(dockSelector) : document.getElementById(sourceId);
+    if (!dockItem) return;
+
+    const startRect = dockItem.getBoundingClientRect();
     const graphRect = graph.getBoundingClientRect();
 
+    // Opret ikon-element med korrekt hue-rotate for insulin
     const icon = document.createElement('span');
     icon.className = 'flying-icon';
     icon.textContent = emoji;
-    icon.style.left = (panelRect.left + panelRect.width / 2 - 14) + 'px';
-    icon.style.top = (panelRect.top + 20) + 'px';
+
+    // Hue-rotate for insulin-sprøjter: blå for basal, teal for hurtig
+    if (insulinType === 'basal') icon.classList.add('insulin-icon-blue');
+    else if (insulinType === 'fast') icon.classList.add('insulin-icon-teal');
+
+    // Startposition: midten af dock-ikonet
+    const startX = startRect.left + startRect.width / 2 - 14;
+    const startY = startRect.top + startRect.height / 2 - 14;
+    icon.style.left = startX + 'px';
+    icon.style.top = startY + 'px';
     document.body.appendChild(icon);
 
     // Luk panelet med det samme
     closeDockPanels();
 
-    // Beregn tidsmæssig x-position på grafen (hvor ikonet placeres)
-    // Grafens x-akse: padding.left + (timeInDay / 1440) * graphWidth
+    // Beregn tidsmæssig x-position på grafen
     const padding = { left: 58, right: 20 };
     const graphWidth = graphRect.width - padding.left - padding.right;
-    let xFraction = 0.8; // Default: højre del af grafen
+    let xFraction = 0.8;
     if (game) {
         const timeInDay = game.timeInMinutes % 1440;
         xFraction = timeInDay / 1440;
     }
     const targetX = graphRect.left + padding.left + xFraction * graphWidth;
-    const targetY = graphRect.top + graphRect.height - 25;
+    // Grafens tegneområde har padding.bottom=40 — placer ikonet lige over x-aksen
+    const targetY = graphRect.top + graphRect.height - 80;
 
-    // Start animationen til grafens aktuelle tidsposition (næste frame for CSS transition)
-    requestAnimationFrame(() => {
-        icon.style.left = targetX + 'px';
-        icon.style.top = targetY + 'px';
-        icon.classList.add('animate');
-    });
+    // Animér langs en quadratic Bezier-kurve fra dock → kontrolpunkt (opad) → graf.
+    // Bezier giver en naturlig, jævn bue uden clamp-problemer.
+    // P0 = start (dock), P1 = kontrolpunkt (ovenover midtpunktet), P2 = target (graf).
+    const duration = 1000; // ms
+    const startTime = performance.now();
+    // Kontrolpunktet: midt i X, og opad (den højeste del af buen)
+    const cpX = (startX + targetX) / 2;
+    const cpY = Math.min(startY, targetY) - 120; // 120px over det højeste punkt
 
-    // Fjern ikonet efter animationen
-    setTimeout(() => icon.remove(), 700);
+    function animate(now) {
+        const elapsed = now - startTime;
+        const t = Math.min(1, elapsed / duration);
+        // Ease-out cubic for blød deceleration
+        const ease = 1 - Math.pow(1 - t, 3);
+        // Quadratic Bezier: B(t) = (1-t)²·P0 + 2(1-t)t·P1 + t²·P2
+        const inv = 1 - ease;
+        const currentX = inv * inv * startX + 2 * inv * ease * cpX + ease * ease * targetX;
+        const currentY = inv * inv * startY + 2 * inv * ease * cpY + ease * ease * targetY;
+
+        icon.style.left = currentX + 'px';
+        icon.style.top = currentY + 'px';
+        // Fade og krymp i den sidste 25%
+        if (t > 0.75) {
+            const fadeProg = (t - 0.75) / 0.25;
+            icon.style.opacity = (1 - fadeProg).toString();
+            icon.style.transform = `scale(${1 - fadeProg * 0.4})`;
+        }
+
+        if (t < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            icon.remove();
+        }
+    }
+    requestAnimationFrame(animate);
 }
 
 
@@ -246,7 +469,7 @@ function toggleDockPanel(panelId) {
 
     const isCurrentlyVisible = panel.classList.contains('visible');
 
-    // Luk ALLE åbne paneler først
+    // Luk ALLE åbne dock-paneler først
     document.querySelectorAll('.dock-panel.visible').forEach(p => {
         p.classList.remove('visible');
     });
@@ -277,6 +500,18 @@ function closeDockPanels() {
     });
 }
 
+/**
+ * toggleDebugSidebar — Åbn/luk debug-sidebar (uafhængig af dock-paneler).
+ * Debug-sidebaren er et flow-element i main-area, ikke et dock-panel.
+ */
+function toggleDebugSidebar() {
+    const sidebar = document.getElementById('debug-sidebar');
+    if (!sidebar) return;
+    sidebar.classList.toggle('visible');
+    // Resize canvas da debug-sidebar ændrer tilgængelig bredde for grafen
+    setTimeout(sizeCanvas, 350);
+}
+
 
 // =============================================================================
 // initializeApp — Engangs-setup når siden indlæses
@@ -286,7 +521,10 @@ function initializeApp() {
     startButton = document.getElementById('startButton');
     helpButton = document.getElementById('helpButton');
     pauseButton = document.getElementById('pauseButton');
-    speedSelector = document.getElementById('speedSelector');
+    profileButton = document.getElementById('profileButton');
+    speedSelector = document.getElementById('speedDropdown');
+    // Custom dropdown: tilføj .value property så simulator.js kan læse den
+    speedSelector.value = '240'; // Default-værdi (4t/min)
     dayDisplay = document.getElementById('dayDisplay');
     timeDisplay = document.getElementById('timeDisplay');
     cgmValueDisplayGraph = document.getElementById('cgmValueDisplayGraph');
@@ -329,7 +567,6 @@ function initializeApp() {
     cobDisplay = document.getElementById('cobDisplay');
     bgGraphCanvas = document.getElementById('bg-graph');
     graphCtx = bgGraphCanvas.getContext('2d');
-    weightChangeSlider = document.getElementById('weightChangeSlider');
     weightChangeValue = document.getElementById('weightChangeValue');
     steepDropWarningDiv = document.getElementById('steep-drop-warning');
     weightDisplay = document.getElementById('weightDisplay');
@@ -347,7 +584,6 @@ function initializeApp() {
     tir14dDisplay = document.getElementById('tir14d');
     titr14dDisplay = document.getElementById('titr14d');
     avgCgm14dDisplay = document.getElementById('avgCgm14d');
-    lastBolusTimerDisplay = document.getElementById('lastBolusTimer');
     kcalBalance24hDisplay = document.getElementById('kcalBalance24h');
     fastInsulin7dDisplay = document.getElementById('fastInsulin7d');
     basalInsulin7dDisplay = document.getElementById('basalInsulin7d');
@@ -359,7 +595,6 @@ function initializeApp() {
     updatePlayerFixedDataUI();
     updateFoodDisplay();
     updateMotionKcal();
-    weightChangeSlider.style.setProperty('--thumb-color', '#4CAF50');
 
     // =========================================================================
     // EVENT LISTENERS — Forbind UI-elementer med deres handler-funktioner
@@ -374,9 +609,18 @@ function initializeApp() {
     fastInsulinSlider.addEventListener('input', (e) => fastInsulinValue.textContent = parseFloat(e.target.value).toFixed(1));
     longInsulinSlider.addEventListener('input', (e) => longInsulinValue.textContent = e.target.value);
 
-    // Fjern fokus fra ALLE slidere når musen slippes, så keyboard shortcuts virker igen
-    [fastInsulinSlider, longInsulinSlider, carbsSlider, proteinSlider, fatSlider].forEach(slider => {
-        slider.addEventListener('change', () => slider.blur());
+    // --- Global fokus-fjernelse efter enhver UI-interaktion ---
+    // Knapper, selects og slidere beholder fokus efter klik/ændring,
+    // hvilket blokerer keyboard shortcuts (tag === 'INPUT'/'SELECT'/'BUTTON').
+    // Løsning: fjern fokus fra ALLE interaktive elementer efter brug.
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('button, select, input[type="range"]');
+        if (el) setTimeout(() => el.blur(), 50);
+    });
+    document.addEventListener('change', (e) => {
+        if (e.target.matches('select, input[type="range"]')) {
+            setTimeout(() => e.target.blur(), 50);
+        }
     });
 
     // --- Game control buttons ---
@@ -394,17 +638,70 @@ function initializeApp() {
     helpButton.addEventListener('click', showHelpPopup);
     pauseButton.addEventListener('click', togglePause);
 
+    // Profil-knap: åbner profil-popup til redigering af vægt/ICR/ISF
+    profileButton.addEventListener('click', () => {
+        showProfilePopup();
+    });
+
     // --- Mute button: toggler lyd (#12: ikon viser nuværende status) ---
     muteButton.addEventListener('click', () => {
         isMuted = !isMuted;
-        // (#12) Vis nuværende status: 🔊 = lyd er tændt, 🔇 = lyd er slukket
-        muteButton.textContent = isMuted ? '\u{1F507}' : '\u{1F50A}';
+        // Vis nuværende status: 🔊 = lyd tændt, 🔇 = lyd slukket
+        const muteIcon = document.getElementById('muteIcon');
+        if (muteIcon) muteIcon.textContent = isMuted ? '\u{1F507}' : '\u{1F50A}';
         if (sounds && Tone.Destination) Tone.Destination.mute = isMuted;
     });
 
-    // --- Hastigheds-vælger ---
-    speedSelector.addEventListener('change', (e) => {
-        if (game) game.simulationSpeed = parseInt(e.target.value);
+    // --- Custom hastigheds-dropdown (Mac-stil popup-menu) ---
+    const speedTrigger = document.getElementById('speedTrigger');
+    const speedMenu = document.getElementById('speedMenu');
+    const speedOptions = speedMenu.querySelectorAll('.speed-option');
+
+    // Åbn/luk menuen ved klik på trigger-knappen
+    speedTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = speedSelector.classList.contains('open');
+        if (isOpen) {
+            // Luk menuen
+            speedMenu.classList.remove('visible');
+            setTimeout(() => speedSelector.classList.remove('open'), 150);
+        } else {
+            // Åbn menuen med animation
+            speedSelector.classList.add('open');
+            // Trigger reflow så CSS-transition virker (display:none → block → animate)
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    speedMenu.classList.add('visible');
+                });
+            });
+        }
+    });
+
+    // Vælg en hastighed ved klik på en option
+    speedOptions.forEach(opt => {
+        opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const val = opt.dataset.value;
+            // Opdater valgt state
+            speedOptions.forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            // Opdater trigger-tekst og intern value
+            speedTrigger.textContent = opt.textContent + ' ▾';
+            speedSelector.value = val;
+            // Opdater simulation
+            if (game) game.simulationSpeed = parseInt(val);
+            // Luk menuen
+            speedMenu.classList.remove('visible');
+            setTimeout(() => speedSelector.classList.remove('open'), 150);
+        });
+    });
+
+    // Luk menuen ved klik udenfor
+    document.addEventListener('click', (e) => {
+        if (!speedSelector.contains(e.target) && speedSelector.classList.contains('open')) {
+            speedMenu.classList.remove('visible');
+            setTimeout(() => speedSelector.classList.remove('open'), 150);
+        }
     });
 
     // --- Food buttons: preset meals + "Lav selv" popup ---
@@ -423,31 +720,31 @@ function initializeApp() {
     // --- Insulin buttons: preset-knapper + custom slider ---
     // Hurtig insulin presets (1, 2, 4 enheder)
     document.getElementById('fastPreset1').addEventListener('click', () => {
-        if(game) { game.addFastInsulin(1); flyIconToGraph('\u{1F489}', 'dock-panel-insulin'); }
+        if(game) { game.addFastInsulin(1); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'fast'); }
     });
     document.getElementById('fastPreset2').addEventListener('click', () => {
-        if(game) { game.addFastInsulin(2); flyIconToGraph('\u{1F489}', 'dock-panel-insulin'); }
+        if(game) { game.addFastInsulin(2); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'fast'); }
     });
     document.getElementById('fastPreset4').addEventListener('click', () => {
-        if(game) { game.addFastInsulin(4); flyIconToGraph('\u{1F489}', 'dock-panel-insulin'); }
+        if(game) { game.addFastInsulin(4); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'fast'); }
     });
     // Hurtig insulin custom slider
     giveFastInsulinButton.addEventListener('click', () => {
-        if(game) { game.addFastInsulin(parseFloat(fastInsulinSlider.value)); flyIconToGraph('\u{1F489}', 'dock-panel-insulin'); }
+        if(game) { game.addFastInsulin(parseFloat(fastInsulinSlider.value)); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'fast'); }
     });
     // Basal insulin presets (1/3, 2/3, 1x anbefalet)
     document.getElementById('basalPreset1').addEventListener('click', () => {
-        if(game) { const dose = Math.round(game.basalDose / 3); game.addLongInsulin(dose); flyIconToGraph('\u{1F58A}\uFE0F', 'dock-panel-insulin'); }
+        if(game) { const dose = Math.round(game.basalDose / 3); game.addLongInsulin(dose); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'basal'); }
     });
     document.getElementById('basalPreset2').addEventListener('click', () => {
-        if(game) { const dose = Math.round(game.basalDose * 2 / 3); game.addLongInsulin(dose); flyIconToGraph('\u{1F58A}\uFE0F', 'dock-panel-insulin'); }
+        if(game) { const dose = Math.round(game.basalDose * 2 / 3); game.addLongInsulin(dose); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'basal'); }
     });
     document.getElementById('basalPreset3').addEventListener('click', () => {
-        if(game) { game.addLongInsulin(game.basalDose); flyIconToGraph('\u{1F58A}\uFE0F', 'dock-panel-insulin'); }
+        if(game) { game.addLongInsulin(game.basalDose); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'basal'); }
     });
     // Basal insulin custom slider
     giveLongInsulinButton.addEventListener('click', () => {
-        if(game) { game.addLongInsulin(parseInt(longInsulinSlider.value)); flyIconToGraph('\u{1F58A}\uFE0F', 'dock-panel-insulin'); }
+        if(game) { game.addLongInsulin(parseInt(longInsulinSlider.value)); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'basal'); }
     });
 
     // --- Motion controls ---
@@ -477,8 +774,28 @@ function initializeApp() {
         });
     }
 
-    // --- Debug checkbox ---
+    // --- Debug checkboxes ---
     debugTrueBgCheckbox.addEventListener('change', () => { if(game) drawGraph(); });
+
+    // Debug log checkbox: aktiver/deaktiver CSV-logning
+    const debugLogCheckbox = document.getElementById('debugLogCheckbox');
+    const debugLogControls = document.getElementById('debugLogControls');
+    debugLogCheckbox.addEventListener('change', () => {
+        debugLogEnabled = debugLogCheckbox.checked;
+        debugLogControls.style.display = debugLogEnabled ? 'flex' : 'none';
+        const statusEl = document.getElementById('debugLogStatus');
+        if (statusEl) statusEl.textContent = debugLogEnabled ? 'Logger...' : 'Klar';
+    });
+
+    // Debug log download, screenshot og ryd knapper
+    document.getElementById('debugLogDownload').addEventListener('click', debugDownloadLog);
+    document.getElementById('debugScreenshot').addEventListener('click', debugDownloadScreenshot);
+    document.getElementById('debugLogClear').addEventListener('click', () => {
+        debugLogData = [];
+        debugLogLastTime = -Infinity;
+        const countEl = document.getElementById('debugLogCount');
+        if (countEl) countEl.textContent = '0 rækker';
+    });
 
     // =========================================================================
     // DOCK PANEL SYSTEM — Klik på dock-items åbner/lukker fold-op paneler
@@ -589,14 +906,23 @@ function initializeApp() {
     });
 
     // =========================================================================
-    // CORNER TOOLS — Debug og fysiologi ikoner (nu i top-bar højre side)
+    // SETTINGS TOOLS — Debug, fysiologi, hjælp, lyd (i bottom-bar th)
     // =========================================================================
-    document.querySelectorAll('.corner-tool-btn[data-panel]').forEach(btn => {
+    document.querySelectorAll('.settings-item[data-panel]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             toggleDockPanel(btn.dataset.panel);
         });
     });
+
+    // Debug-sidebar toggle (separat fra dock-paneler)
+    const debugToggleBtn = document.getElementById('debugToggleButton');
+    if (debugToggleBtn) {
+        debugToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDebugSidebar();
+        });
+    }
 
     // =========================================================================
     // KEYBOARD SHORTCUTS — RTS-stil chord-system
@@ -625,14 +951,14 @@ function initializeApp() {
 
         // --- Insulin panel åbent ---
         if (isPanelOpen('dock-panel-insulin')) {
-            if (key === 'z') { game.addFastInsulin(1); flyIconToGraph('\u{1F489}', 'dock-panel-insulin'); return true; }
-            if (key === 'x') { game.addFastInsulin(2); flyIconToGraph('\u{1F489}', 'dock-panel-insulin'); return true; }
-            if (key === 'c') { game.addFastInsulin(4); flyIconToGraph('\u{1F489}', 'dock-panel-insulin'); return true; }
-            if (key === 'v') { game.addFastInsulin(parseFloat(fastInsulinSlider.value)); flyIconToGraph('\u{1F489}', 'dock-panel-insulin'); return true; }
-            if (key === 'a') { game.addLongInsulin(Math.round(game.basalDose / 3)); flyIconToGraph('\u{1F58A}\uFE0F', 'dock-panel-insulin'); return true; }
-            if (key === 's') { game.addLongInsulin(Math.round(game.basalDose * 2 / 3)); flyIconToGraph('\u{1F58A}\uFE0F', 'dock-panel-insulin'); return true; }
-            if (key === 'd') { game.addLongInsulin(game.basalDose); flyIconToGraph('\u{1F58A}\uFE0F', 'dock-panel-insulin'); return true; }
-            if (key === 'f') { game.addLongInsulin(parseInt(longInsulinSlider.value)); flyIconToGraph('\u{1F58A}\uFE0F', 'dock-panel-insulin'); return true; }
+            if (key === 'z') { game.addFastInsulin(1); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'fast'); return true; }
+            if (key === 'x') { game.addFastInsulin(2); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'fast'); return true; }
+            if (key === 'c') { game.addFastInsulin(4); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'fast'); return true; }
+            if (key === 'v') { game.addFastInsulin(parseFloat(fastInsulinSlider.value)); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'fast'); return true; }
+            if (key === 'a') { game.addLongInsulin(Math.round(game.basalDose / 3)); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'basal'); return true; }
+            if (key === 's') { game.addLongInsulin(Math.round(game.basalDose * 2 / 3)); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'basal'); return true; }
+            if (key === 'd') { game.addLongInsulin(game.basalDose); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'basal'); return true; }
+            if (key === 'f') { game.addLongInsulin(parseInt(longInsulinSlider.value)); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'basal'); return true; }
         }
 
         // --- Mad panel åbent ---
@@ -645,8 +971,8 @@ function initializeApp() {
 
         // --- Målinger panel åbent ---
         if (isPanelOpen('dock-panel-measure')) {
-            if (key === 'z') { game.fingerprick(); flyIconToGraph('\u{1FA78}', 'dock-panel-measure'); return true; }
-            if (key === 'x') { game.ketoneTest(); flyIconToGraph('\u{1F9EA}', 'dock-panel-measure'); return true; }
+            if (key === 'z') { game.performFingerprick(); flyIconToGraph('\u{1FA78}', 'dock-panel-measure'); return true; }
+            if (key === 'x') { game.performKetoneTest(); flyIconToGraph('\u{1F9EA}', 'dock-panel-measure'); return true; }
         }
 
         return false;
@@ -670,7 +996,7 @@ function initializeApp() {
             e.preventDefault();
             const dose = key === '½' ? 0.5 : parseInt(key);
             game.addFastInsulin(dose);
-            flyIconToGraph('\u{1F489}', 'dock-panel-insulin');
+            flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'fast');
             chordFirstKey = null;
             return;
         }
@@ -706,6 +1032,25 @@ function initializeApp() {
             chordTimeout = setTimeout(() => { chordFirstKey = null; }, CHORD_TIMEOUT_MS);
         }
     });
+
+    // --- DEV DEFAULTS: Slå debug-features til automatisk under udvikling ---
+    // Fjern denne blok når spillet er klar til release.
+    const debugSidebar = document.getElementById('debug-sidebar');
+    if (debugSidebar) debugSidebar.classList.add('visible');
+
+    // Vis sand BG-linje (blå) som standard
+    if (debugTrueBgCheckbox) debugTrueBgCheckbox.checked = true;
+
+    // Aktiver CSV-logning som standard
+    const debugLogCheckboxEl = document.getElementById('debugLogCheckbox');
+    if (debugLogCheckboxEl) {
+        debugLogCheckboxEl.checked = true;
+        debugLogEnabled = true;
+        const ctrl = document.getElementById('debugLogControls');
+        if (ctrl) ctrl.style.display = 'flex';
+        const statusEl = document.getElementById('debugLogStatus');
+        if (statusEl) statusEl.textContent = 'Logger...';
+    }
 }
 
 

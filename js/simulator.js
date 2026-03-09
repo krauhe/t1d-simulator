@@ -159,6 +159,7 @@ class Simulator {
         // --- Aggregate state ---
         this.iob = 0;                  // Insulin On Board: total active fast insulin (units)
         this.cob = 0;                  // Carbs On Board: total unabsorbed carbs (grams)
+        this.smoothHeartRate = 60;     // Glidende puls [bpm] — falder gradvist efter motion
         this.lastInsulinTime = -Infinity; // Time of last insulin injection (for DKA detection)
 
         // --- DKA (Diabetic Ketoacidosis) tracking ---
@@ -234,9 +235,12 @@ class Simulator {
         // Higher values mean insulin is less effective (ISF is divided by this).
         this.insulinResistanceFactor = 1.0;
 
-        // --- Bonus range tracking ---
-        // Tracks whether BG is in the tight bonus range (5.0-6.0) for sound feedback
-        this.isInBonusRange = false;
+        // --- Zone-lyd tracking ---
+        // Tracker om BG er i bestemte zoner så lyde kun spilles ved overgang (ikke hvert tick).
+        this.isInBonusRange = true;       // 5.0-6.0 mmol/L → stjernedrys (true ved start så lyd ikke triggers)
+        this.isInRange = true;            // 4.0-10.0 mmol/L → positiv lyd (true ved start)
+        this.isInHyperZone = false;       // > 10.0 → "nedern" lyd
+        this.lastHypoWarnTime = -Infinity; // cooldown for hypo-fare lyd (sim-minutter)
 
         // --- Stress hormones (cortisol, glucagon, adrenaline) ---
         // These hormones increase the liver's glucose production and insulin resistance.
@@ -258,6 +262,44 @@ class Simulator {
         // At acuteStress = 1.0: double production (multiplier = 2.0).
         this.acuteStressLevel = 0.0;
         this.chronicStressLevel = 0.0;
+
+        // --- Hypoglykæmi-unawareness (HAAF) — Kontinuert areal-baseret model ---
+        //
+        // Baseret på: Dagogo-Jack et al. 1993, Cryer 2001/2013, Reno et al. 2013,
+        // Fanelli et al. 1993, Cranston et al. 1994, Rickels et al. 2019.
+        //
+        // Modellen bruger to modstridende kræfter:
+        //
+        // 1. SKADE (hypoArea): Akkumuleret "hypo-belastning"
+        //    hypoArea += max(0, 3.0 - trueBG) × dt  [mmol/L × min]
+        //    Jo dybere og længere hypo, jo mere skade. BG=2.0 i 30 min giver
+        //    (3.0-2.0) × 30 = 30 mmol·min/L. BG=3.5 giver 0 (over tærskel).
+        //
+        // 2. RECOVERY: Når BG er over 4.0, falder hypoArea eksponentielt
+        //    med halveringstid HAAF_RECOVERY_HALFLIFE (sim-minutter).
+        //    Klinisk: 2-3 uger → komprimeret til ~3 sim-dage for gameplay.
+        //
+        // counterRegFactor beregnes fra hypoArea via sigmoid:
+        //    counterRegFactor = 0.3 + 0.7 × exp(-hypoArea / HAAF_DAMAGE_SCALE)
+        //    0 areal → 1.0 (fuld respons)
+        //    Stort areal → 0.3 (svær HAAF, 70% reduktion)
+        //
+        // Parametre kalibreret så:
+        //   - En kort hypo (BG=2.5 i 20 min) giver ~20% reduktion
+        //   - To hypoer samme dag giver ~40-50% reduktion
+        //   - 3 sim-dage uden hypo → næsten fuld genopretning
+        //
+        // HAAF_DAMAGE_SCALE: areal der giver ~63% reduktion [mmol·min/L]
+        //   Sat til 30 — svarende til BG=2.0 i 30 min, eller BG=2.5 i 60 min
+        // HAAF_RECOVERY_HALFLIFE: halveringstid for recovery [sim-minutter]
+        //   Sat til 3×24×60 = 4320 min (3 sim-dage). Klinisk evidens:
+        //   Dagogo-Jack 1993: 2-3 uger → awareness restored
+        //   Fanelli 1993: 3 måneder → adrenalin delvist restored
+        //   Vi komprimerer til 3 dage for gameplay-balance.
+        this.hypoArea = 0.0;              // Akkumuleret hypo-belastning [mmol·min/L]
+        this.counterRegFactor = 1.0;      // Effektiv kontraregulerings-styrke (0.3-1.0)
+        this.HAAF_DAMAGE_SCALE = 30;      // Skala for skade [mmol·min/L]
+        this.HAAF_RECOVERY_HALFLIFE = 3 * 24 * 60; // Recovery t½ [sim-min] (3 dage)
 
         // Initialiser Hovorka-modellen til steady-state.
         // initializeSteadyState finder automatisk den insulin-rate der giver
@@ -577,23 +619,34 @@ class Simulator {
             (this.totalSimMinutes - f.startTime) < 180);
 
         // --- 3. BEREGN PULS (for motionseffekt i Hovorka E1/E2) ---
-        // Motionsintensitet mappes til puls:
+        // Motionsintensitet mappes til målpuls:
         //   Lav → 100 bpm, Medium → 130 bpm, Høj → 160 bpm
+        // Puls stiger/falder GRADVIST via eksponentiel smoothing:
+        //   Under motion: t½ ≈ 2 min (hurtig stigning)
+        //   Efter motion:  t½ ≈ 5 min (gradvis recovery — realistisk)
         // Stresskatekolaminer (anaerob) håndteres via acuteStressLevel
-        let currentHeartRate = this.hovorka.HR_base;
+        let targetHeartRate = this.hovorka.HR_base;
         this.activeMotion.forEach(motion => {
             if (this.totalSimMinutes >= motion.startTime &&
                 this.totalSimMinutes < (motion.startTime + motion.duration)) {
                 const hrMap = { "Lav": 100, "Medium": 130, "Høj": 160 };
-                currentHeartRate = Math.max(currentHeartRate, hrMap[motion.intensity] || 100);
+                targetHeartRate = Math.max(targetHeartRate, hrMap[motion.intensity] || 100);
 
                 // Anaerob komponent (høj intensitet): opbyg akut stress
                 if (motion.intensity === "Høj") {
-                    this.acuteStressLevel = Math.min(2.0,
+                    this.acuteStressLevel = Math.min(0.4,
                         this.acuteStressLevel + 0.02 * simulatedMinutesPassed);
                 }
             }
         });
+
+        // Glidende puls: eksponentiel tilnærmelse mod targetHeartRate.
+        // Hurtigere op (t½≈2 min) end ned (t½≈5 min) — fysiologisk realistisk.
+        const isRising = targetHeartRate > this.smoothHeartRate;
+        const hrHalfLife = isRising ? 2.0 : 5.0;  // sim-minutter
+        const hrDecay = 1 - Math.exp(-Math.log(2) / hrHalfLife * simulatedMinutesPassed);
+        this.smoothHeartRate += (targetHeartRate - this.smoothHeartRate) * hrDecay;
+        const currentHeartRate = this.smoothHeartRate;
 
         // --- 4. SÆT HOVORKA-INPUTS OG KØR MODELLEN ---
         const stressMultiplikator = 1.0 + this.acuteStressLevel +
@@ -776,12 +829,38 @@ class Simulator {
     // @param {number} minutesPassed - Simulated minutes elapsed this tick
     // =========================================================================
     updateNormoPoints(minutesPassed) {
-        // Check for entering bonus range (triggers a pleasant sound)
+        // Check for entering bonus range (triggers stjernedrys-lyd)
         const inBonusNow = this.trueBG >= 5.0 && this.trueBG <= 6.0;
         if(inBonusNow && !this.isInBonusRange) {
             playSound('bonus');
         }
         this.isInBonusRange = inBonusNow;
+
+        // Hypo-fare lyd: spilles når BG er under 4.5 OG faldende.
+        // Cooldown på 5 sim-minutter forhindrer at lyden spammer ved tick-fluktuationer.
+        const bgFalling = this.trueBG < this.lastTrueBGForDropCheck;
+        if (this.trueBG < 4.5 && bgFalling
+            && this.totalSimMinutes - this.lastHypoWarnTime >= 5) {
+            playSound('hypoWarn');
+            this.lastHypoWarnTime = this.totalSimMinutes;
+        }
+
+        // In-range lyd: positiv lyd når BG kommer tilbage i grøn zone (4.0-10.0)
+        // fra enten hypo (<4) eller hyper (>10). Spilles kun ved overgang ind.
+        const inRangeNow = this.trueBG >= 4.0 && this.trueBG <= 10.0;
+        if (inRangeNow && !this.isInRange) {
+            playSound('inRange');
+        }
+        this.isInRange = inRangeNow;
+
+        // Hyper-zone lyd: spilles når BG krydser over 10.0.
+        // Mindre dramatisk end hypo — en kort "nedern" tone der signalerer
+        // at spilleren er gået ud af målzonen opad.
+        const inHyperNow = this.trueBG > 10.0;
+        if (inHyperNow && !this.isInHyperZone) {
+            playSound('hyperWarn');
+        }
+        this.isInHyperZone = inHyperNow;
 
         // Determine point weight based on current BG
         let bgWeight = 0;
@@ -1015,34 +1094,109 @@ class Simulator {
 
         // --- Kontraregulering (glucagon/adrenalin-respons ved lavt BG) ---
         // Kroppen frigiver kontraregulatoriske hormoner når BG falder under ~4 mmol/L.
-        // Responsen er gradueret — stærkere jo lavere BG er:
-        //   4.0 mmol/L: svag respons (begyndende adrenalin-frigivelse)
-        //   3.5 mmol/L: moderat respons (mærkbar glukagon + adrenalin)
-        //   2.5 mmol/L: kraftig respons (massiv kontraregulering)
+        // Responsen er gradueret — stærkere jo lavere BG er.
         //
         // Fysiologisk grundlag: Cryer 2013 beskriver tærskler for kontraregulering:
         //   Glukagon: ~3.8 mmol/L, Adrenalin: ~3.8 mmol/L, Kortisol: ~3.2 mmol/L
         //
+        // Kontraregulering ved T1D:
+        // T1D-patienter har SVÆKKET kontraregulering sammenlignet med raske:
+        //   - Glukagon-respons: tabt inden 1-5 år (Bengtsen 2021)
+        //   - Adrenalin-respons: bevaret men svækkes ved gentagne hypoer (HAAF)
+        //   - Cap sat til 2.0 (vs. ~5.0 hos raske) for at afspejle dette
+        //
+        // counterRegFactor: reduceres kontinuert baseret på akkumuleret hypoArea.
+        // Se updateHAAF() for detaljer.
+        //
         // Klinisk betydning: Denne respons kan give "Somogyi rebound" —
-        // BG stiger kraftigt efter en hypoglykæmi-episode, især om natten.
+        // BG stiger efter en hypoglykæmi-episode, især om natten.
+        // Men ved massiv overdosis er responsen utilstrækkelig.
         if (this.trueBG < 4.0) {
-            // Gradueret respons: stærkere jo lavere BG er
-            let hypoStressRate;
-            if (this.trueBG < 2.5) {
-                hypoStressRate = 0.06;       // Svær hypo — massiv kontraregulering
-            } else if (this.trueBG < 3.0) {
-                hypoStressRate = 0.04;       // Alvorlig hypo
-            } else if (this.trueBG < 3.5) {
-                hypoStressRate = 0.02;       // Moderat hypo
-            } else {
-                hypoStressRate = 0.008;      // Begyndende hypo (3.5-4.0)
-            }
-            this.acuteStressLevel = Math.min(2.0, this.acuteStressLevel + hypoStressRate * simulatedMinutesPassed);
+            // Gradueret respons: stærkere jo lavere BG er.
+            // T1D-patienter har kun adrenalin (glukagon tabt) — SVAG respons.
+            //
+            // VIGTIGT: Cap sat lavt (0.4) så kontraregulering IKKE kan redde
+            // spilleren fra dårlige beslutninger. Pædagogisk pointe:
+            // hypo ER farligt ved T1D, og spilleren skal lære at undgå det.
+            //
+            // Beregning af tid til cap (0.4):
+            //   BG=3.5: 0.002 + 0.01*0.25 = 0.0045/min → 0.4 på ~89 min
+            //   BG=3.0: 0.002 + 0.01*1.0  = 0.012/min  → 0.4 på ~33 min
+            //   BG=2.0: 0.002 + 0.01*4.0  = 0.042/min  → 0.4 på ~10 min
+            //
+            // Med cap=0.4 og circadian=0: stressMultiplier max = 1.4
+            // Med aktiv insulin (x3≈1.3): EGP = EGP_0 × max(0, 1.4-1.3) = EGP_0 × 0.1
+            // → Leveren kan næsten IKKE kompensere. Hypo er reelt farligt.
+            const bgDeficit = 4.0 - this.trueBG;   // 0.0 ved BG=4, 2.0 ved BG=2
+            const baseRate = 0.002 + 0.01 * bgDeficit * bgDeficit;
+            // Reducer med counterRegFactor (HAAF — akkumuleret hypo-belastning)
+            const hypoStressRate = baseRate * this.counterRegFactor;
+            this.acuteStressLevel = Math.min(0.4, this.acuteStressLevel + hypoStressRate * simulatedMinutesPassed);
         }
+
+        // Opdater HAAF (hypoArea akkumulering + recovery)
+        this.updateHAAF(simulatedMinutesPassed);
 
         // Clamp to zero to prevent floating-point drift below zero
         this.acuteStressLevel = Math.max(0, this.acuteStressLevel);
         this.chronicStressLevel = Math.max(0, this.chronicStressLevel);
+    }
+
+    // =========================================================================
+    // HYPOGLYKÆMI-UNAWARENESS (HAAF) — Kontinuert areal-baseret model
+    // =========================================================================
+    //
+    // Modellerer HAAF som en balance mellem skade og recovery:
+    //
+    // SKADE: Når BG < 3.0 mmol/L akkumuleres hypoArea proportionelt med
+    //   dybden under tærskel: ΔhypoArea = max(0, 3.0 - BG) × dt
+    //   Tærskel 3.0 (ikke 3.5) fordi det er ved denne dybde at den
+    //   neuronale adaptation primært sker (Cryer 2013).
+    //
+    // RECOVERY: hypoArea henfader eksponentielt med t½ = 3 sim-dage
+    //   når BG er over 4.0 (hypo-fri). Dette modellerer den kliniske
+    //   observation at 2-3 uger hypo-fri genopretter awareness
+    //   (Dagogo-Jack 1993, Cranston 1994, Fanelli 1993).
+    //
+    // COUNTERREGFACTOR: Sigmoid mapping fra hypoArea:
+    //   counterRegFactor = 0.3 + 0.7 × exp(-hypoArea / HAAF_DAMAGE_SCALE)
+    //   Går fra 1.0 (frisk) mod 0.3 (svær HAAF) asymptotisk.
+    //
+    // Fordele ved denne model vs. diskret episode-tælling:
+    //   - Proportionel: dyb hypo (BG=1.5) giver mere skade end mild (BG=2.8)
+    //   - Kontinuert: ingen arbitrær "10 min"-tærskel for at tælle en episode
+    //   - Reversibel: recovery sker gradvist så længe man undgår hypo
+    //   - Realistisk: kort, mild hypo giver lille effekt; langvarig, dyb hypo
+    //     giver stor, langvarig effekt
+    //
+    // Kilder: Dagogo-Jack 1993, Fanelli 1993, Cranston 1994,
+    //         Cryer 2001/2013, Reno 2013, Rickels 2019
+    // =========================================================================
+    updateHAAF(simulatedMinutesPassed) {
+        const HYPO_DAMAGE_THRESHOLD = 3.0; // mmol/L — under dette akkumuleres skade
+
+        // --- SKADE: akkumuler hypoArea når BG er under tærskel ---
+        if (this.trueBG < HYPO_DAMAGE_THRESHOLD) {
+            const deficit = HYPO_DAMAGE_THRESHOLD - this.trueBG; // mmol/L under tærskel
+            this.hypoArea += deficit * simulatedMinutesPassed;   // [mmol·min/L]
+        }
+
+        // --- RECOVERY: eksponentielt henfald af hypoArea når BG er ok ---
+        // Recovery sker kun når BG > 4.0 (ingen aktiv hypo).
+        // Under hypo (BG < 4.0) stopper recovery — kroppen kan ikke "reparere"
+        // mens den stadig er under stress.
+        if (this.trueBG >= 4.0 && this.hypoArea > 0) {
+            const recoveryDecay = Math.log(2) / this.HAAF_RECOVERY_HALFLIFE;
+            this.hypoArea *= Math.exp(-recoveryDecay * simulatedMinutesPassed);
+            // Clamp til 0 for at undgå floating-point støv
+            if (this.hypoArea < 0.01) this.hypoArea = 0;
+        }
+
+        // --- COUNTERREGFACTOR: sigmoid mapping fra hypoArea ---
+        // 0.3 er gulv (svær HAAF — 70% reduktion, aldrig helt 0)
+        // 0.7 er range (fra 0.3 til 1.0)
+        // HAAF_DAMAGE_SCALE bestemmer hvor hurtigt vi når gulvet
+        this.counterRegFactor = 0.3 + 0.7 * Math.exp(-this.hypoArea / this.HAAF_DAMAGE_SCALE);
     }
 
     // =========================================================================
@@ -1061,7 +1215,7 @@ class Simulator {
      * @param {number} amount - Stress increment (0.0-2.0 scale)
      */
     addAcuteStress(amount) {
-        this.acuteStressLevel = Math.min(2.0, this.acuteStressLevel + amount);
+        this.acuteStressLevel = Math.min(0.4, this.acuteStressLevel + amount);
         logEvent(`Akut stresshormon-stigning: +${amount.toFixed(2)} (fx adrenalin/glukagon)`, 'event');
     }
 
@@ -1143,7 +1297,7 @@ class Simulator {
         cgmDataPoints.push({ time: this.totalSimMinutes, value: measuredBG, type: 'fingerprick' });
 
         // Floating label over målepunktet på grafen (spil-agtigt feedback)
-        const bgColor = measuredBG < 4.0 ? '#e53e3e' : measuredBG > 10.0 ? '#e53e3e' : '#38a169';
+        const bgColor = measuredBG < 4.0 ? '#b91c1c' : measuredBG > 10.0 ? '#b91c1c' : '#38a169';
         this.floatingLabels.push({
             time: this.totalSimMinutes,
             value: measuredBG,
@@ -1228,7 +1382,7 @@ class Simulator {
         logEvent(`Keton-stik: ${measuredClamped.toFixed(1)} mmol/L — ${statusShort}`, 'ketone-test', { value: measuredClamped.toFixed(1) });
 
         // Floating label over CGM-positionen på grafen
-        const popupColor = measuredClamped < 0.6 ? '#38a169' : measuredClamped < 1.5 ? '#d69e2e' : measuredClamped < 3.0 ? '#e67e22' : '#e53e3e';
+        const popupColor = measuredClamped < 0.6 ? '#38a169' : measuredClamped < 1.5 ? '#d69e2e' : measuredClamped < 3.0 ? '#e67e22' : '#b91c1c';
         this.floatingLabels.push({
             time: this.totalSimMinutes,
             value: this.cgmBG,  // Vis ved CGM-niveauet (keton er ikke BG)
@@ -1295,15 +1449,15 @@ class Simulator {
     updateWeight() {
         const netKcal = this.totalKcalConsumed - (this.totalKcalBurnedBase + this.totalKcalBurnedMotion);
         this.weightChangeKg = netKcal / KCAL_PER_KG_WEIGHT;
-        weightChangeSlider.value = Math.max(-5, Math.min(5, this.weightChangeKg));
-        weightChangeValue.textContent = this.weightChangeKg.toFixed(1);
 
-        // Color coding for the weight slider thumb
-        const absWeightChange = Math.abs(this.weightChangeKg);
-        let thumbColor = '#4CAF50';        // Green: stable weight
-        if (absWeightChange > 3.5) thumbColor = '#F44336';      // Red: danger zone
-        else if (absWeightChange > 1.5) thumbColor = '#FFC107';  // Yellow: warning
-        weightChangeSlider.style.setProperty('--thumb-color', thumbColor);
+        // Opdater vægtændring-værdien i stats-tabellen
+        const wcEl = document.getElementById('weightChangeValue');
+        if (wcEl) {
+            wcEl.textContent = this.weightChangeKg.toFixed(1);
+            // Farvekodning: grøn=stabil, gul=advarsel, rød=fare
+            const abs = Math.abs(this.weightChangeKg);
+            wcEl.style.color = abs > 3.5 ? '#b91c1c' : abs > 1.5 ? '#d69e2e' : '';
+        }
     }
 
     // =========================================================================
@@ -1337,21 +1491,38 @@ class Simulator {
         if (this.isGameOver) return; // Don't trigger multiple game overs
 
         // Condition 1: Severe hypoglycemia — instant death
-        if (this.trueBG < 1.5) { this.gameOver("GAME OVER",
-            `<strong>Svær Hypoglykæmi</strong><br><br>` +
-            `Dit blodsukker faldt til ${this.trueBG.toFixed(1)} mmol/L — under den kritiske grænse på 1.5 mmol/L.<br><br>` +
-            `<strong>Hvad skete der?</strong><br>` +
-            `Hjernen er afhængig af glukose som energikilde. Ved meget lavt blodsukker ` +
-            `kan hjernen ikke fungere normalt, hvilket fører til kramper, bevidstløshed og i værste fald død.<br><br>` +
-            `<strong>Sådan undgår du det næste gang:</strong><br>` +
-            `• Spis hurtigt sukker (dextrose, juice) ved de første tegn på lavt blodsukker<br>` +
-            `• Hold øje med dit CGM — faldende kurve kræver handling<br>` +
-            `• Undgå for store insulindoser i forhold til maden<br>` +
-            `• Brug glukagon (✚) som nødbehandling ved alvorlig hypo<br><br>` +
-            `Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return; }
+        if (this.trueBG < 1.5) {
+            this.gameOver("Svær Hypoglykæmi", {
+                cause: `Dit blodsukker faldt til ${this.trueBG.toFixed(1)} mmol/L — under den kritiske grænse på 1.5 mmol/L.`,
+                explanation:
+                    `Hjernen er afhængig af glukose som energikilde. Ved meget lavt blodsukker ` +
+                    `kan hjernen ikke fungere normalt, hvilket fører til kramper, bevidstløshed og i værste fald død.`,
+                tips: [
+                    'Spis hurtigt sukker (dextrose, juice) ved de første tegn på lavt blodsukker',
+                    'Hold øje med dit CGM — faldende kurve kræver handling',
+                    'Pas på kombinationen af insulin og motion — motion øger insulinens virkning og kan give uventet lavt blodsukker. Reducer dosis eller spis ekstra før motion',
+                    'Brug glukagon (✚) som nødbehandling ved alvorlig hypo'
+                ]
+            });
+            return;
+        }
 
         // Condition 2: Extreme weight change
-        if (Math.abs(this.weightChangeKg) > 5.0) { this.gameOver("GAME OVER", `Vægtændring! Din vægtændring oversteg 5 kg (${this.weightChangeKg.toFixed(1)} kg).<br>Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return; }
+        if (Math.abs(this.weightChangeKg) > 5.0) {
+            this.gameOver("Ekstrem Vægtændring", {
+                cause: `Din vægtændring oversteg 5 kg (${this.weightChangeKg.toFixed(1)} kg).`,
+                explanation:
+                    `En vægtændring over 5 kg på kort tid indikerer alvorlig ubalance mellem ` +
+                    `kalorieindtag og -forbrug. Ved diabetes kan dette skyldes manglende insulin ` +
+                    `(kroppen forbrænder fedt og muskler) eller for meget mad i forhold til aktivitetsniveauet.`,
+                tips: [
+                    'Sørg for at spise regelmæssigt og tilstrækkeligt',
+                    'Hold øje med din kaloriebalance i statistikken',
+                    'Husk din daglige basal-insulin — uden den nedbryder kroppen væv'
+                ]
+            });
+            return;
+        }
 
         // Condition 3: DKA — progressive insulin deficiency
         // Check if all DKA preconditions are met
@@ -1388,28 +1559,41 @@ class Simulator {
         }
         // DKA Death: 12 hours after the warning (18 hours total)
         if (this.dkaGameOverTime !== -1 && this.totalSimMinutes >= this.dkaGameOverTime) {
-             this.gameOver("GAME OVER",
-                `<strong>Diabetisk Ketoacidose (DKA)</strong><br><br>` +
-                `Dit blodsukker: ${this.trueBG.toFixed(1)} mmol/L<br>` +
-                `Dit ketonniveau: ${this.ketoneLevel.toFixed(1)} mmol/L<br><br>` +
-                `<strong>Hvad skete der?</strong><br>` +
-                `Uden tilstrækkeligt insulin kan kroppen ikke bruge glukose som energi. ` +
-                `I stedet forbrændes fedt, som producerer ketonstoffer. ` +
-                `Når ketoner ophobes i blodet, bliver det surt (acidose), ` +
-                `hvilket påvirker alle organer og kan føre til bevidstløshed og død.<br><br>` +
-                `<strong>Sådan undgår du det næste gang:</strong><br>` +
-                `• Hold øje med dit blodsukker — vedvarende høje værdier er et advarselstegn<br>` +
-                `• Tag et keton-stik (🧪) hvis dit blodsukker er højt i flere timer<br>` +
-                `• Giv insulin ved højt blodsukker — det er den vigtigste behandling<br>` +
-                `• Husk din daglige basal-insulin<br><br>` +
-                `Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return;
+            this.gameOver("Diabetisk Ketoacidose (DKA)", {
+                cause: `Dit blodsukker: ${this.trueBG.toFixed(1)} mmol/L. Dit ketonniveau: ${this.ketoneLevel.toFixed(1)} mmol/L.`,
+                explanation:
+                    `Uden tilstrækkeligt insulin kan kroppen ikke bruge glukose som energi. ` +
+                    `I stedet forbrændes fedt, som producerer ketonstoffer. ` +
+                    `Når ketoner ophobes i blodet, bliver det surt (acidose), ` +
+                    `hvilket påvirker alle organer og kan føre til bevidstløshed og død.`,
+                tips: [
+                    'Hold øje med dit blodsukker — vedvarende høje værdier er et advarselstegn',
+                    'Tag et keton-stik (🧪) hvis dit blodsukker er højt i flere timer',
+                    'Giv insulin ved højt blodsukker — det er den vigtigste behandling',
+                    'Husk din daglige basal-insulin'
+                ]
+            });
+            return;
         }
 
         // Condition 4: Chronic complications (after 14 days of gameplay)
         if (this.day > 14) {
             const avg14d = this.calculateAverageBGForPeriod(14 * 24 * 60, true);
             if (avg14d !== null && avg14d > 15.0) {
-                this.gameOver(`GAME OVER`, `Sendiabetiske Komplikationer! Dit gennemsnitlige BG over de sidste 14 dage var ${avg14d.toFixed(1)} mmol/L.<br>Du opnåede ${this.normoPoints.toFixed(1)} Normoglykæmi-points.`); return;
+                this.gameOver("Sendiabetiske Komplikationer", {
+                    cause: `Dit gennemsnitlige BG over de sidste 14 dage var ${avg14d.toFixed(1)} mmol/L.`,
+                    explanation:
+                        `Vedvarende højt blodsukker skader blodkar og nerver i hele kroppen. ` +
+                        `Over tid fører det til alvorlige komplikationer som blindhed, nyresvigt, ` +
+                        `nerveskader og hjerte-kar-sygdom.`,
+                    tips: [
+                        'Sigt efter at holde dit blodsukker mellem 4-10 mmol/L så meget som muligt',
+                        'Juster din insulin-dosering hvis dit blodsukker konsekvent er for højt',
+                        'Husk at basal-insulin er fundamentet for god blodsukker-kontrol',
+                        'Spis regelmæssigt og giv bolus-insulin til måltider'
+                    ]
+                });
+                return;
             }
         }
     }
@@ -1470,17 +1654,17 @@ class Simulator {
                 const titrPct = (inTightRangeCount / dataPoints.length) * 100;
                 const avgCgm = sumCgm / dataPoints.length;
 
-                p.displays.tir.textContent = tirPct.toFixed(0) + "%";
-                p.displays.titr.textContent = titrPct.toFixed(0) + "%";
+                p.displays.tir.textContent = tirPct.toFixed(0);
+                p.displays.titr.textContent = titrPct.toFixed(0);
                 p.displays.avg.textContent = avgCgm.toFixed(1);
 
                 // Farveindikation baseret på kliniske mål
                 // TIR: grøn > 70%, orange 50-70%, rød < 50%
-                p.displays.tir.style.color = tirPct >= 70 ? '#38a169' : tirPct >= 50 ? '#d69e2e' : '#e53e3e';
+                p.displays.tir.style.color = tirPct >= 70 ? '#38a169' : tirPct >= 50 ? '#d69e2e' : '#b91c1c';
                 // TITR: grøn > 50%, orange 30-50%, rød < 30%
-                p.displays.titr.style.color = titrPct >= 50 ? '#38a169' : titrPct >= 30 ? '#d69e2e' : '#e53e3e';
+                p.displays.titr.style.color = titrPct >= 50 ? '#38a169' : titrPct >= 30 ? '#d69e2e' : '#b91c1c';
                 // Gns. CGM: grøn 5-8, orange 8-10 eller 4-5, rød > 10 eller < 4
-                p.displays.avg.style.color = (avgCgm >= 5 && avgCgm <= 8) ? '#38a169' : (avgCgm >= 4 && avgCgm <= 10) ? '#d69e2e' : '#e53e3e';
+                p.displays.avg.style.color = (avgCgm >= 5 && avgCgm <= 8) ? '#38a169' : (avgCgm >= 4 && avgCgm <= 10) ? '#d69e2e' : '#b91c1c';
 
                 // Insulin- og kalorietotaler for perioden
                 if (p.displays.fast) {
@@ -1498,7 +1682,7 @@ class Simulator {
 
                     p.displays.fast.textContent = (totalFast / divisor).toFixed(1);
                     p.displays.basal.textContent = (totalBasal / divisor).toFixed(0);
-                    p.displays.kcal.textContent = (totalKcal / divisor).toFixed(0);
+                    p.displays.kcal.textContent = Math.round((totalKcal / divisor) / 10) * 10;
 
                     // Kaloriebalance: indtag minus forbrug (hvile + motion)
                     const restingBurn = this.restingKcalPerMinute * periodMinutes;
@@ -1507,33 +1691,41 @@ class Simulator {
                         motionBurn += ev.details.kcalBurned || 0;
                     });
                     const balance = (totalKcal - restingBurn - motionBurn) / divisor;
+                    // Afrund til nærmeste 10
+                    const balanceRounded = Math.round(balance / 10) * 10;
                     const balanceDisplay = p.key === '7d' ? kcalBalance7dDisplay : kcalBalance24hDisplay;
                     if (balanceDisplay) {
-                        balanceDisplay.textContent = (balance >= 0 ? '+' : '') + balance.toFixed(0);
-                        balanceDisplay.style.color = balance < -200 ? '#e53e3e' : balance > 200 ? '#d69e2e' : '#38a169';
+                        balanceDisplay.textContent = (balanceRounded >= 0 ? '+' : '') + balanceRounded;
+                        // Farvekodning: skaler tærsklerne med periodens andel af en fuld dag.
+                        // Tidligt på dagen (fx kl. 04:00) er et underskud helt normalt — man
+                        // har sovet og ikke spist. Fuld tærskel (±200 kcal) gælder kun
+                        // efter en hel dag. For 7d-gennemsnit bruges fast tærskel.
+                        const dayFraction = p.key === '7d' ? 1.0 : Math.min(1.0, periodMinutes / (24 * 60));
+                        const threshold = 200 + 300 * (1 - dayFraction); // 500 tidligt → 200 efter fuld dag
+                        balanceDisplay.style.color = balanceRounded < -threshold ? '#b91c1c' : balanceRounded > threshold ? '#d69e2e' : '#38a169';
                     }
                 }
             } else {
                 // Not enough data yet — show placeholder dashes
                 Object.values(p.displays).forEach(el => { if(el) el.textContent = '--'; });
-                if(p.displays.tir) p.displays.tir.textContent = '--%';
-                if(p.displays.titr) p.displays.titr.textContent = '--%';
+                if(p.displays.tir) p.displays.tir.textContent = '--';
+                if(p.displays.titr) p.displays.titr.textContent = '--';
             }
         });
     }
 
     /**
-     * gameOver — End the simulation with a death screen.
+     * gameOver — Afslut simulationen med en game over-skærm.
      *
-     * Sets isGameOver flag, pauses the game, plays death sound,
-     * and shows a popup with the cause of death and final score.
+     * Sætter isGameOver, pauser spillet, spiller lyd, og viser popup
+     * med struktureret indhold: årsag → points → forklaring → tips.
      *
-     * @param {string} title   - Popup title (e.g., "GAME OVER")
-     * @param {string} message - HTML message explaining the cause of death
+     * @param {string} cause     - Kort årsagsbeskrivelse (fx "Svær Hypoglykæmi")
+     * @param {object} details   - { cause, explanation, tips[] }
      */
-    gameOver(title, message) {
+    gameOver(cause, details) {
         this.isGameOver = true; isPaused = true;
         playSound('gameOver');
-        showPopup(title, message, true, false, false, true);
+        showGameOverPopup(cause, details, this.normoPoints);
     }
 }

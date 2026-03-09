@@ -33,6 +33,7 @@
 23. [Injektionssted](#23-injektionssted)
 24. [Motionsinduceret inflammation](#24-motionsinduceret-inflammation)
 25. [Ikke-linearitet i insulinvirkning (tærskeleffekter)](#25-ikke-linearitet-i-insulinvirkning-tærskeleffekter)
+26. [Insulinoverdosis og kontrareguleringens begrænsninger](#26-insulinoverdosis-og-kontrareguleringens-begrænsninger)
 
 ---
 
@@ -926,6 +927,163 @@ Dette er en af de vigtigste begrænsninger i den nuværende simulator og en opla
 - Rizza RA, et al. (1981). "Dose-response characteristics for effects of insulin on production and utilization of glucose in man." *Am J Physiol*, 240(6):E630-E639.
 - Bergman RN. (2005). "Minimal model: perspective from 2005." *Horm Res*, 64(Suppl 3):8-15.
 - Thiebaud D, et al. (1982). "The effect of graded doses of insulin on total glucose uptake, glucose oxidation, and glucose storage in man." *Diabetes*, 31(11):957-963.
+
+---
+
+## 26. Insulinoverdosis og kontrareguleringens begrænsninger
+**[IMPLEMENTERET — hypo game over + svækket kontraregulering ved T1D]**
+
+Insulinoverdosis er en af de vigtigste akutte farer ved type 1 diabetes. Forståelse af kroppens kontraregulatoriske respons — og dens begrænsninger — er central for at forstå hvorfor overdoser kan være fatale.
+
+### 26.1 Kontraregulatorisk hierarki hos raske
+
+Hos raske mennesker aktiveres et hierarki af kontraregulatoriske hormoner ved faldende blodsukker:
+
+| Tærskel (mmol/L) | Hormon | Effekt | Latenstid |
+|---|---|---|---|
+| ~4.6 | Insulin ↓ | Reduceret endogen insulinsekretion | Sekunder |
+| ~3.8 | Glukagon ↑ | Hepatisk glykogenolyse (primær forsvar) | 2-5 min |
+| ~3.8 | Adrenalin ↑ | Glykogenolyse + glukoneogenese + lipolyse | 2-5 min |
+| ~3.7 | Kortisol ↑ | Øget glukoneogenese (langsom effekt) | 1-2 timer |
+| ~3.7 | Væksthormon ↑ | Insulinresistens + lipolyse | 1-2 timer |
+| ~3.2 | Symptomer | Svedtendens, hjertebanken, sult (adrenerg) | — |
+| ~2.8 | Neuroglykopeni | Koncentrationsbesvær, forvirring, kramper | — |
+
+**Kilde:** Cryer PE (2013). "Mechanisms of Hypoglycemia-Associated Autonomic Failure in Diabetes." *N Engl J Med*, 369:362-372; Sprague JE, Arbeláez AM (2011). "Glucose counterregulatory responses to hypoglycemia." *Pediatr Endocrinol Rev*, 9(1):463-473.
+
+### 26.2 Kontrareguleringens svigt ved T1D
+
+Ved type 1 diabetes er kontrareguleringen **fundamentalt svækket**:
+
+1. **Glukagon-respons:** Tabt inden for 1-5 år efter diagnose hos de fleste patienter. Mekanismen er omdiskuteret (tab af α-celle parakrinsignalering, autoimmun destruktion af α-celler, eller tab af intra-islet insulin-signalet der normalt regulerer glukagon). Resultatet er at den primære akutte forsvarslinje mangler.
+
+2. **Adrenalin-respons:** Initialt bevaret, men svækkes ved gentagne hypoglykæmi-episoder (se sektion 26.3 om hypoglykæmi-unawareness). Tærsklen forskydes nedad — kroppen reagerer først ved lavere BG.
+
+3. **Kortisol/væksthormon:** Langsom effekt (timer) — utilstrækkelig til at modvirke akut insulinoverdosis.
+
+**Konsekvens:** En T1D-patient har typisk kun 1 ud af 5 akutte forsvarslinjer funktionelle (adrenalin), og denne er ofte svækket. Ved massiv insulinoverdosis kan selv adrenalinresponsen ikke kompensere for den kraftige insulin-medierede glukoseclearance.
+
+**Kilder:**
+- Bengtsen MB, Møller N (2021). "Mini-review: Glucagon responses in type 1 diabetes — a matter of complexity." *Physiol Rep*, 9(16):e14969.
+- Reno CM, et al. (2013). "Defective counterregulation and hypoglycemia unawareness in diabetes: Mechanisms and emerging treatments." *Endocrinol Metab Clin North Am*, 42(1):15-38.
+
+### 26.3 Hypoglykæmi-unawareness (HAAF) — mekanisme, reversibilitet og modellering
+
+Hypoglycemia-Associated Autonomic Failure (HAAF) er et klinisk syndrom hvor gentagne hypoglykæmier progressivt svækker den kontraregulatoriske respons:
+
+- **Mekanisme:** Gentagen eksponering for lavt BG "nulstiller" hjernens glukose-sensorer. Tærsklerne for hormonrespons forskydes nedad (fra ~3.8 til ~3.0 eller lavere). Hjernens ventromediale hypothalamus (VMH) tilpasser sig det lave glukoseniveau, og den autonome respons (adrenalin, symptomer) reduceres.
+- **Onde cirkel:** Svækket respons → ingen advarselsymptomer → udetekteret hypo → endnu dybere hypo → yderligere svækkelse af respons.
+- **Prævalens:** ~25% af T1D-patienter har signifikant hypoglykæmi-unawareness.
+
+#### Reversibilitet — videnskabelig evidens
+
+HAAF er i høj grad reversibel. Nøglestudier:
+
+1. **Dagogo-Jack et al. (1993):** Viste at blot 2-3 ugers strikt undgåelse af hypoglykæmi hos T1D-patienter med HAAF genoprettede adrenalinresponset signifikant. Tærsklen for hormonrespons steg fra ~2.8 mmol/L tilbage mod ~3.8 mmol/L. Dette er det mest citerede bevis for HAAF-reversibilitet.
+
+2. **Fanelli et al. (1993):** Demonstrerede at 3 måneders hypo-undgåelse delvist genoprettede adrenalin-sekretionen og de autonome symptomer hos T1D-patienter. Glukagon-responset (som er tabt ved T1D pga. beta-celle-destruktion) blev IKKE genoprettet — det er permanent tabt.
+
+3. **Cranston et al. (1994):** Bekræftede Dagogo-Jacks fund: 2-3 uger med undgåelse af hypo genoprettede både hormonrespons og subjektiv symptomopfattelse. Recovery var gradvis snarere end pludseligt.
+
+4. **Cryer (2001, 2013):** Formulerede HAAF som et klinisk koncept og konkluderede at recovery kræver "meticulous avoidance of hypoglycemia" — enhver ny hypo under recovery-perioden kan genaktivere HAAF.
+
+5. **Rickels et al. (2019):** Nyere data fra CGM-studier viser at selv partiel reduktion af hypo-byrden (færre og kortere episoder) giver målbar forbedring i symptomopfattelse inden 4-6 uger.
+
+#### Klinisk konsekvens
+
+Patienter med HAAF har 25× øget risiko for svær hypoglykæmi (Cryer 2013). De mærker ikke de tidlige advarselssymptomer (svedtendens, hjertebanken, rysten) og opdager først hypoglykæmien når neuroglykopeni allerede er indtruffet (forvirring, koordinationstab, bevidsthedstab).
+
+#### Modellering i simulatoren — kontinuert areal-baseret model
+
+I stedet for diskret episode-tælling bruger vi en proportionel, kontinuert model:
+
+**Skade (hypoArea):** Akkumuleres som integral af BG-deficit under tærskel 3.0 mmol/L:
+```
+ΔhypoArea = max(0, 3.0 - trueBG) × dt   [mmol·min/L]
+```
+Dyb hypo (BG=1.5) giver 3× mere skade per minut end mild hypo (BG=2.5). Tærskel 3.0 valgt fordi det er ved denne dybde at neuronal adaptation primært sker.
+
+**Recovery:** Når BG > 4.0 henfader hypoArea eksponentielt:
+```
+hypoArea *= exp(-ln(2) / HAAF_RECOVERY_HALFLIFE × dt)
+```
+- Recovery-halveringstid: 3 sim-dage (4320 min)
+- Klinisk ækvivalent: ~2-3 uger, komprimeret for gameplay
+
+**Effekt (counterRegFactor):** Sigmoid mapping fra hypoArea:
+```
+counterRegFactor = 0.3 + 0.7 × exp(-hypoArea / HAAF_DAMAGE_SCALE)
+```
+- Frisk patient: counterRegFactor = 1.0 (fuld adrenalin-respons)
+- Svær HAAF: counterRegFactor → 0.3 (70% reduktion, aldrig helt 0)
+- HAAF_DAMAGE_SCALE = 30 mmol·min/L (svarende til BG=2.0 i 30 min)
+
+**Parameterovervejelser:**
+- Gulv 0.3 (ikke 0): selv ved svær HAAF er der resterende adrenalin-respons
+- Recovery-t½ = 3 dage: balancerer gameplay (spiller oplever effekten) med realisme (recovery er mulig)
+- Tærskel 3.0 (ikke 3.5): undgår at mild hypo (3.0-3.5) akkumulerer for meget skade
+
+**Kilder:**
+- Dagogo-Jack SE, et al. (1993). "Reversal of hypoglycemia unawareness, but not defective glucose counterregulation, in IDDM." *Diabetes*, 42(12):1683-1689.
+- Fanelli CG, et al. (1993). "Meticulous prevention of hypoglycemia normalizes the glycemic thresholds and magnitude of most of neuroendocrine responses to, symptoms of, and cognitive function during hypoglycemia in intensively treated patients with short-term IDDM." *Diabetes*, 42(11):1683-1689.
+- Cranston I, et al. (1994). "Restoration of hypoglycaemia awareness in patients with long-duration insulin-dependent diabetes." *Lancet*, 344(8918):283-287.
+- Cryer PE (2001). "Hypoglycemia-associated autonomic failure in diabetes." *Am J Physiol Endocrinol Metab*, 281(6):E1115-E1121.
+- Cryer PE (2013). "Mechanisms of hypoglycemia-associated autonomic failure in diabetes." *N Engl J Med*, 369:362-372.
+- McCrimmon RJ, Sherwin RS (2010). "Hypoglycemia in Type 1 Diabetes." *Diabetes*, 59(10):2333-2339.
+- Reno CM, et al. (2013). "Defective counterregulation and hypoglycemia unawareness in diabetes." *Endocrinol Metab Clin North Am*, 42(1):15-38.
+- Rickels MR, et al. (2019). "Improvement in hypoglycemia awareness and glycemic variability after islet transplantation." *Diabetes Care*, 42:640-647.
+
+### 26.4 Insulinoverdosis — hvad siger litteraturen?
+
+Der er ingen enkel "dødelig dosis" for insulin — udfald afhænger af mange faktorer:
+
+| Faktor | Indflydelse |
+|---|---|
+| Start-BG | Højere start-BG giver længere tid til intervention |
+| IOB (aktiv insulin) | Akkumuleret insulin forstærker effekten |
+| Måltidsstatus | Fuld mave kan kompensere delvist (COB) |
+| Kontraregulation | Intakt (rask) vs. svækket (T1D) ændrer udfald dramatisk |
+| Behandlingstid | Hurtig glukose/glukagon-indgift redder liv |
+
+**Nøglefund fra litteraturen:**
+
+- **Megarbane et al. (2007):** Analyserede 25 cases af intentionel insulinoverdosis. Laveste BG ved indlæggelse korrelerede med dosis, men overlevelse afhang primært af behandlingstid. Median dosis: 900 E (range: 20-3600 E).
+
+- **Stephenson et al. (2022):** Gennemgik fatale insulinoverdoser fra retsmedicinske data. Konkluderede at dødsfald primært skyldes forsinket behandling snarere end absolut dosis.
+
+- **Rzepczyk et al. (2022):** Review af insulinoverdosens patofysiologi. Beskriver at ved suprafysiologiske insulinniveauer (>50-60 μU/mL) supprimeres hepatisk glukoseproduktion fuldstændigt, uanset kontraregulatoriske hormoner.
+
+**For simulatoren:** Med ISF=3.0 og start-BG=6.0 mmol/L:
+- 9E bolus giver et forventet BG-fald på ~27 mmol/L (9 × 3.0) — langt mere end tilgængeligt
+- Selv med maksimal kontraregulering (som er svækket ved T1D) kan kroppen ikke producere nok glukose
+- Hepatisk glukoseproduktion: ~8-10 g/time normalt, ~15-20 g/time ved maksimal stimulering
+- 9E insulin klarerer ~50-80 g/time fra blodet — langt mere end leveren kan producere
+- **Konklusion: 9E fra BG=6 uden mad bør være dødelig for en T1D-patient**
+
+**Kilder:**
+- Rzepczyk S, et al. (2022). "The Other Face of Insulin—Overdose and Its Effects." *Toxics*, 10(3):123.
+- Megarbane B, et al. (2007). "Intentional insulin overdose: prognostic factors and toxicokinetic/toxicodynamic profiles." *Crit Care*, 11(5):R115.
+- Stephenson J, et al. (2022). "Characteristics of fatal insulin overdoses." *J Forensic Sci*, 67(3):1180-1187.
+
+### 26.5 Modellering i simulatoren
+
+Kontrareguleringens svækkelse ved T1D modelleres via:
+
+1. **Reduceret stress-cap:** Akut stress (kontraregulering) er capped ved 1.0 i stedet for ~5.0 som en rask person ville have. Dette afspejler tab af glukagon-respons — T1D-patienter har kun adrenalin som akut forsvar.
+
+2. **Hypoglykæmi-unawareness (HAAF):** Kontinuert areal-baseret model hvor `hypoArea` akkumulerer proportionelt med dybde og varighed af hypoer under 3.0 mmol/L. `counterRegFactor` (0.3-1.0) beregnes via sigmoid mapping og reducerer den kontraregulatoriske stressrespons. Recovery sker eksponentielt med t½ = 3 sim-dage når BG > 4.0. Se sektion 26.3 for detaljer.
+
+3. **Ingen hypo-guard på insulineffektivitet:** Hovorka-modellens insulin-aktionsvariable (x1, x2) opererer umodificeret ved lav BG. T1D-patienter har ikke den beskyttelsesmekanisme der reducerer perifær insulinoptagelse ved hypoglykæmi (dette er primært en hepatisk mekanisme medieret af glucagon, som er tabt).
+
+```
+stressMultiplier = 1.0 + acuteStressLevel + chronicStressLevel + circadianKortisol
+
+// Kontraregulering ved hypo (BG < 4.0):
+hypoStressRate = (0.008 + 0.08 × bgDeficit²) × counterRegFactor
+// counterRegFactor = 1.0 (ingen tidligere hypoer) → 0.3 (mange hypoer)
+
+acuteStressLevel = min(1.0, acuteStressLevel + hypoStressRate × dt)
+```
 
 ---
 
