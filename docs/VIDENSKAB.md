@@ -738,12 +738,125 @@ Ved absolut insulinmangel -- fx glemt insulin, pumpesvigt eller ny-debut T1D -- 
 
 ### Vigtig skelnen: fasteketose er IKKE det samme som DKA
 
-Ketoner der stiger fordi du faster eller spiser meget lidt kulhydrat er fysiologisk normalt og uskadeligt (så længe du har insulin i kroppen). DKA er drevet af insulinmangel og er en akut, livstruende tilstand. I simulatoren stiger ketoner aktuelt kun ved insulinmangel kombineret med højt blodsukker -- fasteketose er endnu ikke modelleret.
+Ketoner der stiger fordi du faster eller spiser meget lidt kulhydrat er fysiologisk normalt og uskadeligt (så længe du har insulin i kroppen). DKA er drevet af **absolut insulinmangel** og er en akut, livstruende tilstand.
+
+| Parameter | Faste-ketose | DKA |
+|-----------|-------------|-----|
+| Insulin til stede | Ja (nedsat, men til stede) | Nej / minimalt |
+| BG-niveau | Normalt / lavt | Meget højt (>14-20) |
+| Ketoner (BHB) | 0.5-3 mmol/L (evt. 5-7 ved lang faste) | 3-25+ mmol/L |
+| Blodets pH | Normal (>7.35) | Lav (<7.3, acidose) |
+| Farligt? | Nej | Ja, livstruende |
+| Mekanisme | Kontrolleret fedtforbrænding | Ukontrolleret lipolyse |
+
+### Den centrale driver: insulin, ikke blodsukker
+
+Den primære driver af ketogenese er **insulinniveau**, ikke blodglukose. Lipolyse
+(fedtnedbrydning) er ekstremt insulinfølsom — det er den *første* proces der aktiveres
+når insulin falder. EC50 for insulins suppression af lipolyse er kun ~100 pmol/L
+(7-24 mU/L), langt lavere end for glukoseoptag (~300-400 pmol/L).
+
+Kaskaden er:
+1. **Lav insulin** → lipolyse øges (fedtcellerne frigiver fedtsyrer)
+2. **Frie fedtsyrer (FFA)** strømmer til leveren
+3. **Beta-oxidation** i leveren producerer acetyl-CoA
+4. **Ketogenese**: overskydende acetyl-CoA omdannes til ketonlegemer (BHB, acetoacetat)
+
+Ved faste/low-carb tager man *mindre* insulin, fordi man spiser færre kulhydrater.
+Den lavere insulin tillader kontrolleret fedtforbrænding — det er netop meningen.
+Ved DKA er der *ingen* insulin, og lipolysen løber fuldstændigt løbsk.
+
+Protein spiller også en rolle: glukogene aminosyrer omdannes til glukose via
+glukoneogenese, som forbruger oxaloacetat fra citronsyrecyklus. Det presser
+endnu mere acetyl-CoA mod ketogenese. Dvs. glukoneogenese og ketogenese er
+**parallelle processer der forstærker hinanden** ved insulinmangel.
+
+### DKA-behandling: sukker + insulin
+
+En vigtig klinisk pointe: ved DKA-behandling gives insulin for at stoppe
+ketogenesen, men insulin sænker også blodsukkeret. Derfor gives **glukose
+intravenøst** samtidig (når BG falder under ~14 mmol/L) for at undgå
+hypoglykæmi under behandlingen. Sukker og insulin skal gives *sammen* —
+dette er relevant for simulatoren, hvor spilleren skal forstå at man ikke
+bare kan "insuline" sig ud af DKA uden også at spise.
+
+### Typiske ketonniveauer ved forskellige tilstande
+
+| Tilstand | BHB (mmol/L) | Insulin-status |
+|----------|-------------|----------------|
+| Normal, mæt | < 0.1 | Normal |
+| Nattefaste (12 t) | 0.1-0.4 | Let nedsat |
+| 24 timers faste | 1-2 | Nedsat |
+| Ketogen diæt (vedvarende) | 0.5-3 | Nedsat men til stede |
+| 72 timers faste | 5-7 | Markant nedsat |
+| Mild DKA | 1.5-3 | Meget lav / fraværende |
+| Svær DKA | 3-25+ | Fraværende |
+
+### Keton-clearance
+
+Ketoner elimineres via to mekanismer:
+- **Muskel- og hjerneforbrug**: ketoner bruges som brændstof (erstatter glukose)
+- **Renal udskillelse**: ved høje niveauer udskilles ketoner i urinen
+
+Halveringstid for BHB: 0.8-3.1 timer, men clearance er **mætnelig** — ved
+høje koncentrationer (DKA) er eliminationen langsommere pga. Michaelis-Menten
+kinetik (Clarke et al. 2012: CL = 10.9 L/t + Vmax-komponent).
+
+### Low-carb og BG-kontrol
+
+Low-carb kost giver markant lettere BG-kontrol ved T1D fordi:
+- Færre og mindre kulhydrat-boluser → mindre variabilitet
+- Mindre "kurvefejl" fra fejlestimerede kulhydrater
+- Jævnere BG-profil med færre spikes
+- Ketoner som alternativt brændstof reducerer hjernens glukoseafhængighed
+
+Ulempen: kræver opmærksomhed på protein-insulin (protein omdannes delvist til
+glukose, ~25-50% afhængig af mængde) og kan kræve justering af basal-dosis.
+
+### Publicerede matematiske keton-modeller
+
+Der er relativt få modeller i litteraturen:
+
+1. **Pinnaro, Christensen & Curtis (2021):** "Modeling Ketogenesis for Use in
+   Pediatric Diabetes Simulation." *JDST*, 15(2):303-308. — **Mest relevant for
+   vores simulator.** IOB-dreven model: ketoner stiger når IOB < tærskel, falder
+   når IOB > tærskel. Kalibreret til DKA inden 1-2 dage ved komplet insulinmangel.
+   Ketoner modulerer insulinfølsomhed (ketoacidose kræver mere insulin).
+
+2. **Balasse & Féry (1984):** "Ketone body kinetics in humans: a mathematical model."
+   *J Lipid Res*, Feb 1984. — 5-kompartment model med rate-konstanter for BHB/acetoacetat
+   interkonversion og clearance.
+
+3. **Roy & Parker (2006):** "Dynamic Modeling of Free Fatty Acid, Glucose, and Insulin."
+   *Diabetes Technol Ther*, 8:617-626. — FFA-dynamik model for T1D, upstream precursor
+   til ketoner.
+
+4. **Cobelli/Dalla Man (2023):** FFA-kinetik model med Hill-funktion for insulins
+   suppression af lipolyse. *Am J Physiol*.
+
+Bemærkelsesværdigt: hverken UVA/Padova-simulatoren eller Hovorka-gruppen har
+publiceret integrerede ketonmodeller i deres T1D-simulatorer.
+
+### Faste og insulinfølsomhed
+
+Overraskende nok viser forskningen at kortvarig faste (≤24 timer) faktisk
+**nedsætter** insulinfølsomheden med op til 54%. Kun faste >6 dage viser
+forbedret insulinfølsomhed i kontrollerede forsøg. Intermittent fasting over
+12+ uger giver moderat forbedring.
+
+Dette er kontraintuitivt og vigtigt: en enkelt fastedag gør det *sværere* at
+styre BG, ikke lettere — mens vedvarende low-carb/ketogen kost over uger
+gradvist forbedrer insulinfølsomheden via ketoadaptation.
 
 > **Kilder:**
 > - Kitabchi AE, et al. (2009). "Hyperglycemic Crises in Adult Patients With Diabetes." *Diabetes Care*, 32(7):1335-1343.
 > - Dhatariya KK, et al. (2023). "Comprehensive review of diabetic ketoacidosis: an update." *Ann Med Surg*, 85(6):2802-2807.
 > - Laffel L. (1999). "Ketone bodies: a review of physiology, pathophysiology and application of monitoring to diabetes." *Diabetes Metab Res Rev*, 15(6):412-426.
+> - Pinnaro L, Christensen CL, Curtis MD. (2021). "Modeling Ketogenesis for Use in Pediatric Diabetes Simulation." *JDST*, 15(2):303-308. [PubMed](https://pubmed.ncbi.nlm.nih.gov/31608650/)
+> - Balasse EO, Féry F. (1984). "Ketone body kinetics in humans: a mathematical model." *J Lipid Res*, Feb 1984. [PubMed](https://pubmed.ncbi.nlm.nih.gov/6707525/)
+> - Roy A, Parker RS. (2006). "Dynamic Modeling of Free Fatty Acid, Glucose, and Insulin." *Diabetes Technol Ther*, 8:617-626. [PubMed](https://pubmed.ncbi.nlm.nih.gov/17109593/)
+> - Clarke K, et al. (2012). "Kinetics, safety and tolerability of (R)-3-hydroxybutyl (R)-3-hydroxybutyrate." *Regul Toxicol Pharmacol*. [PubMed](https://pubmed.ncbi.nlm.nih.gov/22561291/)
+> - Suppression of lipolysis by insulin. *JCEM* 2000, 85(10):3740-3745.
 
 ---
 

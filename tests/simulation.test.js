@@ -421,7 +421,9 @@ test('BG-fald under motion er stoerre med aktiv insulin end uden', () => {
 
     const simWithInsulin = createCleanSimulator();
     setSimulatorBG(simWithInsulin, 10.0);
-    simWithInsulin.addFastInsulin(2); // 2 enheder aktiv insulin
+    // Sæt insulin direkte i plasma (undgår tilfældig bioavailability/tauFactor
+    // der kan gøre testen flakey — vi tester motionseffekt, ikke absorption).
+    simWithInsulin.hovorka.state[6] = 30; // 30 mU/L plasma-insulin (fysiologisk bolus-niveau)
     simWithInsulin.startMotion("Lav", "30");
     simulateMinutes(simWithInsulin, 30);
     const dropWithInsulin = 10.0 - simWithInsulin.trueBG;
@@ -679,6 +681,9 @@ test('Cirkadisk kortisol er 0 om eftermiddagen (kl. 14)', () => {
 
 test('Cirkadisk kortisol har peak om morgenen (kl. 08)', () => {
     const sim = createCleanSimulator();
+    // Sæt dawn-parametre til kendte værdier (undgår tilfældig variation i testen)
+    sim._dawnAmplitude = 0.3;
+    sim._dawnPeakMinutes = 8 * 60;
     sim.timeInMinutes = 8 * 60; // Kl. 08:00
 
     assertInRange(sim.circadianKortisolNiveau, 0.25, 0.35, 'Kortisol kl. 08 (peak)');

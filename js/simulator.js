@@ -124,7 +124,6 @@ class Simulator {
         // CGM has a ~5-10 minute delay and some noise vs. true BG, just like real sensors.
         this.trueBG = 5.5;             // Starting BG: 5.5 mmol/L (overskrives af steady-state)
         this.cgmBG = 5.5;             // Overskrives efter steady-state init nedenfor
-        this.cgmBGHistory = [];        // Fyldes efter steady-state init
         this.lastCgmCalculationTime = -5;  // Første CGM-update sker ved t=0
 
         // CGM sensor characteristics — kalibreret mod rigtig Libre 2 data.
@@ -263,6 +262,17 @@ class Simulator {
         this.acuteStressLevel = 0.0;
         this.chronicStressLevel = 0.0;
 
+        // --- Dawn-variabilitet ---
+        // Dawn-fænomenet (morgenkortisol) varierer fra dag til dag.
+        // Ved simulationsstart og ved hvert dagsskift genereres nye værdier:
+        //   - Amplitude: normalfordelt (mean 0.3, std 0.06, CV ~20%)
+        //   - Peak-tidspunkt: normalfordelt (mean 08:00, std 30 min)
+        // Dårlig søvn og kronisk stress forstærker amplituden yderligere
+        // (Leproult 1997: søvndeprivation øger morgenkortisol 30-50%).
+        this._dawnAmplitude = this.gaussRand(0.3, 0.06);       // Basis-amplitude
+        this._dawnPeakMinutes = this.gaussRand(8 * 60, 30);    // Peak-tidspunkt
+        this._dawnDay = 1;                                      // Hvilken dag dawn er beregnet for
+
         // --- Hypoglykæmi-unawareness (HAAF) — Kontinuert areal-baseret model ---
         //
         // Baseret på: Dagogo-Jack et al. 1993, Cryer 2001/2013, Reno et al. 2013,
@@ -328,13 +338,6 @@ class Simulator {
         // Synkroniser trueBG med Hovorka-modellens steady-state glukose
         this.trueBG = this.hovorka.glucoseConcentration;
         this.cgmBG = this.trueBG;
-
-        // Seed CGM-historik med steady-state BG så de første datapunkter
-        // har noget at referere til (undgår diskontinuitet i grafen ved start).
-        // Vi lægger 20 punkter ind med 5-minutters interval bagud fra t=0.
-        for (let t = -100; t <= 0; t += 5) {
-            this.cgmBGHistory.push({ time: t, value: this.trueBG });
-        }
 
         // Tilføj et initialt CGM-datapunkt så grafen starter med en værdi
         cgmDataPoints.push({ time: 0, value: this.trueBG });
@@ -414,6 +417,50 @@ class Simulator {
     get currentCarbEffect() { return this.currentISF / this.ICR; }
 
     // =========================================================================
+    // gaussRand — Normalfordelt tilfældig variabel (Box-Muller transformation)
+    // =========================================================================
+    // Genererer en normalfordelt værdi med angivet gennemsnit og standardafvigelse.
+    // Bruges til fysiologisk variation: insulin-bioavailability, dawn-amplitude,
+    // søvnstress, absorptionshastighed m.m.
+    // Box-Muller transformerer to uniformt fordelte tal til én normalfordelt.
+    gaussRand(mean, std) {
+        const u1 = Math.random(), u2 = Math.random();
+        const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        return mean + z * std;
+    }
+
+    // =========================================================================
+    // regenerateDawn — Generér nye dawn-parametre for en ny dag
+    // =========================================================================
+    // Kaldes ved dagsskift (midnat). Beregner ny amplitude og peak-tidspunkt
+    // for morgenkortisol, påvirket af:
+    //   1. Basis-variation: CV ~20% (normalfordelt)
+    //   2. Søvngæld: forstærker dawn med ~12% per mistet time
+    //      (Leproult 1997: søvndeprivation øger morgenkortisol 30-50%)
+    //   3. Kronisk stress: forstærker dawn med op til ~30%
+    //      (vedvarende kortisol gør morgen-peaket højere)
+    regenerateDawn() {
+        // Basis-variation: mean 0.3, std 0.06 (CV ~20%)
+        let amplitude = Math.max(0.10, Math.min(0.55, this.gaussRand(0.3, 0.06)));
+
+        // Dårlig søvn forstærker dawn (+12% per mistet time søvn)
+        // Ved max søvntab (4t): +48% amplitude → ~0.44 i stedet for 0.30
+        amplitude *= 1 + this.lostSleepHoursTonight * 0.12;
+
+        // Kronisk stress fra forrige dag forstærker dawn (+30% ved chronicStress=1.0)
+        amplitude *= 1 + this.chronicStressLevel * 0.30;
+
+        // Clamp til fysiologisk område
+        this._dawnAmplitude = Math.min(0.60, amplitude);
+
+        // Peak-tidspunkt varierer: mean 08:00, std 30 min → typisk 07:00-09:00
+        this._dawnPeakMinutes = Math.max(6.5 * 60, Math.min(9.5 * 60,
+            this.gaussRand(8 * 60, 30)));
+
+        this._dawnDay = this.day;
+    }
+
+    // =========================================================================
     // CIRCADIAN CORTISOL — Dawn Effect Model
     // =========================================================================
     //
@@ -448,25 +495,34 @@ class Simulator {
     //
     // =========================================================================
     get circadianKortisolNiveau() {
-        const maxAmplitude = 0.3; // Maximum cortisol contribution to stress multiplier
-        const t = this.timeInMinutes; // Current time of day in minutes
+        // Regenerér dawn-parametre ved dagsskift (ny dag = nye værdier).
+        // Vigtigt: dette sker FØR applySleepDebt, så søvngæld fra natten
+        // påvirker denne morgens dawn-amplitude.
+        if (this.day !== this._dawnDay) {
+            this.regenerateDawn();
+        }
 
-        const stigStart  = 4 * 60;  // 04:00 — cortisol begins to rise
-        const peak       = 8 * 60;  // 08:00 — peak (dawn effect maximum)
-        const falSlut    = 12 * 60; // 12:00 — back to baseline
+        const amplitude = this._dawnAmplitude;
+        const peakTime = this._dawnPeakMinutes;
+        const t = this.timeInMinutes;
 
-        if (t >= stigStart && t < peak) {
-            // Rising phase: quarter sine arc from 0 to 1
-            const fremgang = (t - stigStart) / (peak - stigStart); // 0.0 → 1.0
-            return maxAmplitude * Math.sin(Math.PI / 2 * fremgang);
+        // Stigningen starter 4 timer før peak (uanset peak-tidspunkt)
+        const stigStart = peakTime - 4 * 60;
+        // Faldet slutter 4 timer efter peak (symmetrisk)
+        const falSlut = peakTime + 4 * 60;
 
-        } else if (t >= peak && t < falSlut) {
-            // Falling phase: quarter cosine arc from 1 to 0
-            const fremgang = (t - peak) / (falSlut - peak);        // 0.0 → 1.0
-            return maxAmplitude * Math.cos(Math.PI / 2 * fremgang);
+        if (t >= stigStart && t < peakTime) {
+            // Stigende fase: kvart-sinusbue fra 0 → amplitude
+            const fremgang = (t - stigStart) / (peakTime - stigStart);
+            return amplitude * Math.sin(Math.PI / 2 * fremgang);
+
+        } else if (t >= peakTime && t < falSlut) {
+            // Faldende fase: spejlet sinusbue fra amplitude → 0
+            const fremgang = (t - peakTime) / (falSlut - peakTime);
+            return amplitude * Math.sin(Math.PI / 2 * (1 - fremgang));
 
         } else {
-            // Rest of the day: no circadian cortisol contribution
+            // Resten af dagen: ingen cirkadisk kortisol-bidrag
             return 0;
         }
     }
@@ -718,35 +774,34 @@ class Simulator {
         // =====================================================================
         // Real CGM sensors (e.g., Dexcom, Libre) don't measure blood glucose directly.
         // They measure interstitial fluid glucose, which:
-        //   1. Lags behind blood glucose by 5-10 minutes (diffusion delay)
-        //   2. Has random measurement noise (sensor electronics)
-        //   3. Has slow systemic drift (sensor degradation, calibration drift)
+        //   1. Interstitiel forsinkelse (Hovorkas C-kompartment: dC = ka_int × (G - C))
+        //   2. Random målestøj (sensor-elektronik)
+        //   3. Langsom systematisk drift (sensor-degradering, kalibreringsdrift)
         //
-        // We simulate all three:
-        //   cgmBG = delayed_trueBG + randomNoise + systemicDrift
+        // Forsinkelsen modelleres fysiologisk korrekt via Hovorkas ODE:
+        //   dC/dt = ka_int × (G - C)
+        // hvor G er plasma-glukose og C er interstitiel glukose.
+        // ka_int = 0.073 min⁻¹ → tidskonstant ~14 min → 5-10 min effektiv lag.
+        // Dette er et førsteordens lavpasfilter der giver:
+        //   - Hurtigt stigende BG: CGM halter bagefter (viser lavere)
+        //   - Hurtigt faldende BG: CGM halter bagefter (viser højere)
+        //   - Stabilt BG: CGM = sandt BG (ingen forsinkelse ved steady state)
         //
-        // CGM updates every 5 simulated minutes (like real CGM sensors).
-        // The result is clamped to 2.2-25.0 mmol/L (real sensor range).
+        // Oven på den interstitielle værdi tilføjes støj, drift og spring.
+        //
+        // CGM opdateres hvert 5. simulerede minut (som rigtige CGM-sensorer).
+        // Resultatet clampes til 2.2-25.0 mmol/L (reelt sensorinterval).
         // =====================================================================
         if (this.totalSimMinutes - this.lastCgmCalculationTime >= 5) {
-            // Simulate interstitial fluid delay: look up trueBG from 5-10 minutes ago
-            const cgmDelayMinutes = 5 + Math.random() * 5;
-            let delayedTrueBG = this.trueBG;
-            const targetTime = this.totalSimMinutes - cgmDelayMinutes;
-            for (let i = this.cgmBGHistory.length - 1; i >= 0; i--) {
-                if (this.cgmBGHistory[i].time <= targetTime) {
-                    delayedTrueBG = this.cgmBGHistory[i].value;
-                    break;
-                }
-            }
+            // Interstitiel glukose fra Hovorkas C-kompartment (state[10]).
+            // Denne værdi er allerede forsinket ift. plasma via ODE'en dC = ka_int*(G-C).
+            const interstitialBG = this.hovorka.cgmValue;
 
             // Proportional random støj — skalerer med BG-niveau (kalibreret fra Libre 2 data).
             // Ved BG=5: std ≈ 0.15 mmol/L. Ved BG=10: std ≈ 0.30 mmol/L.
             // Bruger Box-Muller transform for normalfordelt støj (mere realistisk end uniform).
-            const u1 = Math.random();
-            const u2 = Math.random();
-            const gaussianNoise = Math.sqrt(-2 * Math.log(u1 || 0.001)) * Math.cos(2 * Math.PI * u2);
-            const noiseStd = delayedTrueBG * this.cgmNoiseScale;
+            const gaussianNoise = this.gaussRand(0, 1);
+            const noiseStd = interstitialBG * this.cgmNoiseScale;
             const randomNoise = gaussianNoise * noiseStd;
 
             // Langsom sinusbølge-drift (sensor-karakteristik, periode 4-8 timer)
@@ -759,8 +814,8 @@ class Simulator {
                 discontinuity = (Math.random() - 0.5) * 4.0; // ±2 mmol/L spring
             }
 
-            // Kombiner alle komponenter
-            this.cgmBG = delayedTrueBG + randomNoise + systemicDeviation + discontinuity;
+            // Kombiner alle komponenter: interstitiel BG + støj + drift + spring
+            this.cgmBG = interstitialBG + randomNoise + systemicDeviation + discontinuity;
             this.cgmBG = Math.max(2.2, Math.min(25.0, this.cgmBG)); // Sensor range limits
             this.lastCgmCalculationTime = this.totalSimMinutes;
 
@@ -774,10 +829,7 @@ class Simulator {
                 this.dailyMaxPoints = 0;
                 this.lastTrackedPointsDay = this.day;
             }
-            this.cgmBGHistory.push({ time: this.totalSimMinutes, value: this.trueBG });
-
             // Keep history buffers from growing indefinitely
-            if(this.cgmBGHistory.length > 120) this.cgmBGHistory.shift();
             if (cgmDataPoints.length > MAX_GRAPH_POINTS_PER_DAY * 2) cgmDataPoints.shift();
             if (trueBgPoints.length > MAX_GRAPH_POINTS_PER_DAY * 2) trueBgPoints.shift();
             if (this.bgHistoryForStats.length > (14 * MAX_GRAPH_POINTS_PER_DAY + 10)) this.bgHistoryForStats.shift();
@@ -945,11 +997,14 @@ class Simulator {
                 // Ny vågen-hændelse: kost 1 times søvn (max 4 timer pr. nat)
                 const MAX_LOST_SLEEP = 4;
                 if (this.lostSleepHoursTonight < MAX_LOST_SLEEP) {
-                    this.lostSleepHoursTonight = Math.min(MAX_LOST_SLEEP, this.lostSleepHoursTonight + 1);
-                    logEvent(`Søvnforstyrrelse! Mistet ${this.lostSleepHoursTonight} times søvn i nat.`, 'event');
+                    // Varians: nogle nætter falder man hurtigt i søvn igen (0.5t tabt),
+                    // andre ligger man længe vågen (1.5t). Mean 1.0, std 0.3.
+                    const sleepLoss = Math.max(0.3, Math.min(1.8, this.gaussRand(1.0, 0.3)));
+                    this.lostSleepHoursTonight = Math.min(MAX_LOST_SLEEP, this.lostSleepHoursTonight + sleepLoss);
+                    logEvent(`Søvnforstyrrelse! Mistet ~${this.lostSleepHoursTonight.toFixed(1)} times søvn i nat.`, 'event');
                     this.graphMessages.push({
                         id: `sleep_disruption_${this.totalSimMinutes}`,
-                        text: `zZzz... -${this.lostSleepHoursTonight}t søvn`,
+                        text: `zZzz... -${this.lostSleepHoursTonight.toFixed(1)}t søvn`,
                         expireTime: this.totalSimMinutes + 60 // Vis i 1 sim-time
                     });
                 }
@@ -1053,19 +1108,12 @@ class Simulator {
         // og clamper til rimelige fysiologiske grænser.
         // -----------------------------------------------------------------
 
-        // Hjælpefunktion: normalfordelt tilfældig variabel (mean, std)
-        const gaussRand = (mean, std) => {
-            const u1 = Math.random(), u2 = Math.random();
-            const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-            return mean + z * std;
-        };
-
         // Bioavailability: andel af injiceret insulin der når blodbanen.
         // Resten nedbrydes lokalt af proteaser i det subkutane væv.
         // Gennemsnit ~78%, CV ~10% (Heinemann 2002, Kildegaard 2019).
         // Clamped til [0.55, 0.95] for fysiologisk realisme.
         const bioavailability = Math.max(0.55, Math.min(0.95,
-            gaussRand(0.78, 0.08)));                                        // mean 78%, std 8%
+            this.gaussRand(0.78, 0.08)));                                   // mean 78%, std 8%
 
         // Absorptionshastighed-variation: tau_I varierer fra gang til gang.
         // CV ~25% matcher Heinemann 2002's rapporterede intra-individuelle
@@ -1075,7 +1123,7 @@ class Simulator {
         // (fx intramuskulær injektion = meget hurtigere, lipodystrofi = meget
         // langsommere).
         const tauFactor = Math.max(0.50, Math.min(1.60,
-            gaussRand(1.0, 0.25)));                                         // mean 1.0, CV 25%
+            this.gaussRand(1.0, 0.25)));                                    // mean 1.0, CV 25%
 
         // Onset og varighed (metadata til UI, ikke brugt af Hovorka-ODE)
         const onset = 10 + Math.random() * 5;                              // 10-15 min
@@ -1089,7 +1137,7 @@ class Simulator {
         });
         this.lastInsulinTime = this.totalSimMinutes;
         this.resetDKAState(); // Insulin given → DKA crisis averted
-        playSound('intervention', 'A4');
+        playSound('insulinPen');
     }
 
     /**
@@ -1110,22 +1158,17 @@ class Simulator {
             // Fjern basal-reminder fra grafen med det samme
             this.graphMessages = this.graphMessages.filter(msg =>
                 !msg.id || !msg.id.startsWith('basal_reminder_day_'));
-            playSound('intervention', 'G3');
+            playSound('insulinPen');
          }
          // Basal insulin variabilitet — normalfordelt ligesom bolus.
          // Basal har lidt højere bioavailability (~82%) fordi langsommere
          // absorption giver mindre lokal nedbrydning. CV lavere (~15%)
          // da basal-insuliner er designet til at være mere forudsigelige.
          // Varighed: mean 28t, std 3t (clamped 22-38t) for Lantus/Levemir.
-         const gaussRand = (mean, std) => {
-             const u1 = Math.random(), u2 = Math.random();
-             const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-             return mean + z * std;
-         };
          const bioavailability = Math.max(0.60, Math.min(0.95,
-             gaussRand(0.82, 0.08)));                                        // mean 82%, std 8%
+             this.gaussRand(0.82, 0.08)));                                   // mean 82%, std 8%
          const durationHours = Math.max(22, Math.min(38,
-             gaussRand(28, 3)));                                             // mean 28t, std 3t
+             this.gaussRand(28, 3)));                                        // mean 28t, std 3t
          this.activeLongInsulin.push({
              dose, injectionTime,
              totalDuration: durationHours * 60,

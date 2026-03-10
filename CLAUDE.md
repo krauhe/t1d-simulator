@@ -201,8 +201,17 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
 20. Døgnvariation i insulinfølsomhed (cirkadisk ISF)
     - ISF lavest om morgenen (~08:30), højest om aftenen (~19:00)
     - Variation ~30-40% over dagen
-    - Delvist dækket af dawn-fænomenet, men den fulde cirkadiske kurve mangler
-    - Gary Scheiner ("Think Like a Pancreas") beskriver basalrate-mønstre baseret på klinisk erfaring
+    - Nuværende circadianKortisolNiveau dækker KUN morgen-peak (04:00-12:00), resten af dagen = 0
+    - Bør udvides til fuld døgnkurve: eftermiddag-dip, aften-stigning
+    - Gary Scheiner ("Think Like a Pancreas") beskriver basalrate-mønstre med flere faser over døgnet
+    - Kræver re-kalibrering af circadianKortisolNiveau getter i simulator.js
+35. Alders-afhængigt insulinbehov
+    - Børn/teenagere: højere insulinresistens pga. væksthormon → højere basalbehov per kg
+    - Voksne: relativt stabilt insulinbehov
+    - Ældre (>65): øget insulinfølsomhed, men også nedsat kontraregulering
+    - Puberteten: op til 50% øget insulinbehov (væksthormon-peak)
+    - Kunne implementeres som aldersjusteret ISF/ICR i profil-popup
+    - Reference: Scheiner "Think Like a Pancreas", kapitel om livsaldre
 21. Sæsonvariation i insulinbehov
     - HbA1c typisk højere om vinteren (9.1% vs 7.7% i en ungdomsstudie)
     - Flere hypoglykæmi-episoder om sommeren (øget aktivitet, varme)
@@ -218,12 +227,33 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
 23. Bruger-styret søvn/vågentid
     - Spiller bestemmer selv hvornår de "går i seng" og "står op"
     - Påvirker dawn-fænomenet, søvnkvalitet, og natlige interventioner
-24. Faste-ketose model
-    - Ketoner stiger fysiologisk ved faste (0.5 mmol/L efter nattefaste, 1-3 ved længere faste)
-    - Nuværende model: ketoner stiger kun ved insulinmangel + BG > 12
-    - Skal udvides til også at stige ved lav carb-indtag / faste, uanset insulin
-    - Vigtig skelnen: faste-ketose er IKKE farlig (vs. DKA som er insulin-mangel-drevet)
-25. Kalorieindhold vist på mad (kcal-mål synligt ved måltider)
+24. Udvidet ketonmodel (IOB-drevet, ikke BG-drevet)
+    - **Nuværende model er forkert:** ketoner stiger kun ved insulinmangel + BG > 12
+    - **Korrekt:** ketogenese drives af lavt INSULIN-niveau, ikke højt blodsukker
+    - Kaskade: lav insulin → lipolyse → FFA → beta-oxidation → ketoner
+    - Lipolyse har laveste EC50 af alle insulin-processer (~100 pmol/L vs ~300 for glukose)
+    - **To ketose-typer der skal modelleres:**
+      - Faste/low-carb ketose: kontrolleret, 0.5-3 mmol/L, uskadelig, insulin til stede
+      - DKA-ketose: ukontrolleret, 3-25+ mmol/L, livstruende, ingen insulin
+    - **Design (inspireret af Pinnaro 2021):**
+      - Ketonproduktion = f(IOB) — stiger når IOB < tærskel (fx 1.5 × basalrate)
+      - BG er IKKE en input til ketonproduktion
+      - Keton-clearance: mætnelig (Michaelis-Menten) — langsommere ved høje niveauer
+      - Protein-gluconeogenese driver indirekte ketogenese (oxaloacetat-forbrug)
+    - **DKA-behandling i spillet:** spilleren skal give sukker + insulin sammen
+      (insulin stopper ketoner, men sukker forhindrer hypo under behandling)
+    - **Pædagogisk mål:** vis at ketoner 1-3 ved faste/low-carb er normalt og uskadeligt
+    - **Low-carb fordel:** simulér at færre kulhydrater = jævnere BG, mindre variabilitet
+    - Se VIDENSKAB.md afsnit 23 for fuld videnskabelig baggrund og referencer
+25. Følings-symptomer (hypo-advarsel i UI)
+    - Når trueBG < ~3.5-3.8: vis symptomer (svedtendens, rysten, hjertebanken, sultfølelse)
+    - Afhængig af HAAF/counterRegFactor: jo mere svækket kontraregulering, jo svagere/senere symptomer
+    - Ved intakt counterRegFactor (~1.0): tydelige symptomer ved BG 3.5-3.8
+    - Ved svækket counterRegFactor (<0.5): symptomer først ved BG < 3.0 eller slet ingen ("unawareness")
+    - Visuelt: overlay/banner på grafen, evt. med pulserende effekt og lyd
+    - Pædagogisk: spilleren lærer at føling er kroppens alarm — og at den kan slukkes af gentagne hypoer
+    - Kobling til HAAF-model: `counterRegFactor` bestemmer tærskel og intensitet
+26. Kalorieindhold vist på mad (kcal-mål synligt ved måltider)
 26. Game over-betingelser skal være synlige i spillet
     - Spilleren skal kunne se alle metrics der kan føre til game over
     - 7-dages gennemsnit BG skal vises i statistik (allerede delvist implementeret)

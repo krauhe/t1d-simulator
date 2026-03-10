@@ -208,7 +208,49 @@ Tre separate effektvariable modellerer denne forsinkelse:
 - **x2 (forbrænding):** Insulin får musklerne til at brænde mere glukose
 - **x3 (leversuppression):** Insulin får leveren til at producere mindre glukose
 
-Disse tre effekter arbejder sammen, men med lidt forskellige hastigheder.
+Alle tre følger samme matematiske mønster: `dx = kb × I - ka × x`, hvor `kb × I`
+er aktiveringen (jo mere insulin i blodet, jo stærkere signal) og `ka × x` er
+den naturlige aftagen over tid. Men de har forskellige hastigheder (ka og kb),
+som giver dem lidt forskellige tidsprofiler.
+
+Her er en samlet oversigt over insulins tre effektmekanismer og hvor de optræder
+i modellens ligninger:
+
+| Variabel | Effekt | Hvor den virker | I koden |
+|----------|--------|-----------------|---------|
+| **x1** | **Transport:** flytter glukose fra blod til periferi | dQ1: `-x1 × Q1` (ud af plasma) | Insulin åbner GLUT4-transportører i muskler |
+| **x2** | **Forbrænding:** øger musklernes glukoseforbrug | dQ2: `-x2 × Q2` (forbrændes) | Musklerne bruger den glukose de har fået |
+| **x3** | **Lever-suppression:** dæmper leverens glukoseproduktion | EGP-formlen (se nedenfor) | Insulin bremser leverens glukose-frigivelse |
+
+### EGP-formlen -- tovtrækning mellem insulin og stresshormoner
+
+Leverens glukoseproduktion (EGP) er en af de vigtigste processer i modellen.
+Den styres af en simpel men elegant formel:
+
+```
+EGP = EGP_0 × max(0, stressMultiplier - x3)
+```
+
+Formlen er en **tovtrækning** mellem to modsatrettede kræfter:
+
+- **stressMultiplier** (normalt ≥ 1.0) trækker OP: "Lever, producer mere glukose!"
+  Dette signal kommer fra glukagon, adrenalin, kortisol og dawn-fænomenet.
+- **x3** (insulins lever-effekt) trækker NED: "Lever, stop produktionen!"
+
+| Situation | stress | x3 | EGP | Hvad sker der? |
+|-----------|--------|----|-----|----------------|
+| Normal hvile | 1.0 | 0.3 | EGP_0 × 0.7 | Moderat produktion (normalt) |
+| Efter bolus | 1.0 | 1.3 | 0 | Insulin vinder — leveren stopper |
+| Hypo + kontraregulering | 1.5 | 1.3 | EGP_0 × 0.2 | Glukagon vinder lidt — leveren frigiver glykogen trods aktiv insulin |
+| Insulin-overdosis (T1D) | 1.4 (cap) | 3.0 | 0 | Insulin overvælder alt — BG crasher mod game over |
+
+Formlen fanger det vigtige fysiologiske princip at kontraregulatoriske hormoner
+kan "kæmpe imod" insulin i leveren. Ved hypoglykæmi hos en rask person ville
+stressMultiplier stige til 3-5 og overvinde selv høj insulin. Men ved T1D er
+kontrareguleringen begrænset (cap ved ~1.4) fordi glukagon-responset er tabt —
+derfor er en insulinoverdosis langt farligere.
+
+Disse tre effekter (x1, x2, x3) arbejder sammen med lidt forskellige hastigheder.
 Det er derfor insulin har en kompleks virkningsprofil -- det starter langsomt,
 topper efter 1-2 timer og aftager gradvist over 3-5 timer.
 
@@ -616,19 +658,19 @@ og kortisol stimulerer leverens glukoseproduktion.
 
 ### Hvordan er det modelleret?
 
-Kortisol-kurven er modelleret med kvart-sinuskurver for en blød, fysiologisk
-plausibel form:
+Kortisol-kurven er modelleret med en symmetrisk sinusbue (kvart-sinus op,
+spejlet kvart-sinus ned) for en blød, fysiologisk plausibel form. Kurven
+har tre parametre der alle varierer fra dag til dag:
+
+| Parameter | Mean | Std | Clamp | Beskrivelse |
+|-----------|------|-----|-------|-------------|
+| Amplitude | 0.30 | 0.06 | [0.10, 0.55] | Hvor kraftig dawn-effekten er (CV ~20%) |
+| Peak-tidspunkt | 08:00 | 30 min | [06:30, 09:30] | Hvornår peak rammer |
+| Stigning/fald | ±4 timer | — | — | Symmetrisk: stiger 4t før peak, falder 4t efter |
 
 ```
-00:00 - 04:00:  Baseline -- kortisol er lavt, ingen ekstra leverglukose
-04:00 - 08:00:  Stigende fase -- sinuskurve fra 0 til peak
-08:00 - 12:00:  Faldende fase -- cosinuskurve fra peak til 0
-12:00 - 24:00:  Baseline -- kortisol er lavt resten af dagen
-```
+Typisk dag (amplitude ~0.30, peak 08:00):
 
-Visuel fremstilling (amplitude = 0.3):
-
-```
   0.30 |         ^ peak kl. 08:00
        |       /   \
   0.15 |     /       \
@@ -638,10 +680,31 @@ Visuel fremstilling (amplitude = 0.3):
       00   04   08   12   16   20   24
 ```
 
-Amplituden 0.3 betyder at leverens glukoseproduktion stiger med op til 30%
-på toppen af dawn-effekten. Denne effekt adderes til den samlede
-stress-multiplikator -- så hvis patienten også har kronisk stress fra
-søvnmangel, forstærkes morgenproblematikken yderligere.
+Amplituden 0.30 betyder at leverens glukoseproduktion stiger med op til 30%
+på toppen af dawn-effekten. Men dette er bare gennemsnittet — på dårlige
+dage kan amplituden nå 0.45-0.55, og på gode dage kun 0.15-0.20.
+
+### Hvad forstærker dawn-effekten?
+
+Dawn-amplituden påvirkes af to faktorer der beregnes ved dagsskift (midnat):
+
+1. **Dårlig søvn:** +12% amplitude per mistet time søvn.
+   Ved 4 timers tabt søvn (max): +48% → amplitude ~0.44 i stedet for 0.30.
+   Baseret på Leproult et al. (1997) der fandt at søvndeprivation øger
+   morgenkortisolpeak med 30-50%.
+
+2. **Kronisk stress fra forrige dag:** +30% amplitude ved chronicStress = 1.0.
+   Kronisk stress (t½ = 12 timer) er delvist henfaldet ved næste morgen,
+   men der er stadig nok til at forstærke dawn-effekten mærkbart — især
+   efter sygdomsdage eller flere nætter med dårlig søvn i træk.
+
+Den samlede formel ved dagsskift:
+```
+dawnAmplitude = basisAmplitude × (1 + mistetSøvn × 0.12) × (1 + kroniskStress × 0.30)
+```
+
+*Kode: `regenerateDawn()` og `circadianKortisolNiveau` getter i
+[simulator.js](https://github.com/krauhe/t1d-simulator/blob/main/js/simulator.js).*
 
 ### Hvorfor er det vigtigt at forstå?
 
@@ -649,6 +712,10 @@ Dawn-fænomenet er en af de mest frustrerende udfordringer for T1D-patienter.
 Det er vigtigt at forstå at højt blodsukker om morgenen **ikke er patientens
 skyld** -- det er en naturlig fysiologisk proces. Strategier til at håndtere
 det inkluderer justering af basal insulin-dosis eller timing.
+
+Variationen fra dag til dag forklarer hvorfor morgen-blodsukkeret kan svinge
+markant selv med identisk insulin-timing: en kombination af dårlig søvn,
+stress og naturlig tilfældig variation gør at dawn-effekten aldrig er helt ens.
 
 ---
 
@@ -664,10 +731,13 @@ Zheng et al. (2017) fandt at dårlig søvnkvalitet forstærker dawn-fænomenet.
 ### Hvordan er det modelleret?
 
 Når spilleren udfører en handling mellem kl. 22:00 og 07:00 (mad, insulin,
-målinger), tæller det som en vågen-hændelse der koster 1 times søvn:
+målinger), tæller det som en vågen-hændelse der koster søvn:
 
 - Hændelser inden for 30 minutter af hinanden tæller som en enkelt
   vågenhed (man er allerede vågen)
+- **Varians per opvågning:** Søvntabet per hændelse er normalfordelt med
+  mean 1.0 time og std 0.3 timer (clamp [0.3, 1.8]). Nogle nætter falder
+  man hurtigt i søvn igen (~0.5t tabt), andre ligger man længe vågen (~1.5t).
 - Maksimalt 4 timers søvntab per nat
 - Om morgenen (kl. 07:00) konverteres søvntabet til kronisk stress:
 
@@ -680,8 +750,13 @@ Effekten i praksis:
 - 2 timers tabt søvn: +12% øget insulinresistens
 - 4 timers tabt søvn (maksimum): +24% øget insulinresistens
 
-Da kronisk stress har en halveringstid på 12 timer, aftager effekten
-naturligt gennem dagen og er næsten væk ved næste aften.
+Derudover forstærker søvntabet også næste morgens **dawn-effekt** direkte
+(+12% amplitude per mistet time — se afsnit 8). Den samlede effekt af dårlig
+søvn er altså dobbelt: både øget insulinresistens OG stærkere morgen-BG-stigning.
+
+Da kronisk stress har en halveringstid på 12 timer, aftager insulinresistens-
+effekten naturligt gennem dagen. Men dawn-amplituden er sat for hele morgenen,
+så en dårlig nat mærkes mest tydeligt i de tidlige timer.
 
 ### Hvorfor er det vigtigt at forstå?
 
@@ -834,15 +909,35 @@ primære værktøj de fleste T1D-patienter bruger til at følge deres blodsukker
 Men CGM-værdien er IKKE det samme som det sande blodsukker. Der er tre
 vigtige afvigelser som modellen simulerer:
 
-### 1. Sensor-forsinkelse (5-10 minutter)
+### 1. Interstitiel forsinkelse (fysiologisk kompartment-model)
 
 CGM'en måler glukose i vævsvæske (interstitiel væske), ikke direkte i
-blodet. Glukose skal først diffundere fra blodet ud i vævet, hvilket tager
-5-10 minutter. Det betyder at CGM-værdien altid er "bagud" -- især når
-blodsukkeret ændrer sig hurtigt.
+blodet. Glukose skal først diffundere fra blodkapillærer ud i den
+interstitielle væske. Denne forsinkelse er modelleret som et selvstændigt
+kompartment i Hovorka-modellen med en differentialligning:
 
-I modellen opslår vi det sande blodsukker fra 5-10 minutter (tilfældigt)
-tidligere.
+```
+dC/dt = ka_int × (G - C)
+```
+
+hvor G er plasma-glukose (det "sande" blodsukker) og C er den interstitielle
+glukose-koncentration (det CGM'en måler). Konstanten `ka_int = 0.073 min⁻¹`
+giver en tidskonstant på ~14 minutter.
+
+Dette er *ikke* en simpel tidsforskydning — det er et førsteordens lavpasfilter.
+Forskellen er vigtig:
+
+- **Hurtigt stigende BG (fx efter mad):** CGM halter bagefter → viser lavere end
+  virkeligheden. Jo hurtigere stigning, jo større forsinkelse.
+- **Hurtigt faldende BG (fx efter insulin):** CGM halter bagefter → viser *højere*
+  end virkeligheden. **Farligt:** du kan reelt være i hypo mens CGM stadig viser 4-5.
+- **Stabilt BG:** CGM = sandt BG. Ingen forsinkelse ved steady state.
+
+Den effektive forsinkelse er typisk 5-10 minutter ved normale ændringshastigheder,
+men kan føles længere ved hurtige BG-ændringer (fx post-bolus eller under motion).
+
+*Kode: `dC = ka_int * (G - C)` i Hovorka ODE step,
+[hovorka.js](https://github.com/krauhe/t1d-simulator/blob/main/js/hovorka.js) linje 398.*
 
 ### 2. Tilfældig støj
 
@@ -1104,23 +1199,41 @@ illustrere vigtigheden af balance.
 <a name="scoring"></a>
 ## 15. Scoring og game over
 
-### Pointsystem
+### Klinisk baggrund: Time in Range (Battelino et al. 2019)
 
-Spilleren optjener points baseret på tid tilbragt i forskellige blodsukker-zoner:
+Spillets pointsystem er baseret på den internationale konsensus om "Time in
+Range" (TIR) — den mest anerkendte standard for CGM-baseret glukosekontrol.
+Konsensussen definerer fem zoner med mål for hvor stor en del af døgnet man
+bør tilbringe i hver:
 
-| Zone | Blodsukker | Points per time |
-|------|-----------|-----------------|
-| Bonus (stramt kontrolleret) | 5.0 - 6.0 mmol/L | 2.0 |
-| Normal (i mål) | 4.0 - 10.0 mmol/L | 1.0 |
-| Forhøjet (orange zone) | 10.0 - 14.0 mmol/L | 0.5 |
-| Hypo eller høj hyper | Under 4.0 eller over 14.0 | 0 |
+| Zone | BG-interval | Klinisk mål | Svarer til |
+|------|------------|-------------|------------|
+| **Meget lav** (TBR Level 2) | <3.0 mmol/L (<54 mg/dL) | <1% | <15 min/dag |
+| **Lav** (TBR Level 1) | 3.0-3.9 mmol/L (54-70 mg/dL) | <4% | <1 time/dag |
+| **I mål** (TIR) | 3.9-10.0 mmol/L (70-180 mg/dL) | >70% | >16.8 timer/dag |
+| **Høj** (TAR Level 1) | 10.0-13.9 mmol/L (180-250 mg/dL) | <25% | <6 timer/dag |
+| **Meget høj** (TAR Level 2) | >13.9 mmol/L (>250 mg/dL) | <5% | <1.2 timer/dag |
 
-Asymmetrien afspejler klinisk virkelighed: hypoglykæmi er akut farligt
-(kramper, besvimelse), mens moderat hyperglykæmi (10-14) er skadeligt på
-sigt men ikke akut livstruende.
+Nøglepointen: >70% af tiden bør være i mål (3.9-10.0), og <5% bør være "meget
+høj" (>13.9). Lavt blodsukker er akut farligt, mens højt blodsukker er skadeligt
+på sigt (øjne, nyrer, nerver) — men ikke akut livstruende.
 
-Zoneinddelingen er baseret på den internationale konsensus om Time in Range
-(Battelino et al. 2019).
+### Pointsystem i simulatoren
+
+Spillets scoring-zoner er forenklet fra TIR-tabellen med 14 mmol/L som grænse
+(tæt på den kliniske 13.9):
+
+| Zone | Blodsukker | Points per time | Klinisk baggrund |
+|------|-----------|-----------------|------------------|
+| Bonus (stram kontrol) | 5.0-6.0 mmol/L | 2.0 | Tæt på normalt — svært at opnå |
+| Normal (i mål) | 4.0-10.0 mmol/L | 1.0 | TIR-zonen — målet er >70% her |
+| Forhøjet (orange) | 10.0-14.0 mmol/L | 0.5 | TAR Level 1 — tilladt op til 25% |
+| Ingen points | <4.0 eller >14.0 | 0 | Hypo eller TAR Level 2 — farligt |
+
+Asymmetrien er bevidst: hypoglykæmi (<4.0) giver 0 points fordi det er akut
+farligt (kramper, besvimelse, koma), mens moderat hyperglykæmi (10-14) stadig
+giver halve points fordi det er acceptabelt i kortere perioder — præcis som
+den kliniske konsensus tillader op til 6 timer/dag i TAR Level 1.
 
 ### Game over-betingelser
 
@@ -1150,19 +1263,40 @@ Vigtige begrænsninger:
    (udover generel stress), og mange andre faktorer påvirker blodsukker i
    virkeligheden men er ikke (endnu) inkluderet i simulatoren.
 
-4. **Keton-model:** Forenklet i forhold til den fulde fysiologi. Rigtig
-   ketoacidose involverer pH-ændringer, dehydrering og elektrolytforstyrrelser
-   der ikke er modelleret.
+4. **Kropsbygning og muskelmasse:** ISF fanger den statiske insulinfølsomhed,
+   men ikke dynamikken ved motion. I virkeligheden betyder mere muskelmasse:
+   større GLUT4-optag under motion (E1-effekten burde skalere med muskelmasse),
+   større glykogenlagre (længere tid før udtømning under cardio), højere
+   basalstofskifte, og større perifert fordelingsvolumen (Q2 i Hovorka). To
+   personer med samme ISF men meget forskellig kropsbygning ville reagere markant
+   forskelligt på træning.
 
-5. **Motion:** Modellerer aerob og anaerob som separate mekanismer, men
+5. **Graviditet:** Markant øget insulinresistens i 2. og 3. trimester, strammere
+   BG-mål (3.5-7.8 mmol/L per Battelino 2019), risiko for gestationel diabetes.
+   Ville kræve dynamisk ISF-ændring over uger/måneder — for komplekst til
+   nuværende simulering.
+
+6. **Hypoxi og højdeophold:** Hypoxi (lav iltmætning) øger musklernes
+   glukoseoptag via AMPK-aktivering (samme pathway som motion), og røde
+   blodlegemer forbruger mere glukose under hypoxi. Desuden bliver CGM-sensorer
+   mindre pålidelige ved lav iltmætning. Relevant for bjergbestigning, flyrejser
+   og lungesygdomme — men sjældent nok til at prioritere i simulatoren.
+
+7. **Keton-model:** Forenklet i forhold til den fulde fysiologi. Nuværende model
+   bruger BG > 12 som trigger, men ketogenese drives primært af insulinniveau
+   (se afsnit 11 og VIDENSKAB.md afsnit 23). Faste-ketose er ikke modelleret.
+   Rigtig ketoacidose involverer pH-ændringer, dehydrering og
+   elektrolytforstyrrelser der ikke er modelleret.
+
+8. **Motion:** Modellerer aerob og anaerob som separate mekanismer, men
    virkeligheden er et spektrum. Individuel variation i motionsrespons er stor.
 
-6. **Insulintyper:** Kun en generel hurtigvirkende og en generel langtidsvirkende
+9. **Insulintyper:** Kun en generel hurtigvirkende og en generel langtidsvirkende
    insulin er modelleret. Forskelle mellem specifikke præparater (NovoRapid vs.
    Fiasp, Lantus vs. Tresiba) er ikke inkluderet.
 
-7. **Ingen pumpe-model:** Insulinpumper (kontinuerlig subkutan insulin-infusion)
-   er ikke modelleret.
+10. **Ingen pumpe-model:** Insulinpumper (kontinuerlig subkutan insulin-infusion)
+    er ikke modelleret.
 
 **Brug ALDRIG denne simulator som grundlag for medicinske beslutninger.
 Følg altid din læges anbefalinger.**

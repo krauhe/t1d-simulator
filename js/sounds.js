@@ -47,7 +47,7 @@ try {
     sounds.bonusSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: 'sine' },
         envelope: { attack: 0.005, decay: 0.3, sustain: 0, release: 0.4 },
-        volume: -14
+        volume: -22   // Subtil — skal høres men ikke irritere
     }).connect(sounds.bonusReverb);
 
     // In-range lyd: positiv, let opadgående to-tone når BG vender tilbage til 4-10 mmol/L.
@@ -58,17 +58,17 @@ try {
         volume: -14
     }).toDestination();
 
-    // Hypo-fare lyd: dyb, faretruende lyd når BG < 4.5 og faldende.
-    // FMSynth giver en mørk, urolig klang — lav frekvens med FM-modulation
-    // skaber en "vibrerende" fornemmelse der signalerer fare.
-    // Lav harmonicity (1.5) + høj modulationIndex (6) = dyb, grumset tone.
+    // Hypo-fare lyd: dyb, langsom, faretruende lyd når BG < 4.5 og faldende.
+    // FMSynth giver en mørk, urolig klang — meget lav frekvens med FM-modulation
+    // skaber en tung, vibrerende fornemmelse der signalerer akut fare.
+    // Lange envelope-tider (attack 0.3s, decay 1.2s) gør lyden langsom og truende.
     sounds.hypoWarnSynth = new Tone.FMSynth({
-        harmonicity: 1.5, modulationIndex: 6,
+        harmonicity: 1.5, modulationIndex: 8,
         oscillator: { type: 'sine' },
-        envelope: { attack: 0.1, decay: 0.6, sustain: 0.15, release: 0.8 },
+        envelope: { attack: 0.3, decay: 1.2, sustain: 0.2, release: 1.5 },
         modulation: { type: 'sine' },
-        modulationEnvelope: { attack: 0.1, decay: 0.4, sustain: 0.2, release: 0.5 },
-        volume: -8
+        modulationEnvelope: { attack: 0.2, decay: 0.8, sustain: 0.3, release: 1.0 },
+        volume: -6
     }).toDestination();
 
     // Hyper-zone lyd: kort, "nedern" nedadgående motiv når BG krydser over 10.
@@ -91,6 +91,14 @@ try {
         modulation: { type: "square" },
         modulationEnvelope: { attack: 0.01, decay: 0.2, release: 0.1 }
     }).toDestination();
+    // Insulin pen lyd: ægte lydoptagelse af en insulin-pen der klikker.
+    // Afspilles ved både bolus og basal insulin-injektioner.
+    // Bruger HTML5 Audio element — virker med både file:// og http://.
+    // Audio-elementet preloades og klones ved afspilning (så overlappende
+    // afspilninger er mulige).
+    sounds.insulinPenAudio = new Audio('sounds/insulin pen edited.wav');
+    sounds.insulinPenAudio.preload = 'auto';
+    sounds.insulinPenAudio.volume = 0.7;
 } catch (e) {
     // If Tone.js can't initialize (missing library, audio context blocked, etc.),
     // set sounds to null. playSound() checks for this and becomes a no-op.
@@ -139,17 +147,25 @@ function playSound(type, note = 'C4', duration = '8n') {
             sounds.inRangeSynth.triggerAttackRelease('E5', '16n', now + 0.1);
         }
         else if (type === 'hypoWarn' && sounds.hypoWarnSynth) {
-            // Faretruende nedadgående to-tone motiv: E2 → C2 (dybt moll-fald).
-            // Oktav 2 giver en virkelig dyb, truende klang. Længere toner (4n)
-            // og mere afstand (250ms) giver en langsom, uhyggelig fornemmelse.
-            sounds.hypoWarnSynth.triggerAttackRelease('E2', '4n', now);
-            sounds.hypoWarnSynth.triggerAttackRelease('C2', '2n', now + 0.25);
+            // Faretruende nedadgående to-tone motiv: E1 → C1 (ekstremt dybt).
+            // Oktav 1 giver en tung, næsten sub-bass klang. Lange toner (2n, 1n)
+            // og stor afstand (500ms) giver en langsom, truende fornemmelse.
+            sounds.hypoWarnSynth.triggerAttackRelease('E2', '2n', now);
+            sounds.hypoWarnSynth.triggerAttackRelease('C2', '1n', now + 0.5);
         }
         else if (type === 'hyperWarn' && sounds.hyperWarnSynth) {
             // "Nedern" nedadgående to-tone motiv: A3 → F3 (dybere, mere mættet).
             // Signalerer "du er over 10, det er ikke godt" uden akut panik.
             sounds.hyperWarnSynth.triggerAttackRelease('A3', '8n', now);
             sounds.hyperWarnSynth.triggerAttackRelease('F3', '8n', now + 0.15);
+        }
+        else if (type === 'insulinPen' && sounds.insulinPenAudio) {
+            // Afspil den rigtige insulin-pen lydoptagelse.
+            // Kloner Audio-elementet så lyden kan afspilles igen selvom
+            // forrige afspilning ikke er færdig.
+            const clip = sounds.insulinPenAudio.cloneNode();
+            clip.volume = sounds.insulinPenAudio.volume;
+            clip.play().catch(() => {}); // Ignorer autoplay-blokering
         }
         else if (type === 'intervention' && sounds.interventionSynth) sounds.interventionSynth.triggerAttackRelease(note, duration, now);
         else if (type === 'gameOver' && sounds.gameOverSynth) {
