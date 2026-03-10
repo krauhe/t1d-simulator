@@ -240,6 +240,7 @@ class Simulator {
         this.isInRange = true;            // 4.0-10.0 mmol/L → positiv lyd (true ved start)
         this.isInHyperZone = false;       // > 10.0 → "nedern" lyd
         this.lastHypoWarnTime = -Infinity; // cooldown for hypo-fare lyd (sim-minutter)
+        this.hypoWarnArmed = true;         // hysterese: klar til næste hypo-advarsel (reset når BG > 5.0)
 
         // --- Stress hormones (cortisol, glucagon, adrenaline) ---
         // These hormones increase the liver's glucose production and insulin resistance.
@@ -590,6 +591,7 @@ class Simulator {
         // leverer en jævn rate over ~24-36 timer. Feedes direkte til Hovorka's
         // insulinRate input (bypasser S1/S2 da basal allerede er langsomt).
         let totalInsulinRate = 0;
+        let basalInsulinRate = 0;  // Separat tracking til debug-panelet [mU/min]
         this.activeLongInsulin.forEach(ins => {
             const timeSinceInjection = this.totalSimMinutes - ins.injectionTime;
             if (timeSinceInjection < 0) return;
@@ -603,8 +605,11 @@ class Simulator {
             // Bioavailability: kun en del af dosen når blodbanen (resten nedbrydes lokalt).
             // Ældre injektioner (før denne feature) har ingen bioavailability → default 1.0.
             const ba = ins.bioavailability || 1.0;
-            totalInsulinRate += (ins.dose * ba * 1000 / ins.totalDuration) * Math.max(0, effectFactor);
+            const rate = (ins.dose * ba * 1000 / ins.totalDuration) * Math.max(0, effectFactor);
+            totalInsulinRate += rate;
+            basalInsulinRate += rate;
         });
+        this.basalInsulinRate = basalInsulinRate;  // Gem til debug [mU/min]
         this.activeLongInsulin = this.activeLongInsulin.filter(ins => (this.totalSimMinutes - ins.injectionTime) < ins.totalDuration);
 
         // BOLUS (hurtigvirkende) insulin: injiceres som kort puls (5 sim-min).
@@ -620,6 +625,7 @@ class Simulator {
         // tauFactor varierer absorptionshastigheden per injektion — sættes som
         // en vægtet blanding af alle aktive injektioners tauFactor.
         const BOLUS_PULSE_DURATION = 5; // minutter — simulerer subkutan injektion
+        let bolusInsulinRate = 0;  // Separat tracking til debug-panelet [mU/min]
         let tauWeightSum = 0;
         let tauWeightedFactor = 0;
         this.activeFastInsulin.forEach(ins => {
@@ -627,7 +633,9 @@ class Simulator {
             if (timeSinceInjection >= 0 && timeSinceInjection < BOLUS_PULSE_DURATION) {
                 // Injicér effektiv dosis (efter lokal nedbrydning) som kort puls.
                 const ba = ins.bioavailability || 1.0;
-                totalInsulinRate += ins.dose * ba * 1000 / BOLUS_PULSE_DURATION;
+                const rate = ins.dose * ba * 1000 / BOLUS_PULSE_DURATION;
+                totalInsulinRate += rate;
+                bolusInsulinRate += rate;
             }
             // Vægtet tauFactor: nyeste/største injektioner dominerer.
             // Bruges til at justere Hovorka's tau_I for denne tick.
@@ -646,6 +654,7 @@ class Simulator {
         } else {
             this.hovorka.tau_I = baseTauI;
         }
+        this.bolusInsulinRate = bolusInsulinRate;  // Gem til debug [mU/min]
         // Fjern bolus-entries efter 6 timer (langt efter pulsen er slut, men
         // beholdes for log/UI-formål og IOB-tracking)
         this.activeFastInsulin = this.activeFastInsulin.filter(ins =>
@@ -816,7 +825,7 @@ class Simulator {
 
             // Kombiner alle komponenter: interstitiel BG + støj + drift + spring
             this.cgmBG = interstitialBG + randomNoise + systemicDeviation + discontinuity;
-            this.cgmBG = Math.max(2.2, Math.min(25.0, this.cgmBG)); // Sensor range limits
+            this.cgmBG = Math.max(2.2, Math.min(30.0, this.cgmBG)); // Sensor range limits (hævet fra 25 for bedre synlighed på grafen)
             this.lastCgmCalculationTime = this.totalSimMinutes;
 
             // Store data points for graph rendering and statistics
@@ -914,13 +923,20 @@ class Simulator {
         }
         this.isInBonusRange = inBonusNow;
 
-        // Hypo-fare lyd: spilles når BG er under 4.5 OG faldende.
-        // Cooldown på 5 sim-minutter forhindrer at lyden spammer ved tick-fluktuationer.
+        // Hypo-fare lyd med hysterese:
+        // Spilles når BG krydser NED under 4.5 (faldende).
+        // Derefter IKKE igen før BG har været OVER 5.0 (hysterese-tærskel).
+        // Dette forhindrer gentagne lyde når BG svæver omkring 4.5 i ligevægt.
+        // Minimum cooldown 15 sim-min som ekstra sikkerhed mod spam.
+        if (this.trueBG >= 5.0) {
+            this.hypoWarnArmed = true;  // Reset — klar til næste advarsel
+        }
         const bgFalling = this.trueBG < this.lastTrueBGForDropCheck;
-        if (this.trueBG < 4.5 && bgFalling
-            && this.totalSimMinutes - this.lastHypoWarnTime >= 5) {
+        if (this.trueBG < 4.5 && bgFalling && this.hypoWarnArmed
+            && this.totalSimMinutes - this.lastHypoWarnTime >= 15) {
             playSound('hypoWarn');
             this.lastHypoWarnTime = this.totalSimMinutes;
+            this.hypoWarnArmed = false;  // Lås — kræver BG > 5.0 før næste
         }
 
         // In-range lyd: positiv lyd når BG kommer tilbage i grøn zone (4.0-10.0)
@@ -1073,7 +1089,7 @@ class Simulator {
         this.totalKcalConsumed += foodKcal;
         logEvent(`Mad: ${carbs}g K, ${protein}g P, ${fat}g F`, 'food', {kcal: foodKcal, carbs, protein, icon});
         this.activeFood.push({ carbs, protein, fat, startTime: this.totalSimMinutes, carbsAbsorbed: 0, proteinAbsorbed: 0 });
-        playSound('intervention', 'E4');
+        playSound('eating');
     }
 
     /**
@@ -1528,7 +1544,32 @@ class Simulator {
     updateGlucagonStatus() {
         const cooldownMinutes = 24 * 60;
         const timeSinceUsed = this.totalSimMinutes - this.glucagonUsedTime;
-        glucagonButton.disabled = timeSinceUsed < cooldownMinutes;
+        const onCooldown = timeSinceUsed < cooldownMinutes;
+        this.glucagonOnCooldown = onCooldown;
+        // Glukagon-knappen er nu i kit-panelet (kitGlucagonButton)
+        const btn = document.getElementById('kitGlucagonButton');
+        if (btn) {
+            if (onCooldown) {
+                btn.classList.add('on-cooldown');
+                btn.style.pointerEvents = 'none';
+                // Lagkage-progress: 0% = lige brugt (helt dækket), 100% = klar (helt synlig)
+                const pct = Math.min(100, (timeSinceUsed / cooldownMinutes) * 100);
+                btn.style.setProperty('--cooldown-pct', pct.toFixed(1));
+                // Vis resterende cooldown-tid på knappen
+                const remaining = cooldownMinutes - timeSinceUsed;
+                const hours = Math.floor(remaining / 60);
+                const mins = Math.floor(remaining % 60);
+                const nameEl = btn.querySelector('.pc-name');
+                if (nameEl) nameEl.textContent = `${hours}t ${mins}m`;
+            } else {
+                btn.classList.remove('on-cooldown');
+                btn.style.removeProperty('pointer-events');
+                btn.style.removeProperty('--cooldown-pct');
+                // Gendan label
+                const nameEl = btn.querySelector('.pc-name');
+                if (nameEl) nameEl.textContent = 'Glukagon';
+            }
+        }
     }
 
     /**
@@ -1542,6 +1583,9 @@ class Simulator {
      * 24-hour cooldown after use (liver needs to replenish glycogen).
      */
     useGlucagon() {
+        // Dobbelt-check cooldown (sikkerhed mod direkte kald)
+        const cooldownMinutes = 24 * 60;
+        if (this.totalSimMinutes - this.glucagonUsedTime < cooldownMinutes) return;
         this.handleNightIntervention();
         logEvent("Glukagon brugt! BG stiger hurtigt.", 'glucagon');
 
@@ -1685,12 +1729,12 @@ class Simulator {
         // DKA Death: 12 hours after the warning (18 hours total)
         if (this.dkaGameOverTime !== -1 && this.totalSimMinutes >= this.dkaGameOverTime) {
             this.gameOver("Diabetisk Ketoacidose (DKA)", {
-                cause: `Dit blodsukker: ${this.trueBG.toFixed(1)} mmol/L. Dit ketonniveau: ${this.ketoneLevel.toFixed(1)} mmol/L.`,
+                cause: `Ketonniveau: ${this.ketoneLevel.toFixed(1)} mmol/L — ukontrolleret syreophobning i blodet.`,
                 explanation:
-                    `Uden tilstrækkeligt insulin kan kroppen ikke bruge glukose som energi. ` +
-                    `I stedet forbrændes fedt, som producerer ketonstoffer. ` +
-                    `Når ketoner ophobes i blodet, bliver det surt (acidose), ` +
-                    `hvilket påvirker alle organer og kan føre til bevidstløshed og død.`,
+                    `Insulin styrer ikke kun blodsukkeret — det holder også fedtnedbrydningen i skak. ` +
+                    `Uden insulin nedbryder kroppen fedt ukontrolleret og danner ketonstoffer. ` +
+                    `I små mængder er ketoner harmløse, men uden insulin hober de sig op, ` +
+                    `blodet bliver surt (acidose), og organerne svigter.`,
                 tips: [
                     'Hold øje med dit blodsukker — vedvarende høje værdier er et advarselstegn',
                     'Tag et keton-stik (🧪) hvis dit blodsukker er højt i flere timer',

@@ -84,12 +84,17 @@ function updateUI() {
     // --- CGM Hero farve baseret på BG-niveau ---
     // Fjern alle BG-klasser og tilføj den aktuelle
     cgmValueDisplayGraph.classList.remove('bg-target', 'bg-elevated', 'bg-danger');
+    const cgmHero = document.getElementById('cgm-hero');
+    if (cgmHero) cgmHero.classList.remove('glow-target', 'glow-elevated', 'glow-danger');
     if (game.cgmBG < 4.0 || game.cgmBG > 14.0) {
         cgmValueDisplayGraph.classList.add('bg-danger');
+        if (cgmHero) cgmHero.classList.add('glow-danger');
     } else if (game.cgmBG > 10.0) {
         cgmValueDisplayGraph.classList.add('bg-elevated');
+        if (cgmHero) cgmHero.classList.add('glow-elevated');
     } else {
         cgmValueDisplayGraph.classList.add('bg-target');
+        if (cgmHero) cgmHero.classList.add('glow-target');
     }
 
     // --- CGM Trend-pil ---
@@ -456,26 +461,23 @@ function drawGraph() {
             } else if (event.type === 'motion') {
                 graphCtx.fillText(event.icon, x, yPos);
             } else if(event.type === 'glucagon') {
-                // Glukagon: hvid/lys baggrund med rødt kryds (matcher dock-ikonet)
-                const iconSize = 24;
-                const boxTop = yPos - iconSize;
-                graphCtx.fillStyle = '#e5e7eb';
-                graphCtx.beginPath();
-                graphCtx.roundRect(x - iconSize/2, boxTop, iconSize, iconSize, 5);
-                graphCtx.fill();
-                graphCtx.strokeStyle = 'rgba(220, 38, 38, 0.5)';
-                graphCtx.lineWidth = 1;
-                graphCtx.stroke();
-                // Kryds centreret i boksen
+                // Glukagon: rød sprøjte-emoji (💉) — samme størrelse som insulin, lidt større.
+                // Bruger samme _emojiOffCanvas teknik som insulin-ikoner.
+                const emojiSize = 24;
+                _emojiOffCanvas.width = emojiSize * 2;
+                _emojiOffCanvas.height = emojiSize * 2;
+                _emojiOffCtx.clearRect(0, 0, emojiSize * 2, emojiSize * 2);
+                _emojiOffCtx.filter = 'hue-rotate(330deg) saturate(1.8) brightness(1.1)';
+                _emojiOffCtx.font = `${18}px Arial`;
+                _emojiOffCtx.textAlign = 'center';
+                _emojiOffCtx.textBaseline = 'middle';
+                _emojiOffCtx.fillText('\u{1F489}', emojiSize, emojiSize);
+                _emojiOffCtx.filter = 'none';
+                graphCtx.drawImage(_emojiOffCanvas, x - emojiSize, yPos - 6 - emojiSize, emojiSize * 2, emojiSize * 2);
+                // "GLU" label OVER ikonet
+                graphCtx.font = "bold 11px Inter, Segoe UI";
                 graphCtx.fillStyle = '#dc2626';
-                graphCtx.font = "bold 18px Arial";
-                graphCtx.textBaseline = 'middle';
-                graphCtx.fillText('\u271A', x, boxTop + iconSize/2);
-                graphCtx.textBaseline = 'alphabetic';
-                // "GLU" label OVER boksen
-                graphCtx.font = "bold 10px Inter, Segoe UI";
-                graphCtx.fillStyle = '#dc2626';
-                graphCtx.fillText('GLU', x, boxTop - 4);
+                graphCtx.fillText('GLU', x, yPos - 14);
             } else if(event.type.includes('insulin')) {
                 // Hue-roteret sprøjte-emoji via offscreen canvas med CSS filter.
                 // Canvas API kan ikke filtrere emoji direkte, så vi tegner emoji på
@@ -573,62 +575,79 @@ function drawGraph() {
     });
 
     // --- Floating labels (animerede måleresultater) ---
-    // Disse popper op fra et målepunkt på grafen og svæver opad mens de fader ud.
+    // Renderes som DOM-elementer OVER canvas'et (z-index: 20) så de vises oven på
+    // CGM hero (z-index: 10) og points overlay (z-index: 10).
     // Bruges til fingerprik og keton-stik — spil-agtigt visuelt feedback.
     // Bruger real-tid (performance.now) til smooth animation uafhængig af sim-hastighed.
-    // Cleanup: fjern labels der har levet i mere end 3 real-sekunder.
-    const FLOAT_DURATION_MS = 3000; // 3 sekunder real-tid for smooth animation
+    renderFloatingLabels(padding, graphWidth, graphHeight, range, currentDayStartMinutes, totalMinutesInView);
+}
+
+// =============================================================================
+// renderFloatingLabels — Tegn animerede måleresultater som DOM-elementer
+// =============================================================================
+//
+// I stedet for at tegne på canvas (hvor de skjules af CGM hero/points overlay),
+// oprettes <div>-elementer i #graph-area-container med z-index: 20.
+// Hvert label-element genbruges via en _domEl-reference på label-objektet.
+// Elementer fjernes automatisk når animationen er færdig.
+// =============================================================================
+function renderFloatingLabels(padding, graphWidth, graphHeight, range, currentDayStartMinutes, totalMinutesInView) {
+    if (!game || !game.floatingLabels) return;
+    const container = document.getElementById('graph-area-container');
+    if (!container) return;
+
+    const FLOAT_DURATION_MS = 3000; // 3 sekunder real-tid
     const nowMs = performance.now();
-    if (game.floatingLabels) {
-        game.floatingLabels = game.floatingLabels.filter(lbl => {
-            // Initialiser real-tid-timestamp ved første rendering
-            if (!lbl._realCreatedAt) lbl._realCreatedAt = nowMs;
-            return (nowMs - lbl._realCreatedAt) < FLOAT_DURATION_MS;
-        });
 
-        game.floatingLabels.forEach(lbl => {
-            // Kun tegn labels fra den aktuelle dag
-            if (lbl.time < currentDayStartMinutes || lbl.time >= currentDayStartMinutes + totalMinutesInView) return;
+    // Cleanup: fjern labels der er udløbet
+    game.floatingLabels = game.floatingLabels.filter(lbl => {
+        if (!lbl._realCreatedAt) lbl._realCreatedAt = nowMs;
+        const alive = (nowMs - lbl._realCreatedAt) < FLOAT_DURATION_MS;
+        if (!alive && lbl._domEl) {
+            lbl._domEl.remove();
+            lbl._domEl = null;
+        }
+        return alive;
+    });
 
-            // Smooth animation baseret på real-tid (ikke sim-tid)
-            const progress = Math.min(1, (nowMs - lbl._realCreatedAt) / FLOAT_DURATION_MS); // 0→1
-            const x = padding.left + ((lbl.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
-            const baseY = padding.top + graphHeight - ((lbl.value) / range) * graphHeight;
+    game.floatingLabels.forEach(lbl => {
+        // Kun vis labels fra den aktuelle dag
+        if (lbl.time < currentDayStartMinutes || lbl.time >= currentDayStartMinutes + totalMinutesInView) {
+            if (lbl._domEl) lbl._domEl.style.display = 'none';
+            return;
+        }
 
-            // Animation: start 30px OVER kurven og svæv yderligere 25px opad
-            // Sikrer at labelen ikke dækker for data-punkterne
-            const yOffset = -30 - 25 * progress;    // Start over kurven, bevæg videre op
-            const alpha = 1.0 - progress * 0.8;     // Fade: 1.0 → 0.2
-            const y = baseY + yOffset;
+        // Beregn position (samme koordinatsystem som canvas, men i CSS-pixels)
+        const progress = Math.min(1, (nowMs - lbl._realCreatedAt) / FLOAT_DURATION_MS);
+        const x = padding.left + ((lbl.time - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+        const baseY = padding.top + graphHeight - ((lbl.value) / range) * graphHeight;
+        const yOffset = -30 - 25 * progress;
+        const alpha = 1.0 - progress * 0.8;
+        const y = baseY + yOffset;
 
-            if (y < padding.top - 20 || y > padding.top + graphHeight + 20) return;
+        if (y < padding.top - 20 || y > padding.top + graphHeight + 20) {
+            if (lbl._domEl) lbl._domEl.style.display = 'none';
+            return;
+        }
 
-            graphCtx.save();
-            graphCtx.globalAlpha = alpha;
-            graphCtx.font = "bold 13px Inter, Segoe UI";
-            graphCtx.textAlign = "center";
-            graphCtx.textBaseline = "middle";
+        // Opret DOM-element ved første rendering
+        if (!lbl._domEl) {
+            const el = document.createElement('div');
+            el.className = 'floating-label';
+            el.textContent = lbl.text;
+            el.style.borderColor = lbl.color;
+            el.style.color = lbl.color;
+            container.appendChild(el);
+            lbl._domEl = el;
+        }
 
-            // Baggrund-boks med afrundede hjørner (mørkt tema)
-            const textWidth = graphCtx.measureText(lbl.text).width;
-            const boxW = textWidth + 12;
-            const boxH = 20;
-            const boxX = x - boxW / 2;
-            const boxY = y - boxH / 2;
-            graphCtx.fillStyle = "rgba(17, 24, 39, 0.9)";
-            graphCtx.strokeStyle = lbl.color;
-            graphCtx.lineWidth = 1.5;
-            graphCtx.beginPath();
-            graphCtx.roundRect(boxX, boxY, boxW, boxH, 4);
-            graphCtx.fill();
-            graphCtx.stroke();
-
-            // Tekst — centreret i boksen via textBaseline='middle'
-            graphCtx.fillStyle = lbl.color;
-            graphCtx.fillText(lbl.text, x, y);
-            graphCtx.restore();
-        });
-    }
+        // Opdater position og opacity
+        const el = lbl._domEl;
+        el.style.display = '';
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.style.opacity = alpha;
+    });
 }
 
 

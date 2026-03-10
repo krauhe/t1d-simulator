@@ -42,6 +42,7 @@
     --bg-primary: #0d1526;                          /* Hovedbaggrund */
     --bg-secondary: #141d2f;                        /* Top bar, sidebar */
     --bg-card: rgba(20, 29, 47, 0.97);             /* Paneler/kort */
+    --bg-card-glass: rgba(20, 29, 47, 0.18);       /* Meget gennemsigtige paneler over grafen — grafen skal tydeligt ses igennem */
     --bg-elevated: rgba(255, 255, 255, 0.07);      /* Subtil elevation */
     --bg-hover: rgba(255, 255, 255, 0.14);         /* Hover-baggrund */
 
@@ -49,6 +50,17 @@
     --text-primary: #f5f8fc;                        /* Primær tekst — næsten hvid */
     --text-secondary: #c4d5e8;                      /* Sekundær tekst — tydelig */
     --text-muted: #8fa8c8;                          /* Dæmpet tekst — stadig læsbar */
+
+    /* Typografi-skala — ensartet på tværs af hele UI'et.
+       Kun 5 niveauer (+ hero + micro). Alle bruger Inter (sat på body). */
+    --font-hero: 32px;                              /* CGM-tal */
+    --font-ui-lg: 13px;                             /* Knapper, badge-tal, panel-titler */
+    --font-ui: 11px;                                /* Labels, værdier, brødtekst i paneler */
+    --font-ui-sm: 10px;                             /* Sektionsoverskrifter (uppercase), enheder, metadata */
+    --font-micro: 8px;                              /* Tastatur-hints (pc-key, dock-key) */
+    --font-weight-label: 600;                       /* Labels og knaptekst */
+    --font-weight-value: 600;                       /* Tal-værdier */
+    --font-weight-heading: 600;                     /* Sektionsoverskrifter */
 
     /* Accent-farver (lysere og mere mættede for høj kontrast) */
     --green: #4ade80;                               /* Target range — matcher grafens punkter */
@@ -66,12 +78,12 @@
     --yellow-dim: rgba(253, 224, 71, 0.14);
 
     /* Grænser og effekter (høj synlighed) */
-    --border-subtle: rgba(255, 255, 255, 0.12);
-    --border-medium: rgba(255, 255, 255, 0.20);
+    --border-subtle: rgba(147, 197, 253, 0.12);
+    --border-medium: rgba(147, 197, 253, 0.20);
     --border-strong: rgba(255, 255, 255, 0.28);
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 35px rgba(147, 197, 253, 0.12), 0 0 80px rgba(147, 197, 253, 0.06);
 
     /* Border radius */
     --radius-sm: 6px;
@@ -87,6 +99,19 @@
     --smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+
+/* =============================================================================
+   BLÅ GLØD — Subtil blå aura bag alle paneler (matcher T1D SIMULATOR logo)
+   Farve: #93c5fd / rgba(147, 197, 253). Giver UI'en et sammenhængende sci-fi look.
+   ============================================================================= */
+.status-badge,
+.settings-group,
+.dock,
+#event-log,
+#stats-panel,
+.time-control-group {
+    box-shadow: 0 0 15px rgba(147, 197, 253, 0.10), 0 0 40px rgba(147, 197, 253, 0.06);
+}
 
 /* =============================================================================
    BODY OG GAME CONTAINER
@@ -189,17 +214,18 @@ body {
     background: var(--bg-hover);
 }
 .settings-item .settings-label {
-    font-size: 9px;
+    font-size: var(--font-ui-sm);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-/* Brand-gruppe: logo + slogan stables lodret */
+/* Brand-gruppe: logo + slogan stables lodret — aldrig wrap eller krymp */
 .brand-group {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 /* Brand-logo: Orbitron sci-fi font med animeret gradient + kraftig glow */
@@ -216,6 +242,7 @@ body {
     letter-spacing: 3px;
     cursor: default;
     line-height: 1.1;
+    white-space: nowrap;                             /* Brand-logo skal ALDRIG wrappe til 2 linjer */
     filter: drop-shadow(0 0 14px rgba(147, 197, 253, 0.8))
             drop-shadow(0 0 30px rgba(167, 139, 250, 0.5))
             drop-shadow(0 0 50px rgba(147, 197, 253, 0.25));
@@ -232,6 +259,7 @@ body {
     color: var(--text-secondary);
     text-transform: uppercase;
     line-height: 1;
+    white-space: nowrap;
 }
 
 /* Status-badges: kompakte info-elementer i toppen */
@@ -246,7 +274,7 @@ body {
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: 0 14px;                               /* Ingen top/bund-padding — højden styres af parent */
-    font-size: 13px;
+    font-size: var(--font-ui);
     display: flex;
     align-items: center;                           /* Centrér indhold vertikalt */
     gap: 6px;
@@ -254,15 +282,12 @@ body {
     cursor: default;
 }
 
-.status-badge:hover {
-    background: var(--bg-hover);
-    transform: translateY(-1px);
-}
+/* Ingen hover-effekt på badges — de er kun informative, ikke interaktive */
 
 .badge-icon { font-size: 14px; }
-.badge-num { font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
-.badge-label { color: var(--text-muted); font-size: 11px; }
-.badge-weight { color: var(--text-muted); font-size: 10px; margin-left: 2px; transition: color 0.3s; }
+.badge-num { font-weight: var(--font-weight-value); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.badge-label { color: var(--text-muted); font-size: var(--font-ui); }
+.badge-weight { color: var(--text-muted); font-size: var(--font-ui-sm); margin-left: 2px; transition: color 0.3s; }
 /* Points-weight farve følger scoring-tilstand */
 .status-badge.points.pts-on .badge-weight { color: var(--green); }
 .status-badge.points.pts-bonus .badge-weight { color: #fbbf24; text-shadow: 0 0 6px rgba(250, 204, 21, 0.4); }
@@ -274,11 +299,10 @@ body {
     font-size: 14px;
     margin: 0 2px;
 }
-/* Fast bredde på tid-tal: Inter har ægte tabular-nums (Orbitron har det ikke) */
+/* Fast bredde på tid-tal */
 .datetime-badge .badge-num {
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: var(--font-ui-lg);
+    font-weight: var(--font-weight-value);
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.5px;
 }
@@ -304,18 +328,18 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
-/* Points overlay — svæver i øverste højre hjørne af grafen (spejlvendt af cgm-hero) */
+/* Points overlay — halvgennemsigtig + blur som cgm-hero */
 #pointsOverlay {
     position: absolute;
     top: 32px;
     right: 30px;
     z-index: 10;
-    background: var(--bg-card);
-    border: 1px solid var(--border-medium);
+    background: var(--bg-card-glass);
+    border: 1px solid rgba(52, 211, 153, 0.15);
     border-radius: var(--radius-lg);
     padding: 8px 14px;
-    backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(24px);
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.1), 0 0 30px rgba(0, 0, 0, 0.2);
 }
 
 /* Dag-badge: fast bredde */
@@ -412,81 +436,98 @@ body {
     100% { opacity: 0; transform: translate(12px, -18px) scale(0.7); }
 }
 
-/* Hastigheds-dropdown — custom Mac-stil popup-menu */
-.speed-dropdown {
-    position: relative;
-    display: inline-block;
+/* Hastighed + pause: samlet inline stepper (◀ 4t/min ▶) */
+.speed-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
 }
-.speed-trigger {
+/* ◀ og ▶ piletaster */
+.speed-step-btn {
     background: transparent;
-    border: 1px solid transparent;
+    border: none;
     color: var(--text-muted);
-    font-size: 13px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
+    font-size: 8px;
+    padding: 4px 6px;
     cursor: pointer;
-    outline: none;
-    padding: 2px 6px;
-    border-radius: var(--radius-md);
-    transition: background 0.15s, border-color 0.15s;
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
 }
-.speed-trigger:hover {
-    background: var(--bg-elevated);
-    border-color: var(--border-subtle);
+.speed-step-btn:hover {
     color: var(--text-primary);
+    background: var(--bg-hover);
 }
-.speed-dropdown.open .speed-trigger {
-    background: var(--bg-elevated);
-    border-color: var(--border-medium);
-    color: var(--text-primary);
-}
-/* Popup-menu: folder ned under trigger-knappen */
-.speed-menu {
-    display: none;
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--bg-card);
-    border: 1px solid var(--border-medium);
-    border-radius: var(--radius-lg);
-    padding: 4px;
-    min-width: 90px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-    /* Animeret åbning */
-    opacity: 0;
-    transform: translateX(-50%) translateY(-4px) scale(0.96);
-    transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.speed-dropdown.open .speed-menu {
-    display: block;
-    /* Trigger reflow for transition — display:block → opacity animeres */
-}
-.speed-dropdown.open .speed-menu.visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
-}
-/* Individuelle menu-rækker */
-.speed-option {
-    padding: 6px 12px;
-    font-size: 13px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
+/* Midterste knap: hastighed + play/pause tilstand — fast bredde */
+.speed-current {
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-subtle);
     color: var(--text-secondary);
-    border-radius: var(--radius-md);
+    font-size: var(--font-ui);
+    font-weight: var(--font-weight-value);
+    padding: 3px 6px;
     cursor: pointer;
+    transition: color 0.15s, background 0.15s;
     white-space: nowrap;
+    /* Fast bredde: plads til ▶▶▶▶ + "24t/min" uden resize */
+    width: 100px;
     text-align: center;
-    transition: background 0.1s, color 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
-.speed-option:hover {
-    background: var(--accent);
-    color: #fff;
-}
-.speed-option.selected {
+.speed-current:hover {
     color: var(--text-primary);
-    font-weight: 700;
+    background: var(--bg-hover);
+}
+/* Mode-ikon: viser pile (▶▶) eller ⏸ — pulserer ved kørsel */
+.speed-state-icon {
+    font-size: 8px;
+    letter-spacing: -2px;
+    color: var(--accent);
+    display: inline-block;
+    width: 26px;
+    text-align: left;
+    flex-shrink: 0;
+}
+/* Hastigheds-label (fx "4t/min") */
+#speedLabel {
+    font-variant-numeric: tabular-nums;
+}
+/* Kørsel: pile i tekst-farve, pulserer kun ved høj hastighed */
+.speed-stepper.playing .speed-state-icon {
+    color: var(--text-secondary);
+    /* animation-duration sættes dynamisk via JS — 'none' for langsomme hastigheder */
+}
+.speed-stepper.playing .speed-state-icon.pulsing {
+    animation: speed-pulse ease-in-out infinite;
+}
+/* Pause: ⏸ i tekst-farve, statisk */
+.speed-stepper.paused .speed-state-icon {
+    color: var(--text-secondary);
+    font-size: 10px;
+    letter-spacing: 0;
+    animation: none;
+}
+/* Puls-animation: blinker pilene med variabel hastighed */
+@keyframes speed-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+}
+/* ◀ disabled (ved laveste hastighed) */
+.speed-step-btn:disabled {
+    opacity: 0.2;
+    cursor: default;
+}
+.speed-step-btn:disabled:hover {
+    background: transparent;
+    color: var(--text-muted);
 }
 
 /* (top-actions er nu erstattet af top-center) */
@@ -497,8 +538,7 @@ body {
     color: var(--text-secondary);
     padding: 0 14px;                               /* Ingen top/bund-padding — højden styres af parent */
     border-radius: 8px;
-    font-size: 12px;
-    font-family: 'Inter', sans-serif;
+    font-size: var(--font-ui);
     cursor: pointer;
     transition: all 0.2s var(--bounce);
     display: flex;
@@ -549,17 +589,43 @@ body {
    Flyder over graf-canvaset med semi-transparent baggrund.
    Viser BG-tal, trend-pil, IOB og COB. */
 /* BG-panel: placeret inde i chart-området (padding.left=58px + 12px margin) */
+/* Halvgennemsigtig + blur: grafen er synlig bagved så man kan følge opdateringer */
 #cgm-hero {
     position: absolute;
     top: 32px;
     left: 70px;
     z-index: 10;
-    background: var(--bg-card);
+    background: var(--bg-card-glass);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-lg);
     padding: 8px 14px;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(24px);
     box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 0, 0, 0.4);
+    /* Pulserende glow der matcher BG-farven — animation sættes dynamisk via klasser */
+    transition: box-shadow 1s var(--smooth), border-color 1s var(--smooth);
+}
+/* Pulserende glow per BG-niveau — tydeligt synlig */
+#cgm-hero.glow-target {
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.2), 0 0 40px rgba(52, 211, 153, 0.1);
+    border-color: rgba(52, 211, 153, 0.3);
+}
+#cgm-hero.glow-elevated {
+    box-shadow: 0 0 20px rgba(251, 146, 60, 0.3), 0 0 50px rgba(251, 146, 60, 0.15);
+    border-color: rgba(251, 146, 60, 0.4);
+    animation: cgm-glow-warn 3s ease-in-out infinite;
+}
+#cgm-hero.glow-danger {
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    animation: cgm-glow-danger 1.5s ease-in-out infinite;
+}
+@keyframes cgm-glow-warn {
+    0%, 100% { box-shadow: 0 0 20px rgba(251, 146, 60, 0.3), 0 0 50px rgba(251, 146, 60, 0.15); }
+    50% { box-shadow: 0 0 35px rgba(251, 146, 60, 0.45), 0 0 70px rgba(251, 146, 60, 0.2); }
+}
+@keyframes cgm-glow-danger {
+    0%, 100% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2); }
+    50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.55), 0 0 80px rgba(239, 68, 68, 0.3); }
 }
 
 .cgm-hero-row {
@@ -569,8 +635,7 @@ body {
 }
 
 .cgm-number {
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 32px;
+    font-size: var(--font-hero);
     font-weight: 800;
     color: var(--green);
     line-height: 1;
@@ -601,9 +666,9 @@ body {
 }
 
 .cgm-unit {
-    font-size: 13px;
+    font-size: var(--font-ui);
     color: var(--text-muted);
-    font-weight: 600;
+    font-weight: var(--font-weight-label);
 }
 
 /* Trend-pil: viser BG-retning (som rigtig CGM: ↑↗→↘↓) — tykkere og mere synlig */
@@ -633,20 +698,17 @@ body {
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: 4px 12px;
-    font-size: 12px;
+    font-size: var(--font-ui);
     color: var(--text-secondary);
     transition: all 0.2s var(--smooth);
     cursor: default;
 }
 
-.info-pill:hover {
-    transform: scale(1.05);
-    background: var(--bg-hover);
-}
+/* Ingen hover — info-pills er kun informative, ikke interaktive */
 
 .info-pill strong {
     color: var(--text-primary);
-    font-weight: 700;
+    font-weight: var(--font-weight-value);
     font-variant-numeric: tabular-nums;
     min-width: 28px;
     display: inline-block;
@@ -660,6 +722,26 @@ body {
     flex: 1;
     position: relative;
     min-height: 200px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 0 15px rgba(147, 197, 253, 0.10), 0 0 40px rgba(147, 197, 253, 0.06);
+}
+
+/* Floating labels: animerede måleresultater (fingerprik, keton-stik).
+   Renderes som DOM-elementer OVER canvas'et og CGM hero/points overlay.
+   z-index: 20 > CGM hero/points (10) — så de altid er synlige. */
+.floating-label {
+    position: absolute;
+    z-index: 20;
+    transform: translate(-50%, -50%);                /* Centrér på (left, top) koordinaterne */
+    font-size: var(--font-ui-lg);
+    font-weight: bold;
+    white-space: nowrap;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(17, 24, 39, 0.9);
+    border: 1.5px solid;                             /* border-color sættes inline via JS */
+    pointer-events: none;                            /* Klik går igennem til grafen */
+    transition: none;                                /* Animation styres manuelt i JS */
 }
 
 #bg-graph {
@@ -776,7 +858,7 @@ body {
     padding: 14px;
     overflow-y: auto;
     flex-shrink: 0;
-    font-size: 0.85em;
+    font-size: var(--font-ui);
     transition: width 0.4s var(--bounce), padding 0.4s var(--bounce), margin 0.4s var(--bounce);
     position: relative;
 }
@@ -823,7 +905,8 @@ body {
 }
 
 .stats-section h5 {
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
+    font-weight: var(--font-weight-heading);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--text-muted);
@@ -860,25 +943,25 @@ body {
 }
 
 .stats-table .header {
-    font-weight: 600;
+    font-weight: var(--font-weight-heading);
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
     text-align: center;
 }
 
 /* Kolonne-overskrifter i stats-tabellen ("I dag", "Uge") */
 .stats-middel-header {
     text-align: center !important;
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .stats-table .label {
-    font-weight: 600;
+    font-weight: var(--font-weight-label);
     text-align: left;
     color: var(--text-secondary);
-    font-size: 11px;
+    font-size: var(--font-ui);
     padding: 3px 0;
 }
 
@@ -888,14 +971,14 @@ body {
     padding: 3px 6px;
     border-radius: 4px;
     color: var(--text-primary);
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: var(--font-weight-value);
+    font-size: var(--font-ui);
 }
 
 .stats-table .unit {
     text-align: left;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
 }
 
 /* Spiller-data tabel: 3-kolonne grid (label | value | unit) */
@@ -907,10 +990,10 @@ body {
 }
 
 .player-data-table .label {
-    font-weight: 600;
+    font-weight: var(--font-weight-label);
     text-align: left;
     color: var(--text-secondary);
-    font-size: 11px;
+    font-size: var(--font-ui);
 }
 
 .player-data-table .value {
@@ -919,21 +1002,21 @@ body {
     padding: 3px 6px;
     border-radius: 4px;
     color: var(--text-primary);
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: var(--font-weight-value);
+    font-size: var(--font-ui);
 }
 
 .player-data-table .unit {
     text-align: left;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
 }
 
 /* Vægtændring slider (visual indicator, ikke interaktiv) */
 .weight-change-display {
     text-align: center;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: var(--font-ui-lg);
+    font-weight: var(--font-weight-value);
     color: var(--text-primary);
     margin-bottom: 6px;
 }
@@ -1006,14 +1089,29 @@ body {
     font-size: 24px;
     transition: all 0.3s var(--bounce);
     border: 1px solid transparent;
+    position: relative;
 }
 
 .dock-label {
-    font-size: 9px;
+    font-size: var(--font-ui-sm);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: all 0.3s;
+}
+
+/* Tastatur-genvej bogstav i dock-ikon — nederst th. */
+.dock-key {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: var(--font-micro);
+    font-weight: 700;
+    color: var(--text-muted);
+    opacity: 0.45;
+    text-transform: uppercase;
+    line-height: 1;
+    pointer-events: none;
 }
 
 /* === DOCK HOVER-EFFEKT ===
@@ -1076,6 +1174,9 @@ body {
 .insulin-icon-teal {
     filter: hue-rotate(170deg) saturate(1.3) brightness(1.1);
 }
+.insulin-icon-red {
+    filter: hue-rotate(330deg) saturate(1.8) brightness(1.1);
+}
 .dock-item.d-insulin:hover .dock-icon {
     background: linear-gradient(135deg, #0891b2, #0e7490);
     border-color: rgba(14, 165, 210, 0.7);
@@ -1104,49 +1205,21 @@ body {
     box-shadow: 0 8px 30px rgba(16, 185, 129, 0.45);
 }
 
-/* Målinger: rød/rosa — solide farver */
-.dock-item.d-measure .dock-icon {
-    background: linear-gradient(135deg, #991b1b, #7f1d1d);
-    border-color: rgba(248, 113, 113, 0.4);
+/* Diabetes-kit: teal/grøn — førstehjælp-æstetik */
+.dock-item.d-kit .dock-icon {
+    background: linear-gradient(135deg, #134e4a, #0f3d3a);
+    border-color: rgba(94, 234, 212, 0.4);
 }
-.dock-item.d-measure:hover .dock-icon {
-    background: linear-gradient(135deg, #b91c1c, #991b1b);
-    border-color: rgba(248, 113, 113, 0.7);
-    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.4);
-}
-
-/* Glukagon: hvid/lys baggrund med stort rødt kryds-ikon (nødhjælp) */
-.dock-item.d-sos .dock-icon {
-    background: linear-gradient(135deg, #e5e7eb, #d1d5db);
-    border-color: rgba(220, 38, 38, 0.4);
-    animation: sos-pulse 3s ease-in-out infinite;
-}
-.dock-item.d-sos .dock-icon.sos-icon {
-    color: #dc2626;
-    font-size: 30px;
-    font-weight: 900;
-    -webkit-text-stroke: 2px #dc2626;
-}
-.dock-item.d-sos:hover .dock-icon {
-    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-    box-shadow: 0 8px 30px rgba(220, 38, 38, 0.4);
-    animation: none;
-}
-.dock-item.d-sos.disabled {
-    opacity: 0.3;
-    pointer-events: none;
+.dock-item.d-kit:hover .dock-icon {
+    background: linear-gradient(135deg, #1a6b64, #134e4a);
+    border-color: rgba(94, 234, 212, 0.7);
+    box-shadow: 0 8px 30px rgba(94, 234, 212, 0.4);
 }
 
-@keyframes sos-pulse {
-    0%, 100% { border-color: rgba(220, 38, 38, 0.2); }
-    50% { border-color: rgba(220, 38, 38, 0.5); }
-}
-
-/* SOS aktiveret: kort flash-effekt som feedback */
-.dock-item.d-sos.sos-activated .dock-icon {
+/* Kit aktiveret: kort flash-effekt som feedback ved glukagon */
+.dock-item.d-kit.sos-activated .dock-icon {
     background: rgba(220, 38, 38, 0.6) !important;
     box-shadow: 0 0 30px rgba(220, 38, 38, 0.7);
-    animation: none;
     transition: all 0.15s;
 }
 
@@ -1168,9 +1241,8 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: var(--font-ui);
+    font-weight: var(--font-weight-value);
     color: #ffffff;
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 1px 3px rgba(0, 0, 0, 0.9);
     white-space: nowrap;
@@ -1195,40 +1267,60 @@ body {
    DOCK PANELS — Fold-op paneler der vises over dock'en
    ============================================================================= */
 
+/* Dock-paneler: halvgennemsigtige + blur så grafen er synlig bagved.
+   Alle paneler der dækker grafen bruger --bg-card-glass (50% alpha) + forstærket blur. */
 .dock-panel {
     position: absolute;
     bottom: 95px;                                    /* Over dock'en */
     left: 50%;
-    transform: translateX(-50%) translateY(10px);    /* Start en smule nede (til animation) */
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
+    transform: translateX(-50%) translateY(10px) scale(0.95);
+    background: var(--bg-card-glass);
+    backdrop-filter: blur(24px);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-lg);
-    padding: 14px 18px;                              /* (#13) Reduceret vertikal padding */
+    padding: 14px 18px;
     min-width: 320px;
-    /* (#13) Stærkere aura/glow-effekt bag panelerne */
-    box-shadow: var(--shadow-lg), 0 0 40px rgba(0, 0, 0, 0.6), 0 0 80px rgba(96, 165, 250, 0.08);
+    /* Basis-glow — overrides per panel nedenfor */
+    box-shadow: var(--shadow-lg), 0 0 40px rgba(0, 0, 0, 0.5);
     z-index: 50;
-    max-height: calc(100vh - 200px);                 /* (#13) Forhindrer at paneler dækker grafen */
+    max-height: calc(100vh - 200px);
     overflow-y: auto;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.25s var(--smooth), transform 0.25s var(--bounce);
+    transition: opacity 0.2s var(--smooth), transform 0.3s var(--bounce);
 }
 
-/* Synligt panel */
+/* Synligt panel — scale op + fade ind */
 .dock-panel.visible {
     opacity: 1;
     pointer-events: auto;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* Farvede panel-glows: hver paneltype kaster en tydelig farvet skygge */
+#dock-panel-insulin.visible {
+    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.25), 0 0 60px rgba(59, 130, 246, 0.15), 0 0 100px rgba(59, 130, 246, 0.06);
+    border-color: rgba(96, 165, 250, 0.35);
+}
+#dock-panel-food.visible, #dock-panel-custom-food.visible {
+    box-shadow: 0 8px 30px rgba(234, 179, 8, 0.25), 0 0 60px rgba(234, 179, 8, 0.15), 0 0 100px rgba(234, 179, 8, 0.06);
+    border-color: rgba(250, 204, 21, 0.35);
+}
+#dock-panel-motion.visible {
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.25), 0 0 60px rgba(16, 185, 129, 0.15), 0 0 100px rgba(16, 185, 129, 0.06);
+    border-color: rgba(52, 211, 153, 0.35);
+}
+#dock-panel-kit.visible {
+    box-shadow: 0 8px 30px rgba(94, 234, 212, 0.25), 0 0 60px rgba(94, 234, 212, 0.15), 0 0 100px rgba(94, 234, 212, 0.06);
+    border-color: rgba(94, 234, 212, 0.35);
 }
 
 /* (dock-panel-wide fjernet — mad-panelet bruger nu standard bredde med 5-kolonne grid) */
 
 /* Panel-header */
 .dock-panel h4 {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: var(--font-ui-lg);
+    font-weight: var(--font-weight-label);
     margin-bottom: 14px;
     display: flex;
     align-items: center;
@@ -1248,10 +1340,10 @@ body {
 }
 
 .dp-row label {
-    font-size: 12px;
+    font-size: var(--font-ui);
     color: var(--text-secondary);
     min-width: 70px;
-    font-weight: 600;
+    font-weight: var(--font-weight-label);
 }
 
 .dp-row input[type="range"] {
@@ -1267,8 +1359,7 @@ body {
     color: var(--text-primary);
     padding: 6px 10px;
     border-radius: var(--radius-sm);
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: var(--font-ui);
     cursor: pointer;
 }
 .dp-row select option {
@@ -1276,8 +1367,8 @@ body {
 }
 
 .dp-val {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: var(--font-ui-lg);
+    font-weight: var(--font-weight-value);
     color: var(--text-primary);
     min-width: 50px;
     text-align: right;
@@ -1299,9 +1390,8 @@ body {
     border: none;
     border-radius: var(--radius-md);
     color: white;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: 'Inter', sans-serif;
+    font-size: var(--font-ui-lg);
+    font-weight: var(--font-weight-label);
     cursor: pointer;
     margin-top: 4px;
     transition: all 0.25s var(--bounce);
@@ -1357,8 +1447,8 @@ body {
 
 /* --- Insulin panel: preset-chips og layout --- */
 .dp-section-label {
-    font-size: 11px;
-    font-weight: 700;
+    font-size: var(--font-ui);
+    font-weight: var(--font-weight-heading);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1382,6 +1472,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
     background: rgba(37, 99, 235, 0.15);
     border: 1px solid rgba(96, 165, 250, 0.25);
     border-radius: 8px;
@@ -1405,14 +1496,13 @@ body {
     border-color: rgba(45, 212, 191, 0.5);
 }
 .ip-dose {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: var(--font-ui);
+    font-weight: var(--font-weight-value);
     color: var(--text-primary);
     line-height: 1;
 }
 .ip-label {
-    font-size: 9px;
+    font-size: var(--font-ui-sm);
     color: var(--text-muted);
     line-height: 1;
 }
@@ -1427,8 +1517,9 @@ body {
     min-width: 60px;
 }
 .dp-btn-compact {
-    padding: 5px 10px !important;
-    font-size: 11px !important;
+    position: relative;
+    padding: 5px 14px 5px 10px !important;
+    font-size: var(--font-ui) !important;
     min-width: 50px;
     white-space: nowrap;
 }
@@ -1438,10 +1529,10 @@ body {
 
 .dp-food-info {
     text-align: center;
-    font-size: 12px;
+    font-size: var(--font-ui);
     color: var(--text-muted);
     margin: 6px 0;
-    font-weight: 600;
+    font-weight: var(--font-weight-label);
 }
 
 /* Preset mad-chips (2x5 grid) */
@@ -1479,10 +1570,27 @@ body {
 }
 
 .pc-name {
-    font-size: 9px;
+    font-size: var(--font-ui-sm);
     color: var(--text-muted);
     margin-top: 3px;
-    font-weight: 600;
+    font-weight: var(--font-weight-label);
+}
+
+/* Tastatur-genvej bogstav i nederste højre hjørne af preset-chip */
+.preset-chip {
+    position: relative;
+}
+.pc-key {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: var(--font-micro);
+    font-weight: 700;
+    color: var(--text-muted);
+    opacity: 0.5;
+    text-transform: uppercase;
+    line-height: 1;
+    pointer-events: none;
 }
 
 /* --- Custom food panel: forgrening fra mad-panelet --- */
@@ -1514,34 +1622,35 @@ body {
     border: none;
     border-radius: var(--radius-lg);
     backdrop-filter: blur(10px);
-    font-size: 12px;
+    font-size: var(--font-ui);
     transition: width 0.3s var(--bounce), padding 0.3s var(--bounce), margin 0.3s var(--bounce);
 }
 #debug-sidebar.visible {
-    width: 260px;
-    padding: 10px 10px;
+    width: 280px;
+    padding: 12px 14px;
     margin: var(--panel-gap) var(--panel-gap) var(--panel-gap) 0;
     border: 1px solid var(--border-subtle);
     overflow-y: auto;
 }
+/* Debug h5: matcher stats-panelets sektionsoverskrifter */
 #debug-sidebar h5 {
-    font-size: 11px;
+    font-size: var(--font-ui-sm);
+    font-weight: var(--font-weight-heading);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     color: var(--text-muted);
-    margin: 0 0 6px 0;
-}
-#debug-sidebar .dp-row {
-    padding: 1px 0;
+    margin: 0 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 #debug-sidebar .dp-label {
-    font-size: 10px;
+    font-size: var(--font-ui);
 }
 #debug-sidebar .dp-val {
-    font-size: 10px;
+    font-size: var(--font-ui);
 }
 #debug-sidebar .dp-checkbox {
-    font-size: 11px;
+    font-size: var(--font-ui);
     gap: 6px;
     margin-bottom: 2px;
 }
@@ -1550,11 +1659,11 @@ body {
     height: 13px;
 }
 #debug-sidebar .dp-btn {
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
     padding: 3px 6px;
 }
 #debug-sidebar .dp-divider {
-    margin: 4px 0;
+    margin: 8px 0;
 }
 
 /* --- Debug panel checkbox --- */
@@ -1563,7 +1672,7 @@ body {
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: var(--font-ui);
     color: var(--text-secondary);
 }
 
@@ -1590,46 +1699,70 @@ body {
 .dp-log-status {
     display: flex;
     gap: 8px;
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
     color: var(--text-muted);
     flex: 1;
 }
 
 .dp-btn {
     padding: 3px 8px;
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     cursor: pointer;
-    font-family: 'Inter', sans-serif;
     transition: background 0.2s;
 }
 .dp-btn:hover { background: rgba(255, 255, 255, 0.12); }
 .dp-btn-clear { color: var(--text-muted); }
 
-/* Live debug-værdier: kompakt grid */
+/* Live debug-værdier: 3-kolonne grid der matcher stats-panelets player-data-table */
 .dp-live {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px 12px;
+    grid-template-columns: auto 1fr auto;           /* label | value | unit — som player-data-table */
+    gap: 4px 6px;
+    align-items: center;
 }
 
 .dp-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
+    display: contents;                               /* Hvert barn lægger sig direkte i grid'et */
+    font-size: var(--font-ui-sm);
 }
 
 .dp-label {
-    color: var(--text-muted);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-label);
+    font-size: var(--font-ui);
+    text-align: left;
+}
+
+/* Klikbare debug-labels: åbner FYSIOLOGI.md på GitHub */
+.dp-label a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.dp-label a:hover {
+    color: var(--blue);
+    text-decoration: underline;
 }
 
 .dp-val {
+    text-align: right;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 2px 5px;
+    border-radius: 4px;
     color: var(--text-primary);
-    font-weight: 600;
+    font-weight: var(--font-weight-value);
+    font-size: var(--font-ui);
     font-variant-numeric: tabular-nums;
+}
+
+.dp-unit {
+    text-align: left;
+    color: var(--text-muted);
+    font-size: var(--font-ui-sm);
 }
 
 
@@ -1868,7 +2001,7 @@ body {
     color: #ef4444 !important;
 }
 .popup-content.help-popup h3 {
-    font-size: 10px !important;
+    font-size: var(--font-ui-sm) !important;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--text-muted) !important;
@@ -1878,7 +2011,7 @@ body {
 }
 .popup-content.help-popup p,
 .popup-content.help-popup li {
-    font-size: 11px !important;
+    font-size: var(--font-ui) !important;
     line-height: 1.5 !important;
     margin-bottom: 6px !important;
     color: var(--text-secondary) !important;
@@ -1903,7 +2036,7 @@ body {
     margin-bottom: 0;
 }
 .popup-content.help-popup details.help-section summary {
-    font-size: 10px !important;
+    font-size: var(--font-ui-sm) !important;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--text-muted) !important;
@@ -1941,7 +2074,7 @@ body {
 }
 
 .profile-title {
-    font-size: 10px !important;
+    font-size: var(--font-ui-sm) !important;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--text-muted) !important;
@@ -1952,7 +2085,7 @@ body {
 }
 
 .profile-desc {
-    font-size: 11px !important;
+    font-size: var(--font-ui) !important;
     color: var(--text-secondary) !important;
     margin-bottom: 12px !important;
     line-height: 1.4 !important;
@@ -1971,8 +2104,8 @@ body {
 }
 
 .profile-field label {
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: var(--font-weight-label);
+    font-size: var(--font-ui);
     color: var(--text-secondary);
 }
 
@@ -1985,15 +2118,14 @@ body {
 .profile-input-row input[type="number"] {
     width: 80px;
     padding: 4px 6px;
-    font-size: 11px;
+    font-size: var(--font-ui);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-sm);
     text-align: center;
     transition: border-color 0.2s;
     background: rgba(255, 255, 255, 0.06);
     color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
+    font-weight: var(--font-weight-value);
 }
 
 .profile-input-row input[type="number"]:focus {
@@ -2002,14 +2134,14 @@ body {
 }
 
 .profile-unit {
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
     color: var(--text-muted);
-    font-weight: 600;
+    font-weight: var(--font-weight-label);
 }
 
 .profile-field small {
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
     line-height: 1.3;
 }
 
@@ -2031,8 +2163,8 @@ body {
 }
 
 .profile-calc-row .label {
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: var(--font-weight-label);
+    font-size: var(--font-ui);
     color: var(--text-secondary);
 }
 
@@ -2042,14 +2174,14 @@ body {
     padding: 2px 6px;
     border-radius: 4px;
     color: var(--text-primary);
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: var(--font-weight-value);
+    font-size: var(--font-ui);
 }
 
 .profile-calc-row .unit {
     text-align: left;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
 }
 
 /* Gem-knap: kompakt og afdæmpet */
@@ -2059,7 +2191,7 @@ body {
 
 .profile-save-btn {
     padding: 6px 18px !important;
-    font-size: 11px !important;
+    font-size: var(--font-ui) !important;
 }
 
 /* Scrollbar styling for mørkt tema (WebKit browsers) */
@@ -2087,10 +2219,12 @@ body {
     display: flex;
     gap: 4px;
     align-items: stretch;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--bg-elevated);                  /* Samme baggrund som status-badge og øvrige paneler */
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
-    padding: 0 4px;
+    padding: 4px 4px;                               /* Ensartet vertikal padding */
+    min-height: 38px;                               /* Fast minimumshøjde for alle knapper */
+    box-sizing: border-box;
 }
 .time-control-group .status-badge {
     border: none;
@@ -2101,11 +2235,7 @@ body {
     border: none;
     background: none;
 }
-/* Pause-knap: fast bredde så layout ikke rykker ved Pause↔Genoptag */
-#pauseButton {
-    min-width: 100px;
-    text-align: center;
-}
+/* pauseButton er nu .speed-current i speed-stepperen — ingen ekstra styling nødvendig */
 /* Afslut-knap: fast bredde */
 #startButton.game-running {
     min-width: 80px;
@@ -2118,7 +2248,9 @@ body {
     color: white !important;
     border: 1px solid rgba(74, 222, 128, 0.3) !important;
     font-weight: 700 !important;
-    padding: 6px 18px !important;
+    padding: 0 18px !important;
+    width: 100px;
+    white-space: nowrap;
     animation: start-pulse 2s ease-in-out infinite;
     box-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
 }
@@ -2147,7 +2279,7 @@ body {
 /* Profil-knap: neutral stil der passer til top-bar */
 .profile-btn {
     opacity: 0.7;
-    font-size: 11px !important;
+    font-size: var(--font-ui) !important;
 }
 .profile-btn:hover {
     opacity: 1;
@@ -2165,7 +2297,7 @@ body {
 
 /* --- #3: Basal dosis hint --- */
 .dp-basal-hint {
-    font-size: 11px;
+    font-size: var(--font-ui);
     color: var(--text-muted);
     text-align: center;
     padding: 4px 0;
@@ -2201,57 +2333,74 @@ body {
     border-color: rgba(52, 211, 153, 0.5);
     box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
 }
-.ic-emoji {
-    font-size: 20px;
-    display: block;
-}
-.ic-label {
-    font-size: 9px;
-    color: var(--text-muted);
-    margin-top: 2px;
-    font-weight: 600;
-    display: block;
-}
-.intensity-chip.selected .ic-label {
+/* Motion-chips bruger .pc-emoji/.pc-name (ensrettet med mad-chips) */
+.intensity-chip.selected .pc-name {
     color: var(--text-primary);
 }
 
-/* --- #8: Målings-chips --- */
-.dp-measure-chips {
+/* --- #8: T1D Kit-chips (ensrettet med mad-chips: .pc-emoji/.pc-name/.pc-key) --- */
+.dp-kit-chips {
     display: flex;
     gap: 8px;
 }
-.measure-chip {
+.kit-chip {
     flex: 1;
-    background: var(--red-dim);
-    border: 1px solid rgba(239, 68, 68, 0.15);
+    position: relative;
+    background: rgba(94, 234, 212, 0.08);
+    border: 1px solid rgba(94, 234, 212, 0.15);
     border-radius: var(--radius-md);
-    padding: 12px 8px;
+    padding: 8px 4px;
     text-align: center;
     cursor: pointer;
     transition: all 0.25s var(--bounce);
 }
-.measure-chip:hover {
+.kit-chip:hover {
     transform: scale(1.05) translateY(-3px);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.2);
+    background: rgba(94, 234, 212, 0.15);
+    border-color: rgba(94, 234, 212, 0.3);
+    box-shadow: 0 6px 20px rgba(94, 234, 212, 0.2);
 }
-.measure-chip:nth-child(2) {
-    background: var(--purple-dim);
-    border-color: rgba(167, 139, 250, 0.15);
+/* Druesukker-chip: gul/varm som i mad-panelet */
+.kit-chip-sugar {
+    background: var(--yellow-dim);
+    border-color: rgba(234, 179, 8, 0.12);
 }
-.measure-chip:nth-child(2):hover {
-    box-shadow: 0 6px 20px rgba(167, 139, 250, 0.2);
+.kit-chip-sugar:hover {
+    background: rgba(234, 179, 8, 0.2);
+    border-color: rgba(250, 204, 21, 0.3);
+    box-shadow: 0 6px 20px rgba(234, 179, 8, 0.2);
 }
-.mc-emoji {
-    font-size: 24px;
-    display: block;
+/* Glukagon-chip: orange nødhjælp-farve */
+.kit-chip-sos {
+    background: rgba(249, 115, 22, 0.12);
+    border-color: rgba(249, 115, 22, 0.25);
 }
-.mc-label {
-    font-size: 10px;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    font-weight: 600;
-    display: block;
+.kit-chip-sos:hover {
+    background: rgba(249, 115, 22, 0.2);
+    border-color: rgba(249, 115, 22, 0.4);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.25);
+}
+
+/* Glucagon cooldown — lagkage-animation (conic-gradient overlay).
+   --cooldown-pct styres fra JS (0 = lige brugt, 100 = klar).
+   Overlayet dækker knappen med en mørk "pizza-slice" der gradvist
+   forsvinder i urets retning efterhånden som cooldown udløber. */
+.kit-chip-sos.on-cooldown {
+    position: relative;
+    overflow: hidden;
+}
+.kit-chip-sos.on-cooldown::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: conic-gradient(
+        transparent calc(var(--cooldown-pct, 0) * 1%),
+        rgba(0, 0, 0, 0.55) calc(var(--cooldown-pct, 0) * 1%)
+    );
+    pointer-events: none;
+    z-index: 1;
+    transition: background 0.5s linear;
 }
 
 /* --- Corner tools (debug + fysiologi) — nu i top-bar højre side --- */
@@ -2288,7 +2437,7 @@ body {
     color: var(--text-secondary) !important;
 }
 .collapse-arrow {
-    font-size: 10px;
+    font-size: var(--font-ui-sm);
     transition: transform 0.2s;
 }
 .stats-section.collapsible .stats-collapse-content {
@@ -2305,13 +2454,13 @@ body {
 
 /* --- #17: Badge-numre mere synlige --- */
 .badge-num {
-    font-weight: 700;
+    font-weight: var(--font-weight-value);
     color: #e8f0f8;
 }
 
 /* --- Points max-dag display (ved siden af score) --- */
 .points-best {
-    font-size: 9px;
+    font-size: var(--font-ui-sm);
     color: var(--yellow);
     margin-left: 4px;
     opacity: 0.8;
@@ -2334,8 +2483,11 @@ body {
 .flying-icon.insulin-icon-blue {
     filter: hue-rotate(220deg) saturate(1.4) brightness(1.1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
 }
+.flying-icon.insulin-icon-red {
+    filter: hue-rotate(330deg) saturate(1.8) brightness(1.1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+}
 /* Ikke-insulin flyvende ikoner: kun drop-shadow */
-.flying-icon:not(.insulin-icon-teal):not(.insulin-icon-blue) {
+.flying-icon:not(.insulin-icon-teal):not(.insulin-icon-blue):not(.insulin-icon-red) {
     filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
 }
 

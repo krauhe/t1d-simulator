@@ -126,7 +126,7 @@ function startGameWithProfile(profile) {
 
     // Unpause and start the loop
     isPaused = false;
-    pauseButton.innerHTML = "&#x23F8; Pause";
+    if (typeof updateSpeedStepperUI === 'function') updateSpeedStepperUI();
 
     // Record the current time as the reference point for deltaTime calculations
     lastFrameTime = performance.now();
@@ -162,7 +162,8 @@ function resetGame() {
     if (gameLoopIntervalId) { cancelAnimationFrame(gameLoopIntervalId); gameLoopIntervalId = null; }
 
     // Reset game state
-    isPaused = true; pauseButton.innerHTML = "&#x25B6; Genoptag"; game = null;
+    isPaused = true; game = null;
+    if (typeof updateSpeedStepperUI === 'function') updateSpeedStepperUI();
     cgmDataPoints = []; trueBgPoints = [];
     yAxisMax = 16.0; // Nulstil y-akse til standard
 
@@ -176,20 +177,28 @@ function resetGame() {
     normoPointsDisplay.textContent = "0.0";
     iobDisplay.textContent="0.0"; cobDisplay.textContent="0";
 
-    // Reset stats table values to dashes
-    document.querySelectorAll('.stats-table .value').forEach(el => el.textContent = '--');
-    document.querySelectorAll('#tir24h, #tir14d, #titr24h, #titr14d').forEach(el => el.textContent = '--');
-    document.querySelectorAll('#fastInsulin24h, #basalInsulin24h').forEach(el => el.textContent = '--');
-    document.querySelector('#kcal24h').textContent = '--';
+    // Reset stats table values to dashes OG nulstil inline farver
+    // (updateStats() sætter inline style.color som ellers hænger efter game over/reset)
+    document.querySelectorAll('.stats-table .value').forEach(el => { el.textContent = '--'; el.style.color = ''; });
+    document.querySelectorAll('#tir24h, #tir14d, #titr24h, #titr14d').forEach(el => { el.textContent = '--'; el.style.color = ''; });
+    document.querySelectorAll('#fastInsulin24h, #basalInsulin24h').forEach(el => { el.textContent = '--'; el.style.color = ''; });
+    const kcal24hEl = document.querySelector('#kcal24h');
+    if (kcal24hEl) { kcal24hEl.textContent = '--'; kcal24hEl.style.color = ''; }
     [weightDisplay, icrDisplay, isfDisplay, carbEffectDisplay, basalDoseDisplay, restingKcalDisplay].forEach(el => el.textContent="--");
 
     // Reset vægtændring
     if (weightChangeValue) { weightChangeValue.textContent = "0.0"; weightChangeValue.style.color = ''; }
 
+    // Reset debug-panelværdier til '--'
+    document.querySelectorAll('#debugLiveValues .dp-val').forEach(el => el.textContent = '--');
+
     // Gendan start-knap fra stop til start
     startButton.innerHTML = '&#x25B6; Start';
     startButton.title = 'Start en ny simulation';
     startButton.classList.remove('game-running');
+
+    // Ryd floating labels (DOM-elementer fra fingerprik/keton-stik)
+    document.querySelectorAll('.floating-label').forEach(el => el.remove());
 
     // Ryd hændelsesloggen
     const logList = document.getElementById('event-log-list');
@@ -212,7 +221,7 @@ function togglePause() {
     if (!game || game.isGameOver) return; // Can't pause if no game or already dead
 
     isPaused = !isPaused;
-    pauseButton.innerHTML = isPaused ? "&#x25B6; Genoptag" : "&#x23F8; Pause";
+    if (typeof updateSpeedStepperUI === 'function') updateSpeedStepperUI();
 
     if (!isPaused) {
         // Reset the frame timer to prevent a time jump after unpausing

@@ -62,6 +62,9 @@ try {
     // FMSynth giver en mørk, urolig klang — meget lav frekvens med FM-modulation
     // skaber en tung, vibrerende fornemmelse der signalerer akut fare.
     // Lange envelope-tider (attack 0.3s, decay 1.2s) gør lyden langsom og truende.
+    // Hypo-fare lyd: dyb, truende FM-lyd når BG falder under 4.5.
+    // Originale envelope-tider — lang nok til at føles faretruende.
+    // Hysterese i simulator.js sikrer at den kun spilles én gang per hypo-episode.
     sounds.hypoWarnSynth = new Tone.FMSynth({
         harmonicity: 1.5, modulationIndex: 8,
         oscillator: { type: 'sine' },
@@ -99,6 +102,27 @@ try {
     sounds.insulinPenAudio = new Audio('sounds/insulin pen edited.wav');
     sounds.insulinPenAudio.preload = 'auto';
     sounds.insulinPenAudio.volume = 0.7;
+
+    // Mad-knaselyde: fire varianter af flæskesvær-knase.
+    // Ved hvert måltid vælges én tilfældigt — giver variation og liv.
+    // Bruger HTML5 Audio ligesom insulin-pen lyden.
+    sounds.eatingSounds = ['a', 'b', 'c', 'd'].map(letter => {
+        const audio = new Audio(`sounds/flæskesvær ${letter}.wav`);
+        audio.preload = 'auto';
+        audio.volume = 0.6;
+        return audio;
+    });
+
+    // Menu pop-lyd: kort, luftig "pop" når dock-paneler åbner/lukker.
+    // MembraneSynth giver en blød, rund percussiv lyd — som en sæbeboble der popper.
+    // Lav pitchDecay + høj oktav = kort, let "pop" uden at være skarp/irriterende.
+    // To varianter: åbning (højere tone, C5) og lukning (lavere, G4).
+    sounds.menuPopSynth = new Tone.MembraneSynth({
+        pitchDecay: 0.03,
+        octaves: 2,
+        envelope: { attack: 0.001, decay: 0.12, sustain: 0, release: 0.05 },
+        volume: -18
+    }).toDestination();
 } catch (e) {
     // If Tone.js can't initialize (missing library, audio context blocked, etc.),
     // set sounds to null. playSound() checks for this and becomes a no-op.
@@ -147,9 +171,8 @@ function playSound(type, note = 'C4', duration = '8n') {
             sounds.inRangeSynth.triggerAttackRelease('E5', '16n', now + 0.1);
         }
         else if (type === 'hypoWarn' && sounds.hypoWarnSynth) {
-            // Faretruende nedadgående to-tone motiv: E1 → C1 (ekstremt dybt).
-            // Oktav 1 giver en tung, næsten sub-bass klang. Lange toner (2n, 1n)
-            // og stor afstand (500ms) giver en langsom, truende fornemmelse.
+            // Kort, dyb nedadgående to-tone: E2 → C2.
+            // 32n noter (~125ms) + 150ms spacing = total ~0.4s. Hurtigt og tydeligt.
             sounds.hypoWarnSynth.triggerAttackRelease('E2', '2n', now);
             sounds.hypoWarnSynth.triggerAttackRelease('C2', '1n', now + 0.5);
         }
@@ -166,6 +189,20 @@ function playSound(type, note = 'C4', duration = '8n') {
             const clip = sounds.insulinPenAudio.cloneNode();
             clip.volume = sounds.insulinPenAudio.volume;
             clip.play().catch(() => {}); // Ignorer autoplay-blokering
+        }
+        else if (type === 'eating' && sounds.eatingSounds && sounds.eatingSounds.length > 0) {
+            // Tilfældig knaselyd fra de fire varianter
+            const clip = sounds.eatingSounds[Math.floor(Math.random() * sounds.eatingSounds.length)].cloneNode();
+            clip.volume = sounds.eatingSounds[0].volume;
+            clip.play().catch(() => {});
+        }
+        else if (type === 'menuOpen' && sounds.menuPopSynth) {
+            // Panel åbner: højere tone (C5) — let, opadgående "pop"
+            sounds.menuPopSynth.triggerAttackRelease('C5', '32n', now);
+        }
+        else if (type === 'menuClose' && sounds.menuPopSynth) {
+            // Panel lukker: lavere tone (G4) — blødere, nedadgående "pop"
+            sounds.menuPopSynth.triggerAttackRelease('G4', '32n', now);
         }
         else if (type === 'intervention' && sounds.interventionSynth) sounds.interventionSynth.triggerAttackRelease(note, duration, now);
         else if (type === 'gameOver' && sounds.gameOverSynth) {

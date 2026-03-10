@@ -33,7 +33,7 @@ let startButton, helpButton, pauseButton, profileButton, speedSelector, dayDispl
     sodaButton, saladButton, cerealButton, fastInsulinSlider, fastInsulinValue,
     giveFastInsulinButton, longInsulinSlider, longInsulinValue, giveLongInsulinButton,
     motionIntensitySelect, motionDurationSelect, startMotionButton, motionKcalDisplay,
-    fingerprickButton, ketoneTestButton, glucagonButton, debugTrueBgCheckbox,
+    fingerprickButton, ketoneTestButton, debugTrueBgCheckbox,
     iobDisplay, cobDisplay, bgGraphCanvas, graphCtx,
     weightChangeValue, steepDropWarningDiv, weightDisplay, icrDisplay, isfDisplay,
     carbEffectDisplay, basalDoseDisplay, restingKcalDisplay, tir24hDisplay,
@@ -125,6 +125,22 @@ function debugUpdateLiveValues() {
     set('dbgTrueBG', game.trueBG.toFixed(2));
     set('dbgCgmBG', game.cgmBG.toFixed(2));
     set('dbgIOB', game.iob.toFixed(2));
+    // Basal IOB: resterende dosis (uden bioavailability-korrektion, så det matcher injiceret dosis)
+    let basalIOB = 0;
+    if (game.activeLongInsulin) {
+        game.activeLongInsulin.forEach(ins => {
+            const elapsed = game.totalSimMinutes - ins.injectionTime;
+            if (elapsed < 0 || elapsed >= ins.totalDuration) return;
+            basalIOB += ins.dose * (1 - elapsed / ins.totalDuration);
+        });
+    }
+    set('dbgBasalIOB', basalIOB.toFixed(1));
+    // Flow ind i plasma [mU/min] → konvertér til E/t for læsbarhed
+    // Basal flow: direkte input-rate fra trapez-profilen
+    set('dbgBasalRate', ((game.basalInsulinRate || 0) / 1000 * 60).toFixed(2));
+    // Bolus flow: absorptionshastighed fra subkutant depot → plasma = S2/τ_I
+    const bolusFlow = game.hovorka ? game.hovorka.state[3] / game.hovorka.tau_I : 0; // mU/min
+    set('dbgBolusFlow', (bolusFlow / 1000 * 60).toFixed(2));
     // Subkutant depot: S1+S2 i Hovorka [mU] → konverter til enheder [E]
     const subQ = game.hovorka ? (game.hovorka.state[2] + game.hovorka.state[3]) / 1000 : 0;
     set('dbgSubQ', subQ.toFixed(2));
@@ -169,9 +185,16 @@ function debugUpdateLiveValues() {
     set('dbgAcute', game.acuteStressLevel.toFixed(3));
     set('dbgChronic', game.chronicStressLevel.toFixed(3));
     set('dbgHR', (h ? h.heartRate : 60).toFixed(0));
-    set('dbgPoints', game.normoPoints.toFixed(1));
+
+    // Dawn-effekt: cirkadisk kortisol-niveau (0.0 = ingen, ~0.3 = peak kl. 08:00)
+    set('dbgDawn', game.circadianKortisolNiveau.toFixed(3));
+
+    // Søvntab: akkumuleret mistet søvn denne nat (timer)
+    set('dbgSleep', game.lostSleepHoursTonight.toFixed(1));
+
     set('dbgHypoArea', game.hypoArea.toFixed(1));
     set('dbgCounterReg', (game.counterRegFactor * 100).toFixed(0) + '%');
+    set('dbgPoints', game.normoPoints.toFixed(1));
 }
 
 // debugDownloadLog() — genererer CSV-fil og trigger download i browseren
@@ -288,8 +311,9 @@ function flyIconToGraph(emoji, sourceId, insulinType) {
     const dockMap = {
         'dock-panel-insulin': '.dock-item.d-insulin',
         'dock-panel-food': '.dock-item.d-food',
+        'dock-panel-custom-food': '.dock-item.d-food',   // Custom food bruger samme dock-ikon som mad
         'dock-panel-motion': '.dock-item.d-exercise',
-        'dock-panel-measure': '.dock-item.d-measure'
+        'dock-panel-kit': '.dock-item.d-kit'
     };
     const dockSelector = dockMap[sourceId];
     const dockItem = dockSelector ? document.querySelector(dockSelector) : document.getElementById(sourceId);
@@ -303,9 +327,10 @@ function flyIconToGraph(emoji, sourceId, insulinType) {
     icon.className = 'flying-icon';
     icon.textContent = emoji;
 
-    // Hue-rotate for insulin-sprøjter: blå for basal, teal for hurtig
+    // Hue-rotate for insulin-sprøjter: blå for basal, teal for hurtig, rød for glukagon
     if (insulinType === 'basal') icon.classList.add('insulin-icon-blue');
     else if (insulinType === 'fast') icon.classList.add('insulin-icon-teal');
+    else if (insulinType === 'glucagon') icon.classList.add('insulin-icon-red');
 
     // Startposition: midten af dock-ikonet
     const startX = startRect.left + startRect.width / 2 - 14;
@@ -381,14 +406,14 @@ function triggerGlucagonSOS() {
     if (timeSinceUsed >= cooldownMinutes) {
         game.useGlucagon();
         closeDockPanels();
-        // Visuel feedback: flash SOS-ikonet + flyv ✚ ikon til grafen
-        const sosItem = document.getElementById('glucagonDockItem');
-        if (sosItem) {
-            sosItem.classList.add('sos-activated');
-            setTimeout(() => sosItem.classList.remove('sos-activated'), 600);
+        // Visuel feedback: flash kit-ikonet + flyv ✚ ikon til grafen
+        const kitItem = document.querySelector('.dock-item.d-kit');
+        if (kitItem) {
+            kitItem.classList.add('sos-activated');
+            setTimeout(() => kitItem.classList.remove('sos-activated'), 600);
         }
-        // Flyv ✚ ikon fra SOS-ikonet til grafens aktuelle tidsposition
-        flyIconToGraph('\u271A', 'glucagonDockItem');
+        // Flyv ✚ ikon fra kit-ikonet til grafens aktuelle tidsposition
+        flyIconToGraph('\u{1F489}', 'dock-panel-kit', 'glucagon');
     }
 }
 
@@ -484,6 +509,10 @@ function toggleDockPanel(panelId) {
         // Marker det tilhørende dock-item som aktivt
         const dockItem = document.querySelector(`.dock-item[data-panel="${panelId}"]`);
         if (dockItem) dockItem.classList.add('active');
+        playSound('menuOpen');
+    } else {
+        // Panelet blev lukket
+        playSound('menuClose');
     }
 }
 
@@ -492,12 +521,15 @@ function toggleDockPanel(panelId) {
  * Kaldes når brugeren klikker udenfor et panel.
  */
 function closeDockPanels() {
+    // Tjek om der faktisk er åbne paneler (spil kun lyd hvis noget lukkes)
+    const hadOpen = document.querySelector('.dock-panel.visible');
     document.querySelectorAll('.dock-panel.visible').forEach(p => {
         p.classList.remove('visible');
     });
     document.querySelectorAll('.dock-item.active').forEach(d => {
         d.classList.remove('active');
     });
+    if (hadOpen) playSound('menuClose');
 }
 
 /**
@@ -522,8 +554,8 @@ function initializeApp() {
     helpButton = document.getElementById('helpButton');
     pauseButton = document.getElementById('pauseButton');
     profileButton = document.getElementById('profileButton');
-    speedSelector = document.getElementById('speedDropdown');
-    // Custom dropdown: tilføj .value property så simulator.js kan læse den
+    speedSelector = document.getElementById('speedStepper');
+    // Stepper: .value property bruges af simulator.js til at læse hastigheden
     speedSelector.value = '240'; // Default-værdi (4t/min)
     dayDisplay = document.getElementById('dayDisplay');
     timeDisplay = document.getElementById('timeDisplay');
@@ -561,7 +593,7 @@ function initializeApp() {
     motionKcalDisplay = document.getElementById('motionKcalDisplay');
     fingerprickButton = document.getElementById('fingerprickButton');
     ketoneTestButton = document.getElementById('ketoneTestButton');
-    glucagonButton = document.getElementById('glucagonButton');
+    // glucagonButton fjernet — glukagon er nu i kit-panelet (kitGlucagonButton)
     debugTrueBgCheckbox = document.getElementById('debugTrueBgCheckbox');
     iobDisplay = document.getElementById('iobDisplay');
     cobDisplay = document.getElementById('cobDisplay');
@@ -636,7 +668,7 @@ function initializeApp() {
         }
     });
     helpButton.addEventListener('click', showHelpPopup);
-    pauseButton.addEventListener('click', togglePause);
+    // pauseButton listener er nu i speed-stepper opsætningen nedenfor
 
     // Profil-knap: åbner profil-popup til redigering af vægt/ICR/ISF
     profileButton.addEventListener('click', () => {
@@ -652,62 +684,79 @@ function initializeApp() {
         if (sounds && Tone.Destination) Tone.Destination.mute = isMuted;
     });
 
-    // --- Custom hastigheds-dropdown (Mac-stil popup-menu) ---
-    const speedTrigger = document.getElementById('speedTrigger');
-    const speedMenu = document.getElementById('speedMenu');
-    const speedOptions = speedMenu.querySelectorAll('.speed-option');
+    // --- Hastigheds-stepper (◀ 4t/min ▶) med integreret pause ---
+    const speeds = [60, 240, 720, 1440];
+    const speedLabels = { 60: '1t/min', 240: '4t/min', 720: '12t/min', 1440: '24t/min' };
+    const speedLabel = document.getElementById('speedLabel');
+    const speedStateIcon = document.getElementById('speedStateIcon');
+    const speedDownBtn = document.getElementById('speedDown');
+    const speedUpBtn = document.getElementById('speedUp');
 
-    // Åbn/luk menuen ved klik på trigger-knappen
-    speedTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isOpen = speedSelector.classList.contains('open');
-        if (isOpen) {
-            // Luk menuen
-            speedMenu.classList.remove('visible');
-            setTimeout(() => speedSelector.classList.remove('open'), 150);
+    // Hjælpefunktion: opdater stepper UI
+    // Ikonet viser mode: ⏸ ved pause, ▶/▶▶/▶▶▶/▶▶▶▶ ved kørsel (pulserende)
+    // Puls-hastigheden matcher simulationshastigheden
+    const speedArrows = { 60: '\u25B6', 240: '\u25B6\u25B6', 720: '\u25B6\u25B6\u25B6', 1440: '\u25B6\u25B6\u25B6\u25B6' };
+    // Puls-varighed per hastighed — hurtigere sim = hurtigere puls
+    const speedPulse = { 60: '3', 240: '1.5', 720: '0.6', 1440: '0.3' };
+    function updateSpeedStepperUI() {
+        const val = speedSelector.value;
+        const idx = speeds.indexOf(parseInt(val));
+        // Label viser "Pause" ved pause, ellers hastighed (fx "4t/min")
+        speedLabel.textContent = isPaused ? 'Pause' : (speedLabels[val] || '4t/min');
+        // Deaktiver ▶ ved højeste hastighed
+        speedUpBtn.disabled = (idx >= speeds.length - 1);
+        speedDownBtn.disabled = false;
+        // Ikon + puls: ⏸ statisk ved pause, pile ved kørsel
+        if (isPaused) {
+            speedStateIcon.innerHTML = '\u23F8';  // ⏸ statisk pause-ikon
+            speedSelector.classList.remove('playing');
+            speedSelector.classList.add('paused');
+            speedStateIcon.classList.remove('pulsing');
+            speedStateIcon.style.animationDuration = '';
         } else {
-            // Åbn menuen med animation
-            speedSelector.classList.add('open');
-            // Trigger reflow så CSS-transition virker (display:none → block → animate)
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    speedMenu.classList.add('visible');
-                });
-            });
+            speedStateIcon.innerHTML = speedArrows[val] || '\u25B6\u25B6';
+            speedSelector.classList.remove('paused');
+            speedSelector.classList.add('playing');
+            // Alle hastigheder pulserer — langsommere ved lav speed, hurtigere ved høj
+            speedStateIcon.classList.add('pulsing');
+            speedStateIcon.style.animationDuration = (speedPulse[val] || '1.5') + 's';
         }
-    });
+    }
 
-    // Vælg en hastighed ved klik på en option
-    speedOptions.forEach(opt => {
-        opt.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const val = opt.dataset.value;
-            // Opdater valgt state
-            speedOptions.forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            // Opdater trigger-tekst og intern value
-            speedTrigger.textContent = opt.textContent + ' ▾';
-            speedSelector.value = val;
-            // Opdater simulation
-            if (game) game.simulationSpeed = parseInt(val);
-            // Luk menuen
-            speedMenu.classList.remove('visible');
-            setTimeout(() => speedSelector.classList.remove('open'), 150);
-        });
-    });
-
-    // Luk menuen ved klik udenfor
-    document.addEventListener('click', (e) => {
-        if (!speedSelector.contains(e.target) && speedSelector.classList.contains('open')) {
-            speedMenu.classList.remove('visible');
-            setTimeout(() => speedSelector.classList.remove('open'), 150);
+    // Skift hastighed op/ned — helt tv. pauser simulationen
+    function changeSpeed(delta) {
+        if (!game || game.isGameOver) return;
+        const idx = speeds.indexOf(parseInt(speedSelector.value));
+        const newIdx = idx + delta;
+        // ◀ ved laveste hastighed → pause
+        if (delta < 0 && idx <= 0) {
+            if (!isPaused) togglePause();
+            return;
         }
-    });
+        // ▶ mens pauset → resume (på nuværende hastighed)
+        if (delta > 0 && isPaused) {
+            togglePause();
+            return;
+        }
+        if (newIdx < 0 || newIdx >= speeds.length) return;
+        speedSelector.value = String(speeds[newIdx]);
+        if (game) game.simulationSpeed = speeds[newIdx];
+        updateSpeedStepperUI();
+    }
+
+    speedDownBtn.addEventListener('click', () => changeSpeed(-1));
+    speedUpBtn.addEventListener('click', () => changeSpeed(1));
+    // Midterste knap = pause/resume
+    pauseButton.addEventListener('click', togglePause);
+    // Gør funktionerne tilgængelige globalt (bruges fra game.js)
+    window.updateSpeedStepperUI = updateSpeedStepperUI;
+    window.changeSpeed = changeSpeed;
+    updateSpeedStepperUI();
 
     // --- Food buttons: preset meals + "Lav selv" popup ---
     // Alle mad-knapper luk panelet og flyver et ikon ned til grafen.
     // Preset meals med faste makronæringsprofiler (kulhydrat, protein, fedt)
-    dextroButton.addEventListener('click', () => { if(game) { game.addFood(3, 0, 0, '\u{1F36C}'); flyIconToGraph('\u{1F36C}', 'dock-panel-food'); } });
+    dextroButton.addEventListener('click', () => { if(game) { game.addFood(3, 0, 0, '\u25FB\uFE0F'); flyIconToGraph('\u25FB\uFE0F', 'dock-panel-food'); } });
     document.getElementById('appleButton').addEventListener('click', () => { if(game) { game.addFood(20, 0, 0, '\u{1F34E}'); flyIconToGraph('\u{1F34E}', 'dock-panel-food'); } });
     burgerButton.addEventListener('click', () => { if(game) { game.addFood(40, 30, 30, '\u{1F354}'); flyIconToGraph('\u{1F354}', 'dock-panel-food'); } });
     avocadoButton.addEventListener('click', () => { if(game) { game.addFood(5, 5, 25, '\u{1F951}'); flyIconToGraph('\u{1F951}', 'dock-panel-food'); } });
@@ -758,18 +807,23 @@ function initializeApp() {
         }
     });
 
-    // --- Måling og nødhjælp: flyv ikon til graf ---
-    fingerprickButton.addEventListener('click', () => { if(game) { game.performFingerprick(); flyIconToGraph('\u{1FA78}', 'dock-panel-measure'); } });
-    ketoneTestButton.addEventListener('click', () => { if(game) { game.performKetoneTest(); flyIconToGraph('\u{1F9EA}', 'dock-panel-measure'); } });
-    glucagonButton.addEventListener('click', () => {
-        if (game && !glucagonButton.disabled) game.useGlucagon();
-    });
+    // --- Diabetes-kit: druesukker, målinger og glukagon ---
+    fingerprickButton.addEventListener('click', () => { if(game) { game.performFingerprick(); flyIconToGraph('\u{1FA78}', 'dock-panel-kit'); } });
+    ketoneTestButton.addEventListener('click', () => { if(game) { game.performKetoneTest(); flyIconToGraph('\u{1F9EA}', 'dock-panel-kit'); } });
 
-    // SOS dock-item: trigger glucagon direkte (#5: fix — tjek cooldown via game i stedet for hidden button)
-    const glucagonDockItem = document.getElementById('glucagonDockItem');
-    if (glucagonDockItem) {
-        glucagonDockItem.addEventListener('click', (e) => {
-            e.stopPropagation(); // Forhindrer at dock-panel system fanger klikket
+    // Druesukker i kit-panelet
+    const kitDextroButton = document.getElementById('kitDextroButton');
+    if (kitDextroButton) {
+        kitDextroButton.addEventListener('click', () => {
+            if(game) { game.addFood(3, 0, 0, '\u25FB\uFE0F'); flyIconToGraph('\u25FB\uFE0F', 'dock-panel-kit'); }
+        });
+    }
+
+    // Glukagon i kit-panelet
+    const kitGlucagonButton = document.getElementById('kitGlucagonButton');
+    if (kitGlucagonButton) {
+        kitGlucagonButton.addEventListener('click', (e) => {
+            e.stopPropagation();
             triggerGlucagonSOS();
         });
     }
@@ -932,7 +986,8 @@ function initializeApp() {
     // OG som enkelt-tryk når panelet allerede er åbent.
     //
     // Insulin (Z): Z/X/C = 1/2/4E hurtig, A/S/D = basal presets, V/F = custom
-    // Mad (X):     Z/X/C/V = presets (dextro/æble/havregryn/burger)
+    // Mad (X):     Koordinatsystem — nederste rk: Z=Dextro(hypo!) X=Sodavand C=Æble V=Havregryn B=Burger
+    //              Øverste rk: A=Lagkage S=Salat D=Avocado F=Kylling G=Lav selv
     // Målinger (V): Z = fingerprik, X = keton-stik
     // =========================================================================
     let chordFirstKey = null;      // Første tast i chord-sekvens
@@ -962,17 +1017,31 @@ function initializeApp() {
         }
 
         // --- Mad panel åbent ---
+        // Tastatur-layout som koordinatsystem (korresponderer til ikonernes grid-position):
+        //   Øverste række: A=Lagkage  S=Salat  D=Avocado  F=Kylling  G=Lav selv
+        //   Nederste række: Z=Dextro(hypo!)  X=Sodavand  C=Æble  V=Havregryn  B=Burger
         if (isPanelOpen('dock-panel-food')) {
-            if (key === 'z') { game.addFood(3, 0, 0, '\u{1F36C}'); flyIconToGraph('\u{1F36C}', 'dock-panel-food'); return true; }
-            if (key === 'x') { game.addFood(20, 0, 0, '\u{1F34E}'); flyIconToGraph('\u{1F34E}', 'dock-panel-food'); return true; }
-            if (key === 'c') { game.addFood(30, 8, 2, '\u{1F963}'); flyIconToGraph('\u{1F963}', 'dock-panel-food'); return true; }
-            if (key === 'v') { game.addFood(40, 30, 30, '\u{1F354}'); flyIconToGraph('\u{1F354}', 'dock-panel-food'); return true; }
+            // Nederste række — Z=Dextro (hurtig hypo-korrektion), X=Sodavand, C=Æble, V=Havregryn, B=Burger
+            if (key === 'z') { game.addFood(3, 0, 0, '\u25FB\uFE0F'); flyIconToGraph('\u25FB\uFE0F', 'dock-panel-food'); return true; }
+            if (key === 'x') { game.addFood(35, 0, 0, '\u{1F964}'); flyIconToGraph('\u{1F964}', 'dock-panel-food'); return true; }
+            if (key === 'c') { game.addFood(20, 0, 0, '\u{1F34E}'); flyIconToGraph('\u{1F34E}', 'dock-panel-food'); return true; }
+            if (key === 'v') { game.addFood(30, 8, 2, '\u{1F963}'); flyIconToGraph('\u{1F963}', 'dock-panel-food'); return true; }
+            if (key === 'b') { game.addFood(40, 30, 30, '\u{1F354}'); flyIconToGraph('\u{1F354}', 'dock-panel-food'); return true; }
+            // Øverste række — A=Lagkage, S=Salat, D=Avocado, F=Kylling, G=Lav selv
+            if (key === 'a') { game.addFood(60, 5, 25, '\u{1F370}'); flyIconToGraph('\u{1F370}', 'dock-panel-food'); return true; }
+            if (key === 's') { game.addFood(5, 2, 1, '\u{1F957}'); flyIconToGraph('\u{1F957}', 'dock-panel-food'); return true; }
+            if (key === 'd') { game.addFood(5, 5, 25, '\u{1F951}'); flyIconToGraph('\u{1F951}', 'dock-panel-food'); return true; }
+            if (key === 'f') { game.addFood(2, 30, 15, '\u{1F357}'); flyIconToGraph('\u{1F357}', 'dock-panel-food'); return true; }
+            if (key === 'g') { showCustomFoodPanel(); return true; }
         }
 
-        // --- Målinger panel åbent ---
-        if (isPanelOpen('dock-panel-measure')) {
-            if (key === 'z') { game.performFingerprick(); flyIconToGraph('\u{1FA78}', 'dock-panel-measure'); return true; }
-            if (key === 'x') { game.performKetoneTest(); flyIconToGraph('\u{1F9EA}', 'dock-panel-measure'); return true; }
+        // --- Diabetes-kit panel åbent ---
+        // Z=Druesukker, X=Fingerprik, C=Keton-stik, V=Glukagon
+        if (isPanelOpen('dock-panel-kit')) {
+            if (key === 'z') { game.addFood(3, 0, 0, '\u25FB\uFE0F'); flyIconToGraph('\u25FB\uFE0F', 'dock-panel-kit'); return true; }
+            if (key === 'x') { game.performFingerprick(); flyIconToGraph('\u{1FA78}', 'dock-panel-kit'); return true; }
+            if (key === 'c') { game.performKetoneTest(); flyIconToGraph('\u{1F9EA}', 'dock-panel-kit'); return true; }
+            if (key === 'v') { triggerGlucagonSOS(); return true; }
         }
 
         return false;
@@ -988,7 +1057,13 @@ function initializeApp() {
         // Space og Escape virker altid direkte (ingen chord)
         if (key === ' ') { e.preventDefault(); if (game) togglePause(); return; }
         if (key === 'escape') { closeDockPanels(); chordFirstKey = null; return; }
-        if (key === 'b') { e.preventDefault(); triggerGlucagonSOS(); chordFirstKey = null; return; }
+
+        // Piltaster: ← langsommere, → hurtigere (cyklér gennem hastighedsvalg)
+        if (key === 'arrowright' || key === 'arrowleft') {
+            e.preventDefault();
+            changeSpeed(key === 'arrowright' ? 1 : -1);
+            return;
+        }
 
         // Taltaster 1-9: direkte genvej til hurtig insulin med den pågældende dosis
         // ½ (dansk tastatur) giver 0.5 E
@@ -1013,7 +1088,8 @@ function initializeApp() {
 
         // --- Panel allerede åbent: enkelt-tryk sub-handling ---
         // Når panelet er synligt behøver man kun trykke én tast
-        if (['z', 'x', 'c', 'v', 'a', 's', 'd', 'f'].includes(key)) {
+        // Inkluderer B (æble i mad-panel) og G (lav selv i mad-panel)
+        if (['z', 'x', 'c', 'v', 'a', 's', 'd', 'f', 'b', 'g'].includes(key)) {
             // Prøv sub-handling først (hvis relevant panel er åbent)
             if (executeSubAction(key)) {
                 e.preventDefault();
@@ -1024,7 +1100,7 @@ function initializeApp() {
         // --- Første tast: åbn panel + start chord-timer ---
         if (['z', 'x', 'c', 'v'].includes(key)) {
             e.preventDefault();
-            const panelMap = { z: 'dock-panel-insulin', x: 'dock-panel-food', c: 'dock-panel-motion', v: 'dock-panel-measure' };
+            const panelMap = { z: 'dock-panel-insulin', x: 'dock-panel-food', c: 'dock-panel-motion', v: 'dock-panel-kit' };
             toggleDockPanel(panelMap[key]);
 
             // Start chord-timer for hurtig sekvens
