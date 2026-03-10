@@ -24,11 +24,12 @@ Brug aldrig simulatoren som grundlag for medicinske beslutninger. Følg altid di
 10. [Hypoglykæmi-unawareness (HAAF)](#haaf)
 11. [Ketoner og ketoacidose (DKA)](#ketoner)
 12. [CGM-simulation -- Sensorens begrænsninger](#cgm)
-13. [Vægt og kaloriebalance](#vaegt)
-14. [Scoring og game over](#scoring)
-15. [Begrænsninger og forbehold](#begraensninger)
-16. [Videnskabelige referencer](#referencer)
-17. [Open source-software der er brugt](#open-source)
+13. [Variabilitet -- Hvorfor virker det ikke ens hver gang?](#variabilitet)
+14. [Vægt og kaloriebalance](#vaegt)
+15. [Scoring og game over](#scoring)
+16. [Begrænsninger og forbehold](#begraensninger)
+17. [Videnskabelige referencer](#referencer)
+18. [Open source-software der er brugt](#open-source)
 
 ---
 
@@ -175,6 +176,22 @@ Insulinet sidder først i et depot under huden (S1) og bevæger sig gradvist
 videre til et andet depot (S2). Herfra optages det i blodbanen. Tiden til
 maksimal absorption er ca. 55 minutter for hurtigvirkende insulin som NovoRapid.
 
+**Puls-accelereret absorption:** Når hjertefrekvensen stiger (fx under motion),
+øges blodgennemstrømningen i det subkutane væv. Det udvasker insulin hurtigere
+fra depoterne til blodbanen. Modellen beregner en pulsFaktor:
+
+```
+pulsFaktor = 1 + max(0, (puls - hvilepuls) / hvilepuls) × 0.5
+```
+
+Ved hvilepuls (60 bpm) er faktoren 1.0 -- ingen ændring. Ved puls 120 er den
+1.5 (50% hurtigere absorption), og ved puls 160 er den ca. 1.83. Denne effekt
+gælder **al insulin i depotet** -- både bolus og basal. Det er en vigtig grund
+til at motion kan føles så kraftig: selv uden nylig bolus har du altid
+basal-insulin under huden, og den accelereres også. Kombinationen af
+hurtigere insulinabsorption og motionens direkte muskeloptag (se afsnit 6)
+giver den markante BG-sænkning mange T1D-patienter oplever under træning.
+
 **Station 3: I blodet (I)**
 
 Fra blodet fordeler insulinet sig med et fordelingsvolumen på ca. 8.4 liter
@@ -247,7 +264,25 @@ Forståelsen af insulin-farmakokinetik er afgørende for god blodsukkerstyring:
 - **Timing:** Insulin virker ikke med det samme. Hvis du venter med at give
   insulin til blodsukkeret allerede er højt, vil du være bagud i timer.
 - **Variabilitet:** Selv den samme dosis insulin virker ikke ens hver gang.
-  Modellen simulerer dette med tilfældig variation i onset og varighed.
+  Modellen simulerer dette på tre måder:
+  1. **Bioavailability (gennemsnit 78%, std 8%):** Ikke al injiceret insulin
+     når blodbanen. En del nedbrydes lokalt af proteaser i det subkutane
+     væv. Modellen trækker en normalfordelt bioavailability per injektion
+     (clamped til 55-95%). Det betyder at af fx 5 enheder injiceret insulin
+     når reelt ca. 3.5-4.5 enheder blodet — og det varierer fra gang til gang.
+  2. **Absorptionshastighed (CV ~25%):** Tidskonstanten tau_I varierer fra
+     injektion til injektion, modelleret med en normalfordeling omkring
+     standardværdien (mean 1.0, std 0.25, clamped 0.50-1.60). Det afhænger
+     af injektionsdybde, lokalt blodflow, temperatur og evt. lipodystrofi
+     (fortykkede områder under huden fra gentagne injektioner). Én injektion
+     kan peake efter 35 min, den næste efter 70 min — selv med samme dosis
+     og samme sted. Extremer (fx intramuskulær injektion) giver meget
+     hurtigere absorption.
+  3. **Varighed (basal):** Langtidsvirkende insulins varighed varierer med
+     normalfordeling (mean 28 timer, std 3 timer, clamped 22-38 timer).
+  Variabiliteten er kalibreret til at matche den intra-individuelle CV
+  på 20-30% der er dokumenteret for hurtigvirkende insulinanaloger
+  (Heinemann 2002).
 
 ---
 
@@ -320,11 +355,79 @@ to ekstra tilstandsvariable drevet af hjertefrekvens:
 
 Ved aerob træning dominerer to mekanismer:
 
-1. **Direkte muskeloptag (E1):** Musklerne optager glukose direkte fra blodet
-   under træning, helt uden insulin. Jo højere puls, jo mere optag.
-2. **Forstærket insulinvirkning (E2):** Insulin virker bedre under og efter
-   træning. Matematisk multipliceres insulins transport-effekt (x1) med
-   faktoren (1 + alpha * E2^2), hvor alpha = 1.79.
+**1. Direkte muskeloptag (E1) -- virker UDEN insulin:**
+
+Musklerne optager glukose direkte fra blodet under træning via
+GLUT4-translokation -- en mekanisme der **ikke kræver insulin**. Fysisk
+kontraktion af muskelfibrene alene er nok til at trække GLUT4-transportører
+op til celleoverfladen. Jo højere puls, jo mere optag.
+
+I modellen repræsenteres dette af tilstandsvariablen **E1** (kortvarig
+motionseffekt). E1 stiger hurtigt når pulsen er over hvileniveau
+(tidskonstant 20 min) og falder hurtigt efter træning. E1 trækker glukose
+ud af de perifere væv (Q2) direkte:
+
+```
+dQ2 = ... - beta × E1 × HR_effect
+```
+
+Her er `beta = 0.78` (optag-styrke) og `HR_effect` er den relative
+pulsstigning over hvile: `(puls - hvilepuls) / hvilepuls`. Ved puls 120
+og hvilepuls 60 er HR_effect = 1.0. Ved puls 160 er den ~1.67.
+
+**2. Forstærket insulinvirkning (E2) -- "exerciseFactor":**
+
+Motion gør insulin mere effektivt. Under og efter træning åbner musklerne
+flere kapillærer (øget perfusion), og cellernes insulinreceptorer bliver
+mere følsomme. Det betyder at det insulin der allerede er i blodet --
+**både bolus og basal** -- pludselig virker kraftigere.
+
+I modellen repræsenteres dette af tilstandsvariablen **E2** (langvarig
+motionseffekt). E2 stiger langsomt (tidskonstant 200 min, dvs. ~3.3 timer)
+og falder langsomt efter træning. Det er derfor insulinfølsomheden er
+forhøjet **timer efter** træning er slut.
+
+E2 påvirker blodsukkeret via **exerciseFactor**, en multiplikator der
+forstærker insulins transport-effekt (x1):
+
+```
+exerciseFactor = 1 + alpha × E2²
+```
+
+Lad os pakke den ud:
+
+- **alpha = 1.79** er en konstant fra Resalat et al. (2020) der bestemmer
+  hvor kraftigt motion forstærker insulin.
+- **E2** er den akkumulerede langvarige motionseffekt. Den starter på 0
+  ved hvile og stiger gradvist under træning.
+- **E2²** (E2 i anden potens) giver en progressiv kurve: lidt motion giver
+  lidt forstærkning, men meget motion giver *uforholdsmæssigt meget*
+  forstærkning. Det afspejler at kroppen åbner stadig flere kapillærer og
+  aktiverer flere GLUT4-receptorer jo længere træningen varer.
+- Resultatet ganges på **x1** i Q1-ligningen:
+  `dQ1 = ... - exerciseFactor × x1 × Q1`
+  Så insulin-drevet transport af glukose fra blod til muskler multipliceres
+  med exerciseFactor.
+
+**Konkret eksempel:** Efter 60 min moderat løb (puls 130) er E2 ca. 0.45.
+exerciseFactor = 1 + 1.79 × 0.45² = 1 + 1.79 × 0.20 = **1.36** -- insulin
+virker 36% kraftigere. Efter 2 timer intensiv træning kan E2 nå ~0.8,
+og exerciseFactor = 1 + 1.79 × 0.64 = **2.15** -- insulin virker mere end
+dobbelt så kraftigt.
+
+**Samlet motionseffekt -- tre mekanismer der stacker:**
+
+Under motion rammes blodsukkeret af tre samtidige mekanismer:
+
+1. **Direkte muskeloptag (E1)** -- insulin-uafhængigt, virker kun under
+   træning
+2. **Forstærket insulinvirkning (exerciseFactor via E2)** -- forstærker al
+   aktiv insulin, varer timer efter træning
+3. **Accelereret insulinabsorption (pulsFaktor)** -- hurtigere udvaskning
+   fra subkutant depot, gælder al insulin (bolus + basal)
+
+Det er kombinationen af alle tre der giver den voldsomme BG-sænkning
+mange T1D-patienter oplever under motion.
 
 Nettoresultat: blodsukkeret **falder** under aerob træning.
 
@@ -332,12 +435,18 @@ Nettoresultat: blodsukkeret **falder** under aerob træning.
 
 Ved høj intensitet udløses en katekolamin-respons (adrenalin). I modellen
 tilføjes akut stress (0.02 per simuleret minut ved høj intensitet), som øger
-leverens glukoseproduktion. Denne effekt kan midlertidigt **overskride**
-det faldende blodsukker fra muskeloptaget.
+leverens glukoseproduktion. Tallet 0.02 betyder at hvert simuleret minut
+med høj intensitet lægger 0.02 til det akutte stressniveau -- efter 10 min
+er akutStress = 0.20, hvilket øger leverens glukoseproduktion med 20%.
+Stresshormonerne har en halveringstid på ~60 min, så effekten aftager
+gradvist efter træning.
+
+Denne stress-effekt kan midlertidigt **overskride** det faldende blodsukker
+fra muskeloptaget.
 
 Nettoresultat: blodsukkeret kan **stige akut** under anaerob træning, men
 falder efterfølgende når stresshormonerne aftager og den forstærkede
-insulinfølsomhed tager over.
+insulinfølsomhed (E2) tager over.
 
 ### Puls-model
 
@@ -441,17 +550,47 @@ klippet til nul -- og stresshormoner kunne aldrig slå igennem. Det betød
 at kontraregulering var virkningsløs under hypoglykæmi, hvilket ikke
 svarer til virkeligheden.
 
-### Kontraregulering ved T1D
+### Kontraregulering ved T1D -- hvorfor er den så svag?
 
-Modellen tager højde for at T1D-patienter har svækket kontraregulering:
+T1D-patienter har dramatisk svækket kontraregulering. Den vigtigste årsag
+er **tabet af glukagonrespons på hypoglykæmi**, som sker overraskende
+hurtigt efter diagnosen:
 
-- Glukagon-respons er typisk tabt inden 1-5 år efter diagnose
-- Adrenalin-respons er bevaret men kan svækkes ved gentagne hypoer (se HAAF)
-- Stress-cap sat til 0.4 (vs. ca. 5.0 hos raske) for at afspejle dette
+**Tidslinje:**
+- Inden for den første måned kan glukagonresponset allerede være nedsat
+- Inden for 1-5 år er det fraværende hos de fleste patienter (Gerich 1988)
+- Tabet er progressivt og irreversibelt (undtagen ved ø-transplantation)
 
-Den praktiske konsekvens: en insulinoverdosis kan ikke "reddes" af kroppens
-egen hormon-respons. Spilleren skal lære at forebygge hypoglykæmi --
-ikke stole på at kroppen klarer det.
+**Mekanisme -- "switch-off"-hypotesen:**
+
+Alfacellerne (der producerer glukagon) dør **ikke** — de overlever og
+fungerer stadig. Problemet er at de mangler det rigtige *signal* til at
+reagere på lavt blodsukker. I en normal bugspytkirtel sidder alfa- og
+betaceller tæt sammen i øer (islets). Når blodsukkeret falder, **stopper
+betacellerne med at secernere insulin**. Dette fald i *lokalt* insulin
+er selve signalet til alfacellerne om at frigive glukagon. Betacellerne
+co-secernerer også GABA og zink, som normalt hæmmer alfacellerne —
+når de stopper, løftes hæmningen.
+
+I T1D er betacellerne ødelagt af immunforsvaret → der er ingen lokal
+insulinsekretion at "slukke for" → alfacellerne modtager aldrig
+switch-off-signalet → glukagonresponset udebliver. Eksogent insulin
+(injiceret under huden) kan ikke replikere dette, fordi det ikke skaber
+det lokale, pulserende fald *inde i øen*.
+
+**Bevis for switch-off-hypotesen:** Ø-transplantation (Rickels 2015, 2016)
+genopretter delvist glukagonresponset — når betaceller genintroduceres,
+vender signalet tilbage.
+
+**Hvad er bevaret:**
+- Glukagonrespons på **aminosyrer** (protein) — stadig intakt
+- Glukagonrespons på **motion** — delvist bevaret (via katekolaminer)
+- **Adrenalinrespons** — initialt bevaret, men kan svækkes af HAAF
+
+**I modellen:** Stress-cap sat til 0.4 (vs. ca. 5.0 hos raske) for at
+afspejle dette massive tab. Den praktiske konsekvens: en insulinoverdosis
+kan ikke "reddes" af kroppens egen hormon-respons. Spilleren skal lære
+at forebygge hypoglykæmi — ikke stole på at kroppen klarer det.
 
 ### Hvorfor er det vigtigt at forstå?
 
@@ -747,8 +886,186 @@ måleusikkerhed.
 
 ---
 
+<a name="variabilitet"></a>
+## 13. Variabilitet -- Hvorfor virker det ikke ens hver gang?
+
+En af de mest frustrerende aspekter ved T1D er at **det samme aldrig virker ens to gange**. Du kan give præcis den samme insulindosis, spise præcis den samme mad, og alligevel få et helt andet blodsukkerforløb. Simulatoren modellerer denne variabilitet bevidst, fordi den er en central del af T1D-oplevelsen.
+
+### Kilder til variabilitet i simulatoren
+
+Modellen har fire uafhængige variabilitetskilder:
+
+#### 1. Insulin-bioavailability (lokal nedbrydning)
+
+Ikke al injiceret insulin når blodbanen. En del nedbrydes af proteaser (enzymer) i det subkutane væv inden det absorberes. Modellen trækker en normalfordelt bioavailability per injektion:
+
+- **Hurtigvirkende (bolus):** gennemsnit 78%, std 8% (clamped 55-95%)
+- **Langtidsvirkende (basal):** gennemsnit 82%, std 8% (clamped 60-95%)
+
+Absolut biotilgængelighed for subkutan insulin er målt til **55-77%** (insulin lispro, FDA label), op til 84% i enkelte studier (Gradel et al. 2018). Det betyder at af 5E injiceret bolus-insulin når reelt ca. 3-4E blodet. Resten nedbrydes lokalt af enzymer (proteaser) i det subkutane væv, eller akkumuleres i depotet uden at nå blodbanen.
+
+> **Implementering:** [`js/simulator.js` — addFastInsulin()](https://github.com/krauhe/t1d-simulator/blob/main/js/simulator.js#L1041) og [`addLongInsulin()`](https://github.com/krauhe/t1d-simulator/blob/main/js/simulator.js#L1095)
+
+#### 2. Absorptionshastighed (tau_I-variation)
+
+Tidskonstanten for insulinabsorption (tau_I, normalt 55 min) varierer fra injektion til injektion. Modellen trækker en normalfordelt skaleringsfaktor:
+
+- **tauFactor:** mean 1.0, std 0.25 (CV ~25%), clamped 0.50-1.60
+
+En tauFactor på 0.7 giver peak efter ~38 min i stedet for ~55 min. En tauFactor på 1.4 giver peak efter ~77 min. Årsagerne i virkeligheden:
+
+| Faktor | Effekt på absorption | Kilde |
+|--------|---------------------|-------|
+| Injektionsdybde | IM = meget hurtigere; 8mm nål giver >10x højere risiko for IM vs. 4mm | Gradel 2018 |
+| Injektionssted | Abdomen hurtigst (reference), arm 30% langsommere, lår **86% langsommere** | [Koivisto 1980](https://pubmed.ncbi.nlm.nih.gov/7042427/) |
+| Lokalt blodflow | Varme/motion øger; sauna: absorption **110% hurtigere** | [Koivisto 1981](https://pubmed.ncbi.nlm.nih.gov/7000239/) |
+| Lipodystrofi | Cmax **25% lavere**, AUC **22-46% lavere**, BG ~40% højere i 5+ timer | [Tian 2023](https://journals.sagepub.com/doi/10.1177/19322968231187661) |
+| Dosis-størrelse | Større depot = langsommere absorption (lavere overflade:volumen-ratio) | Heinemann 2002 |
+| Temperatur | 35°C vs. 20°C: insulinabsorption **50-60% hurtigere** ved varme | [Sindelka 1994](https://pubmed.ncbi.nlm.nih.gov/7010077/) |
+| Rygning | Nikotin → kutan vasokonstriktion → reduceret absorption + øget insulinresistens | [Bergman 2012](https://pmc.ncbi.nlm.nih.gov/articles/PMC3501865/) |
+
+Når flere injektioner er aktive samtidig, beregnes tau_I som et vægtet gennemsnit af alle aktive injektioners tauFactor.
+
+> **Implementering:** [`js/simulator.js` — update() insulin-sektion](https://github.com/krauhe/t1d-simulator/blob/main/js/simulator.js#L531) og [`js/hovorka.js` — S1/S2 differentialligninger](https://github.com/krauhe/t1d-simulator/blob/main/js/hovorka.js#L344)
+
+#### 3. Puls-accelereret absorption (pulsFaktor)
+
+Øget hjertefrekvens under motion øger blodgennemstrømningen i det subkutane væv, hvilket udvasker insulin hurtigere fra depotet. Dette er **ikke** tilfældig variabilitet men en deterministisk mekanisme der afhænger af aktivitet:
+
+```
+pulsFaktor = 1 + max(0, (puls - hvilepuls) / hvilepuls) × 0.5
+```
+
+| Puls | pulsFaktor | Effekt |
+|------|------------|--------|
+| 60 (hvile) | 1.00 | Normal absorption |
+| 100 | 1.33 | 33% hurtigere |
+| 120 | 1.50 | 50% hurtigere |
+| 160 | 1.83 | 83% hurtigere |
+
+Denne effekt gælder **al insulin i depotet** — både bolus og basal. Det er en vigtig grund til at motion kan give uventet kraftige BG-fald.
+
+> **Implementering:** [`js/hovorka.js` — pulsFaktor i derivatives()](https://github.com/krauhe/t1d-simulator/blob/main/js/hovorka.js#L272)
+
+Bemærk den enorme forskel mellem insulintyper — Tresiba (degludec) er markant
+mere forudsigelig end Lantus (glargin), som har dramatisk variabilitet efter 8 timer:
+
+| Insulin | CV (dag-til-dag) | Kilde |
+|---------|-------------------|-------|
+| NPH | 59-68% | [Heise 2004](https://pubmed.ncbi.nlm.nih.gov/15161770/) |
+| Lantus (glargin U100) | 46-82% | [Heise 2012](https://pubmed.ncbi.nlm.nih.gov/22594461/) |
+| Toujeo (glargin U300) | Lavere end U100 | [Heise 2017](https://pubmed.ncbi.nlm.nih.gov/28295934/) |
+| Levemir (detemir) | 27% | [Heise 2004](https://pubmed.ncbi.nlm.nih.gov/15161770/) |
+| Tresiba (degludec) | 20% | [Heise 2012](https://pubmed.ncbi.nlm.nih.gov/22594461/) |
+
+> **Implementering:** [`js/simulator.js` — addLongInsulin()](https://github.com/krauhe/t1d-simulator/blob/main/js/simulator.js#L1095)
+
+#### 4. CGM-sensor variabilitet
+
+CGM-værdien afviger fra det sande blodsukker på fire måder:
+
+| Kilde | Hvad | Parametre |
+|-------|------|-----------|
+| Sensor-forsinkelse | Glukose skal diffundere fra blod til vævsvæske | 5-10 min (tilfældigt) |
+| Tilfældig støj | Elektrisk og biologisk støj i sensoren | 2.5-4.0% af BG (normalfordelt) |
+| Systematisk drift | Langsom sinusbølge fra sensor-degradering | Periode 4-8t, amplitude 0.3-0.7 mmol/L |
+| Diskontinuiteter | Pludselige spring (kompression, kalibrering) | ~0.7 per dag, op til ±2 mmol/L |
+
+Støj-parametrene er kalibreret fra ca. 34.000 Freestyle Libre 2-målinger over et år fra en rigtig T1D-patient.
+
+Til sammenligning, officielle MARD-værdier (Mean Absolute Relative Difference) for aktuelle CGM-sensorer:
+
+| Sensor | MARD | Kilde |
+|--------|------|-------|
+| FreeStyle Libre 2 | 9.2% | [Alva 2022](https://pubmed.ncbi.nlm.nih.gov/32954812/) |
+| FreeStyle Libre 3 | 7.9% | Abbott 2022 |
+| Dexcom G6 | 9.9% | Welsh 2024 |
+| Dexcom G7 | 8.2% (arm) | [Shah 2022](https://pmc.ncbi.nlm.nih.gov/articles/PMC9208857/) |
+
+Bemærk: den fysiologiske forsinkelse (5-6 min hos raske, **7-8 min ved T1D**) er kun en del af den totale CGM-forsinkelse. Fibrøs indkapsling af sensoren er den dominerende kilde til forsinkelse ([Helton 2019](https://diabetesjournals.org/diabetes/article/68/10/1892/35372/)).
+
+> **Implementering:** [`js/simulator.js` — CGM-beregning i update()](https://github.com/krauhe/t1d-simulator/blob/main/js/simulator.js#L737)
+
+#### 5. Kulhydrat-bioavailability (A_G)
+
+Ikke alle kulhydrater optages. Modellen bruger en fast bioavailability på 80% (A_G = 0.8) fra Hovorka-modellen. I virkeligheden varierer dette kraftigt:
+
+| Madtype | Estimeret bioavailability |
+|---------|--------------------------|
+| Glukosedrik / cola | ~95-100% |
+| Hvidt brød, ris | ~85-90% |
+| Blandet måltid | ~75-85% |
+| Fuldkorn med fiber | ~60-75% |
+
+Variabel A_G per madtype er planlagt som fremtidig feature (se TODO 31 i CLAUDE.md).
+
+> **Implementering:** [`js/hovorka.js` — A_G konstant](https://github.com/krauhe/t1d-simulator/blob/main/js/hovorka.js#L83)
+
+#### 6. Basal-insulin varighed
+
+Langtidsvirkende insulins varighed varierer med normalfordeling:
+
+- **Mean:** 28 timer, **std:** 3 timer (clamped 22-38 timer)
+
+Dette afspejler at Lantus/Levemir ikke har en perfekt forudsigelig varighed — nogle dage varer det 25 timer, andre 31. Tresiba har endnu længere og mere stabil varighed (>40 timer), men er ikke separat modelleret endnu.
+
+> **Implementering:** [`js/simulator.js` — addLongInsulin()](https://github.com/krauhe/t1d-simulator/blob/main/js/simulator.js#L1095)
+
+### Samlet variabilitets-budget
+
+For en typisk bolus-injektion er den samlede effekt-variation ca.:
+
+| Kilde | CV | Type |
+|-------|----|------|
+| Bioavailability | ~10% | Tilfældig per injektion |
+| Absorptionshastighed (tau_I) | ~25% | Tilfældig per injektion |
+| Puls (motion) | 0-83% | Deterministisk, afhænger af aktivitet |
+| CGM-aflæsning | ~3-4% | Tilfældig per måling |
+| **Samlet tilfældig** | **~27%** | Stacker (root-sum-of-squares) |
+
+Den samlede tilfældige CV på ~27% matcher Heinemann 2002's rapporterede intra-individuelle variation på 20-30% for hurtigvirkende insulinanaloger.
+
+### Hvorfor er det vigtigt at forstå?
+
+- **"Samme dosis, forskelligt resultat"** er normalt — det er ikke din skyld
+- Insulins effekt kan variere op til ±50% fra gang til gang (2 standardafvigelser)
+- Motion forstærker variabiliteten yderligere via accelereret absorption
+- CGM-værdien er et estimat med sin egen usikkerhed oven i insulinens
+- God T1D-kontrol handler om at navigere i denne usikkerhed — ikke om at eliminere den
+
+> **Kilder:**
+>
+> *Insulin-variabilitet:*
+> - Heinemann L. (2002). "Variability of insulin absorption and insulin action." *Diabetes Technol Ther*, 4(5):673-682. [PubMed](https://pubmed.ncbi.nlm.nih.gov/12450450/)
+> - Gradel AKJ, et al. (2018). "Factors Affecting the Absorption of Subcutaneously Administered Insulin." *J Diabetes Res*. [PMC6079517](https://pmc.ncbi.nlm.nih.gov/articles/PMC6079517/)
+> - Heise T, et al. (2004). "Lower within-subject variability of insulin detemir vs NPH and glargine." *Diabetes*, 53(Suppl 2). [PubMed](https://pubmed.ncbi.nlm.nih.gov/15161770/)
+> - Heise T, et al. (2012). "Insulin degludec: four times lower pharmacodynamic variability than insulin glargine." *Diabetes Obes Metab*, 14(9):859-64. [PubMed](https://pubmed.ncbi.nlm.nih.gov/22594461/)
+> - Heise T, et al. (2017). "Insulin degludec vs insulin glargine U300: day-to-day variability." *Diabetes Obes Metab*, 19(7):1032-1039. [PubMed](https://pubmed.ncbi.nlm.nih.gov/28295934/)
+>
+> *Injektionssted og absorption:*
+> - Koivisto VA, Felig P. (1980). "Alterations in insulin absorption and blood glucose control associated with varying insulin injection sites." *Ann Intern Med*. [PubMed](https://pubmed.ncbi.nlm.nih.gov/7042427/)
+> - Koivisto VA. (1981). "Sauna-induced acceleration in insulin absorption from subcutaneous injection site." *BMJ*. [PubMed](https://pubmed.ncbi.nlm.nih.gov/7000239/)
+> - Sindelka G, et al. (1994). "Effect of temperature on insulin absorption." *Diabetologia*. [PubMed](https://pubmed.ncbi.nlm.nih.gov/7010077/)
+> - McCarthy O, et al. (2020). "Factors Influencing Subcutaneous Insulin Absorption Around Exercise in T1D." *Front Endocrinol*. [PMC7609903](https://pmc.ncbi.nlm.nih.gov/articles/PMC7609903/)
+> - Tian T, et al. (2023). "Lipohypertrophy and insulin: update from DTS." *J Diabetes Sci Technol*. [Sagepub](https://journals.sagepub.com/doi/10.1177/19322968231187661)
+>
+> *CGM-nøjagtighed:*
+> - Alva S, et al. (2022). "Accuracy of a 14-day factory-calibrated CGM." *J Diabetes Sci Technol*. [PubMed](https://pubmed.ncbi.nlm.nih.gov/32954812/)
+> - Shah VN, et al. (2022). "Accuracy and safety of Dexcom G7 in adults." *Diabetes Technol Ther*. [PMC9208857](https://pmc.ncbi.nlm.nih.gov/articles/PMC9208857/)
+> - Helton KL, et al. (2019). "Fibrotic encapsulation is the dominant source of CGM delays." *Diabetes*, 68(10):1892. [Diabetes](https://diabetesjournals.org/diabetes/article/68/10/1892/35372/)
+> - Basu A, et al. (2013). "Time lag of glucose from intravascular to interstitial compartment." *Diabetes*. [PMC3837059](https://pmc.ncbi.nlm.nih.gov/articles/PMC3837059/)
+>
+> *Kulhydrat-biotilgængelighed:*
+> - Livesey G. (2005). "Low-glycaemic diets and health." *Br J Nutr*. [PubMed](https://pubmed.ncbi.nlm.nih.gov/16115326/)
+>
+> *Simuleringsmodeller:*
+> - Hovorka R, et al. (2004). "Nonlinear model predictive control of glucose concentration in subjects with type 1 diabetes." *Physiol Meas*, 25(4):905-920.
+> - Resalat N, et al. (2020). "Simulation Software for Assessment of Nonlinear and Adaptive Multivariable Control Algorithms." *IFAC-PapersOnLine*, 53(2):16025-16030. [PMC7449052](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7449052/)
+
+---
+
 <a name="vaegt"></a>
-## 13. Vægt og kaloriebalance
+## 14. Vægt og kaloriebalance
 
 ### Grundidéen
 
@@ -785,7 +1102,7 @@ illustrere vigtigheden af balance.
 ---
 
 <a name="scoring"></a>
-## 14. Scoring og game over
+## 15. Scoring og game over
 
 ### Pointsystem
 
@@ -817,7 +1134,7 @@ Spillet slutter ved fire scenarier:
 ---
 
 <a name="begraensninger"></a>
-## 15. Begrænsninger og forbehold
+## 16. Begrænsninger og forbehold
 
 T1D Simulator er et **uddannelsesværktøj og spil** -- IKKE et medicinsk device.
 Vigtige begrænsninger:
@@ -853,7 +1170,7 @@ Følg altid din læges anbefalinger.**
 ---
 
 <a name="referencer"></a>
-## 16. Videnskabelige referencer
+## 17. Videnskabelige referencer
 
 ### Primære kilder
 
@@ -931,7 +1248,7 @@ Følg altid din læges anbefalinger.**
 ---
 
 <a name="open-source"></a>
-## 17. Open source-software der er brugt
+## 18. Open source-software der er brugt
 
 ### Direkte implementationer
 

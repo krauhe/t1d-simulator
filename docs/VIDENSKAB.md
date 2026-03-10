@@ -354,7 +354,7 @@ Kroppen har et hierarkisk forsvarssystem der aktiveres når blodsukkeret falder.
 
 Glukagon frigives fra bugspytkirtlens alfa-celler når blodsukkeret falder under ca. 3.8 mmol/L. Det virker hurtigt (inden for 2-5 minutter) og får leveren til at frigive glukose fra sine glykogenlagre. Glukagon kan øge leverens glukoseproduktion 3-5 gange over det basale niveau.
 
-**Vigtigt for T1D:** Hos de fleste T1D-patienter er glukagonresponset svækket eller helt fraværende efter 5 eller flere års sygdom. Det skyldes, at den autoimmune proces der ødelægger betacellerne også påvirker alfacellerne. Det betyder, at T1D-patientens vigtigste akutte forsvar mod lavt blodsukker mangler.
+**Vigtigt for T1D:** Hos de fleste T1D-patienter er glukagonresponset svækket eller helt fraværende efter 5 eller flere års sygdom. Alfacellerne overlever — de ødelægges ikke af det autoimmune angreb — men de mister det parakrine signal fra de nærliggende betaceller (lokal insulin, GABA, zink) der normalt koordinerer glukagonfrigivelsen. Denne "switch-off hypotese" (Unger & Orci 2010, Brissova 2005) forklarer hvorfor alfacellerne stadig kan producere glukagon ved andre stimuli (fx arginin), men ikke reagerer korrekt på lavt blodsukker. Det betyder, at T1D-patientens vigtigste akutte forsvar mod lavt blodsukker mangler.
 
 ### Adrenalin -- det sekundære forsvar
 
@@ -824,24 +824,37 @@ Dette er et af de mest frustrerende aspekter ved daglig T1D-behandling: insulins
 
 ### Forskellige organer har forskellige tærskler
 
-Insulin virker pa flere organer, men de reagerer ved forskellige insulinkoncentrationer:
+Insulin virker på flere organer, men de reagerer ved forskellige insulinkoncentrationer. Rizza et al. (1981) udførte 8-timers sekventielle insulin-clamps i 15 raske forsøgspersoner og fandt markant forskellige EC50-værdier (den koncentration hvor halvdelen af den maksimale effekt opnås):
 
-| Organ | Hvad insulin gør | Følsomhed |
-|-------|-----------------|-----------|
-| Lever | Bremser glukoseproduktion | Høj -- reagerer først, ved lave niveauer |
-| Fedtvæv | Bremser fedtnedbrydning | Høj -- reagerer også tidligt |
-| Muskler | Øger glukoseoptag | Lav -- kræver mere insulin |
+| Effekt | EC50 (halvmaksimal) | Fuld effekt ved | Receptor-besættelse |
+|--------|---------------------|-----------------|---------------------|
+| Suppression af lipolyse (fedtvæv) | ~44-68 pmol/L (~8-11 μU/mL) | ~150 pmol/L | Meget lav |
+| Suppression af leverens glukoseproduktion (EGP) | ~174 pmol/L (~29 μU/mL) | ~360 pmol/L (~60 μU/mL) | 11% |
+| Stimulation af perifer glukoseoptagelse (muskel) | ~330 pmol/L (~55 μU/mL) | ~1200-4200 pmol/L (~200-700 μU/mL) | 49% |
 
-Det betyder, at ved lave insulinniveauer bremser leveren allerede sin glukoseproduktion, men musklerne optager stadig ikke glukose effektivt. Nettoresultatet kan være minimal ændring i blodsukkeret, fordi de to effekter delvist ophæver hinanden.
+Det afgørende: **leveren reagerer ved halvt så meget insulin som musklerne.** Fedtvævet reagerer endnu tidligere. Det giver et hierarki af insulineffekter sorteret efter følsomhed:
+
+1. Fedtnedbrydning bremses (laveste tærskel)
+2. Leverens glukoseproduktion bremses
+3. Musklernes glukoseoptag aktiveres (højeste tærskel)
 
 ### Den S-formede dosis-respons-kurve
 
-Insulins virkning følger en S-formet (sigmoid) kurve. Det betyder:
-- **Under tærskel:** Næsten ingen målbar effekt
-- **Omkring tærskel:** Kraftigt stigende effekt
-- **Over mætning:** Ekstra insulin giver aftagende ekstra effekt
+Insulins virkning følger en S-formet (sigmoid) kurve, typisk modelleret med en Hill-funktion:
 
-### Hvad det betyder i dagligdagen
+```
+Effekt(I) = Emax × I^n / (EC50^n + I^n)
+```
+
+hvor Emax er den maksimale effekt, EC50 er halvmaksimal koncentration, og n er Hill-koefficienten (kurvens stejlhed). Det betyder:
+
+- **Under tærskel:** Næsten ingen målbar effekt
+- **Omkring tærskel:** Kraftigt stigende effekt (den "stejle" del af S-kurven)
+- **Over mætning:** Ekstra insulin giver aftagende ekstra effekt (kurven flader ud)
+
+Prager et al. (1986) fandt at trods de forskellige EC50-værdier er *tidskonstanterne* for hepatisk og perifer insulinvirkning bemærkelsesværdigt ens (~43-45 min halveringstid). Begge effekter deler sandsynligvis et fælles rate-limiting step: insulintransport fra plasma til interstitielt væv.
+
+### Hvad det betyder i dagligdagen: "dødzonen"
 
 Dette forklarer en meget almindelig T1D-oplevelse:
 
@@ -850,18 +863,50 @@ Dette forklarer en meget almindelig T1D-oplevelse:
 3. I frustration giver du 2 enheder. Blodsukkeret styrtdykker til 4 mmol/L.
 4. I alt 4 enheder har givet en effekt der er langt større end 4 gange din ISF.
 
-Forklaringen: de forste 2 enheder var under musklernes tærskel og påvirkede primært leveren (som allerede var delvist bremset). De sidste 2 enheder bragte koncentrationen over musklernes tærskel, og det samlede glukoseoptag steg dramatisk.
+Forklaringen: de første 2 enheder var under musklernes tærskel og påvirkede primært leveren (som allerede var delvist bremset). De sidste 2 enheder bragte koncentrationen over musklernes tærskel, og det samlede glukoseoptag steg dramatisk. I "zonen" mellem de to tærskler opleves en "dødzone" hvor insulin tilsyneladende ikke virker — leveren er allerede supprimeret, men musklerne er endnu ikke aktiveret.
 
-### Inaktivitet gør det værre
+### Insulinresistens vokser gabet
 
-Ved fysisk inaktivitet (stillesiddende dag, sygdom) falder musklernes insulinfølsomhed, og tærsklen rykker endnu højere. Der skal endnu mere insulin til før musklerne begynder at reagere. Det er derfor "sofadage" kan give så frustrerende blodsukkerregulering.
+Ved insulinresistens (sygdom, inaktivitet, stress) forskydes dosis-respons-kurverne mod højre — der kræves mere insulin for samme effekt. Men forskydningen er **ikke ens** for alle væv:
+
+- **Perifer (muskel) insulinresistens** er typisk den primære defekt og tegner sig for ca. **2/3** af den totale glukose-dysregulering (DeFronzo & Tripathy 2009)
+- **Hepatisk insulinresistens** tegner sig for ca. **1/3**
+
+Det betyder at under insulinresistens vokser afstanden mellem leverens og musklernes tærskler. "Dødzonen" bliver bredere. I praksis:
+
+- **Normal tilstand:** EC50-lever ~174, EC50-muskel ~330 pmol/L → gab ~156 pmol/L
+- **Insulinresistent (sygdom):** EC50-lever ~250, EC50-muskel ~600 pmol/L → gab ~350 pmol/L (mere end dobbelt)
+
+Det er derfor "sofadage" og sygdomsdage kan give så frustrerende blodsukkerregulering: den dosis der normalt virker fint, lander nu midt i det udvidede gab hvor leveren er bremset men musklerne er inaktive.
+
+### Selektiv hepatisk insulinresistens
+
+Et bemærkelsesværdigt paradoks inden for selve levercellen (Brown & Goldstein 2008): under insulinresistens mister insulin evnen til at supprimere glukoneogenese (den ønskede effekt), men **bevarer** evnen til at stimulere fedtsyntese (lipogenese). Denne "selektive hepatiske insulinresistens" skaber kombinationen af hyperglykæmi + hypertriglyceridæmi — højt blodsukker og højt fedt i blodet samtidig.
+
+### Basu et al. (2004): Målt forskel i T2D
+
+I et 3-trins insulin-clamp-studie sammenlignede Basu et al. raske med T2D-patienter:
+
+| Insulin-niveau | Raske: EGP | T2D: EGP | Raske: Muskeloptagelse | T2D: Muskeloptagelse |
+|----------------|-----------|----------|----------------------|---------------------|
+| Lavt (~150 pmol/L) | Delvist supprimeret | Utilstrækkelig suppression | Minimal | Minimal |
+| Moderat (~350 pmol/L) | Fuldstændig suppression | Stadig ikke fuldstændig | Moderat | Nedsat |
+| Højt (~700 pmol/L) | Fuldstændig | Fuldstændig | Høj | Stadig nedsat |
+
+Nøglefund: muskeloptagelsen var nedsat ved **alle** testede insulinniveauer hos T2D, mens EGP-suppression kun var signifikant værre ved det laveste niveau. Det bekræfter at muskelresistens er den dominerende defekt.
 
 ### Begrænsning i simulatoren
 
-Hovorka-modellen bruger lineære insulin-effektligninger, som ikke fanger denne tærskeladfærd. Det er en af de vigtigste begrænsninger i den nuværende simulator og en oplagt kandidat til fremtidig forbedring.
+Hovorka-modellen bruger lineære insulin-effektligninger (x1, x2, x3 er alle proportionale med insulinkoncentrationen), som ikke fanger denne tærskeladfærd. Det er en af de vigtigste begrænsninger i den nuværende simulator og en oplagt kandidat til fremtidig forbedring — fx ved at erstatte de lineære effektligninger med sigmoid (Hill-type) funktioner med separate EC50-værdier for hver effekt.
 
 > **Kilder:**
-> - Rizza RA, et al. (1981). "Dose-response characteristics for effects of insulin on production and utilization of glucose in man." *Am J Physiol*, 240(6):E630-E639.
+> - Rizza RA, Mandarino LJ, Gerich JE. (1981). "Dose-response characteristics for effects of insulin on production and utilization of glucose in man." *Am J Physiol*, 240(6):E630-E639.
+> - Basu R, Basu A, Johnson CM, Schwenk WF, Rizza RA. (2004). "Insulin dose-response curves for stimulation of splanchnic glucose uptake and suppression of endogenous glucose production differ in nondiabetic humans and are abnormal in people with type 2 diabetes." *Diabetes*, 53(8):2042-2050.
+> - Prager R, Wallace P, Olefsky JM. (1986). "Dynamics of hepatic and peripheral insulin effects suggest common rate-limiting step in vivo." *Diabetes*, 35(9):1042-1048.
+> - DeFronzo RA, Tripathy D. (2009). "Skeletal muscle insulin resistance is the primary defect in type 2 diabetes." *Diabetes Care*, 32(Suppl 2):S157-S163.
+> - Brown MS, Goldstein JL. (2008). "Selective versus total insulin resistance: a pathogenic paradox." *Cell Metab*, 7(2):95-96.
+> - Stumvoll M, et al. (2000). "Suppression of systemic, intramuscular, and subcutaneous adipose tissue lipolysis by insulin in humans." *J Clin Endocrinol Metab*, 85(10):3740-3745.
+> - Natali A, et al. (2000). "Dose-response characteristics of insulin action on glucose metabolism: a non-steady-state approach." *Am J Physiol Endocrinol Metab*, 278(5):E794-E801.
 > - Kolterman OG, et al. (1981). "Receptor and postreceptor defects contribute to the insulin resistance in noninsulin-dependent diabetes mellitus." *J Clin Invest*, 68(4):957-969.
 > - Bergman RN. (2005). "Minimal model: perspective from 2005." *Horm Res*, 64(Suppl 3):8-15.
 > - Thiebaud D, et al. (1982). "The effect of graded doses of insulin on total glucose uptake, glucose oxidation, and glucose storage in man." *Diabetes*, 31(11):957-963.

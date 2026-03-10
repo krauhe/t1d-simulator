@@ -131,8 +131,45 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
 4. Highscore-liste med navn
 5. Sandkasse-tilstand med scenarier/forhindringer man kan aktivere
 
+### Høj prioritet (fysiologisk vigtig)
+6. Non-lineær insulin dosis-respons (sigmoid/Hill-kurver)
+    - Lever, muskel og fedtvæv har forskellige aktiveringstærskler (EC50-værdier)
+    - Lever: EC50 ~29 μU/mL, Muskel: EC50 ~55 μU/mL (Rizza 1981)
+    - Under insulinresistens vokser gabet → "dødzone" hvor insulin tilsyneladende ikke virker
+    - Implementering: erstat lineære x1/x2/x3-effektligninger med Hill-funktioner
+    - Kræver re-kalibrering af alle parametre og nye tests
+    - Se VIDENSKAB.md afsnit 25 for fuld videnskabelig baggrund
+7. Insulin-kurver på grafen (visuelt overlay)
+    - To linjer: hurtigvirkende (fx blå) og langtidsvirkende (fx lilla)
+    - Tykkelse/amplitude proportional med aktiv insulin i systemet
+    - Skygge-estimat fremad i tid: beregnet fra forventet absorption UDEN motion
+    - Reel kurve fyldes ind efterhånden og afspejler faktisk absorption (med HR/pulsFaktor)
+    - Forskellen mellem skygge og reel kurve visualiserer motionens effekt på absorption
+    - Sekundær y-akse eller normaliseret overlay oven på BG-grafen
+8. Fysiologi-panel — "motorhjelmen"
+    - Realtidsvisning af alle fysiologiske processer der påvirker BG lige nu
+    - Pile op/ned med størrelse proportional til processens styrke:
+      - ↑ Leverproduktion (EGP) — stor pil om morgenen (dawn), lille i hvile
+      - ↑ Mad-absorption (UG) — stor pil efter måltid
+      - ↓ Insulinvirkning (x1+x2+x3) — stor pil efter bolus
+      - ↓ Muskeloptag (E1) — stor pil under motion
+      - ↑ Stresshormoner — pil ved hypo/motion
+      - ↓ Nyreudskillelse (FR) — pil ved højt BG
+      - ↓ Hjerneforbrug (F01c) — konstant lille pil
+    - Netto-pil der viser den samlede retning (stiger/falder/stabilt)
+    - Evt. fold-ud panel ved siden af/under grafen
+    - Centralt pædagogisk værktøj: spilleren ser HVORFOR BG ændrer sig
+
+9. Easy mode — sværhedsgrad for nybegyndere
+    - Ingen variabilitet: bioavailability=1.0, tauFactor=1.0, fast basal-varighed
+    - Ingen CGM-støj/drift/diskontinuiteter — CGM viser sandt BG
+    - Fysiologi-hjælp: popup-tips der forklarer hvad der sker ("Din insulin er ved at peake", "Motion sænker dit BG pga. tre mekanismer: ...")
+    - Evt. foreslåede handlinger ("Du bør overveje at spise noget inden motion")
+    - Fysiologi-panelet (TODO 8) altid synligt i easy mode
+    - God onboarding for spillere der aldrig har styret T1D
+
 ### Fremtidige features (tænk fremad i arkitekturen)
-6. Baner — realistiske hverdagsscenarier, fx:
+10. Baner — realistiske hverdagsscenarier, fx:
    - "Du løber 10 km til skolernes idrætsdag kl. 11–12"
    - "Du glemte din insulin hjemmefra"
    - "Du har feber" (øget insulinbehov)

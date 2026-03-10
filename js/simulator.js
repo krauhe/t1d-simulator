@@ -544,7 +544,10 @@ class Simulator {
             if (timeSinceInjection < timeToPlateau) effectFactor = timeSinceInjection / timeToPlateau;
             else if (timeSinceInjection < endOfPlateau) effectFactor = 1.0;
             else if (timeSinceInjection < ins.totalDuration) effectFactor = 1.0 - (timeSinceInjection - endOfPlateau) / tailOffDuration;
-            totalInsulinRate += (ins.dose * 1000 / ins.totalDuration) * Math.max(0, effectFactor);
+            // Bioavailability: kun en del af dosen når blodbanen (resten nedbrydes lokalt).
+            // Ældre injektioner (før denne feature) har ingen bioavailability → default 1.0.
+            const ba = ins.bioavailability || 1.0;
+            totalInsulinRate += (ins.dose * ba * 1000 / ins.totalDuration) * Math.max(0, effectFactor);
         });
         this.activeLongInsulin = this.activeLongInsulin.filter(ins => (this.totalSimMinutes - ins.injectionTime) < ins.totalDuration);
 
@@ -556,14 +559,37 @@ class Simulator {
         //
         // IOB beregnes fra Hovorka's tilstandsvariable (S1 + S2 + I*VI)
         // i stedet for vores egen tracking, da Hovorka nu ejer al insulin-PK.
+        //
+        // Bioavailability reducerer effektiv dosis (lokal nedbrydning i subkutis).
+        // tauFactor varierer absorptionshastigheden per injektion — sættes som
+        // en vægtet blanding af alle aktive injektioners tauFactor.
         const BOLUS_PULSE_DURATION = 5; // minutter — simulerer subkutan injektion
+        let tauWeightSum = 0;
+        let tauWeightedFactor = 0;
         this.activeFastInsulin.forEach(ins => {
             const timeSinceInjection = this.totalSimMinutes - ins.injectionTime;
             if (timeSinceInjection >= 0 && timeSinceInjection < BOLUS_PULSE_DURATION) {
-                // Injicér hele dosen som en kort puls: dose * 1000 mU over 5 min
-                totalInsulinRate += ins.dose * 1000 / BOLUS_PULSE_DURATION;
+                // Injicér effektiv dosis (efter lokal nedbrydning) som kort puls.
+                const ba = ins.bioavailability || 1.0;
+                totalInsulinRate += ins.dose * ba * 1000 / BOLUS_PULSE_DURATION;
+            }
+            // Vægtet tauFactor: nyeste/største injektioner dominerer.
+            // Bruges til at justere Hovorka's tau_I for denne tick.
+            const tf = ins.tauFactor || 1.0;
+            const remainingInsulin = Math.max(0, ins.dose * (1 - timeSinceInjection / (6 * 60)));
+            if (remainingInsulin > 0) {
+                tauWeightSum += remainingInsulin;
+                tauWeightedFactor += tf * remainingInsulin;
             }
         });
+        // Opdatér Hovorka's tau_I baseret på vægtet gennemsnit af aktive injektioners
+        // absorptionsvariabilitet. Standardværdi 55 min skaleres med tauFactor.
+        const baseTauI = 55; // Hovorka standard [min]
+        if (tauWeightSum > 0) {
+            this.hovorka.tau_I = baseTauI * (tauWeightedFactor / tauWeightSum);
+        } else {
+            this.hovorka.tau_I = baseTauI;
+        }
         // Fjern bolus-entries efter 6 timer (langt efter pulsen er slut, men
         // beholdes for log/UI-formål og IOB-tracking)
         this.activeFastInsulin = this.activeFastInsulin.filter(ins =>
@@ -1016,12 +1042,51 @@ class Simulator {
         this.handleNightIntervention();
         logEvent(`Hurtig insulin: ${dose}E`, 'insulin-fast', {dose});
 
-        // Randomized pharmacokinetics — each injection is slightly different
+        // -----------------------------------------------------------------
+        // Randomiseret farmakokinetik — normalfordelt variation per injektion.
+        //
+        // Heinemann 2002 (review af subkutan insulinabsorption) rapporterer
+        // intra-individuel CV ~20-30% for hurtigvirkende insulinanaloger.
+        // CV = standardafvigelse / gennemsnit.
+        //
+        // Vi bruger Box-Muller normalfordeling (samme metode som CGM-støj)
+        // og clamper til rimelige fysiologiske grænser.
+        // -----------------------------------------------------------------
+
+        // Hjælpefunktion: normalfordelt tilfældig variabel (mean, std)
+        const gaussRand = (mean, std) => {
+            const u1 = Math.random(), u2 = Math.random();
+            const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+            return mean + z * std;
+        };
+
+        // Bioavailability: andel af injiceret insulin der når blodbanen.
+        // Resten nedbrydes lokalt af proteaser i det subkutane væv.
+        // Gennemsnit ~78%, CV ~10% (Heinemann 2002, Kildegaard 2019).
+        // Clamped til [0.55, 0.95] for fysiologisk realisme.
+        const bioavailability = Math.max(0.55, Math.min(0.95,
+            gaussRand(0.78, 0.08)));                                        // mean 78%, std 8%
+
+        // Absorptionshastighed-variation: tau_I varierer fra gang til gang.
+        // CV ~25% matcher Heinemann 2002's rapporterede intra-individuelle
+        // variation. Årsager: injektionsdybde, lokalt blodflow, temperatur,
+        // depot-størrelse, lipodystrofi.
+        // Clamped til [0.50, 1.60] — ekstreme værdier er sjældne men mulige
+        // (fx intramuskulær injektion = meget hurtigere, lipodystrofi = meget
+        // langsommere).
+        const tauFactor = Math.max(0.50, Math.min(1.60,
+            gaussRand(1.0, 0.25)));                                         // mean 1.0, CV 25%
+
+        // Onset og varighed (metadata til UI, ikke brugt af Hovorka-ODE)
         const onset = 10 + Math.random() * 5;                              // 10-15 min
         const timeToPeak = 45 + (dose * 5) + (Math.random() * 20);         // Scales with dose
         const totalDuration = 120 + (dose * 12) + (Math.random() * 60);    // Scales with dose
 
-        this.activeFastInsulin.push({ dose, injectionTime: this.totalSimMinutes, onset, timeToPeak, totalDuration });
+        this.activeFastInsulin.push({
+            dose, injectionTime: this.totalSimMinutes,
+            onset, timeToPeak, totalDuration,
+            bioavailability, tauFactor
+        });
         this.lastInsulinTime = this.totalSimMinutes;
         this.resetDKAState(); // Insulin given → DKA crisis averted
         playSound('intervention', 'A4');
@@ -1047,8 +1112,25 @@ class Simulator {
                 !msg.id || !msg.id.startsWith('basal_reminder_day_'));
             playSound('intervention', 'G3');
          }
-         // Duration: 24-36 hours (randomized to simulate real-world variability)
-         this.activeLongInsulin.push({ dose, injectionTime, totalDuration: (24 + Math.random() * 12) * 60 });
+         // Basal insulin variabilitet — normalfordelt ligesom bolus.
+         // Basal har lidt højere bioavailability (~82%) fordi langsommere
+         // absorption giver mindre lokal nedbrydning. CV lavere (~15%)
+         // da basal-insuliner er designet til at være mere forudsigelige.
+         // Varighed: mean 28t, std 3t (clamped 22-38t) for Lantus/Levemir.
+         const gaussRand = (mean, std) => {
+             const u1 = Math.random(), u2 = Math.random();
+             const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+             return mean + z * std;
+         };
+         const bioavailability = Math.max(0.60, Math.min(0.95,
+             gaussRand(0.82, 0.08)));                                        // mean 82%, std 8%
+         const durationHours = Math.max(22, Math.min(38,
+             gaussRand(28, 3)));                                             // mean 28t, std 3t
+         this.activeLongInsulin.push({
+             dose, injectionTime,
+             totalDuration: durationHours * 60,
+             bioavailability
+         });
          this.lastInsulinTime = injectionTime;
          this.resetDKAState(); // Insulin given → DKA crisis averted
     }

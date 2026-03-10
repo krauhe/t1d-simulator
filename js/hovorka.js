@@ -269,8 +269,16 @@ class HovorkaModel {
         // Glukose-absorption fra tarmen [mmol/min]
         const U_G = D2 / this.tau_G;
 
+        // Puls-dreven insulinabsorption — øget subkutan perfusion ved motion.
+        // Ved høj puls strømmer mere blod gennem det subkutane væv, hvilket
+        // udvasker insulin hurtigere fra depotet til plasma.
+        // pulsFaktor = 1.0 ved hvile, ~1.5 ved puls 120, ~1.83 ved puls 160.
+        // Følsomheden 0.5 betyder at en fordobling af puls over hvile giver +50%.
+        // Vigtigt: dette påvirker AL insulin i depotet — både bolus og basal!
+        const pulsFaktor = 1 + Math.max(0, (this.heartRate - this.HR_base) / this.HR_base) * 0.5;
+
         // Insulin-absorption fra subkutant depot [mU/min]
-        const U_I = S2 / this.tau_I;
+        const U_I = S2 / this.tau_I * pulsFaktor;
 
         // Hjernens glukoseforbrug — afhænger af tilgængeligt blodsukker.
         // Ved normalt BG: konstant forbrug (F_01).
@@ -332,11 +340,13 @@ class HovorkaModel {
         // Tarm-kompartment 2: fra kompartment 1, absorption til blod
         const dD2 = D1 / this.tau_G - U_G;
 
-        // Subkutant insulin depot 1: injektion ind, passage til depot 2
-        const dS1 = this.insulinRate - S1 / this.tau_I;
+        // Subkutant insulin depot 1: injektion ind, passage til depot 2.
+        // pulsFaktor accelererer passage — øget perfusion udvasker insulin hurtigere.
+        const dS1 = this.insulinRate - S1 / this.tau_I * pulsFaktor;
 
-        // Subkutant insulin depot 2: fra depot 1, absorption til plasma
-        const dS2 = S1 / this.tau_I - U_I;
+        // Subkutant insulin depot 2: fra depot 1, absorption til plasma.
+        // Samme pulsFaktor på begge led — insulin strømmer hurtigere igennem.
+        const dS2 = S1 / this.tau_I * pulsFaktor - U_I;
 
         // --- Insulinvirkning ved lav BG (T1D) ---
         // BEMÆRK: Hypo-guard er FJERNET for T1D-simulering.
