@@ -28,17 +28,37 @@ const path = require('path');
 
 // Mock DOM-element: et objekt der accepterer alle typiske DOM-operationer
 function mockElement() {
-    return {
+    const el = {
         textContent: '',
+        innerHTML: '',
         value: '60',           // speedSelector.value bruges i constructor
         disabled: false,
         style: {
             display: 'none',
-            setProperty: () => {}
+            setProperty: () => {},
+            removeProperty: () => {}
+        },
+        classList: {
+            add: () => {},
+            remove: () => {},
+            toggle: () => {},
+            contains: () => false
         },
         addEventListener: () => {},
-        getBoundingClientRect: () => ({ width: 800, height: 400 })
+        removeEventListener: () => {},
+        getBoundingClientRect: () => ({ width: 800, height: 400 }),
+        querySelector: () => mockElement(),
+        querySelectorAll: () => [],
+        closest: () => null,
+        appendChild: () => {},
+        removeChild: () => {},
+        remove: () => {},
+        setAttribute: () => {},
+        getAttribute: () => null,
+        children: [],
+        parentElement: null
     };
+    return el;
 }
 
 // Alle globale DOM-referencer fra main.js — saettes til mock-elementer
@@ -776,15 +796,17 @@ test('Kulhydrateffekt aendres med ISF og ICR', () => {
     global.cgmDataPoints = [];
     global.trueBgPoints = [];
 
-    // ISF=2.0, ICR=8 → carbEffect = 2.0/8 = 0.25
+    // ISF=2.0, ICR=8 → carbEffect = ISF * circadianISF / ICR
+    // Ved midnat (kl. 00:00) er circadianISF = 1.20, saa:
+    // carbEffect = 2.0 * 1.20 / 8 = 0.30
     const sim = new Simulator({ isf: 2.0, icr: 8, weight: 70 });
-    assertInRange(sim.currentCarbEffect, 0.24, 0.26, 'CarbEffect ved ISF=2, ICR=8');
+    assertInRange(sim.currentCarbEffect, 0.29, 0.31, 'CarbEffect ved ISF=2, ICR=8 (midnat, circadianISF=1.2)');
 
-    // ISF=5.0, ICR=15 → carbEffect = 5.0/15 = 0.333
+    // ISF=5.0, ICR=15 → carbEffect = 5.0 * 1.20 / 15 = 0.40
     global.cgmDataPoints = [];
     global.trueBgPoints = [];
     const sim2 = new Simulator({ isf: 5.0, icr: 15, weight: 70 });
-    assertInRange(sim2.currentCarbEffect, 0.32, 0.34, 'CarbEffect ved ISF=5, ICR=15');
+    assertInRange(sim2.currentCarbEffect, 0.39, 0.41, 'CarbEffect ved ISF=5, ICR=15 (midnat, circadianISF=1.2)');
 });
 
 

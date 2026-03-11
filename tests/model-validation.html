@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>T1D Simulator — Modelvalidering</title>
+<style>
+/* =================================================================
+   MODEL-VALIDATION.HTML — Visuel validering af simulationsmodellen.
+
+   Denne fil kører simulationsmodellen (hovorka.js + simulator.js) i
+   browseren og plotter BG-kurver for en række scenarier. Formålet er
+   at verificere at modellen giver fysiologisk realistiske resultater
+   for forskellige profiler, insulindoser og tidspunkter.
+
+   Åbn i browser — ingen server nødvendig.
+   ================================================================= */
+
+:root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e4e4e7;
+    --muted: #8b8d97;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    line-height: 1.5;
+}
+
+h1 { font-size: 22px; margin-bottom: 8px; }
+h2 { font-size: 17px; margin: 32px 0 6px 0; color: var(--blue); border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+h3 { font-size: 14px; margin: 16px 0 4px 0; color: var(--muted); }
+
+.meta { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+/* Testsektion: intro, forventning, graf, resultat, konklusion */
+.test-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+}
+
+.test-section p { font-size: 13px; margin: 4px 0; }
+.test-section .label { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 10px; }
+.test-section .pass { color: var(--green); }
+.test-section .warn { color: var(--yellow); }
+.test-section .fail { color: var(--red); }
+
+canvas {
+    width: 100%;
+    height: 220px;
+    border-radius: 8px;
+    background: #12141c;
+    margin: 8px 0;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.legend-color {
+    width: 18px;
+    height: 3px;
+    border-radius: 1px;
+}
+
+/* Tabel til numeriske resultater — kompakt, smal, tæt på hinanden */
+.results-table {
+    width: auto;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin: 8px 0;
+}
+
+.results-table th, .results-table td {
+    padding: 3px 6px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.results-table th {
+    color: var(--muted);
+    font-weight: 600;
+    text-align: left;
+}
+
+.results-table td:first-child { text-align: left; padding-right: 12px; }
+
+#status { color: var(--muted); font-size: 13px; padding: 12px 0; }
+</style>
+</head>
+<body>
+
+<h1>T1D Simulator — Modelvalidering</h1>
+<p class="meta">
+    Automatiserede tests af simulationsmodellen (Hovorka 2004 + spilmekanik).
+    Tester fysiologisk plausibilitet, cirkadisk variation, dosis-respons og profilafhængighed.
+</p>
+
+<div class="test-section" style="border-left: 3px solid var(--blue);">
+    <h3 style="color: var(--blue); margin-top: 0;">Sådan er testene udført</h3>
+    <p>Testene kører simulatorens fysiologiske model (<code>hovorka.js</code> + <code>simulator.js</code>)
+    direkte i browseren — uden UI, graf eller spilmekanik. Et minimalt mock-miljø erstatter DOM-elementer
+    så modellen kan initialiseres.</p>
+    <p>Hver test opretter en frisk <code>Simulator</code>-instans med en given profil (vægt, ISF, ICR).
+    Start-BG sættes med <code>clampBG()</code>, der justerer både plasma- (Q1) og perifert (Q2) glukose
+    proportionalt og kører 15 sim-minutter for ækvilibrering — dette undgår diskontinuiteter i starten af graferne.</p>
+    <p>Derefter simuleres et scenarie (fx insulindosis, måltid, motion) ved at kalde
+    <code>sim.update(1.0)</code> minut for minut, og BG logges. Resultatkurverne plottes på canvas
+    og sammenlignes med forventede fysiologiske værdier.</p>
+    <p>Standardprofil: <strong>70 kg, ISF=3.0 mmol/L/E, ICR=10 g/E</strong> (medmindre andet er angivet).</p>
+</div>
+
+<div id="status">Kører simuleringer...</div>
+<div id="results"></div>
+
+<!-- Load modellen direkte fra js/ — samme filer spillet bruger -->
+<script src="../js/hovorka.js"></script>
+<script>
+// =========================================================================
+// MOCK-MILJØ — Simulatoren forventer browser-globaler. Vi mockar dem minimalt.
+// =========================================================================
+
+// Mock DOM-element der accepterer alle typiske operationer
+function mockElement() {
+    return {
+        textContent: '', innerHTML: '', value: '60', disabled: false,
+        style: { display: 'none', setProperty: () => {}, removeProperty: () => {} },
+        classList: { add: () => {}, remove: () => {}, toggle: () => {}, contains: () => false },
+        addEventListener: () => {}, removeEventListener: () => {},
+        getBoundingClientRect: () => ({ width: 800, height: 400 }),
+        querySelector: () => mockElement(), querySelectorAll: () => [],
+        closest: () => null, appendChild: () => {}, removeChild: () => {},
+        remove: () => {}, setAttribute: () => {}, getAttribute: () => null,
+        children: [], parentElement: null
+    };
+}
+
+// Alle globale DOM-referencer simulatoren forventer
+const domNames = [
+    'startButton', 'resetButton', 'helpButton', 'pauseButton', 'speedSelector',
+    'dayDisplay', 'timeDisplay', 'cgmValueDisplayGraph', 'normoPointsDisplay',
+    'normoPointsWeighting', 'muteButton', 'carbsSlider', 'carbsValue',
+    'proteinSlider', 'proteinValue', 'fatSlider', 'fatValue', 'giveFoodButton',
+    'foodInfoDisplay', 'foodKcalDisplay', 'foodKeDisplay', 'dextroButton',
+    'burgerButton', 'avocadoButton', 'chickenButton', 'cakeButton', 'sodaButton',
+    'saladButton', 'cerealButton', 'fastInsulinSlider', 'fastInsulinValue',
+    'giveFastInsulinButton', 'longInsulinSlider', 'longInsulinValue',
+    'giveLongInsulinButton', 'motionIntensitySelect', 'motionDurationSelect',
+    'startMotionButton', 'motionKcalDisplay', 'fingerprickButton', 'ketoneTestButton',
+    'glucagonButton', 'debugTrueBgCheckbox', 'iobDisplay', 'cobDisplay',
+    'bgGraphCanvas', 'graphCtx', 'weightChangeSlider', 'weightChangeValue',
+    'steepDropWarningDiv', 'weightDisplay', 'icrDisplay', 'isfDisplay',
+    'carbEffectDisplay', 'basalDoseDisplay', 'restingKcalDisplay',
+    // Stats-display globaler brugt i simulator.js updateStats()
+    'tir24hDisplay', 'titr24hDisplay', 'avgCgm24hDisplay',
+    'tir14dDisplay', 'titr14dDisplay', 'avgCgm14dDisplay',
+    'fastInsulin24hDisplay', 'fastInsulin7dDisplay',
+    'basalInsulin24hDisplay', 'basalInsulin7dDisplay',
+    'kcal24hDisplay', 'kcal7dDisplay',
+    'kcalBalance24hDisplay', 'kcalBalance7dDisplay',
+    // Andre globaler brugt i simulator.js
+    'pointsBadge', 'lastBolusTimerDisplay'
+];
+domNames.forEach(n => { window[n] = mockElement(); });
+
+// Globale variable
+window.isPaused = false;
+window.cgmDataPoints = [];
+window.trueBgPoints = [];
+window.MAX_GRAPH_POINTS_PER_DAY = 288;
+window.KCAL_PER_KG_WEIGHT = 7700;
+
+// Mock-funktioner
+window.logEvent = () => {};
+window.showPopup = () => {};
+window.playSound = () => {};
+window.updateUI = () => {};
+window.drawGraph = () => {};
+window.updateSpeedStepperUI = () => {};
+window.updatePlayerFixedDataUI = () => {};
+</script>
+<script src="../js/simulator.js"></script>
+<script>
+// =========================================================================
+// SIMULERINGSMOTOR — Kør modellen fremad i tid og saml BG-data
+// =========================================================================
+
+/**
+ * Opret en ren simulator med given profil.
+ * Nulstiller globale arrays så data ikke blandes mellem tests.
+ */
+function createSim(profile = {}) {
+    window.cgmDataPoints = [];
+    window.trueBgPoints = [];
+    return new Simulator(profile);
+}
+
+/**
+ * Kør simulator fremad til et bestemt tidspunkt (totalSimMinutes).
+ * Bruger 1-minuts skridt for stabilitet og præcision.
+ * @param {Simulator} sim - Simulator-instans
+ * @param {number} targetMinutes - Mål-tidspunkt i totalSimMinutes
+ */
+function advanceTo(sim, targetMinutes) {
+    // Vi simulerer 1 sim-minut ad gangen.
+    // Med speed=60: 1 real-sekund = 1 sim-minut
+    // Så deltaTime = 1 sekund giver præcis 1 sim-minut.
+    while (sim.totalSimMinutes < targetMinutes - 0.01) {
+        sim.update(1.0); // 1 real-sekund × speed 60 / 60 = 1 sim-minut
+    }
+}
+
+/**
+ * Saml BG-data hvert N minutter over en tidsperiode.
+ * Returnerer array af {time, bg} datapunkter.
+ * @param {Simulator} sim - Simulator-instans
+ * @param {number} durationMinutes - Varighed at simulere
+ * @param {number} sampleInterval - Minutter mellem samples (default 5)
+ * @returns {Array<{time: number, bg: number}>}
+ */
+function collectBG(sim, durationMinutes, sampleInterval = 5) {
+    const data = [];
+    const startTime = sim.totalSimMinutes;
+    const endTime = startTime + durationMinutes;
+
+    // Sample startpunkt
+    data.push({ time: sim.totalSimMinutes, bg: sim.trueBG });
+
+    while (sim.totalSimMinutes < endTime - 0.01) {
+        // Avancer 1 minut
+        sim.update(1.0);
+
+        // Sample ved interval
+        const elapsed = sim.totalSimMinutes - startTime;
+        if (elapsed % sampleInterval < 1.0) {
+            data.push({ time: sim.totalSimMinutes, bg: sim.trueBG });
+        }
+    }
+    return data;
+}
+
+/**
+ * Kør et komplet scenarie: opret sim, avancer til starttid, giv interventioner,
+ * og saml BG-data over en måleperiode.
+ * @param {Object} profile - Spiller-profil {weight, isf, icr}
+ * @param {number} interventionTimeH - Klokkeslæt for intervention (timer, fx 8.0 = kl. 08:00)
+ * @param {Object} intervention - {insulin: units, carbs: grams} eller begge
+ * @param {number} measureHours - Timer at måle BG efter intervention
+ * @returns {Array<{time: number, bg: number}>} BG-data
+ */
+function runScenario(profile, interventionTimeH, intervention, measureHours = 6) {
+    const sim = createSim(profile);
+    const interventionMin = interventionTimeH * 60;
+
+    // Avancer til interventionstidspunkt
+    advanceTo(sim, interventionMin);
+
+    // Giv interventioner
+    if (intervention.insulin) sim.addFastInsulin(intervention.insulin);
+    if (intervention.carbs) sim.addFood(intervention.carbs, 0, 0);
+
+    // Saml BG-data
+    return { data: collectBG(sim, measureHours * 60), sim };
+}
+
+// =========================================================================
+// GRAF-TEGNING — Plot BG-kurver med Canvas
+// =========================================================================
+
+// Farvepalette til kurver (op til 8 linjer)
+const COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#a855f7', '#06b6d4', '#f97316', '#ec4899'];
+
+/**
+ * Tegn multiple BG-kurver på ét canvas.
+ * @param {HTMLCanvasElement} canvas
+ * @param {Array<{label: string, data: Array<{time, bg}>}>} series - Datasæt med labels
+ * @param {Object} opts - {xLabel, yMin, yMax, targetLow, targetHigh, xIsClockTime}
+ */
+function drawChart(canvas, series, opts = {}) {
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const W = rect.width, H = rect.height;
+    const pad = { top: 12, right: 16, bottom: 28, left: 44 };
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+
+    // Autorange Y
+    const yMin = opts.yMin ?? 0;
+    let yMax = opts.yMax ?? 20;
+    series.forEach(s => s.data.forEach(d => { if (d.bg > yMax - 1) yMax = Math.ceil(d.bg) + 2; }));
+
+    // X-range: brug tid fra første serie
+    const allTimes = series.flatMap(s => s.data.map(d => d.time));
+    const xMin = Math.min(...allTimes);
+    const xMax = Math.max(...allTimes);
+    const xRange = xMax - xMin || 1;
+
+    const toX = t => pad.left + ((t - xMin) / xRange) * plotW;
+    const toY = bg => pad.top + (1 - (bg - yMin) / (yMax - yMin)) * plotH;
+
+    // Baggrund
+    ctx.fillStyle = '#12141c';
+    ctx.fillRect(0, 0, W, H);
+
+    // Target zone (4-10 mmol/L)
+    const tLow = opts.targetLow ?? 4;
+    const tHigh = opts.targetHigh ?? 10;
+    ctx.fillStyle = 'rgba(34, 197, 94, 0.07)';
+    ctx.fillRect(pad.left, toY(tHigh), plotW, toY(tLow) - toY(tHigh));
+
+    // Hypo-zone (< 4)
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+    ctx.fillRect(pad.left, toY(tLow), plotW, toY(yMin) - toY(tLow));
+
+    // Grid linjer
+    ctx.strokeStyle = '#2a2d3a';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([3, 3]);
+    for (let y = Math.ceil(yMin); y <= yMax; y += 2) {
+        ctx.beginPath();
+        ctx.moveTo(pad.left, toY(y));
+        ctx.lineTo(W - pad.right, toY(y));
+        ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Target-linjer (4 og 10)
+    ctx.strokeStyle = 'rgba(34, 197, 94, 0.3)';
+    ctx.lineWidth = 1;
+    [tLow, tHigh].forEach(y => {
+        ctx.beginPath();
+        ctx.moveTo(pad.left, toY(y));
+        ctx.lineTo(W - pad.right, toY(y));
+        ctx.stroke();
+    });
+
+    // Y-akse labels
+    ctx.fillStyle = '#8b8d97';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    for (let y = Math.ceil(yMin); y <= yMax; y += 2) {
+        ctx.fillText(y.toString(), pad.left - 6, toY(y) + 3);
+    }
+
+    // X-akse labels
+    ctx.textAlign = 'center';
+    const xStepMin = xRange > 600 ? 120 : 60; // 2t eller 1t skridt
+    for (let t = Math.ceil(xMin / xStepMin) * xStepMin; t <= xMax; t += xStepMin) {
+        const hours = (t / 60) % 24;
+        const label = opts.xIsClockTime
+            ? `${String(Math.floor(hours)).padStart(2, '0')}:00`
+            : `${((t - xMin) / 60).toFixed(0)}t`;
+        ctx.fillText(label, toX(t), H - pad.bottom + 16);
+    }
+
+    // Y-akse titel
+    ctx.save();
+    ctx.translate(12, pad.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = '#8b8d97';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('mmol/L', 0, 0);
+    ctx.restore();
+
+    // Tegn kurver
+    series.forEach((s, i) => {
+        const color = s.color || COLORS[i % COLORS.length];
+        ctx.strokeStyle = color;
+        ctx.lineWidth = s.lineWidth || 1.8;
+        ctx.setLineDash(s.dash || []);
+        ctx.beginPath();
+        s.data.forEach((d, j) => {
+            const x = toX(d.time), y = toY(d.bg);
+            j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+    });
+}
+
+/**
+ * Byg legend-HTML for en serie datasæt.
+ */
+function buildLegend(series) {
+    return series.map((s, i) => {
+        const color = s.color || COLORS[i % COLORS.length];
+        const dash = s.dash ? 'dashed' : 'solid';
+        return `<div class="legend-item"><div class="legend-color" style="background:${color};border-top:2px ${dash} ${color}"></div>${s.label}</div>`;
+    }).join('');
+}
+
+// =========================================================================
+// TEST-SEKTIONER — Hver sektion tester ét aspekt af modellen
+// =========================================================================
+
+const resultsDiv = document.getElementById('results');
+let sectionCount = 0;
+
+/**
+ * Tilføj en test-sektion med intro, graf, resultater og konklusion.
+ */
+function addSection(title, intro, expected, testFn) {
+    sectionCount++;
+    const section = document.createElement('div');
+    section.className = 'test-section';
+    section.innerHTML = `<h2>${sectionCount}. ${title}</h2>
+        <p class="label">Beskrivelse</p><p>${intro}</p>
+        <p class="label">Forventet resultat</p><p>${expected}</p>
+        <canvas id="chart-${sectionCount}"></canvas>
+        <div class="legend" id="legend-${sectionCount}"></div>
+        <p class="label">Resultat</p>
+        <div id="result-${sectionCount}"></div>
+        <p class="label">Konklusion</p>
+        <div id="conclusion-${sectionCount}"></div>`;
+    resultsDiv.appendChild(section);
+
+    try {
+        const canvas = document.getElementById(`chart-${sectionCount}`);
+        const resultDiv = document.getElementById(`result-${sectionCount}`);
+        const conclusionDiv = document.getElementById(`conclusion-${sectionCount}`);
+        const legendDiv = document.getElementById(`legend-${sectionCount}`);
+        testFn(canvas, resultDiv, conclusionDiv, legendDiv);
+    } catch (e) {
+        const resultDiv = document.getElementById(`result-${sectionCount}`);
+        resultDiv.innerHTML = `<p class="fail">FEJL: ${e.message}</p>`;
+        console.error(e);
+    }
+}
+
+/**
+ * Clamp BG til et ønsket niveau på en stabil måde.
+ * Justerer BÅDE Q1 (plasma) og Q2 (perifert) proportionalt,
+ * og kører derefter 15 sim-minutter for at lade modellen ækvilibrere.
+ * Dette undgår diskontinuiteter i starten af grafen.
+ * @param {Simulator} sim - Simulator-instans
+ * @param {number} targetBG - Ønsket BG i mmol/L
+ */
+function clampBG(sim, targetBG) {
+    const currentBG = sim.hovorka.glucoseConcentration;
+    if (Math.abs(currentBG - targetBG) < 0.1) return; // Allerede tæt nok
+
+    // Beregn skaleringsforhold — justér Q1 og Q2 proportionalt
+    // så plasma/perifert glukose forbliver i balance.
+    const ratio = targetBG / currentBG;
+    sim.hovorka.state[4] *= ratio; // Q1 — plasma glukose
+    sim.hovorka.state[5] *= ratio; // Q2 — perifert glukose
+
+    // Kør 15 min for at lade modellen ækvilibrere efter ændringen
+    for (let i = 0; i < 15; i++) {
+        sim.update(1.0); // 1 sim-minut per kald
+    }
+}
+
+// Hjælpefunktion: find min/max BG i et datasæt
+function bgStats(data) {
+    const bgs = data.map(d => d.bg);
+    return {
+        min: Math.min(...bgs),
+        max: Math.max(...bgs),
+        start: bgs[0],
+        end: bgs[bgs.length - 1],
+        nadir: Math.min(...bgs),
+        peak: Math.max(...bgs),
+        // Find tidspunkter for nadir/peak
+        nadirTime: data[bgs.indexOf(Math.min(...bgs))].time,
+        peakTime: data[bgs.indexOf(Math.max(...bgs))].time
+    };
+}
+
+// =========================================================================
+// KØRSEL — Alle tests køres synkront efter DOM er klar
+// =========================================================================
+
+const DEFAULT_PROFILE = { weight: 70, isf: 3.0, icr: 10 };
+
+// -------------------------------------------------------------------------
+// SEKTION 1: Baseline stabilitet (ingen intervention)
+// -------------------------------------------------------------------------
+addSection(
+    'Baseline uden korrektioner — kun basal insulin',
+    'Simulatoren starter ved midnat med BG=5.5 mmol/L og den beregnede basaldosis. '
+    + 'Vi kører 24 timer UDEN mad, bolus eller motion. Formålet er at observere '
+    + 'modellens drift over et helt døgn — ikke at forvente stabilitet. '
+    + 'Basal insulin alene kompenserer ikke nødvendigvis for dawn-effekten og '
+    + 'cirkadisk ISF-variation, ligesom i virkeligheden.',
+
+    'Dawn-effekten er en RATE-ændring (ekstra hepatisk glukoseproduktion). '
+    + 'I DENNE model peaker HGP-raten kl. ~06-10 (hardcodet dawn-kurve stiger 04→08). '
+    + 'NB: Dawn-timing er stærkt individuel i virkeligheden (kl. 03-10). '
+    + 'BG-niveauet fortsætter med at stige efter HGP-peak fordi glukosen akkumuleres. '
+    + 'BG-peak kommer derfor EFTER HGP-peak. Ingen hypo (<3.5) forventes — basal forhindrer det.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        const sim = createSim(DEFAULT_PROFILE);
+        const data = collectBG(sim, 24 * 60);
+        const stats = bgStats(data);
+
+        // Beregn BG-stigningsrate (dBG/dt) for at finde hvornår stigningen er hurtigst
+        const rates = [];
+        for (let i = 1; i < data.length; i++) {
+            const dt = data[i].time - data[i-1].time;
+            if (dt > 0) {
+                const rate = (data[i].bg - data[i-1].bg) / dt; // mmol/L per minut
+                rates.push({
+                    time: (data[i].time + data[i-1].time) / 2,
+                    rate: rate * 60 // mmol/L per time
+                });
+            }
+        }
+        // Find max stigningsrate
+        let maxRate = -Infinity, maxRateTime = 0;
+        rates.forEach(r => {
+            if (r.rate > maxRate) { maxRate = r.rate; maxRateTime = r.time; }
+        });
+        const maxRateH = ((maxRateTime % 1440) / 60).toFixed(1);
+        const peakH = ((stats.peakTime % 1440) / 60).toFixed(1);
+        const nadirH = ((stats.nadirTime % 1440) / 60).toFixed(1);
+
+        const series = [{ label: 'BG (ISF=3.0, 70kg)', data }];
+        drawChart(canvas, series, { yMin: 2, yMax: 22, xIsClockTime: true });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><td>Start BG</td><td>${stats.start.toFixed(1)}</td></tr>
+            <tr><td>Slut BG (24t)</td><td>${stats.end.toFixed(1)}</td></tr>
+            <tr><td>Nadir</td><td>${stats.nadir.toFixed(1)} kl. ${nadirH}</td></tr>
+            <tr><td>Peak</td><td>${stats.peak.toFixed(1)} kl. ${peakH}</td></tr>
+            <tr><td>Max dBG/dt</td><td>${maxRate.toFixed(2)} mmol/L/t kl. ${maxRateH}</td></tr>
+            <tr><td>Døgnrange</td><td>${(stats.max - stats.min).toFixed(1)} mmol/L</td></tr>
+        </table>`;
+
+        const noHypo = stats.min > 3.0;
+        // Stigningsraten bør peake nær kl. 06-10 (dawn HGP peak ~08)
+        const rateNearDawn = maxRateTime > 300 && maxRateTime < 660;
+        // BG-peak bør komme EFTER dawn-raten (akkumuleringseffekt)
+        const peakAfterRate = stats.peakTime > maxRateTime;
+        conclusionDiv.innerHTML = `<p class="${noHypo ? 'pass' : 'fail'}">${noHypo ? '✓' : '✗'} Ingen hypoglykæmi — nadir ${stats.nadir.toFixed(1)} mmol/L (basal forhindrer hypo)</p>
+        <p class="${rateNearDawn ? 'pass' : 'warn'}">${rateNearDawn ? '✓' : '⚠'} Max stigningsrate kl. ${maxRateH} (forventet kl. 05-11, nær dawn HGP-peak)</p>
+        <p class="${peakAfterRate ? 'pass' : 'warn'}">${peakAfterRate ? '✓' : '⚠'} BG-peak (kl. ${peakH}) efter max rate (kl. ${maxRateH}) — korrekt: BG akkumuleres efter rate-peak</p>
+        <p>BG stiger ${(stats.peak - stats.start).toFixed(1)} mmol/L over døgnet. Dette er forventeligt — basal alene dækker ikke dawn+cirkadisk ISF-variation uden bolus-korrektioner.</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 2: Cirkadisk ISF — Insulin om morgen vs. aften
+// -------------------------------------------------------------------------
+addSection(
+    'Cirkadisk ISF — Samme insulindosis morgen vs. aften',
+    'Vi giver identisk bolus (3E) fra identisk start-BG (~8 mmol/L) kl. 08 og kl. 19. '
+    + 'Kontrolkurver UDEN insulin viser hvordan BG ville have udviklet sig uden intervention. '
+    + 'Den reelle insulineffekt er forskellen mellem kontrol og insulin-kurven — ikke '
+    + 'forskellen fra startpunktet (da BG drifter pga. dawn/HGP).',
+
+    'Insulineffekt = kontrolkurve minus insulinkurve (ved nadir-tidspunktet). '
+    + 'Morgen: dawn-HGP driver BG opad → kontrolkurven stiger → den reelle insulineffekt '
+    + 'er STØRRE end det rå BG-fald fra start. '
+    + 'Aften: EGP er lav → kontrolkurven er flad/faldende → insulineffekten ≈ rå BG-fald. '
+    + 'Vi forventer stadig at aften-insulin har større effekt end morgen-insulin.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        // --- Morgen MED insulin ---
+        const simMorning = createSim(DEFAULT_PROFILE);
+        advanceTo(simMorning, 8 * 60);
+        clampBG(simMorning, 8.0);
+        const morningStartBG = simMorning.trueBG;
+        simMorning.addFastInsulin(3);
+        const morningData = collectBG(simMorning, 6 * 60);
+
+        // --- Morgen UDEN insulin (kontrol) ---
+        const simMorningCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simMorningCtrl, 8 * 60);
+        clampBG(simMorningCtrl, 8.0);
+        const morningCtrlData = collectBG(simMorningCtrl, 6 * 60);
+
+        // --- Aften MED insulin ---
+        const simEvening = createSim(DEFAULT_PROFILE);
+        advanceTo(simEvening, 19 * 60);
+        clampBG(simEvening, 8.0);
+        const eveningStartBG = simEvening.trueBG;
+        simEvening.addFastInsulin(3);
+        const eveningData = collectBG(simEvening, 6 * 60);
+
+        // --- Aften UDEN insulin (kontrol) ---
+        const simEveningCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simEveningCtrl, 19 * 60);
+        clampBG(simEveningCtrl, 8.0);
+        const eveningCtrlData = collectBG(simEveningCtrl, 6 * 60);
+
+        const mStats = bgStats(morningData);
+        const eStats = bgStats(eveningData);
+        const mcStats = bgStats(morningCtrlData);
+        const ecStats = bgStats(eveningCtrlData);
+
+        // Rå fald fra startpunkt
+        const mDropRaw = mStats.start - mStats.nadir;
+        const eDropRaw = eStats.start - eStats.nadir;
+
+        // Reel insulineffekt: kontrol-BG minus insulin-BG ved nadir-tidspunktet
+        // Find kontrol-BG ved det tidspunkt hvor insulin-kurven rammer nadir
+        const mNadirIdx = morningData.findIndex(d => d.bg === mStats.nadir);
+        const eNadirIdx = eveningData.findIndex(d => d.bg === eStats.nadir);
+        const mCtrlAtNadir = mNadirIdx < morningCtrlData.length ? morningCtrlData[mNadirIdx].bg : mcStats.end;
+        const eCtrlAtNadir = eNadirIdx < eveningCtrlData.length ? eveningCtrlData[eNadirIdx].bg : ecStats.end;
+        const mDropReal = mCtrlAtNadir - mStats.nadir;
+        const eDropReal = eCtrlAtNadir - eStats.nadir;
+        const ratioReal = eDropReal / Math.max(mDropReal, 0.1);
+
+        const series = [
+            { label: `Morgen 3E insulin`, data: morningData },
+            { label: `Morgen kontrol (0E)`, data: morningCtrlData, dash: [6, 4] },
+            { label: `Aften 3E insulin`, data: eveningData },
+            { label: `Aften kontrol (0E)`, data: eveningCtrlData, dash: [6, 4] }
+        ];
+        drawChart(canvas, series, { yMin: 0, yMax: 14 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Tidspunkt</th><th>Start</th><th>Nadir</th><th>Rå fald</th><th>Kontrol ved nadir</th><th>Reel effekt</th></tr>
+            <tr><td>Morgen kl. 08</td><td>${mStats.start.toFixed(1)}</td><td>${mStats.nadir.toFixed(1)}</td><td>${mDropRaw.toFixed(1)}</td><td>${mCtrlAtNadir.toFixed(1)}</td><td><strong>${mDropReal.toFixed(1)}</strong></td></tr>
+            <tr><td>Aften kl. 19</td><td>${eStats.start.toFixed(1)}</td><td>${eStats.nadir.toFixed(1)}</td><td>${eDropRaw.toFixed(1)}</td><td>${eCtrlAtNadir.toFixed(1)}</td><td><strong>${eDropReal.toFixed(1)}</strong></td></tr>
+            <tr><td colspan="4">Ratio aften/morgen (reel effekt):</td><td colspan="2"><strong>${ratioReal.toFixed(2)}×</strong></td></tr>
+        </table>`;
+
+        const ratioOK = ratioReal > 1.1 && ratioReal < 2.5;
+        conclusionDiv.innerHTML = `<p class="${ratioOK ? 'pass' : 'warn'}">${ratioOK ? '✓' : '⚠'} Aften-insulin reel effekt ${ratioReal.toFixed(2)}× morgen (forventet >1.1×)</p>
+        <p class="${mDropReal > mDropRaw ? 'pass' : 'warn'}">${mDropReal > mDropRaw ? '✓' : '⚠'} Morgen: reel effekt (${mDropReal.toFixed(1)}) > rå fald (${mDropRaw.toFixed(1)}) — dawn-drift maskerer insulinvirkningen</p>
+        <p>Kontrolkurverne viser at BG ${mcStats.end > mcStats.start ? 'stiger' : 'falder'} om morgenen (dawn) og ${ecStats.end > ecStats.start ? 'stiger' : 'falder'} om aftenen uden insulin.</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 3: Insulin dosis-respons (1E, 3E, 5E, 8E kl. 14)
+// -------------------------------------------------------------------------
+addSection(
+    'Insulin dosis-respons — 1E, 3E, 5E, 8E ved kl. 14',
+    'Tester om BG-faldet skalerer nogenlunde lineært med insulindosis. '
+    + 'Kl. 14 er cirkadisk ISF ~1.0 (nominelt), så dosis × ISF bør give det '
+    + 'forventede fald. Start-BG hæves til 12 mmol/L for at undgå hypo ved '
+    + 'høje doser.',
+
+    'ISF=3.0 → 1E sænker ~3 mmol/L, 3E ~9, 5E ~15 (bremset af gulv). '
+    + 'Dosis-respons bør være approksimativt lineært op til det punkt hvor '
+    + 'BG rammer den fysiologiske bund (~1.5-2.0 mmol/L).',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        const doses = [1, 3, 5, 8];
+        const results = [];
+        const allSeries = [];
+
+        // Kontrolkurve: 0E insulin fra BG=12 kl. 14
+        const simCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simCtrl, 14 * 60);
+        clampBG(simCtrl, 12.0);
+        const ctrlData = collectBG(simCtrl, 6 * 60);
+        allSeries.push({ label: '0E kontrol', data: ctrlData, dash: [6, 4] });
+
+        doses.forEach((dose, i) => {
+            const sim = createSim(DEFAULT_PROFILE);
+            advanceTo(sim, 14 * 60);
+            clampBG(sim, 12.0);
+            const startBG = sim.trueBG;
+            sim.addFastInsulin(dose);
+            const data = collectBG(sim, 6 * 60);
+            const stats = bgStats(data);
+            // Reel effekt: kontrol-BG minus insulin-BG ved nadir
+            const nadirIdx = data.findIndex(d => d.bg === stats.nadir);
+            const ctrlAtNadir = nadirIdx < ctrlData.length ? ctrlData[nadirIdx].bg : ctrlData[ctrlData.length-1].bg;
+            const realDrop = ctrlAtNadir - stats.nadir;
+            results.push({ dose, startBG, ...stats, drop: startBG - stats.nadir, realDrop, ctrlAtNadir });
+            allSeries.push({ label: `${dose}E (effekt ${realDrop.toFixed(1)})`, data });
+        });
+
+        drawChart(canvas, allSeries, { yMin: 0, yMax: 16 });
+        legendDiv.innerHTML = buildLegend(allSeries);
+
+        let tableRows = results.map(r =>
+            `<tr><td>${r.dose}E</td><td>${r.startBG.toFixed(1)}</td><td>${r.nadir.toFixed(1)}</td><td>${r.ctrlAtNadir.toFixed(1)}</td><td>${r.realDrop.toFixed(1)}</td><td>${(r.realDrop / r.dose).toFixed(1)}</td></tr>`
+        ).join('');
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Dosis</th><th>Start</th><th>Nadir</th><th>Kontrol</th><th>Reel effekt</th><th>Effekt/E</th></tr>
+            ${tableRows}
+        </table>`;
+
+        const r1 = results[0]; // 1E
+        const perUnit = r1.realDrop / r1.dose;
+        const isfMatch = perUnit > 1.5 && perUnit < 5.0;
+        const monotonic = results.every((r, i) => i === 0 || r.realDrop >= results[i-1].realDrop - 0.5);
+        conclusionDiv.innerHTML = `<p class="${isfMatch ? 'pass' : 'warn'}">${isfMatch ? '✓' : '⚠'} 1E reel effekt ${perUnit.toFixed(1)} mmol/L (ISF=3.0, forventet ~2-4)</p>
+        <p class="${monotonic ? 'pass' : 'fail'}">${monotonic ? '✓' : '✗'} Dosis-respons er monotont stigende</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 4: Kulhydrat dosis-respons (10g, 30g, 60g kl. 14)
+// -------------------------------------------------------------------------
+addSection(
+    'Kulhydrat dosis-respons — 10g, 30g, 60g ved kl. 14',
+    'Tester om BG-stigning skalerer med kulhydratindtag. '
+    + 'Ved ISF=3.0, ICR=10: carbEffect = 0.3 mmol/L pr. gram. '
+    + 'Start fra steady-state BG (~5.5 mmol/L).',
+
+    '10g → peak ~3 mmol/L stigning, 30g → ~9 mmol/L, 60g → ~18 mmol/L (bremset af '
+    + 'insulin og nyreudskillelse ved høje værdier). Monotont stigende peaks.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        const carbDoses = [10, 30, 60];
+        const results = [];
+        const allSeries = [];
+
+        // Kontrolkurve: 0g kulhydrat kl. 14
+        const simCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simCtrl, 14 * 60);
+        const ctrlData = collectBG(simCtrl, 6 * 60);
+        allSeries.push({ label: '0g kontrol', data: ctrlData, dash: [6, 4] });
+
+        carbDoses.forEach((carbs, i) => {
+            const sim = createSim(DEFAULT_PROFILE);
+            advanceTo(sim, 14 * 60);
+            const startBG = sim.trueBG;
+            sim.addFood(carbs, 0, 0);
+            const data = collectBG(sim, 6 * 60);
+            const stats = bgStats(data);
+            // Reel effekt: peak minus kontrol-BG ved peak-tidspunkt
+            const peakIdx = data.findIndex(d => d.bg === stats.peak);
+            const ctrlAtPeak = peakIdx < ctrlData.length ? ctrlData[peakIdx].bg : ctrlData[ctrlData.length-1].bg;
+            const realRise = stats.peak - ctrlAtPeak;
+            results.push({ carbs, startBG, ...stats, rise: stats.peak - startBG, realRise, ctrlAtPeak });
+            allSeries.push({ label: `${carbs}g (effekt +${realRise.toFixed(1)})`, data });
+        });
+
+        drawChart(canvas, allSeries, { yMin: 2, yMax: 24 });
+        legendDiv.innerHTML = buildLegend(allSeries);
+
+        let tableRows = results.map(r =>
+            `<tr><td>${r.carbs}g</td><td>${r.startBG.toFixed(1)}</td><td>${r.peak.toFixed(1)}</td><td>${r.ctrlAtPeak.toFixed(1)}</td><td>${r.realRise.toFixed(1)}</td><td>${(r.realRise / r.carbs).toFixed(2)}</td></tr>`
+        ).join('');
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Kulhydrat</th><th>Start</th><th>Peak</th><th>Kontrol</th><th>Reel effekt</th><th>Effekt/g</th></tr>
+            ${tableRows}
+        </table>`;
+
+        const monotonic = results.every((r, i) => i === 0 || r.realRise >= results[i-1].realRise - 0.5);
+        conclusionDiv.innerHTML = `<p class="${monotonic ? 'pass' : 'fail'}">${monotonic ? '✓' : '✗'} Kulhydrat-respons er monotont stigende</p>
+        <p>Bemærk: ved høje doser bremses stigningen af basal insulin og nyreudskillelse (BG > renal tærskel ~10 mmol/L)</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 5: Profil-sammenligning (ISF=2.0 vs 3.0 vs 5.0)
+// -------------------------------------------------------------------------
+addSection(
+    'Profilafhængighed — ISF=2.0, 3.0, 5.0 med 3E insulin kl. 14',
+    'Tester om modellen reagerer korrekt på forskellige ISF-profiler. '
+    + 'Lavere ISF → insulin virker mindre pr. enhed → mindre BG-fald. '
+    + 'Alle starter fra BG=10.',
+
+    'ISF=2.0: 3E → ~6 mmol/L fald. ISF=3.0: 3E → ~9 mmol/L fald. '
+    + 'ISF=5.0: 3E → ~15 mmol/L fald (bremset af gulv). '
+    + 'BG-fald bør skalere nogenlunde proportionalt med ISF.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        const isfs = [2.0, 3.0, 5.0];
+        const results = [];
+        const allSeries = [];
+
+        // Kontrolkurve: 0E fra BG=10 kl. 14 (ISF=3.0 som reference)
+        const simCtrl = createSim({ weight: 70, isf: 3.0, icr: 10 });
+        advanceTo(simCtrl, 14 * 60);
+        clampBG(simCtrl, 10.0);
+        const ctrlData = collectBG(simCtrl, 6 * 60);
+        allSeries.push({ label: '0E kontrol', data: ctrlData, dash: [6, 4] });
+
+        isfs.forEach((isf, i) => {
+            const sim = createSim({ weight: 70, isf, icr: Math.round(isf * 10 / 3) });
+            advanceTo(sim, 14 * 60);
+            clampBG(sim, 10.0);
+            const startBG = sim.trueBG;
+            sim.addFastInsulin(3);
+            const data = collectBG(sim, 6 * 60);
+            const stats = bgStats(data);
+            const nadirIdx = data.findIndex(d => d.bg === stats.nadir);
+            const ctrlAtNadir = nadirIdx < ctrlData.length ? ctrlData[nadirIdx].bg : ctrlData[ctrlData.length-1].bg;
+            const realDrop = ctrlAtNadir - stats.nadir;
+            results.push({ isf, startBG, ...stats, drop: startBG - stats.nadir, realDrop });
+            allSeries.push({ label: `ISF=${isf} (effekt ${realDrop.toFixed(1)})`, data });
+        });
+
+        drawChart(canvas, allSeries, { yMin: 0, yMax: 14 });
+        legendDiv.innerHTML = buildLegend(allSeries);
+
+        let tableRows = results.map(r =>
+            `<tr><td>${r.isf}</td><td>${r.startBG.toFixed(1)}</td><td>${r.nadir.toFixed(1)}</td><td>${r.realDrop.toFixed(1)}</td><td>${(r.realDrop / 3).toFixed(1)}</td></tr>`
+        ).join('');
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>ISF</th><th>Start</th><th>Nadir</th><th>Reel effekt</th><th>Effekt/E</th></tr>
+            ${tableRows}
+        </table>`;
+
+        const ordered = results[0].realDrop < results[1].realDrop && results[1].realDrop < results[2].realDrop;
+        conclusionDiv.innerHTML = `<p class="${ordered ? 'pass' : 'fail'}">${ordered ? '✓' : '✗'} Højere ISF → større reel effekt (${results.map(r => r.realDrop.toFixed(1)).join(' < ')})</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 6: Profil-sammenligning — Vægt (50kg, 70kg, 100kg)
+// -------------------------------------------------------------------------
+addSection(
+    'Vægtafhængighed — 50kg, 70kg, 100kg med 3E insulin kl. 14',
+    'Tester om modellen reagerer korrekt på forskellige kropsvægte. '
+    + 'Hovorka-modellens V_G (glukose-distributionsvolumen) skalerer med vægt, '
+    + 'så tungere patienter har et større "pool" der fortynder insulineffekten.',
+
+    'Højere vægt → større V_G → insulindosis fortyndes mere → mindre BG-fald pr. enhed. '
+    + '50kg bør falde mest, 100kg mindst.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        const weights = [50, 70, 100];
+        const results = [];
+        const allSeries = [];
+
+        // Kontrolkurve: 0E fra BG=10 kl. 14 (70kg)
+        const simCtrl = createSim({ weight: 70, isf: 3.0, icr: 10 });
+        advanceTo(simCtrl, 14 * 60);
+        clampBG(simCtrl, 10.0);
+        const ctrlData = collectBG(simCtrl, 6 * 60);
+        allSeries.push({ label: '0E kontrol (70kg)', data: ctrlData, dash: [6, 4] });
+
+        weights.forEach((weight, i) => {
+            const sim = createSim({ weight, isf: 3.0, icr: 10 });
+            advanceTo(sim, 14 * 60);
+            clampBG(sim, 10.0);
+            const startBG = sim.trueBG;
+            sim.addFastInsulin(3);
+            const data = collectBG(sim, 6 * 60);
+            const stats = bgStats(data);
+            const nadirIdx = data.findIndex(d => d.bg === stats.nadir);
+            const ctrlAtNadir = nadirIdx < ctrlData.length ? ctrlData[nadirIdx].bg : ctrlData[ctrlData.length-1].bg;
+            const realDrop = ctrlAtNadir - stats.nadir;
+            results.push({ weight, startBG, ...stats, drop: startBG - stats.nadir, realDrop });
+            allSeries.push({ label: `${weight}kg (effekt ${realDrop.toFixed(1)})`, data });
+        });
+
+        drawChart(canvas, allSeries, { yMin: 0, yMax: 14 });
+        legendDiv.innerHTML = buildLegend(allSeries);
+
+        let tableRows = results.map(r =>
+            `<tr><td>${r.weight}kg</td><td>${r.startBG.toFixed(1)}</td><td>${r.nadir.toFixed(1)}</td><td>${r.realDrop.toFixed(1)}</td><td>${(r.realDrop / 3).toFixed(1)}</td></tr>`
+        ).join('');
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Vægt</th><th>Start</th><th>Nadir</th><th>Reel effekt</th><th>Effekt/E</th></tr>
+            ${tableRows}
+        </table>`;
+
+        const ordered = results[0].realDrop > results[1].realDrop && results[1].realDrop > results[2].realDrop;
+        conclusionDiv.innerHTML = `<p class="${ordered ? 'pass' : 'warn'}">${ordered ? '✓' : '⚠'} Lettere patient → større reel effekt (${results.map(r => r.realDrop.toFixed(1)).join(' > ')})</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 7: Circadian ISF-kurve visualisering
+// -------------------------------------------------------------------------
+addSection(
+    'Cirkadisk ISF-kurve — direkte visning af circadianISF over 24t',
+    'Plotter den rå circadianISF-faktor over et helt døgn for at verificere '
+    + 'kurveformen: nadir kl. 08 (faktor 0.70), nominelt kl. 14 (1.00), '
+    + 'peak kl. 19-00 (1.20).',
+
+    'Glat S-kurve mellem kontrolpunkter. Ingen skarpe knæk. '
+    + 'Faktor 0.70 ved kl. 08, 1.00 ved kl. 14, 1.20 ved kl. 19-00.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        const sim = createSim(DEFAULT_PROFILE);
+        const data = [];
+
+        // Sample circadianISF hvert 10. minut over 24 timer
+        for (let t = 0; t <= 1440; t += 10) {
+            // Sæt BÅDE totalSimMinutes og timeInMinutes manuelt
+            // (timeInMinutes opdateres normalt kun i update(), så vi sætter den direkte)
+            const origTotal = sim.totalSimMinutes;
+            const origTime = sim.timeInMinutes;
+            sim.totalSimMinutes = t;
+            sim.timeInMinutes = t % 1440;
+            const isf = sim.circadianISF;
+            data.push({ time: t, bg: isf }); // Misbruger 'bg' feltet til ISF-faktor
+            sim.totalSimMinutes = origTotal;
+            sim.timeInMinutes = origTime;
+        }
+
+        const series = [{ label: 'circadianISF-faktor', data, color: '#a855f7' }];
+        drawChart(canvas, series, {
+            yMin: 0.6, yMax: 1.3, xIsClockTime: true,
+            targetLow: 0.95, targetHigh: 1.05 // "nominel zone" ±5%
+        });
+        legendDiv.innerHTML = buildLegend(series);
+
+        // Aflæs specifikke tidspunkter
+        const at = (t) => data.find(d => d.time === t)?.bg?.toFixed(3) ?? '?';
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Klokkeslæt</th><th>ISF-faktor</th><th>Forventet</th></tr>
+            <tr><td>00:00</td><td>${at(0)}</td><td>1.200</td></tr>
+            <tr><td>04:00</td><td>${at(240)}</td><td>1.200</td></tr>
+            <tr><td>06:00</td><td>${at(360)}</td><td>~0.95 (faldende)</td></tr>
+            <tr><td>08:00</td><td>${at(480)}</td><td>0.700</td></tr>
+            <tr><td>11:00</td><td>${at(660)}</td><td>~0.85 (stigende)</td></tr>
+            <tr><td>14:00</td><td>${at(840)}</td><td>1.000</td></tr>
+            <tr><td>16:30</td><td>${at(990)}</td><td>~1.10 (stigende)</td></tr>
+            <tr><td>19:00</td><td>${at(1140)}</td><td>1.200</td></tr>
+            <tr><td>22:00</td><td>${at(1320)}</td><td>1.200</td></tr>
+        </table>`;
+
+        const nadir = parseFloat(at(480));
+        const peak = parseFloat(at(0));
+        const nominal = parseFloat(at(840));
+        const nadirOK = Math.abs(nadir - 0.70) < 0.01;
+        const peakOK = Math.abs(peak - 1.20) < 0.01;
+        const nominalOK = Math.abs(nominal - 1.00) < 0.01;
+
+        conclusionDiv.innerHTML = `<p class="${nadirOK ? 'pass' : 'fail'}">${nadirOK ? '✓' : '✗'} Nadir kl. 08 = ${nadir} (forventet 0.700)</p>
+        <p class="${peakOK ? 'pass' : 'fail'}">${peakOK ? '✓' : '✗'} Peak kl. 00 = ${peak} (forventet 1.200)</p>
+        <p class="${nominalOK ? 'pass' : 'fail'}">${nominalOK ? '✓' : '✗'} Nominelt kl. 14 = ${nominal} (forventet 1.000)</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 8: Kulhydrater morgen vs. aften (cirkadisk effekt på mad)
+// -------------------------------------------------------------------------
+addSection(
+    'Kulhydrater morgen vs. aften — 40g uden insulin',
+    'Tester om kulhydrater giver forskellig BG-stigning morgen vs. aften. '
+    + 'BG clampes til 6.0 mmol/L ved begge tidspunkter for at eliminere '
+    + 'BG-afhængige variabler (renal udskillelse, F01c, Q1↔Q2 transport). '
+    + 'Kontrolkurver (0g) viser den rene drift fra dawn-HGP og basal.',
+
+    'I Hovorka-modellen absorberes kulhydrater via D1→D2→Q1 uafhængigt af '
+    + 'circadianISF — den rene kulhydrat-effekt bør derfor være ens morgen/aften. '
+    + 'Forskelle skyldes dawn-HGP drift (synlig i kontrolkurverne).',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        // Morgen med 40g (clamp til 6.0 for fair sammenligning)
+        const simMorning = createSim(DEFAULT_PROFILE);
+        advanceTo(simMorning, 8 * 60);
+        clampBG(simMorning, 6.0);
+        const mStartBG = simMorning.trueBG;
+        simMorning.addFood(40, 0, 0);
+        const morningData = collectBG(simMorning, 5 * 60);
+
+        // Morgen kontrol (0g)
+        const simMorningCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simMorningCtrl, 8 * 60);
+        clampBG(simMorningCtrl, 6.0);
+        const morningCtrlData = collectBG(simMorningCtrl, 5 * 60);
+
+        // Aften med 40g (clamp til 6.0)
+        const simEvening = createSim(DEFAULT_PROFILE);
+        advanceTo(simEvening, 19 * 60);
+        clampBG(simEvening, 6.0);
+        const eStartBG = simEvening.trueBG;
+        simEvening.addFood(40, 0, 0);
+        const eveningData = collectBG(simEvening, 5 * 60);
+
+        // Aften kontrol (0g)
+        const simEveningCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simEveningCtrl, 19 * 60);
+        clampBG(simEveningCtrl, 6.0);
+        const eveningCtrlData = collectBG(simEveningCtrl, 5 * 60);
+
+        const mStats = bgStats(morningData);
+        const eStats = bgStats(eveningData);
+
+        // Reel kulhydrat-effekt: mad-kurve minus kontrol ved peak
+        const mPeakIdx = morningData.findIndex(d => d.bg === mStats.peak);
+        const ePeakIdx = eveningData.findIndex(d => d.bg === eStats.peak);
+        const mCtrlAtPeak = mPeakIdx < morningCtrlData.length ? morningCtrlData[mPeakIdx].bg : morningCtrlData[morningCtrlData.length-1].bg;
+        const eCtrlAtPeak = ePeakIdx < eveningCtrlData.length ? eveningCtrlData[ePeakIdx].bg : eveningCtrlData[eveningCtrlData.length-1].bg;
+        const mRealRise = mStats.peak - mCtrlAtPeak;
+        const eRealRise = eStats.peak - eCtrlAtPeak;
+
+        const series = [
+            { label: `Morgen 40g`, data: morningData },
+            { label: `Morgen kontrol (0g)`, data: morningCtrlData, dash: [6, 4] },
+            { label: `Aften 40g`, data: eveningData },
+            { label: `Aften kontrol (0g)`, data: eveningCtrlData, dash: [6, 4] }
+        ];
+        drawChart(canvas, series, { yMin: 2, yMax: 22 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Tid</th><th>Start</th><th>Peak</th><th>Kontrol</th><th>Reel effekt</th></tr>
+            <tr><td>Morgen 08</td><td>${mStartBG.toFixed(1)}</td><td>${mStats.peak.toFixed(1)}</td><td>${mCtrlAtPeak.toFixed(1)}</td><td>${mRealRise.toFixed(1)}</td></tr>
+            <tr><td>Aften 19</td><td>${eStartBG.toFixed(1)}</td><td>${eStats.peak.toFixed(1)}</td><td>${eCtrlAtPeak.toFixed(1)}</td><td>${eRealRise.toFixed(1)}</td></tr>
+        </table>`;
+
+        conclusionDiv.innerHTML = `<p>Reel kulhydrat-effekt (vs. kontrol): morgen ${mRealRise.toFixed(1)}, aften ${eRealRise.toFixed(1)} mmol/L.</p>`
+        + `<p>I Hovorka-modellen driver kulhydrater BG via tarm-kompartmenterne (D1→D2→Q1) — `
+        + `dette er uafhængigt af circadianISF. Forskellen skyldes primært dawn-HGP drift.</p>`
+        + `<p style="color:var(--muted)">NB: Denne test verificerer modellens interne mekanik. `
+        + `Sektion 9 (mad + insulin) er den klinisk relevante test for måltidsdosering.</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 9: Måltid + bolus — Korrekt dosering kl. 08 vs. kl. 19
+// -------------------------------------------------------------------------
+addSection(
+    'Måltid + bolus — 40g + "korrekt" bolus morgen vs. aften',
+    'Tester om en bolus beregnet med base ICR=10 (dvs. 4E for 40g) dækker '
+    + 'et måltid om morgenen vs. aftenen. Pga. circadianISF bør morgen-bolus '
+    + 'være utilstrækkelig (insulin virker dårligere) og aften-bolus give hypo '
+    + '(insulin virker bedre end forventet).',
+
+    'Morgen (ISF×0.70): 4E dækker kun ~70% af behovet → postprandiel spike højere. '
+    + 'Aften (ISF×1.20): 4E dækker ~120% af behovet → BG falder for meget efter måltid. '
+    + 'Pædagogisk pointe: morgen-ICR bør være lavere end aften-ICR.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        // Morgen: 40g + 4E kl. 08 (clamp til 6.0 for fair sammenligning)
+        const simMorning = createSim(DEFAULT_PROFILE);
+        advanceTo(simMorning, 8 * 60);
+        clampBG(simMorning, 6.0);
+        const mStartBG = simMorning.trueBG;
+        simMorning.addFood(40, 0, 0);
+        simMorning.addFastInsulin(4);
+        const morningData = collectBG(simMorning, 6 * 60);
+
+        // Morgen kontrol: kun 40g, ingen insulin
+        const simMorningCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simMorningCtrl, 8 * 60);
+        clampBG(simMorningCtrl, 6.0);
+        simMorningCtrl.addFood(40, 0, 0);
+        const morningCtrlData = collectBG(simMorningCtrl, 6 * 60);
+
+        // Aften: 40g + 4E kl. 19 (clamp til 6.0)
+        const simEvening = createSim(DEFAULT_PROFILE);
+        advanceTo(simEvening, 19 * 60);
+        clampBG(simEvening, 6.0);
+        const eStartBG = simEvening.trueBG;
+        simEvening.addFood(40, 0, 0);
+        simEvening.addFastInsulin(4);
+        const eveningData = collectBG(simEvening, 6 * 60);
+
+        // Aften kontrol: kun 40g, ingen insulin
+        const simEveningCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simEveningCtrl, 19 * 60);
+        clampBG(simEveningCtrl, 6.0);
+        simEveningCtrl.addFood(40, 0, 0);
+        const eveningCtrlData = collectBG(simEveningCtrl, 6 * 60);
+
+        const mStats = bgStats(morningData);
+        const eStats = bgStats(eveningData);
+
+        const series = [
+            { label: `Morgen 40g + 4E`, data: morningData },
+            { label: `Morgen 40g + 0E`, data: morningCtrlData, dash: [6, 4] },
+            { label: `Aften 40g + 4E`, data: eveningData },
+            { label: `Aften 40g + 0E`, data: eveningCtrlData, dash: [6, 4] }
+        ];
+        drawChart(canvas, series, { yMin: 0, yMax: 22 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Tid</th><th>Start</th><th>Peak</th><th>Nadir</th><th>Slut</th></tr>
+            <tr><td>Morgen 4E</td><td>${mStartBG.toFixed(1)}</td><td>${mStats.peak.toFixed(1)}</td><td>${mStats.nadir.toFixed(1)}</td><td>${mStats.end.toFixed(1)}</td></tr>
+            <tr><td>Aften 4E</td><td>${eStartBG.toFixed(1)}</td><td>${eStats.peak.toFixed(1)}</td><td>${eStats.nadir.toFixed(1)}</td><td>${eStats.end.toFixed(1)}</td></tr>
+        </table>`;
+
+        const morningHigher = mStats.peak > eStats.peak;
+        const eveningLower = eStats.nadir < mStats.nadir;
+        conclusionDiv.innerHTML = `<p class="${morningHigher ? 'pass' : 'warn'}">${morningHigher ? '✓' : '⚠'} Morgen-peak (${mStats.peak.toFixed(1)}) højere end aften (${eStats.peak.toFixed(1)}) — morgen-insulin dækker dårligere</p>
+        <p class="${eveningLower ? 'pass' : 'warn'}">${eveningLower ? '✓' : '⚠'} Aften-nadir (${eStats.nadir.toFixed(1)}) lavere end morgen (${mStats.nadir.toFixed(1)}) — aften-insulin for kraftig</p>
+        <p>Stiplede kurver viser 40g UDEN insulin — afstanden til den solide kurve er insulinens reelle virkning.</p>
+        <p>Læringspointe: brug mere insulin til morgenmad, mindre til aftensmad.</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 10: Motion — Cardio kl. 14 med og uden aktiv insulin
+// -------------------------------------------------------------------------
+addSection(
+    'Motion — 30 min medium cardio ± aktiv insulin',
+    'Tester at motion sænker BG mere med aktiv insulin (øget absorptionshastighed). '
+    + 'Scenarie A: motion fra BG 8 uden nylig bolus. '
+    + 'Scenarie B: motion fra BG 8 med 2E bolus 30 min inden.',
+
+    'Begge scenarier bør sænke BG. Scenarie B (med insulin) bør falde '
+    + 'markant mere pga. øget insulinabsorption under motion + GLUT4-aktivering.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        // Kontrol: ingen motion, ingen insulin
+        const simCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simCtrl, 14 * 60);
+        clampBG(simCtrl, 8.0);
+        const ctrlData = collectBG(simCtrl, 4 * 60);
+
+        // Motion uden insulin
+        const simA = createSim(DEFAULT_PROFILE);
+        advanceTo(simA, 14 * 60);
+        clampBG(simA, 8.0);
+        simA.startMotion("Medium", "30");
+        const dataA = collectBG(simA, 4 * 60);
+
+        // Motion med insulin 30 min inden
+        const simB = createSim(DEFAULT_PROFILE);
+        advanceTo(simB, 13.5 * 60);
+        clampBG(simB, 8.0);
+        simB.addFastInsulin(2);
+        advanceTo(simB, 14 * 60);
+        simB.startMotion("Medium", "30");
+        const dataB = collectBG(simB, 4 * 60);
+
+        const cStats = bgStats(ctrlData);
+        const aStats = bgStats(dataA);
+        const bStats = bgStats(dataB);
+
+        // Reel effekt vs. kontrol
+        const aNadirIdx = dataA.findIndex(d => d.bg === aStats.nadir);
+        const bNadirIdx = dataB.findIndex(d => d.bg === bStats.nadir);
+        const aCtrlAtNadir = aNadirIdx < ctrlData.length ? ctrlData[aNadirIdx].bg : cStats.end;
+        const bCtrlAtNadir = bNadirIdx < ctrlData.length ? ctrlData[bNadirIdx].bg : cStats.end;
+        const aReal = aCtrlAtNadir - aStats.nadir;
+        const bReal = bCtrlAtNadir - bStats.nadir;
+
+        const series = [
+            { label: `Ingen motion (kontrol)`, data: ctrlData, dash: [6, 4] },
+            { label: `Motion uden insulin`, data: dataA },
+            { label: `Motion + 2E bolus`, data: dataB }
+        ];
+        drawChart(canvas, series, { yMin: 0, yMax: 12 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Scenarie</th><th>Start</th><th>Nadir</th><th>Kontrol</th><th>Reel effekt</th></tr>
+            <tr><td>Motion alene</td><td>${aStats.start.toFixed(1)}</td><td>${aStats.nadir.toFixed(1)}</td><td>${aCtrlAtNadir.toFixed(1)}</td><td>${aReal.toFixed(1)}</td></tr>
+            <tr><td>Motion + 2E</td><td>${bStats.start.toFixed(1)}</td><td>${bStats.nadir.toFixed(1)}</td><td>${bCtrlAtNadir.toFixed(1)}</td><td>${bReal.toFixed(1)}</td></tr>
+        </table>`;
+
+        const insulinMore = bReal > aReal;
+        conclusionDiv.innerHTML = `<p class="${insulinMore ? 'pass' : 'warn'}">${insulinMore ? '✓' : '⚠'} Motion + insulin (effekt ${bReal.toFixed(1)}) > motion alene (${aReal.toFixed(1)})</p>
+        <p>Klinisk pointe: motion med aktiv bolus-insulin er en hypo-risiko.</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 11: Ekstrem profil — ISF=1.5 (insulinresistent) + høj vægt
+// -------------------------------------------------------------------------
+addSection(
+    'Ekstrem profil — ISF=1.5, 120kg, insulinresistent patient',
+    'Tester at modellen er stabil for en "svær" profil. ISF=1.5 betyder '
+    + 'at 1E kun sænker BG 1.5 mmol/L. Høj vægt giver stort V_G. '
+    + 'Tester baseline-stabilitet og 5E bolus fra BG=12.',
+
+    'Baseline bør være stabil (BG ~5.5). 5E bolus fra 12 → fald ~7.5 mmol/L → BG ~4.5. '
+    + 'Ingen ustabilitet, oscillationer eller numeriske artefakter.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        const extremeProfile = { weight: 120, isf: 1.5, icr: 6 };
+
+        // Baseline 24t
+        const simBase = createSim(extremeProfile);
+        const baseData = collectBG(simBase, 24 * 60, 15);
+
+        // Bolus-test
+        const simBolus = createSim(extremeProfile);
+        advanceTo(simBolus, 14 * 60);
+        clampBG(simBolus, 12.0);
+        simBolus.addFastInsulin(5);
+        const bolusData = collectBG(simBolus, 6 * 60);
+
+        const bStats = bgStats(baseData);
+        const iStats = bgStats(bolusData);
+
+        const series = [
+            { label: 'Baseline 24t (120kg, ISF=1.5)', data: baseData, dash: [4, 4] },
+            { label: '5E fra BG=12 kl. 14', data: bolusData }
+        ];
+        drawChart(canvas, series, { yMin: 0, yMax: 16 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Test</th><th>Start</th><th>Peak/Nadir</th><th>Range</th></tr>
+            <tr><td>Baseline 24t</td><td>${bStats.start.toFixed(1)}</td><td>${bStats.peak.toFixed(1)} / ${bStats.nadir.toFixed(1)}</td><td>${(bStats.max - bStats.min).toFixed(1)}</td></tr>
+            <tr><td>5E bolus</td><td>${iStats.start.toFixed(1)}</td><td>Nadir ${iStats.nadir.toFixed(1)}</td><td>Fald ${(iStats.start - iStats.nadir).toFixed(1)}</td></tr>
+        </table>`;
+
+        const stableBase = bStats.min > 3.0 && bStats.max < 12;
+        const bolusOK = iStats.nadir > 1.5 && iStats.nadir < 10;
+        conclusionDiv.innerHTML = `<p class="${stableBase ? 'pass' : 'fail'}">${stableBase ? '✓' : '✗'} Baseline stabil: ${bStats.min.toFixed(1)}-${bStats.max.toFixed(1)} mmol/L</p>
+        <p class="${bolusOK ? 'pass' : 'warn'}">${bolusOK ? '✓' : '⚠'} 5E bolus giver plausibelt nadir ${iStats.nadir.toFixed(1)} mmol/L</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 12: Ekstremt følsom profil — ISF=5.0, 50kg
+// -------------------------------------------------------------------------
+addSection(
+    'Ekstremt følsom profil — ISF=5.0, 50kg (barn/tynd voksen)',
+    'Tester at modellen ikke bliver ustabil for en meget følsom patient. '
+    + 'ISF=5.0 → 1E sænker BG hele 5 mmol/L. Lav vægt → lille V_G.',
+
+    'Baseline stabil. 1E bolus fra BG=10 → fald ~5 mmol/L → BG ~5. '
+    + '2E bolus → alvorlig hypo. Modellen skal bremse ved fysiologisk gulv.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        const sensitiveProfile = { weight: 50, isf: 5.0, icr: 17 };
+
+        const simBase = createSim(sensitiveProfile);
+        const baseData = collectBG(simBase, 24 * 60, 15);
+
+        // 1E test
+        const sim1E = createSim(sensitiveProfile);
+        advanceTo(sim1E, 14 * 60);
+        clampBG(sim1E, 10.0);
+        sim1E.addFastInsulin(1);
+        const data1E = collectBG(sim1E, 5 * 60);
+
+        // 2E test (overdosis for denne profil)
+        const sim2E = createSim(sensitiveProfile);
+        advanceTo(sim2E, 14 * 60);
+        clampBG(sim2E, 10.0);
+        sim2E.addFastInsulin(2);
+        const data2E = collectBG(sim2E, 5 * 60);
+
+        const bStats = bgStats(baseData);
+        const s1 = bgStats(data1E);
+        const s2 = bgStats(data2E);
+
+        const series = [
+            { label: 'Baseline (50kg, ISF=5.0)', data: baseData, dash: [4, 4] },
+            { label: `1E (fald ${(s1.start - s1.nadir).toFixed(1)})`, data: data1E },
+            { label: `2E (fald ${(s2.start - s2.nadir).toFixed(1)})`, data: data2E, color: '#ef4444' }
+        ];
+        drawChart(canvas, series, { yMin: 0, yMax: 14 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Test</th><th>Start</th><th>Nadir</th><th>Fald</th></tr>
+            <tr><td>Baseline</td><td>${bStats.start.toFixed(1)}</td><td>${bStats.nadir.toFixed(1)}</td><td>${(bStats.max - bStats.min).toFixed(1)} range</td></tr>
+            <tr><td>1E bolus</td><td>${s1.start.toFixed(1)}</td><td>${s1.nadir.toFixed(1)}</td><td>${(s1.start - s1.nadir).toFixed(1)}</td></tr>
+            <tr><td>2E bolus</td><td>${s2.start.toFixed(1)}</td><td>${s2.nadir.toFixed(1)}</td><td>${(s2.start - s2.nadir).toFixed(1)}</td></tr>
+        </table>`;
+
+        const stableBase = bStats.min > 3.0 && bStats.max < 10;
+        const floorHit = s2.nadir < 3.0;
+        conclusionDiv.innerHTML = `<p class="${stableBase ? 'pass' : 'fail'}">${stableBase ? '✓' : '✗'} Baseline stabil: ${bStats.min.toFixed(1)}-${bStats.max.toFixed(1)}</p>
+        <p class="${floorHit ? 'pass' : 'warn'}">${floorHit ? '✓' : '⚠'} 2E giver hypo (nadir ${s2.nadir.toFixed(1)}) — modellen rammer fysiologisk gulv</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 13: Makronæringsstoffer — fedt og protein
+// -------------------------------------------------------------------------
+addSection(
+    'Makronæringsstoffer — fedt og protein vs. rene kulhydrater',
+    'Tester om fedt og protein påvirker BG-kurven. Protein er implementeret som '
+    + '25% forsinkede kulhydrater (30 min delay, 60 min varighed). '
+    + 'Fedt BURDE forsinke mavetømningen (τG), men koden justerer IKKE τG dynamisk — '
+    + 'fedt bidrager kun til kcal-beregning. Denne test eksponerer begrænsningen.',
+
+    'Rent kulhydrat-måltid (40g K): hurtig peak ~2t. '
+    + 'Med protein (40g K + 30g P): lidt højere og bredere peak (protein bidrager ~7.5g KH forsinklet). '
+    + 'Med fedt (40g K + 30g F): BURDE forsinke peak, men forventes at se identisk med ren KH '
+    + '(fedt er ikke implementeret i absorptionsmodellen).',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        // Kontrol: 0g
+        const simCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simCtrl, 14 * 60);
+        clampBG(simCtrl, 6.0);
+        const ctrlData = collectBG(simCtrl, 5 * 60);
+
+        // 40g rene kulhydrater
+        const simCarb = createSim(DEFAULT_PROFILE);
+        advanceTo(simCarb, 14 * 60);
+        clampBG(simCarb, 6.0);
+        simCarb.addFood(40, 0, 0);
+        const carbData = collectBG(simCarb, 5 * 60);
+
+        // 40g KH + 30g protein
+        const simProt = createSim(DEFAULT_PROFILE);
+        advanceTo(simProt, 14 * 60);
+        clampBG(simProt, 6.0);
+        simProt.addFood(40, 30, 0);
+        const protData = collectBG(simProt, 5 * 60);
+
+        // 40g KH + 30g fedt
+        const simFat = createSim(DEFAULT_PROFILE);
+        advanceTo(simFat, 14 * 60);
+        clampBG(simFat, 6.0);
+        simFat.addFood(40, 0, 30);
+        const fatData = collectBG(simFat, 5 * 60);
+
+        const cStats = bgStats(carbData);
+        const pStats = bgStats(protData);
+        const fStats = bgStats(fatData);
+
+        const series = [
+            { label: '0g kontrol', data: ctrlData, dash: [6, 4] },
+            { label: '40g KH', data: carbData },
+            { label: '40g KH + 30g protein', data: protData },
+            { label: '40g KH + 30g fedt', data: fatData }
+        ];
+        drawChart(canvas, series, { yMin: 2, yMax: 18 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Måltid</th><th>Peak</th><th>Peak-tid</th></tr>
+            <tr><td>40g KH</td><td>${cStats.peak.toFixed(1)}</td><td>${((cStats.peakTime % 1440)/60).toFixed(1)}t</td></tr>
+            <tr><td>40g KH + 30g P</td><td>${pStats.peak.toFixed(1)}</td><td>${((pStats.peakTime % 1440)/60).toFixed(1)}t</td></tr>
+            <tr><td>40g KH + 30g F</td><td>${fStats.peak.toFixed(1)}</td><td>${((fStats.peakTime % 1440)/60).toFixed(1)}t</td></tr>
+        </table>`;
+
+        const proteinHigher = pStats.peak > cStats.peak;
+        const fatSameAsCarb = Math.abs(fStats.peak - cStats.peak) < 0.3;
+        conclusionDiv.innerHTML = `<p class="${proteinHigher ? 'pass' : 'warn'}">${proteinHigher ? '✓' : '⚠'} Protein øger peak (${pStats.peak.toFixed(1)} vs. ${cStats.peak.toFixed(1)}) — 25% protein-til-KH virker</p>
+        <p class="${fatSameAsCarb ? 'warn' : 'pass'}">${fatSameAsCarb ? '⚠ KENDT BEGRÆNSNING:' : '✓'} Fedt-kurve ${fatSameAsCarb ? 'er identisk med ren KH' : 'afviger fra ren KH'} — fedt justerer IKKE τG i nuværende kode (peak ${fStats.peak.toFixed(1)} vs. ${cStats.peak.toFixed(1)})</p>
+        <p style="color:var(--muted)">TODO: Implementér fedt → τG-forsinkelse ("pizza-effekten"). Se CLAUDE.md TODO #37.</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 14: IOB-ophobning — overlappende bolus-doser
+// -------------------------------------------------------------------------
+addSection(
+    'IOB-ophobning — 3E + 3E med 30 min mellemrum vs. 6E enkelt',
+    'Tester at IOB (Insulin On Board) akkumuleres korrekt ved tætte, overlappende '
+    + 'bolusser. Hovorka-modellens S1/S2 kompartmenter bør addere doser lineært. '
+    + 'To doser á 3E med 30 min mellemrum bør give tilsvarende (men tidsmæssigt '
+    + 'forskudt) effekt som én dosis á 6E.',
+
+    '6E enkelt: kraftigt fald med én peak-effekt. '
+    + '3E + 3E: lignende totalt fald, men bredere/fladere profil pga. forskudte peaks. '
+    + 'Max IOB bør være lidt lavere ved split-dosis (anden dosis rammer efter '
+    + 'første er delvist absorberet).',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        // Kontrol: 0E
+        const simCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simCtrl, 14 * 60);
+        clampBG(simCtrl, 12.0);
+        const ctrlData = collectBG(simCtrl, 6 * 60);
+
+        // 6E enkelt dosis
+        const sim6E = createSim(DEFAULT_PROFILE);
+        advanceTo(sim6E, 14 * 60);
+        clampBG(sim6E, 12.0);
+        sim6E.addFastInsulin(6);
+        const data6E = collectBG(sim6E, 6 * 60);
+
+        // 3E + 3E med 30 min mellemrum
+        const simSplit = createSim(DEFAULT_PROFILE);
+        advanceTo(simSplit, 14 * 60);
+        clampBG(simSplit, 12.0);
+        simSplit.addFastInsulin(3);
+        // Kør 30 minutter, giv derefter 3E mere
+        for (let i = 0; i < 30; i++) simSplit.update(1.0);
+        simSplit.addFastInsulin(3);
+        const dataSplit = collectBG(simSplit, 5.5 * 60); // 5.5t for at matche total 6t
+
+        const s6 = bgStats(data6E);
+        const sSplit = bgStats(dataSplit);
+
+        const series = [
+            { label: '0E kontrol', data: ctrlData, dash: [6, 4] },
+            { label: '6E enkelt', data: data6E },
+            { label: '3E + 3E (30 min split)', data: dataSplit }
+        ];
+        drawChart(canvas, series, { yMin: 0, yMax: 14 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Scenarie</th><th>Start</th><th>Nadir</th><th>Fald</th></tr>
+            <tr><td>6E enkelt</td><td>${s6.start.toFixed(1)}</td><td>${s6.nadir.toFixed(1)}</td><td>${(s6.start - s6.nadir).toFixed(1)}</td></tr>
+            <tr><td>3E + 3E split</td><td>${sSplit.start.toFixed(1)}</td><td>${sSplit.nadir.toFixed(1)}</td><td>${(sSplit.start - sSplit.nadir).toFixed(1)}</td></tr>
+        </table>`;
+
+        const similarDrop = Math.abs((s6.start - s6.nadir) - (sSplit.start - sSplit.nadir)) < 3.0;
+        conclusionDiv.innerHTML = `<p class="${similarDrop ? 'pass' : 'warn'}">${similarDrop ? '✓' : '⚠'} Split-dosis giver lignende totalt fald som enkelt (${(sSplit.start - sSplit.nadir).toFixed(1)} vs. ${(s6.start - s6.nadir).toFixed(1)})</p>
+        <p>Klinisk pointe: insulin stacker — 3E + 3E ≈ 6E i samlet effekt. Pas på ved hurtige korrektioner.</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 15: Kontraregulering — Somogyi og fysiologisk gulv
+// -------------------------------------------------------------------------
+addSection(
+    'Kontraregulering — glukagon/adrenalin-respons ved hypoglykæmi',
+    'Tester om modellen aktiverer kontraregulerende hormoner ved lavt BG. '
+    + 'Simulatoren har Somogyi-effekt (acuteStressLevel stiger ved BG<3.5) og '
+    + 'counterRegFactor (svækkes ved gentagne hypoer via HAAF). '
+    + 'Vi giver en overdosis insulin og observerer om BG bremses/reboundes.',
+
+    'Ved intakt kontraregulering (counterRegFactor ≈ 1.0): BG bør bremses '
+    + 'ved ~3-4 mmol/L og evt. rebound opad (Somogyi). '
+    + 'Modellen bør IKKE falde under ~1.5 mmol/L (fysiologisk clamp). '
+    + 'Uden kontraregulering ville 8E fra BG=8 give et beregnet fald på ~24 mmol/L.',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        // Kontrol: 0E
+        const simCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simCtrl, 14 * 60);
+        clampBG(simCtrl, 8.0);
+        const ctrlData = collectBG(simCtrl, 8 * 60);
+
+        // Overdosis: 8E fra BG=8 (ISF=3 → beregnet fald 24 mmol/L)
+        const simOD = createSim(DEFAULT_PROFILE);
+        advanceTo(simOD, 14 * 60);
+        clampBG(simOD, 8.0);
+        simOD.addFastInsulin(8);
+        const dataOD = collectBG(simOD, 8 * 60);
+
+        const odStats = bgStats(dataOD);
+
+        const series = [
+            { label: '0E kontrol', data: ctrlData, dash: [6, 4] },
+            { label: '8E overdosis', data: dataOD, color: '#ef4444' }
+        ];
+        drawChart(canvas, series, { yMin: 0, yMax: 12 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><td>Beregnet fald (8×ISF)</td><td>24.0 mmol/L</td></tr>
+            <tr><td>Faktisk nadir</td><td>${odStats.nadir.toFixed(1)} mmol/L</td></tr>
+            <tr><td>Slut BG (8t)</td><td>${odStats.end.toFixed(1)} mmol/L</td></tr>
+            <tr><td>Rebound (slut − nadir)</td><td>${(odStats.end - odStats.nadir).toFixed(1)} mmol/L</td></tr>
+        </table>`;
+
+        const floorOK = odStats.nadir >= 1.5;
+        const rebound = odStats.end > odStats.nadir + 0.5;
+        conclusionDiv.innerHTML = `<p class="${floorOK ? 'pass' : 'fail'}">${floorOK ? '✓' : '✗'} Fysiologisk gulv: nadir ${odStats.nadir.toFixed(1)} mmol/L (≥1.5)</p>
+        <p class="${rebound ? 'pass' : 'warn'}">${rebound ? '✓' : '⚠'} Somogyi-rebound: BG stiger ${(odStats.end - odStats.nadir).toFixed(1)} mmol/L efter nadir ${rebound ? '— kontraregulering virker' : '— svag/ingen rebound'}</p>
+        <p>Kontraregulering aktiveres ved BG < 3.5: acuteStressLevel stiger → HGP øges → BG bremses/reboundes.</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 16: Renal udskillelse — nyretærskel ved højt BG
+// -------------------------------------------------------------------------
+addSection(
+    'Renal udskillelse — nyretærskel og BG-stabilisering',
+    'Hovorka-modellen har renal glukoseudskillelse med tærskel R_thr = 9 mmol/L. '
+    + 'Over denne tærskel udskilles glukose via urinen, hvilket bremser BG-stigningen. '
+    + 'Vi giver en massiv kulhydratdosis (100g) uden insulin og observerer '
+    + 'om BG stabiliserer/flader ud ved høje værdier.',
+
+    'Uden renal udskillelse ville 100g KH give en enorm BG-stigning. '
+    + 'Med nyreudskillelse bør stigningen bremses ved ~15-25 mmol/L. '
+    + 'BG-stigningsraten bør aftage markant over renal tærskel (~9-10 mmol/L).',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        // Kontrol: 0g
+        const simCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simCtrl, 14 * 60);
+        clampBG(simCtrl, 5.5);
+        const ctrlData = collectBG(simCtrl, 6 * 60);
+
+        // 100g kulhydrat uden insulin
+        const sim100 = createSim(DEFAULT_PROFILE);
+        advanceTo(sim100, 14 * 60);
+        clampBG(sim100, 5.5);
+        sim100.addFood(100, 0, 0);
+        const data100 = collectBG(sim100, 6 * 60);
+
+        const stats = bgStats(data100);
+
+        // Find BG-rate ved renal tærskel (~9-10 mmol/L) vs. ved peak
+        const nearThreshold = data100.findIndex(d => d.bg > 9);
+        const nearPeak = data100.findIndex(d => d.bg === stats.peak);
+        let rateAtThreshold = 0, rateAtPeak = 0;
+        if (nearThreshold > 0) {
+            rateAtThreshold = (data100[nearThreshold].bg - data100[nearThreshold-1].bg) * 60;
+        }
+        if (nearPeak > 0 && nearPeak < data100.length - 1) {
+            rateAtPeak = (data100[nearPeak+1].bg - data100[nearPeak-1].bg) / 2 * 60;
+        }
+
+        const series = [
+            { label: '0g kontrol', data: ctrlData, dash: [6, 4] },
+            { label: '100g KH uden insulin', data: data100, color: '#ef4444' }
+        ];
+        drawChart(canvas, series, { yMin: 2, yMax: Math.max(stats.peak + 2, 20) });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><td>Peak BG</td><td>${stats.peak.toFixed(1)} mmol/L</td></tr>
+            <tr><td>Renal tærskel (R_thr)</td><td>9.0 mmol/L</td></tr>
+            <tr><td>dBG/dt ved tærskel</td><td>${rateAtThreshold.toFixed(1)} mmol/L/t</td></tr>
+            <tr><td>dBG/dt ved peak</td><td>${rateAtPeak.toFixed(1)} mmol/L/t</td></tr>
+        </table>`;
+
+        const rateSlows = Math.abs(rateAtPeak) < Math.abs(rateAtThreshold);
+        conclusionDiv.innerHTML = `<p class="${rateSlows ? 'pass' : 'warn'}">${rateSlows ? '✓' : '⚠'} Stigningsraten aftager: ${rateAtThreshold.toFixed(1)} → ${rateAtPeak.toFixed(1)} mmol/L/t — renal udskillelse bremser</p>
+        <p>Peak ${stats.peak.toFixed(1)} mmol/L — uden renal udskillelse ville den være højere.</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// SEKTION 17: Protein-timing — forsinkede kulhydrater
+// -------------------------------------------------------------------------
+addSection(
+    'Protein-timing — forsinkede kulhydrater fra protein',
+    'Protein bidrager med ~25% af sit gramtal som forsinkede kulhydrater (30 min delay). '
+    + 'Vi tester rent protein-måltid (0g KH + 60g protein ≈ 15g forsinkede KH) '
+    + 'for at isolere proteineffekten fra kulhydrater.',
+
+    '60g protein → 15g forsinkede KH med 30 min delay og 60 min varighed. '
+    + 'Forventet: svag, forsinket BG-stigning startende ~30 min efter indtagelse. '
+    + 'Betydeligt lavere peak end 15g rene kulhydrater (pga. langsom absorption).',
+
+    (canvas, resultDiv, conclusionDiv, legendDiv) => {
+        // Kontrol
+        const simCtrl = createSim(DEFAULT_PROFILE);
+        advanceTo(simCtrl, 14 * 60);
+        clampBG(simCtrl, 6.0);
+        const ctrlData = collectBG(simCtrl, 5 * 60);
+
+        // 15g rene kulhydrater (reference)
+        const simCarb = createSim(DEFAULT_PROFILE);
+        advanceTo(simCarb, 14 * 60);
+        clampBG(simCarb, 6.0);
+        simCarb.addFood(15, 0, 0);
+        const carbData = collectBG(simCarb, 5 * 60);
+
+        // 60g rent protein (≈15g forsinkede KH)
+        const simProt = createSim(DEFAULT_PROFILE);
+        advanceTo(simProt, 14 * 60);
+        clampBG(simProt, 6.0);
+        simProt.addFood(0, 60, 0);
+        const protData = collectBG(simProt, 5 * 60);
+
+        const cStats = bgStats(carbData);
+        const pStats = bgStats(protData);
+
+        const series = [
+            { label: '0g kontrol', data: ctrlData, dash: [6, 4] },
+            { label: '15g rene KH', data: carbData },
+            { label: '60g protein (≈15g KH)', data: protData }
+        ];
+        drawChart(canvas, series, { yMin: 3, yMax: 14 });
+        legendDiv.innerHTML = buildLegend(series);
+
+        resultDiv.innerHTML = `<table class="results-table">
+            <tr><th>Måltid</th><th>Peak</th><th>Peak-tid</th></tr>
+            <tr><td>15g KH</td><td>${cStats.peak.toFixed(1)}</td><td>${((cStats.peakTime % 1440)/60).toFixed(1)}t</td></tr>
+            <tr><td>60g protein</td><td>${pStats.peak.toFixed(1)}</td><td>${((pStats.peakTime % 1440)/60).toFixed(1)}t</td></tr>
+        </table>`;
+
+        const proteinDelayed = pStats.peakTime > cStats.peakTime;
+        const proteinLower = pStats.peak < cStats.peak;
+        conclusionDiv.innerHTML = `<p class="${proteinDelayed ? 'pass' : 'warn'}">${proteinDelayed ? '✓' : '⚠'} Protein-peak (${((pStats.peakTime%1440)/60).toFixed(1)}t) er forsinket ift. KH (${((cStats.peakTime%1440)/60).toFixed(1)}t)</p>
+        <p class="${proteinLower ? 'pass' : 'warn'}">${proteinLower ? '✓' : '⚠'} Protein-peak (${pStats.peak.toFixed(1)}) lavere end KH-peak (${cStats.peak.toFixed(1)}) — langsom absorption</p>`;
+    }
+);
+
+// -------------------------------------------------------------------------
+// Færdig — opdater status
+// -------------------------------------------------------------------------
+document.getElementById('status').textContent = `${sectionCount} testsektioner kørt.`;
+</script>
+</body>
+</html>

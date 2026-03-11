@@ -437,24 +437,60 @@ Somogyi-effektens kliniske relevans er omdiskuteret. Nyere studier med CGM (kont
 
 ## 14. Døgnvariation i insulinfølsomhed
 
-**Ikke implementeret (planlagt)**
+**Implementeret (hybrid model: HGP + ISF)**
 
 Ud over dawn-fænomenet varierer kroppens insulinfølsomhed over hele døgnet:
 
-- **Om morgenen (ca. kl. 08:30):** Insulinfølsomheden er lavest -- op til 30-40% lavere end gennemsnittet. Du har brug for mere insulin per gram kulhydrat til morgenmaden end til aftensmaden.
+- **Om morgenen (ca. kl. 08:00):** Insulinfølsomheden er lavest -- op til 30-50% lavere end gennemsnittet. Du har brug for mere insulin per gram kulhydrat til morgenmaden end til aftensmaden.
 - **Om aftenen (ca. kl. 19:00):** Insulinfølsomheden er højest. Samme insulindosis har en større effekt.
 
 Denne variation skyldes det cirkadiske system (kroppens indre ur) der styrer kortisolrytme, væksthormon, det autonome nervesystem og leverens insulinnedbrydning.
+
+### Evidens og dens begrænsninger
+
+Evidensen for døgnvariation i ISF er overraskende uklar, især for T1D:
+
+**Raske personer (Saad 2012, n=20):** SI var *højest* om morgenen og lavere resten af dagen. Identiske måltider kl. 07/13/19 viste bedst glukosetolerance til morgenmad. Men dette er raske — de har et fungerende beta-cellerespons der kompenserer.
+
+**T1D-patienter (Hinshaw 2013, n=19):** SI-mønstret var *omvendt* sammenlignet med raske — lavest om morgenen (5.1), højest til frokost (7.6). **Men**: forskellen var *ikke* statistisk signifikant (P=0.34), og forfatternes hovedkonklusion var at *"any diurnal pattern of SI in type 1 diabetes is individual specific"* — det kan **ikke** generaliseres til populationen. Derudover fandt de hepatisk insulinresistens om morgenen: EGP var mindre supprimeret trods højere insulinniveauer.
+
+**T1D børn/unge (Sohag 2022, n=93):** Real-life korrektionsdoser viste morgen-ISF ~50 mg/dL, aften ~75 mg/dL — ca. 50% forskel. Foreslår differenterede formler: morgen=1736/TDD, aften=2035/TDD. Men studiet er pædiatrisk, ét center, Egypten.
+
+**Modellering (Toffanin 2013):** Konstruerede en cirkadisk ISF-kurve baseret på publicerede studier (piecewise kubisk interpolation, 7 segmenter). Sensitivitetsfaktor: 0.4 (nadir kl. 08) til 1.4 (peak midnat). Valideret *in silico* (UVA/Padova-simulator, 100 virtuelle patienter) — ikke på rigtige patienter. Resulterede i 6-40% færre hypo-episoder i simulationen.
+
+**Klinisk praksis (Scheiner 2020):** Beskriver basalrate-mønstre med morgen-peak i insulinbehov — universel klinisk observation fra tusindvis af pumpebrugere. Ingen præcise SI-kurver, men stærk klinisk erfaring.
 
 ### Hvad det betyder i praksis
 
 - Insulin-til-kulhydrat-ratioen (ICR) bør ideelt set være lavere om morgenen (mere insulin per gram kulhydrat) og højere om aftenen
 - Mange insulinpumper programmeres med 2-3 forskellige basalrater over døgnet
-- Det forklarer også, hvorfor det kan være lettere at holde blodsukkeret stabilt om aftenen end om morgenen
+- Det forklarer, hvorfor det kan være lettere at holde blodsukkeret stabilt om aftenen end om morgenen
+- ~40% ekstra morgeninsulin er en realistisk størrelsesorden baseret på klinisk erfaring
+
+### Implementering i simulatoren
+
+Simulatoren bruger en **hybrid model** der deler morgeneffekten mellem to mekanismer:
+
+1. **HGP-stigning (leverproduktion):** `circadianKortisolNiveau` — sinusbue kl. 04-12, amplitude reduceret til 0.15 (fra 0.30). Leveren producerer op til 15% mere glukose om morgenen.
+
+2. **ISF-reduktion (perifer insulinresistens):** `circadianISF` — døgnkurve med ISF-faktor 0.70 om morgenen (insulin virker 30% dårligere) og 1.20 om aftenen (insulin virker 20% bedre). Inspireret af Toffanin 2013, dæmpet til 50% amplitude.
+
+**Samlet morgeneffekt (kl. 08):** HGP ×1.15 + ISF ×0.70 → spilleren skal bruge ~43% mere insulin til morgenmaden. **Samlet afteneffekt (kl. 19):** HGP ×1.0 + ISF ×1.20 → insulin virker ~17% bedre om aftenen.
+
+### Ærlig vurdering af modellens kvalitet
+
+Denne implementering er bygget på **mangelfuld videnskabelig evidens** kombineret med klinisk erfaring fra T1D-patienter. De vigtigste forbehold:
+
+- Hinshaw 2013 konkluderer eksplicit at ISF-mønstret er individuelt og ikke generaliserbart for T1D
+- Toffanin 2013-kurven er en syntetisk konstruktion valideret på virtuelle patienter (cirkulær validering)
+- Den valgte amplitude (50% af Toffanin) og split mellem HGP/ISF er baseret på klinisk intuition, ikke præcise målinger
+- Modellen bør opdateres hvis bedre kvantitative data for døgnvariation i T1D bliver tilgængelige
 
 > **Kilder:**
 > - Saad A, et al. (2012). "Diurnal pattern to insulin secretion and insulin action in healthy individuals." *Diabetes*, 61(11):2691-2700.
 > - Hinshaw L, et al. (2013). "Diurnal pattern of insulin action in type 1 diabetes." *Diabetes*, 62(7):2223-2229.
+> - Toffanin C, et al. (2013). "Dynamic insulin on board: incorporation of circadian insulin sensitivity variation." *J Diabetes Sci Technol*, 7(4):928-940.
+> - El-Rasheedy FI, et al. (2022). "Diurnal variation of real-life insulin sensitivity factor among children and adolescents with type 1 diabetes." *Front Pediatr*, 10:854972.
 > - Scheiner G. (2020). *Think Like a Pancreas: A Practical Guide to Managing Diabetes with Insulin*. 3rd ed. Da Capo Lifelong Books.
 
 ---

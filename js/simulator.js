@@ -355,28 +355,23 @@ class Simulator {
     /**
      * currentISF — The effective Insulin Sensitivity Factor at this moment.
      *
-     * Base ISF is modified by two dynamic factors:
-     *   1. insulinResistanceFactor (>1.0 when chronic stress is elevated)
-     *      — This DIVIDES ISF, making insulin less effective.
-     *      — E.g., factor=1.5 means ISF goes from 3.0 to 3.0*1.5=4.5,
-     *        but since ISF is "how much 1U lowers BG", higher ISF here means
-     *        the formula yields less BG drop... actually wait: the factor
-     *        multiplies ISF so the insulin rate (dose * ISF) increases.
-     *        But then sensitivityIncreaseFactor divides it back.
-     *        The net effect: insulinResistanceFactor > 1 means higher ISF value
-     *        which means MORE BG drop per unit... This seems counterintuitive,
-     *        but in the update() method, insulin effect is calculated as
-     *        dose * currentISF, so a higher ISF = more BG lowering.
-     *        The insulinResistanceFactor is set in updateStressHormones as
-     *        1.0 + chronicStressLevel * 0.5, but it multiplies ISF...
-     *        (Note: this may be a design choice where resistance is modeled
-     *        differently than expected — the liver produces more glucose via
-     *        the stress multiplier, which is the main insulin resistance effect.)
+     * Base ISF is modified by three dynamic factors:
      *
-     *   2. sensitivityIncreaseFactor (>1.0 after exercise)
-     *      — Exercise increases insulin sensitivity for hours after the session.
-     *      — This DIVIDES the result, making insulin MORE effective post-exercise.
-     *      — The increase fades linearly from max to 1.0 over the sensitivity window.
+     *   1. circadianISF (0.70–1.20 over døgnet)
+     *      — Cirkadisk døgnvariation i insulinfølsomhed.
+     *      — Om morgenen (kl. ~08): faktor 0.70 → insulin virker 30% dårligere
+     *        → spilleren skal bruge ~43% mere insulin for samme effekt.
+     *      — Om aftenen (kl. ~19): faktor 1.20 → insulin virker 20% bedre.
+     *      — Baseret på Toffanin 2013, dæmpet 50%, justeret efter klinisk
+     *        erfaring. Se circadianISF getter for detaljer.
+     *
+     *   2. insulinResistanceFactor (>1.0 when chronic stress is elevated)
+     *      — Kronisk stress øger insulinresistens via leverens HGP.
+     *      — Sættes i updateStressHormones: 1.0 + chronicStressLevel × 0.5.
+     *
+     *   3. sensitivityIncreaseFactor (>1.0 after exercise)
+     *      — Motion øger insulinfølsomhed i timer efter træning.
+     *      — Fader lineært fra max til 1.0 over post-exercise perioden.
      *
      * @returns {number} Effective ISF in mmol/L per unit of insulin
      */
@@ -400,8 +395,10 @@ class Simulator {
             }
         });
 
-        // Final ISF = (base ISF * resistance factor) / sensitivity boost
-        return (this.ISF * this.insulinResistanceFactor) / sensitivityIncreaseFactor;
+        // Final ISF = base ISF × cirkadisk faktor × resistensfaktor / motionsboost
+        // circadianISF < 1.0 om morgenen → lavere ISF → insulin virker dårligere
+        // circadianISF > 1.0 om aftenen → højere ISF → insulin virker bedre
+        return (this.ISF * this.circadianISF * this.insulinResistanceFactor) / sensitivityIncreaseFactor;
     }
 
     /**
@@ -441,18 +438,21 @@ class Simulator {
     //   3. Kronisk stress: forstærker dawn med op til ~30%
     //      (vedvarende kortisol gør morgen-peaket højere)
     regenerateDawn() {
-        // Basis-variation: mean 0.3, std 0.06 (CV ~20%)
-        let amplitude = Math.max(0.10, Math.min(0.55, this.gaussRand(0.3, 0.06)));
+        // Basis-variation: mean 0.15, std 0.03 (CV ~20%)
+        // NOTE: Reduceret fra 0.30 til 0.15 fordi dawn-effekten nu er DELT
+        // mellem HGP-stigning (denne kurve) og cirkadisk ISF-reduktion
+        // (circadianISF getter). Se FYSIOLOGI.md afsnit 8 for begrundelse.
+        let amplitude = Math.max(0.05, Math.min(0.35, this.gaussRand(0.15, 0.03)));
 
         // Dårlig søvn forstærker dawn (+12% per mistet time søvn)
-        // Ved max søvntab (4t): +48% amplitude → ~0.44 i stedet for 0.30
+        // Ved max søvntab (4t): +48% amplitude → ~0.22 i stedet for 0.15
         amplitude *= 1 + this.lostSleepHoursTonight * 0.12;
 
         // Kronisk stress fra forrige dag forstærker dawn (+30% ved chronicStress=1.0)
         amplitude *= 1 + this.chronicStressLevel * 0.30;
 
-        // Clamp til fysiologisk område
-        this._dawnAmplitude = Math.min(0.60, amplitude);
+        // Clamp til fysiologisk område (reduceret max fra 0.60 til 0.35)
+        this._dawnAmplitude = Math.min(0.35, amplitude);
 
         // Peak-tidspunkt varierer: mean 08:00, std 30 min → typisk 07:00-09:00
         this._dawnPeakMinutes = Math.max(6.5 * 60, Math.min(9.5 * 60,
@@ -484,15 +484,19 @@ class Simulator {
     //   "progress" is a value from 0.0 to 1.0 indicating how far through
     //   the current phase we are.
     //
-    // Visual representation (amplitude = 0.3):
+    // Visual representation (amplitude = 0.15, reduced from 0.30):
     //
-    //   0.30 |         ^ peak at 08:00
+    //   0.15 |         ^ peak at 08:00
     //        |       /   \
-    //   0.15 |     /       \
+    //   0.08 |     /       \
     //        |   /           \
     //   0.00 |---              ---------------
     //        +----------------------------> time
     //       00   04   08   12   16   20   24
+    //
+    // NOTE: Amplitude halved because the morning effect is now SPLIT between
+    // HGP increase (this curve) and peripheral ISF reduction (circadianISF).
+    // The combined effect is comparable to the original 0.30 HGP-only model.
     //
     // =========================================================================
     get circadianKortisolNiveau() {
@@ -526,6 +530,88 @@ class Simulator {
             // Resten af dagen: ingen cirkadisk kortisol-bidrag
             return 0;
         }
+    }
+
+    // =========================================================================
+    // CIRCADIAN ISF — Døgnvariation i insulinfølsomhed
+    // =========================================================================
+    //
+    // Insulinfølsomheden varierer over døgnet. Om morgenen er insulin
+    // mindre effektivt (ISF lavere), om aftenen mere effektivt (ISF højere).
+    // Dette er en SEPARAT mekanisme fra dawn-fænomenet (HGP-stigning via
+    // circadianKortisolNiveau) — dawn driver leverproduktion, denne kurve
+    // driver perifer insulinresistens.
+    //
+    // HYBRID MODEL: Den samlede morgen-effekt er summen af:
+    //   1. HGP +15% (circadianKortisolNiveau, reduceret fra +30%)
+    //   2. ISF ×0.70 (denne kurve → 43% mere insulin nødvendigt)
+    //
+    // Kurven er inspireret af Toffanin et al. (2013) men dæmpet til 50%
+    // amplitude, da evidensen for T1D er mangelfuld:
+    //   - Hinshaw 2013: ISF-mønster er individuelt, ikke generaliserbart
+    //   - Sohag 2022: morgen ISF ~50, aften ~75 mg/dL (50% forskel)
+    //   - Klinisk erfaring: ~40% mere morgeninsulin matcher T1D-oplevelse
+    //
+    // Kontrolpunkter (tid → ISF-faktor relativt til nominelt=1.0):
+    //   00:00 → 1.20  (nat: høj følsomhed)
+    //   04:00 → 1.20  (sen nat: stadig høj, inden dawn-drop)
+    //   08:00 → 0.70  (morgen nadir: lavest følsomhed)
+    //   14:00 → 1.00  (eftermiddag: nominelt)
+    //   19:00 → 1.20  (aften: højest følsomhed)
+    //   24:00 → 1.20  (midnat: wraps til start)
+    //
+    // Mellem kontrolpunkter interpoleres med cosinusfunktion for glatte
+    // overgange uden skarpe knæk (S-kurve mellem hvert par).
+    //
+    // Visual (ISF-faktor over døgnet):
+    //
+    //  1.20 |****                                      ********
+    //       |     *                                  **
+    //  1.10 |      *                               *
+    //       |       *                            *
+    //  1.00 |─ ─ ─ ─*─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─*─ ─ ─ ─ ─ ─ ─ ─ ─
+    //       |        *                     *
+    //  0.90 |         *                  *
+    //       |          *               *
+    //  0.80 |           *            *
+    //       |            **       **
+    //  0.70 |              *******
+    //       ├────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬──┤
+    //      00   02   04   06   08   10   12   14   16   18   20  24
+    //
+    // VIGTIGT: Denne model er bygget på mangelfuld evidens og klinisk
+    // erfaring. Bør opdateres hvis bedre kvantitative data bliver
+    // tilgængelige. Se FYSIOLOGI.md afsnit 8 og VIDENSKAB.md afsnit 14.
+    // =========================================================================
+    get circadianISF() {
+        const t = this.timeInMinutes;
+
+        // Kontrolpunkter: [tid_i_minutter, ISF_faktor]
+        // Defineret som array for overskuelighed og nem justering.
+        const points = [
+            [0,    1.20],   // midnat
+            [240,  1.20],   // 04:00 — sen nat, inden dawn-drop
+            [480,  0.70],   // 08:00 — morgen nadir (lavest følsomhed)
+            [840,  1.00],   // 14:00 — eftermiddag nominelt
+            [1140, 1.20],   // 19:00 — aften peak (højest følsomhed)
+            [1440, 1.20],   // 24:00 — midnat (wraps)
+        ];
+
+        // Find det segment vi er i (hvilket par af kontrolpunkter)
+        let i = 0;
+        while (i < points.length - 1 && t >= points[i + 1][0]) i++;
+
+        // Cosinus-interpolation for glat S-kurve mellem kontrolpunkter.
+        // cos(0)=1, cos(π)=-1 → (1-cos(π×progress))/2 giver 0→1 S-kurve.
+        const [t0, v0] = points[i];
+        const [t1, v1] = points[Math.min(i + 1, points.length - 1)];
+
+        if (t1 === t0) return v0; // Guard mod division by zero ved endpoints
+
+        const progress = (t - t0) / (t1 - t0);
+        const smoothProgress = (1 - Math.cos(Math.PI * progress)) / 2;
+
+        return v0 + (v1 - v0) * smoothProgress;
     }
 
     // =========================================================================
@@ -1265,7 +1351,7 @@ class Simulator {
             //   BG=3.0: 0.002 + 0.01*1.0  = 0.012/min  → 0.4 på ~33 min
             //   BG=2.0: 0.002 + 0.01*4.0  = 0.042/min  → 0.4 på ~10 min
             //
-            // Med cap=0.4 og circadian=0: stressMultiplier max = 1.4
+            // Med cap=0.4 og circadian=0: stressMultiplier max = 1.4 (dawn halveret → max ~1.55 med dawn)
             // Med aktiv insulin (x3≈1.3): EGP = EGP_0 × max(0, 1.4-1.3) = EGP_0 × 0.1
             // → Leveren kan næsten IKKE kompensere. Hypo er reelt farligt.
             const bgDeficit = 4.0 - this.trueBG;   // 0.0 ved BG=4, 2.0 ved BG=2
@@ -1623,9 +1709,9 @@ class Simulator {
         const wcEl = document.getElementById('weightChangeValue');
         if (wcEl) {
             wcEl.textContent = this.weightChangeKg.toFixed(1);
-            // Farvekodning: grøn=stabil, gul=advarsel, rød=fare
+            // Farvekodning: neutral=stabil, gul=advarsel (±2.5 kg), rød=fare (±4 kg), game over ved ±5 kg
             const abs = Math.abs(this.weightChangeKg);
-            wcEl.style.color = abs > 3.5 ? '#b91c1c' : abs > 1.5 ? '#d69e2e' : '';
+            wcEl.style.color = abs > 4.0 ? '#b91c1c' : abs > 2.5 ? '#d69e2e' : '';
         }
     }
 

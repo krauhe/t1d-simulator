@@ -198,10 +198,17 @@
                         <div class="value" id="kcalBalance7d">--</div>
                         <div class="unit">kcal/dag</div>
 
-                        <div class="label" title="Akkumuleret vægtændring baseret på kaloriebalance">Vægtændring</div>
-                        <div class="value" id="weightChangeValue">0.0</div>
-                        <div class="value"></div>
-                        <div class="unit">kg</div>
+                    </div>
+                </div>
+
+                <div class="stats-divider"></div>
+
+                <!-- Vægtændring: separat sektion (akkumuleret fra start, ikke daglig/ugentlig) -->
+                <div class="stats-section" id="stats-weight">
+                    <div class="weight-change-row">
+                        <span class="label" title="Akkumuleret vægtændring baseret på kaloriebalance. Game over ved ±5 kg.">Vægtændring</span>
+                        <span class="value" id="weightChangeValue">0.0</span>
+                        <span class="unit">kg</span>
                     </div>
                 </div>
             </div>
@@ -611,14 +618,21 @@
         <details class="help-section" open>
           <summary>Formål</summary>
           <p>
-            Jeg fik konstateret Type 1 Diabetes i februar 2025 og lavede denne simulator
-            for at forstå min nye hverdag bedre. Håbet er at andre nydiagnosticerede
-            — og deres pårørende — kan lege sig til viden om blodsukkerstyring i et
-            sikkert, simuleret miljø, hvor fejl ikke har konsekvenser i den virkelige
-            verden. Simulationen er baseret på validerede fysiologiske modeller,
-            AI-assisteret udvikling, og personlige erfaringer fra de første måneder
-            med T1D.<br>— Kristian R Harreby
+            Jeg fik konstateret T1D i februar 2025. Fra dag ét skulle jeg injicere
+            mig med potentielt farligt insulin baseret på viden, jeg endnu ikke havde.
+            Det måtte kunne gøres smartere — øve sig først, fejle sikkert, og lære
+            undervejs. Sådan opstod denne simulator.
           </p>
+          <p>
+            Målet er at nydiagnosticerede, deres forældre og pårørende kan lege sig
+            til livsvigtig viden om de fysiologiske mekanismer der styrer blodsukker
+            — uden risiko. Simulationen bygger på videnskabelig litteratur hvor muligt,
+            og er krydret med personlige erfaringer hvor litteraturen mangler. Alle
+            med T1D er forskellige, og modellen kan ikke simulere præcist hvordan
+            den enkelte reagerer — men forhåbentlig gør den dig opmærksom på de
+            mange faktorer der spiller ind i hverdagen.
+          </p>
+          <p style="text-align: right; color: var(--text-muted); font-style: italic;">— Kristian R Harreby</p>
           <p class="disclaimer" style="color: #ef4444;">
             <strong>Disclaimer:</strong> Simulationen er IKKE en guide til kliniske
             beslutninger. Konsulter altid sundhedspersonale for rådgivning om din
@@ -680,11 +694,16 @@
         </details>
 
         <details class="help-section">
-          <summary>Baggrund</summary>
+          <summary>Baggrund og test</summary>
           <p>Simulatoren er bygget på validerede fysiologiske modeller og videnskabelig litteratur. Vil du vide mere?</p>
           <ul>
             <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md" target="_blank" style="color: var(--blue);">Fysiologisk model</a> — Hvordan simulatorens motor virker: Hovorka-modellen, insulin, motion, stresshormoner m.m.</li>
             <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/VIDENSKAB.md" target="_blank" style="color: var(--blue);">Videnskabelig oversigt</a> — Alle faktorer der påvirker blodsukker ved T1D, baseret på forskning og klinisk erfaring.</li>
+          </ul>
+          <p style="margin-top: 10px;">Modellen valideres løbende med automatiske tests:</p>
+          <ul>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/tests/model-validation.html" target="_blank" style="color: var(--blue);">Visuel modelvalidering</a> — 12 testsektioner der kører simulatoren headless (uden UI) og plotter BG-kurver for forskellige scenarier. Testene verificerer baseline-stabilitet, cirkadisk ISF-variation, insulin- og kulhydrat dosis-respons, profil- og vægtafhængighed, motion, og ekstreme patientprofiler. Hver sektion beskriver hvad der testes, hvad vi forventer, og om resultatet matcher. Åbn filen direkte i en browser for at se graferne.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/tests/simulation.test.js" target="_blank" style="color: var(--blue);">Automatiserede enhedstests</a> — 29 tests der tjekker individuelle fysiologiske mekanismer (insulinvirkning, kulhydratabsorption, motion, stresshormoner, ketoner m.m.). Kør med <code>node tests/simulation.test.js</code>.</li>
           </ul>
         </details>
 

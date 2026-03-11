@@ -647,7 +647,7 @@ at forebygge hypoglykæmi — ikke stole på at kroppen klarer det.
 ---
 
 <a name="dawn"></a>
-## 8. Dawn-fænomenet -- Morgenkortisol
+## 8. Dawn-fænomenet og cirkadisk insulinfølsomhed
 
 ### Hvad er dawn-fænomenet?
 
@@ -656,40 +656,103 @@ de ikke har spist noget. Dette skyldes kroppens naturlige kortisol-rytme:
 kortisol stiger i timerne før opvågning som del af den cirkadiske rytme,
 og kortisol stimulerer leverens glukoseproduktion.
 
-### Hvordan er det modelleret?
+Men dawn-fænomenet er kun halvdelen af historien. Insulinfølsomheden varierer
+også over hele døgnet: om morgenen virker insulin dårligere (perifer
+insulinresistens), og om aftenen virker det bedre. Disse to mekanismer
+arbejder sammen om at gøre morgenerne sværere for T1D-patienter.
+
+### Hybrid model: to mekanismer
+
+Simulatoren modellerer morgeneffekten som en kombination af to separate
+fysiologiske processer:
+
+**Mekanisme 1 — HGP-stigning (leverproduktion):**
+Kortisol og væksthormon får leveren til at producere mere glukose. BG stiger
+uanset insulinniveau. Modelleret via `circadianKortisolNiveau` (sinusbue
+kl. 04-12). Spilleren kan korrigere med insulin — insulinet virker normalt.
+
+**Mekanisme 2 — ISF-reduktion (perifer insulinresistens):**
+Kroppens celler reagerer dårligere på insulin om morgenen. Samme dosis
+sænker BG mindre. Modelleret via `circadianISF` (døgnkurve). Spilleren
+skal bruge mere insulin for at opnå samme BG-sænkning.
+
+Den samlede morgeneffekt:
+```
+Kl. 08 (morgen):  HGP ×1.15  +  ISF ×0.70  →  ~43% mere insulin nødvendigt
+Kl. 14 (efterm.): HGP ×1.00  +  ISF ×1.00  →  normalt (baseline)
+Kl. 19 (aften):   HGP ×1.00  +  ISF ×1.20  →  ~17% mindre insulin nødvendigt
+```
+
+### HGP-komponent (leverproduktion via kortisol)
 
 Kortisol-kurven er modelleret med en symmetrisk sinusbue (kvart-sinus op,
-spejlet kvart-sinus ned) for en blød, fysiologisk plausibel form. Kurven
-har tre parametre der alle varierer fra dag til dag:
+spejlet kvart-sinus ned). Kurven har tre parametre der varierer fra dag til dag:
 
 | Parameter | Mean | Std | Clamp | Beskrivelse |
 |-----------|------|-----|-------|-------------|
-| Amplitude | 0.30 | 0.06 | [0.10, 0.55] | Hvor kraftig dawn-effekten er (CV ~20%) |
+| Amplitude | 0.15 | 0.03 | [0.05, 0.35] | Hvor kraftig HGP-stigningen er (CV ~20%) |
 | Peak-tidspunkt | 08:00 | 30 min | [06:30, 09:30] | Hvornår peak rammer |
 | Stigning/fald | ±4 timer | — | — | Symmetrisk: stiger 4t før peak, falder 4t efter |
 
 ```
-Typisk dag (amplitude ~0.30, peak 08:00):
+HGP-komponent (amplitude ~0.15, peak 08:00):
 
-  0.30 |         ^ peak kl. 08:00
+  0.15 |         ^ peak kl. 08:00
        |       /   \
-  0.15 |     /       \
+  0.08 |     /       \
        |   /           \
   0.00 |---              ---------------
        +----------------------------> tid
       00   04   08   12   16   20   24
 ```
 
-Amplituden 0.30 betyder at leverens glukoseproduktion stiger med op til 30%
-på toppen af dawn-effekten. Men dette er bare gennemsnittet — på dårlige
-dage kan amplituden nå 0.45-0.55, og på gode dage kun 0.15-0.20.
+Amplituden var tidligere 0.30 da den alene dækkede hele morgeneffekten.
+Den er reduceret til 0.15 fordi den anden halvdel nu håndteres af ISF-kurven.
+
+### ISF-komponent (cirkadisk insulinfølsomhed)
+
+Insulinfølsomheden varierer over hele døgnet — ikke bare om morgenen.
+Kurven bruger cosinus-interpolation mellem kontrolpunkter for glatte overgange:
+
+| Kl. | ISF-faktor | Betydning |
+|------|-----------|-----------|
+| 00:00-04:00 | 1.20 | Nat: høj følsomhed |
+| 04:00→08:00 | 1.20→0.70 | Dawn-drop: følsomheden falder markant |
+| 08:00 | 0.70 | Morgen nadir: lavest følsomhed |
+| 08:00→14:00 | 0.70→1.00 | Gradvis normalisering |
+| 14:00-15:00 | 1.00 | Eftermiddag: nominelt (baseline) |
+| 15:00→19:00 | 1.00→1.20 | Stigning mod aftenens peak |
+| 19:00-00:00 | 1.20 | Aften/nat: højest følsomhed |
+
+```
+ISF-faktor over døgnet:
+
+  1.20 |****                                       ********
+       |     *                                   **
+  1.10 |      *                                *
+       |       *                             *
+  1.00 |── ── ──*── ── ── ── ── ── ── ──*── ── ── ── ── ── ──
+       |         *                     *
+  0.90 |          *                  *
+       |           *               *
+  0.80 |            *            *
+       |             **       **
+  0.70 |               *******
+       ├────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬──┤
+      00   02   04   06   08   10   12   14   16   18   20  24
+```
+
+ISF-faktor 0.70 betyder at insulin virker 30% dårligere. I praksis: hvis
+en bolus normalt sænker BG med 3.0 mmol/L, sænker den kun 2.1 mmol/L om
+morgenen. For at opnå samme effekt skal spilleren bruge ~43% mere insulin
+(1/0.70 = 1.43).
 
 ### Hvad forstærker dawn-effekten?
 
-Dawn-amplituden påvirkes af to faktorer der beregnes ved dagsskift (midnat):
+HGP-amplituden påvirkes af to faktorer der beregnes ved dagsskift (midnat):
 
 1. **Dårlig søvn:** +12% amplitude per mistet time søvn.
-   Ved 4 timers tabt søvn (max): +48% → amplitude ~0.44 i stedet for 0.30.
+   Ved 4 timers tabt søvn (max): +48% → amplitude ~0.22 i stedet for 0.15.
    Baseret på Leproult et al. (1997) der fandt at søvndeprivation øger
    morgenkortisolpeak med 30-50%.
 
@@ -703,15 +766,35 @@ Den samlede formel ved dagsskift:
 dawnAmplitude = basisAmplitude × (1 + mistetSøvn × 0.12) × (1 + kroniskStress × 0.30)
 ```
 
-*Kode: `regenerateDawn()` og `circadianKortisolNiveau` getter i
+*Kode: `regenerateDawn()`, `circadianKortisolNiveau` og `circadianISF` i
 [simulator.js](https://github.com/krauhe/t1d-simulator/blob/main/js/simulator.js).*
+
+### Evidens og ærlig vurdering
+
+Denne hybrid model er bygget på **mangelfuld videnskabelig evidens**
+kombineret med input fra egne erfaringer som T1D-patient:
+
+- Hinshaw 2013 (n=19 T1D) konkluderer at ISF-mønstret er *individuelt
+  specifikt* og ikke kan generaliseres til T1D-populationen
+- Toffanin 2013-kurven (som ISF-komponenten er inspireret af) er en
+  syntetisk konstruktion valideret på virtuelle patienter — cirkulær evidens
+- Den valgte amplitude (50% af Toffanin) og split mellem HGP/ISF er
+  baseret på klinisk intuition og erfaring med ~40% ekstra morgeninsulin
+- Sohag 2022 (n=93 T1D børn) viste ~50% morgen/aften-forskel i real-life
+  korrektionsdoser, hvilket understøtter størrelsesordenen
+
+**Modellen bør opdateres** hvis bedre kvantitative data for cirkadisk
+insulinfølsomhed ved T1D bliver tilgængelige. Indtil da er den et
+kvalificeret bud baseret på den bedste tilgængelige viden.
 
 ### Hvorfor er det vigtigt at forstå?
 
-Dawn-fænomenet er en af de mest frustrerende udfordringer for T1D-patienter.
-Det er vigtigt at forstå at højt blodsukker om morgenen **ikke er patientens
-skyld** -- det er en naturlig fysiologisk proces. Strategier til at håndtere
-det inkluderer justering af basal insulin-dosis eller timing.
+Dawn-fænomenet og cirkadisk ISF-variation er blandt de mest frustrerende
+udfordringer for T1D-patienter. Det er vigtigt at forstå at højt blodsukker
+om morgenen **ikke er patientens skyld** -- det er en naturlig fysiologisk
+proces. Strategier til at håndtere det inkluderer justering af basal
+insulin-dosis, timing af morgenbolus, og accept af at morgeninsulin
+simpelthen skal være højere end afteninsulin.
 
 Variationen fra dag til dag forklarer hvorfor morgen-blodsukkeret kan svinge
 markant selv med identisk insulin-timing: en kombination af dårlig søvn,

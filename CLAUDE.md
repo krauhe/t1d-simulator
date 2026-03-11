@@ -32,7 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Bevar altid simulationslogikken intakt ved UI-ændringer
 - **Foreslå ALTID at committe og pushe før store ændringer** — så der altid er et sikkert fallback-punkt
 - **Opdater `docs/VIDENSKAB.md`** løbende med nye emner der er relevante for blodglukoseregulering — også selvom de ikke implementeres i simulatoren. Dokumentet skal være en komplet videnskabelig oversigt over alle faktorer der påvirker BG ved T1D.
-- **Hent relevante videnskabelige artikler** ned i `docs/references/` når nye emner tilføjes. Filnavns-format: `Efternavn_Årstal[_RW]_Titel.pdf` (fx `Hovorka_2004_NonlinearMPC.pdf`, `Cryer_2013_RW_GlucoseCounterregulation.pdf`). RW tilføjes kun ved review-artikler.
+- **Hent ALTID relevante videnskabelige artikler** ned i `docs/references/` når nye emner tilføjes eller researches. Kilder skal så vidt muligt downloades som PDF. Filnavns-format: `Efternavn_Årstal[_RW]_Titel.ext` (fx `Hovorka_2004_NonlinearMPC.pdf`, `Cryer_2013_RW_GlucoseCounterregulation.pdf`). RW tilføjes kun ved review-artikler. Hvis PDF ikke er tilgængelig, gem som `.html` fra PMC eller lignende.
 
 ---
 
@@ -169,6 +169,14 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
     - Fysiologi-panelet (TODO #8) altid synligt i easy mode
     - God onboarding for spillere der aldrig har styret T1D
 
+9b. Fedt-forsinkelse af kulhydratabsorption ("pizza-effekten")
+    - **STATUS: IKKE IMPLEMENTERET** — koden accepterer `fat` parameter men justerer IKKE τG
+    - Eksponeret af modelvalidering (test 13): fedt-kurve er identisk med ren KH-kurve
+    - Fedt bør forsinke mavetømning → højere τG → bredere, lavere BG-peak
+    - Implementering: dynamisk τG baseret på måltidets fedtindhold (fx τG = 40 + fat * 0.5)
+    - Klinisk vigtigt: "pizza-effekten" er et af de mest forvirrende fænomener for T1D-patienter
+    - Se også TODO #37 (mad-interaktion) og #38 (differentierede sukkertyper)
+
 ### Fremtidige features (tænk fremad i arkitekturen)
 10. Baner — realistiske hverdagsscenarier, fx:
     - "Du løber 10 km til skolernes idrætsdag kl. 11–12"
@@ -199,13 +207,12 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
     - Kræver kønsvalg (TODO 15) + cykluslængde-input
     - Klinisk relevant: mange kvinder med T1D oplever uforklarlig hyperglykæmi før menstruation
     - Reference: Yeung et al. 2024, Diabetes Care — Si falder fra 5.03 til 2.22 i lutealfase
-25. Døgnvariation i insulinfølsomhed (cirkadisk ISF)
-    - ISF lavest om morgenen (~08:30), højest om aftenen (~19:00)
-    - Variation ~30-40% over dagen
-    - Nuværende circadianKortisolNiveau dækker KUN morgen-peak (04:00-12:00), resten af dagen = 0
-    - Bør udvides til fuld døgnkurve: eftermiddag-dip, aften-stigning
-    - Gary Scheiner ("Think Like a Pancreas") beskriver basalrate-mønstre med flere faser over døgnet
-    - Kræver re-kalibrering af circadianKortisolNiveau getter i simulator.js
+25. ~~Døgnvariation i insulinfølsomhed (cirkadisk ISF)~~ ✅ IMPLEMENTERET
+    - Hybrid model: HGP dawn (amplitude halveret til 0.15) + circadianISF (0.70–1.20)
+    - Morgen kl. 08: ISF ×0.70 + HGP ×1.15 → ~43% mere insulin nødvendigt
+    - Aften kl. 19: ISF ×1.20 → insulin virker ~17% bedre
+    - Inspireret af Toffanin 2013, dæmpet 50%, justeret efter klinisk erfaring
+    - Bygget på mangelfuld evidens — bør opdateres ved bedre data (Hinshaw 2013: mønster er individuelt)
 26. Alders-afhængigt insulinbehov
     - Børn/teenagere: højere insulinresistens pga. væksthormon → højere basalbehov per kg
     - Voksne: relativt stabilt insulinbehov

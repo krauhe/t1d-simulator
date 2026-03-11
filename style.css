@@ -1012,6 +1012,37 @@ body {
     font-size: var(--font-ui-sm);
 }
 
+/* Vægtændring: separat sektion under statistik-tabellen */
+.weight-change-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.weight-change-row .label {
+    font-weight: var(--font-weight-label);
+    color: var(--text-secondary);
+    font-size: var(--font-ui);
+    flex: 1;
+}
+
+.weight-change-row .value {
+    text-align: right;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-weight: var(--font-weight-value);
+    font-size: var(--font-ui);
+    font-variant-numeric: tabular-nums;
+    min-width: 3em;
+}
+
+.weight-change-row .unit {
+    color: var(--text-muted);
+    font-size: var(--font-ui-sm);
+}
+
 /* Vægtændring slider (visual indicator, ikke interaktiv) */
 .weight-change-display {
     text-align: center;
