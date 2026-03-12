@@ -139,8 +139,8 @@ function startGameWithProfile(profile) {
     updatePlayerFixedDataUI();
 
     // Konverter start-knap til rød stop-knap
-    startButton.innerHTML = '&#x23F9; Afslut';
-    startButton.title = 'Afslut simulationen og se resultater';
+    startButton.textContent = t('ui.btn.stop');
+    startButton.title = t('ui.title.stop');
     startButton.classList.add('game-running');
 
     // (#12) Sæt lyd-knap til korrekt initial ikon
@@ -193,19 +193,33 @@ function resetGame() {
     document.querySelectorAll('#debugLiveValues .dp-val').forEach(el => el.textContent = '--');
 
     // Gendan start-knap fra stop til start
-    startButton.innerHTML = '&#x25B6; Start';
-    startButton.title = 'Start en ny simulation';
+    startButton.textContent = t('ui.btn.start');
+    startButton.title = t('ui.title.start');
     startButton.classList.remove('game-running');
 
     // Ryd floating labels (DOM-elementer fra fingerprik/keton-stik)
     document.querySelectorAll('.floating-label').forEach(el => el.remove());
+
+    // Nulstil kit-chip cooldowns (fjern visuel cooldown-tilstand)
+    document.querySelectorAll('.kit-chip.on-cooldown').forEach(btn => {
+        btn.classList.remove('on-cooldown');
+        btn.style.removeProperty('pointer-events');
+        btn.style.removeProperty('--cooldown-pct');
+    });
+    // Gendan kit-chip labels til originale navne
+    const fpName = document.querySelector('#fingerprickButton .pc-name');
+    if (fpName) fpName.textContent = t('kit.fingerprick');
+    const ktName = document.querySelector('#ketoneTestButton .pc-name');
+    if (ktName) ktName.textContent = t('kit.ketone');
+    const glName = document.querySelector('#kitGlucagonButton .pc-name');
+    if (glName) glName.textContent = t('kit.glucagon');
 
     // Nulstil aktivitets-UI (skjul overlay, vis setup)
     if (typeof hideActivityActive === 'function') hideActivityActive();
 
     // Ryd hændelsesloggen
     const logList = document.getElementById('event-log-list');
-    if (logList) logList.innerHTML = '<div style="padding:4px; color:#a0aec0;">Ingen hændelser endnu</div>';
+    if (logList) logList.innerHTML = `<div style="padding:4px; color:#a0aec0;">${t('log.noEvents')}</div>`;
 
     // Redraw the empty graph
     drawGraph();

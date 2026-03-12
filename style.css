@@ -177,10 +177,9 @@ body {
     align-items: flex-end;
     gap: 6px;
     padding: 8px 16px;
-    background: var(--bg-elevated);
+    background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-xl);
-    backdrop-filter: blur(10px);
     justify-self: end;                           /* Højre-aligner i sin grid-kolonne */
 }
 /* Individuelle settings-items: ikon + label (som dock-items) */
@@ -1655,10 +1654,9 @@ body {
     margin: 0;
     overflow: hidden;
     flex-shrink: 0;
-    background: var(--bg-elevated);
+    background: var(--bg-card);                     /* Solid baggrund — undgår at nabopanelers glow skinner igennem */
     border: none;
     border-radius: var(--radius-lg);
-    backdrop-filter: blur(10px);
     font-size: var(--font-ui);
     transition: width 0.3s var(--bounce), padding 0.3s var(--bounce), margin 0.3s var(--bounce);
 }
@@ -1677,7 +1675,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 2;
-    background: var(--bg-elevated);
+    background: var(--bg-card);                     /* Matcher debug-sidebar baggrund */
     padding: 12px 14px 8px;
     border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
@@ -1808,7 +1806,7 @@ body {
     text-align: left;
 }
 
-/* Klikbare debug-labels: åbner FYSIOLOGI.md på GitHub */
+/* Klikbare debug-labels: åbner PHYSIOLOGY.md på GitHub */
 .dp-label a {
     color: var(--text-secondary);
     text-decoration: none;
@@ -2376,6 +2374,12 @@ body {
     padding: 6px 18px !important;
     font-size: var(--font-ui) !important;
 }
+.profile-reset-btn {
+    padding: 6px 18px !important;
+    font-size: var(--font-ui) !important;
+    background: linear-gradient(135deg, #374151, #1f2937) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+}
 
 /* Scrollbar styling for mørkt tema (WebKit browsers) */
 ::-webkit-scrollbar {
@@ -2488,6 +2492,14 @@ body {
 }
 .dp-basal-hint strong {
     color: var(--blue);
+}
+
+/* --- Hurtig insulin hint (tast 1-9) --- */
+.dp-fast-hint {
+    font-size: var(--font-ui-sm);
+    color: var(--text-muted);
+    text-align: center;
+    padding: 4px 0 0;
 }
 
 /* --- Aktivitetspanel: type-chips, intensitet-chips, varighed-chips --- */
@@ -2767,11 +2779,14 @@ body {
    --cooldown-pct styres fra JS (0 = lige brugt, 100 = klar).
    Overlayet dækker knappen med en mørk "pizza-slice" der gradvist
    forsvinder i urets retning efterhånden som cooldown udløber. */
-.kit-chip-sos.on-cooldown {
+/* Cooldown-animation: lagkage-overlay der gradvist forsvinder.
+   Bruges af glukagon (24t), fingerprik (3t) og evt. andre kit-chips.
+   --cooldown-pct styres fra JS (0 = lige brugt, 100 = klar). */
+.kit-chip.on-cooldown {
     position: relative;
     overflow: hidden;
 }
-.kit-chip-sos.on-cooldown::after {
+.kit-chip.on-cooldown::after {
     content: '';
     position: absolute;
     inset: 0;

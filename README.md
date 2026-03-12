@@ -35,8 +35,9 @@ Eller besøg den hostede version: [t1d-simulator](https://krauhe.github.io/t1d-s
 
 ## Dokumentation
 
-- [Fysiologisk model](docs/FYSIOLOGI.md) — Hvordan simulatorens motor virker
-- [Videnskabelig oversigt](docs/VIDENSKAB.md) — Alle faktorer der påvirker blodsukker ved T1D (25+ emner med referencer)
+- [Physiological model](docs/PHYSIOLOGY.md) — How the simulator engine works (Hovorka 2004, insulin, exercise, stress hormones)
+- [Scientific overview](docs/SCIENCE.md) — All factors affecting blood sugar in T1D (25+ topics with references)
+- [Fysiologisk model (dansk)](docs/FYSIOLOGI.da.md) | [Videnskabelig oversigt (dansk)](docs/VIDENSKAB.da.md)
 - [Automatiserede tests](tests/simulation.test.js) — 47 tests, kør med `node tests/simulation.test.js`
 
 ## Fil-struktur
@@ -52,8 +53,10 @@ js/
   game.js           ← Game loop, start/reset/pause
   main.js           ← Event listeners, DOM-referencer, init
 docs/
-  FYSIOLOGI.md      ← Teknisk modelbeskrivelse
-  VIDENSKAB.md      ← Videnskabelig baggrund (alle BG-faktorer)
+  PHYSIOLOGY.md     ← Technical model description (English, primary)
+  SCIENCE.md        ← Scientific background (English, primary)
+  FYSIOLOGI.da.md   ← Danish translation of PHYSIOLOGY.md
+  VIDENSKAB.da.md   ← Danish translation of SCIENCE.md
   references/       ← Downloadede videnskabelige artikler
 tests/
   simulation.test.js ← Automatiserede enhedstests

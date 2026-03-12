@@ -377,7 +377,7 @@ function drawGraph() {
     graphCtx.save(); graphCtx.translate(16, padding.top + graphHeight/2); graphCtx.rotate(-Math.PI/2);
     graphCtx.textAlign = "center"; graphCtx.font = "bold 12px Inter, Segoe UI";
     graphCtx.fillStyle = 'rgba(190, 210, 235, 0.85)';
-    graphCtx.fillText("Blodsukker (mmol/L)", 0, 0); graphCtx.restore();
+    graphCtx.fillText(t('graph.yAxisLabel'), 0, 0); graphCtx.restore();
 
     if (!game) return; // No data to plot if game hasn't started
 
@@ -744,8 +744,10 @@ function showHelpPopup() {
     // Hjælp-teksten hentes fra <template id="help-content-template"> i index.html.
     // Template-tags er usynlige i browseren men kan læses af JavaScript.
     // Rediger teksten direkte i index.html under template-tagget.
-    const template = document.getElementById('help-content-template');
-    content.innerHTML = template.innerHTML + `<div class="popup-button-container"><button id="help-ok-button">Luk</button></div>`;
+    // Vælg hjælp-template baseret på aktivt sprog
+    const lang = appSettings.language || 'da';
+    const template = document.getElementById(`help-content-${lang}`) || document.getElementById('help-content-da');
+    content.innerHTML = template.innerHTML + `<div class="popup-button-container"><button id="help-ok-button">${t('popup.close')}</button></div>`;
     overlay.appendChild(content);
     document.body.appendChild(overlay);
     document.getElementById('help-ok-button').addEventListener('click', () => {
@@ -796,7 +798,7 @@ function showPopup(title, message, isGameOverPopup, isEventPopup = false, isInfo
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'popup-button-container';
     const button = document.createElement('button');
-    button.textContent = isGameOverPopup ? "Reset Spil" : "OK";
+    button.textContent = isGameOverPopup ? t('popup.resetGame') : t('popup.ok');
     button.onclick = () => {
         document.body.removeChild(overlay);
         if (isGameOverPopup) resetGame();
@@ -809,6 +811,79 @@ function showPopup(title, message, isGameOverPopup, isEventPopup = false, isInfo
 
     // Play a notification sound (unless it's a game over or pure info popup)
     if (!isGameOverPopup && !isInfoPopup) playSound('intervention', 'C5');
+}
+
+
+// =============================================================================
+// DISCLAIMER POPUP — Vises ved første start, gemmes i localStorage
+// =============================================================================
+// Returnerer true hvis disclaimer allerede er accepteret, false hvis popup vises.
+// Callback onAccept() kaldes når brugeren accepterer.
+// =============================================================================
+function showDisclaimerPopup(onAccept) {
+    // Allerede accepteret → spring over
+    if (localStorage.getItem('disclaimerAccepted') === 'true') {
+        onAccept();
+        return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'popup-overlay';
+
+    const content = document.createElement('div');
+    content.className = 'popup-content';
+    content.style.maxWidth = '480px';
+
+    // Titel
+    const h2 = document.createElement('h2');
+    h2.style.color = '#ef4444';
+    h2.textContent = t('disclaimer.title');
+    content.appendChild(h2);
+
+    // Tekst
+    const p = document.createElement('p');
+    p.innerHTML = t('disclaimer.text');
+    p.style.lineHeight = '1.6';
+    content.appendChild(p);
+
+    // Checkbox-linje
+    const checkLabel = document.createElement('label');
+    checkLabel.style.cssText = 'display:flex; align-items:center; gap:10px; margin:18px 0 8px; cursor:pointer; font-size:14px; color:var(--text-secondary);';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.style.cssText = 'width:18px; height:18px; cursor:pointer; accent-color:#ef4444; flex-shrink:0;';
+    const labelText = document.createElement('span');
+    labelText.textContent = t('disclaimer.accept');
+    checkLabel.appendChild(checkbox);
+    checkLabel.appendChild(labelText);
+    content.appendChild(checkLabel);
+
+    // Accept-knap (disabled indtil flueben)
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'popup-button-container';
+    const button = document.createElement('button');
+    button.textContent = '▶ Start';
+    button.disabled = true;
+    button.style.opacity = '0.4';
+    button.style.cursor = 'not-allowed';
+
+    checkbox.addEventListener('change', () => {
+        button.disabled = !checkbox.checked;
+        button.style.opacity = checkbox.checked ? '1' : '0.4';
+        button.style.cursor = checkbox.checked ? 'pointer' : 'not-allowed';
+    });
+
+    button.onclick = () => {
+        if (!checkbox.checked) return;
+        localStorage.setItem('disclaimerAccepted', 'true');
+        document.body.removeChild(overlay);
+        onAccept();
+    };
+
+    buttonContainer.appendChild(button);
+    content.appendChild(buttonContainer);
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
 }
 
 
@@ -844,42 +919,42 @@ function showGameOverPopup(cause, details, points) {
 
     // Byg indhold — nu med navnefelt til highscore
     content.innerHTML = `
-        <h2 class="go-title">Game Over</h2>
+        <h2 class="go-title">${t('game.over.title')}</h2>
         <div class="go-cause">${cause}</div>
         <p class="go-cause-detail">${details.cause}</p>
 
         <div class="go-points-container">
             <div class="go-star">&#x2B50;</div>
             <div class="go-points-num">${points.toFixed(1)}</div>
-            <div class="go-points-label">Normoglykæmi-points</div>
+            <div class="go-points-label">${t('game.over.pointsLabel')}</div>
         </div>
 
         <div class="go-highscore-entry">
-            <label for="goPlayerName" style="font-size:0.85em; color:var(--text-muted);">Gem din score:</label>
+            <label for="goPlayerName" style="font-size:0.85em; color:var(--text-muted);">${t('game.over.saveLabel')}</label>
             <div style="display:flex; gap:8px; align-items:center;">
-                <input type="text" id="goPlayerName" placeholder="Dit navn" maxlength="20"
+                <input type="text" id="goPlayerName" placeholder="${t('game.over.namePlaceholder')}" maxlength="20"
                     style="flex:1; padding:6px 10px; border-radius:var(--radius-sm);
                     border:1px solid var(--border); background:var(--bg-input,#1a1a2e);
                     color:var(--text-primary); font-size:0.95em;">
                 <button id="goSaveScoreBtn" style="padding:6px 14px; border-radius:var(--radius-sm);
                     background:var(--accent-gold,#f59e0b); color:#000; border:none; cursor:pointer;
-                    font-weight:600; white-space:nowrap;">Gem</button>
+                    font-weight:600; white-space:nowrap;">${t('game.over.saveBtn')}</button>
             </div>
             <div id="goSaveResult" style="font-size:0.8em; color:var(--accent-gold,#f59e0b); margin-top:4px;"></div>
         </div>
 
         <div class="go-section">
-            <div class="go-section-title">Hvad skete der?</div>
+            <div class="go-section-title">${t('game.over.whatHappened')}</div>
             <p>${details.explanation}</p>
         </div>
 
         <div class="go-section">
-            <div class="go-section-title">Sådan undgår du det næste gang</div>
-            <ul>${details.tips.map(t => `<li>${t}</li>`).join('')}</ul>
+            <div class="go-section-title">${t('game.over.howToAvoid')}</div>
+            <ul>${details.tips.map(tip => `<li>${tip}</li>`).join('')}</ul>
         </div>
 
         <div class="popup-button-container">
-            <button id="gameOverResetBtn">Prøv igen</button>
+            <button id="gameOverResetBtn">${t('game.over.tryAgain')}</button>
         </div>
     `;
 
@@ -902,12 +977,12 @@ function showGameOverPopup(cause, details, points) {
     saveBtn.addEventListener('click', () => {
         const rank = saveHighscore(nameInput.value, points, dayReached, cause);
         if (rank > 0) {
-            resultDiv.textContent = `Gemt! Du er nr. ${rank} på highscore-listen.`;
+            resultDiv.textContent = t('game.over.savedRank', {rank});
         } else {
-            resultDiv.textContent = 'Gemt!';
+            resultDiv.textContent = t('game.over.saved');
         }
         saveBtn.disabled = true;
-        saveBtn.textContent = 'Gemt';
+        saveBtn.textContent = t('game.over.savedBtn');
         nameInput.disabled = true;
 
         // Pop-lyd
@@ -958,18 +1033,18 @@ function showHighscorePopup() {
 
     let tableHTML = '';
     if (scores.length === 0) {
-        tableHTML = '<p style="text-align:center; color:var(--text-muted);">Ingen scores endnu. Spil et spil!</p>';
+        tableHTML = `<p style="text-align:center; color:var(--text-muted);">${t('highscore.noScores')}</p>`;
     } else {
         tableHTML = `
         <table class="highscore-table">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Navn</th>
-                    <th>Points</th>
-                    <th>Dag</th>
-                    <th>Game Over</th>
-                    <th>Dato</th>
+                    <th>${t('highscore.col.rank')}</th>
+                    <th>${t('highscore.col.name')}</th>
+                    <th>${t('highscore.col.points')}</th>
+                    <th>${t('highscore.col.day')}</th>
+                    <th>${t('highscore.col.gameOver')}</th>
+                    <th>${t('highscore.col.date')}</th>
                 </tr>
             </thead>
             <tbody>
@@ -989,13 +1064,13 @@ function showHighscorePopup() {
     content.innerHTML = `
         <div class="hs-header">
             <span class="hs-trophy">\u{1F3C6}</span>
-            <h2>Highscores</h2>
+            <h2>${t('highscore.title')}</h2>
         </div>
         ${tableHTML}
         <div class="popup-button-container" style="margin-top:18px;">
-            <button id="hs-close-btn">Luk</button>
+            <button id="hs-close-btn">${t('highscore.close')}</button>
         </div>
-        ${scores.length > 0 ? '<div style="text-align:center; margin-top:12px;"><a href="#" id="hs-clear-btn" style="font-size:0.75em; color:var(--text-muted); text-decoration:underline; cursor:pointer;">Slet alle scores</a></div>' : ''}
+        ${scores.length > 0 ? `<div style="text-align:center; margin-top:12px;"><a href="#" id="hs-clear-btn" style="font-size:0.75em; color:var(--text-muted); text-decoration:underline; cursor:pointer;">${t('highscore.clearAll')}</a></div>` : ''}
     `;
 
     overlay.appendChild(content);
@@ -1009,7 +1084,7 @@ function showHighscorePopup() {
     const clearBtn = document.getElementById('hs-clear-btn');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
-            if (confirm('Slet alle highscores?')) {
+            if (confirm(t('highscore.confirmClear'))) {
                 try { localStorage.removeItem(HIGHSCORE_KEY); } catch (e) {}
                 document.body.removeChild(overlay);
                 showHighscorePopup(); // Genåbn med tom liste
@@ -1137,7 +1212,7 @@ function updateEventLog() {
     const recentEvents = game.logHistory.slice(-8).reverse();
 
     if (recentEvents.length === 0) {
-        logList.innerHTML = '<div style="padding:4px; color:#a0aec0;">Ingen hændelser endnu</div>';
+        logList.innerHTML = `<div style="padding:4px; color:#a0aec0;">${t('log.noEvents')}</div>`;
         return;
     }
 
@@ -1145,12 +1220,12 @@ function updateEventLog() {
     // Ved høje hastigheder rundes til 5/10-min intervaller for roligere display.
     function formatTimeSince(eventTime) {
         let minSince = Math.floor(game.totalSimMinutes - eventTime);
-        if (minSince < 1) return 'nu';
+        if (minSince < 1) return t('log.now');
         // Afrund til 5 eller 10 min ved høje hastigheder
         const speed = game.simulationSpeed || 60;
         if (speed >= 1440) minSince = Math.floor(minSince / 10) * 10;
         else if (speed >= 720) minSince = Math.floor(minSince / 5) * 5;
-        if (minSince < 1) return 'nu';
+        if (minSince < 1) return t('log.now');
         const h = Math.floor(minSince / 60);
         const m = minSince % 60;
         if (h > 0) return `${h}t${String(m).padStart(2, '0')}m`;
@@ -1279,58 +1354,59 @@ function showProfilePopup(options) {
     content.className = 'popup-content profile-popup';
 
     content.innerHTML = `
-        <h5 class="profile-title">Personprofil</h5>
-        <p class="profile-desc">Indtast dine diabetes-parametre for en personlig simulation.</p>
+        <h5 class="profile-title">${t('profile.title')}</h5>
+        <p class="profile-desc">${t('profile.desc')}</p>
 
         <div class="profile-form">
             <div class="profile-field">
-                <label for="profileWeight">Vægt</label>
+                <label for="profileWeight">${t('profile.weight')}</label>
                 <div class="profile-input-row">
                     <input type="number" id="profileWeight" min="30" max="200" step="1" value="${savedProfile.weight}">
                     <span class="profile-unit">kg</span>
                 </div>
-                <small>Din kropsvægt — bruges til beregning af kalorieforbrug.</small>
+                <small>${t('profile.weight.help')}</small>
             </div>
 
             <div class="profile-field">
-                <label for="profileICR">ICR (Insulin-to-Carb Ratio)</label>
+                <label for="profileICR">${t('profile.icr')}</label>
                 <div class="profile-input-row">
                     <input type="number" id="profileICR" min="3" max="30" step="1" value="${savedProfile.icr}">
-                    <span class="profile-unit">g / E</span>
+                    <span class="profile-unit">g / ${tInsulinUnit()}</span>
                 </div>
-                <small>Gram kulhydrat per enhed insulin. Typisk 8–15 for voksne.</small>
+                <small>${t('profile.icr.help')}</small>
             </div>
 
             <div class="profile-field">
-                <label for="profileISF">ISF (Insulin Sensitivity Factor)</label>
+                <label for="profileISF">${t('profile.isf')}</label>
                 <div class="profile-input-row">
                     <input type="number" id="profileISF" min="0.5" max="10" step="0.1" value="${savedProfile.isf}">
-                    <span class="profile-unit">mmol/L / E</span>
+                    <span class="profile-unit">mmol/L / ${tInsulinUnit()}</span>
                 </div>
-                <small>BG-fald per enhed insulin. Typisk 1.5–5.0 mmol/L for voksne.</small>
+                <small>${t('profile.isf.help')}</small>
             </div>
 
             <div class="profile-calculated">
                 <div class="profile-calc-row">
-                    <span class="label">Total Daily Dose (TDD)</span>
+                    <span class="label">${t('profile.tdd')}</span>
                     <span class="value" id="profileTDD">--</span>
-                    <span class="unit">E/dag</span>
+                    <span class="unit">${t('stats.unit.ePerDay')}</span>
                 </div>
                 <div class="profile-calc-row">
-                    <span class="label">Anbefalet basal</span>
+                    <span class="label">${t('profile.recommendedBasal')}</span>
                     <span class="value" id="profileBasal">--</span>
-                    <span class="unit">E/dag</span>
+                    <span class="unit">${t('stats.unit.ePerDay')}</span>
                 </div>
                 <div class="profile-calc-row">
-                    <span class="label">Hvileforbrug</span>
+                    <span class="label">${t('profile.restingKcal')}</span>
                     <span class="value" id="profileKcal">--</span>
-                    <span class="unit">kcal/dag</span>
+                    <span class="unit">${t('stats.unit.kcalPerDay')}</span>
                 </div>
             </div>
         </div>
 
-        <div class="popup-button-container">
-            <button id="profileSaveButton" class="profile-save-btn">Gem profil</button>
+        <div class="popup-button-container" style="display:flex; gap:10px; justify-content:center;">
+            <button id="profileResetButton" class="profile-reset-btn">${t('profile.reset')}</button>
+            <button id="profileSaveButton" class="profile-save-btn">${t('profile.save')}</button>
         </div>
     `;
 
@@ -1389,6 +1465,14 @@ function showProfilePopup(options) {
             localStorage.setItem('diabetesDystenProfile', JSON.stringify(profile));
         } catch (e) { /* localStorage utilgængeligt */ }
     }
+
+    // "Reset til standard"-knap: sæt felterne tilbage til defaults
+    document.getElementById('profileResetButton').addEventListener('click', () => {
+        weightInput.value = 70;
+        icrInput.value = 10;
+        isfInput.value = 3.0;
+        updateCalculatedValues();
+    });
 
     // "Gem profil"-knap: gem og luk popup
     document.getElementById('profileSaveButton').addEventListener('click', () => {

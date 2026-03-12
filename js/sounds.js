@@ -31,12 +31,17 @@
 // Profil (vægt/ISF/ICR) gemmes separat under 'diabetesDystenProfile' — se ui.js.
 // =============================================================================
 const SETTINGS_KEY = 't1dSimSettings';
+// Detekter browsersprog — navigator.language returnerer fx 'da-DK', 'en-US', 'de'.
+// Hvis sproget starter med 'da' → dansk, ellers → engelsk.
+// Bruges kun som default ved første besøg; derefter huskes brugerens valg i localStorage.
+const detectedLanguage = (typeof navigator !== 'undefined' && navigator.language || '').startsWith('da') ? 'da' : 'en';
+
 const DEFAULT_SETTINGS = {
     muted: false,
     debugOpen: true,       // DEV DEFAULT — sæt til false ved release
     debugTrueBG: true,     // DEV DEFAULT — sæt til false ved release
     debugLog: true,        // DEV DEFAULT — sæt til false ved release
-    language: 'da'
+    language: detectedLanguage
 };
 
 /**

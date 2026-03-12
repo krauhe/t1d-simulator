@@ -1,3 +1,4 @@
+<!-- translated-from: SCIENCE.md doc-version: 2026-03-12-v2 -->
 # Blodsukkerregulering ved Type 1 Diabetes -- En Komplet Vidensoversigt
 
 *Denne guide gennemgår alle kendte faktorer der påvirker blodsukkeret hos personer med type 1 diabetes. Den er skrevet til patienter, pårørende og sundhedspersonale -- med videnskabelig dybde for dem der ønsker det.*
@@ -155,26 +156,161 @@ Fedt i et måltid bremser mavetømningen markant. Mekanismen er, at fedtet udlø
 
 ### Protein bidrager til glukose
 
-Ca. 50-60% af aminosyrerne i protein er "glukogene" -- de kan omdannes til glukose i leveren. Den klinisk relevante effekt er:
+Ca. 50-60% af aminosyrerne i protein er "glukogene" -- de kan omdannes til glukose i leveren via glukoneogenese. Men den faktiske konvertering er langt mindre end det teoretiske maksimum, og den primære mekanisme hvormed protein hæver BG ved T1D er ikke glukoneogenese, men derimod umodvirket glukagonsekretion.
 
-- Ca. 20-35% af proteinets energi ender som glukose
-- Effekten er forsinket 3-5 timer efter måltidet
-- Den lægges oven i kulhydraternes bidrag
+#### "Bernstein 25%-reglen" -- hvad viser forskningen?
 
-Et studie med børn med T1D viste, at tilføjelse af 35 gram protein til 30 gram kulhydrat øgede den samlede blodsukkerstigning med 49% i tidsvinduet 3-5 timer efter måltidet.
+Dr. Richard Bernstein populariserede påstanden om at ca. 36% af indtaget protein konverteres til glukose (nogle gange citeret som ~25%). Den teoretiske biokemi understøtter at 50-80 g glukose *kan* udvindes af 100 g protein. Men isotopspor-studier viser at den faktiske konvertering er dramatisk lavere:
 
-### Fat-Protein Units (FPU) -- en praktisk tommelfingerregel
+| Studie | Protein indtaget | Glukose fra protein | Konverteringsrate |
+|--------|-----------------|---------------------|-------------------|
+| Fromentin et al. 2013 | 23 g æggeprotein | 3,9 g over 8 t | ~17% |
+| Nuttall & Gannon 2001 | 50 g hytteost (raske) | 9,7 g over 8 t | ~19% |
+| Nuttall & Gannon 2001 | 50 g oksekød (T2D) | 2,0 g over 8 t | ~4% |
 
-Klinisk bruges FPU-konceptet til at beregne ekstra insulin til fedt og protein:
-- 1 FPU = 100 kcal fra fedt og protein
-- 1 FPU svarer til ca. 10 gram kulhydrat i insulinbehov, men med 3-5 timers forsinkelse
+Fromentin et al. (2013) brugte dobbeltmærket (^15N, ^13C) æggeprotein med isotopfortynding og fandt at kun 3,9 +/- 0,7 g glukose ud af 50,4 +/- 7,7 g total glukoseproduktion stammede fra aminosyrer -- kun 8% af den totale glukoseproduktion, med peak-bidrag på 12,1% ved 4,5 timer. De resterende aminosyre-kulstofatomer blev oxideret direkte som brændstof (CO2), ikke konverteret til glukose.
 
-Et randomiseret studie viste, at fedt- og proteinrige maltider krævede 47% mere insulin end ren kulhydrattælling ville tilsige. Det er derfor mange erfarne T1D-patienter også "tæller" fedt og protein i store måltider.
+**Konklusion:** Bernsteins 25%-regel overvurderer glukoneogenese fra protein med 2-6 gange. Den faktiske glukoseproduktion fra protein er beskeden (~4-10 g fra en 50 g proteinmængde). Den BG-hævende effekt af protein ved T1D drives primært af glukagon, ikke glukoneogenese.
+
+#### Hvorfor protein hæver BG ved T1D men ikke hos raske
+
+Den afgørende mekanisme er **umodvirket glukagonsekretion**:
+
+1. Aminosyrer fra fordøjet protein stimulerer alfa-cellernes glukagonsekretion (glutamin, arginin og alanin kan øge glukagon op til 10 gange ved fysiologiske koncentrationer)
+2. Hos raske stimulerer de samme aminosyrer også beta-cellernes insulinsekretion, som (a) undertrykker glukagon og (b) modvirker leverens glukoseproduktion. Nettoeffekt på BG: minimal.
+3. Ved T1D er der ingen endogen insulinrespons. Glukagon virker umodvirket og driver leverens glukoseproduktion (både glykogenolyse og glukoneogenese) uden modvægt fra insulin.
+
+Det er derfor protein kan hæve BG markant ved T1D mens det har lille eller ingen effekt hos ikke-diabetikere. Effekten er fundamentalt et *hormonelt* problem (glukagon/insulin-ubalance), ikke primært et *substrat*-problem (aminosyrer der konverteres til glukose).
+
+#### Tidsforløb for proteins effekt på BG
+
+Proteins glykæmiske effekt er markant langsommere og mere langvarig end kulhydraters:
+
+| Parameter | Kulhydrat (20 g glukose) | Protein (75-100 g whey, alene) |
+|-----------|---------------------------|-------------------------------|
+| Onset | ~15 min | ~90-100 min |
+| Peak | ~60 min | ~180 min |
+| Varighed | ~2-3 t | > 5 t (stadig forhøjet ved 300 min) |
+| Form | Skarp spids | Langsom, vedvarende stigning |
+
+Vigtige tidsdata fra Paterson et al. (2016): BG faldt faktisk *initialt* fra 0-90 min (sandsynligvis pga. GLP-1/GIP inkretiner der forsinker mavetømning og moderat stimulerer resterende beta-celler), og begyndte først at stige efter ~100 min, med stigningen fortsættende gennem hele den 300-minutters studieperiode.
+
+#### Dosis-respons: hvor meget protein påvirker BG?
+
+**Protein alene (ingen kulhydrat, ingen insulin)** -- Paterson et al. 2016 (T1D, whey-isolat):
+
+| Proteindosis | BG-effekt 60-120 min | BG-effekt 180-240 min | BG-effekt 240-300 min | Signifikant? |
+|-------------|---------------------|----------------------|----------------------|-------------|
+| 12,5 g | 0,00 mmol/L | +0,21 mmol/L | +0,43 mmol/L | Nej |
+| 25 g | -1,06 mmol/L | -1,38 mmol/L | -1,70 mmol/L | Ja (lavere) |
+| 50 g | -0,26 mmol/L | +0,28 mmol/L | +0,50 mmol/L | Nej |
+| 75 g | -1,10 mmol/L | +0,71 mmol/L | +1,65 mmol/L | Ja (højere) |
+| 100 g | -1,22 mmol/L | +1,06 mmol/L | +1,72 mmol/L | Ja (højere) |
+
+Afgørende fund: responsen er **ikke lineær**. Den ser ud til at have en **tærskeleffekt**: doser under ~75 g havde ingen signifikant BG-hævende effekt alene, mens >= 75 g producerede en klar, forsinket, vedvarende stigning. 25 g-dosen sænkede faktisk BG, muligvis via inkretineffekter.
+
+**Protein i blandede måltider (med kulhydrat)** -- tærsklen er meget lavere:
+
+I kulhydratholdige måltider påvirkede så lidt som 12,5 g ekstra protein det postprandielle blodsukker (Paterson 2019 systematisk review). Det skyldes at kulhydratet allerede giver den glukoneogene substrat-kontekst, og glukagonet fra protein lægges oven i.
+
+#### Protein + fedt: effekten er additiv
+
+Smart et al. (2013) demonstrerede additivitet med præcise tal hos børn med T1D (samme kulhydrat i alle måltider):
+
+| Måltidstype | BG-stigning ved 180 min | Tid til peak BG | BG-stigning ved 300 min |
+|-------------|------------------------|-----------------|------------------------|
+| Lav fedt + Lavt protein (baseline) | +0,5 mmol/L | 79 min | baseline |
+| Lav fedt + Højt protein (40 g) | +2,4 mmol/L | 96 min | forhøjet |
+| Høj fedt (35 g) + Lavt protein | +1,8 mmol/L | 126 min | forhøjet |
+| Høj fedt + Højt protein | +4,2 mmol/L | 143 min | +5,4 mmol/L vs baseline |
+
+HF/HP-stigningen (4,2 mmol/L) er lig summen af HF alene (1,8) + HP alene (2,4) -- bekræfter ren additivitet uden interaktion (P > 0,05 for interaktionsleddet). Dette forlængede også tid til peak fra 79 min (baseline) til 143 min (HF/HP).
+
+Bemærkelsesværdigt reducerede proteinrige måltider hypoglykæmirisikoen (OR 0,16, P < 0,001) -- sandsynligvis fordi glukagonresponsen forhindrer tidlige postprandielle lavninger.
+
+#### Påvirker insulin-on-board om protein hæver BG?
+
+Et kritisk spørgsmål med begrænset direkte evidens, men det mekanistiske svar er klart:
+
+- Ved T1D er protein -> glukagon -> leverens glukoseproduktion kun problematisk fordi der **ingen matchende endogen insulinrespons** er til at modvirke den
+- Når eksogen insulin er tilstrækkelig (høj IOB), undertrykker den leverens glukoseproduktion og øger perifer glukoseoptagelse, hvilket potentielt ophæver den glukagondrevne glukosestigning
+- Når eksogen insulin er lav (lav IOB, fx timer efter sidste bolus), virker glukagon umodvirket
+
+Paterson 2016-studiet gav protein **uden insulin** -- en ekstrem "nul IOB"-betingelse -- hvilket sandsynligvis maksimerede den glykæmiske effekt. I klinisk praksis ville et proteinrigt måltid indtaget kort efter en kulhydrat-dækkende bolus (når IOB er høj) sandsynligvis vise en mindre proteineffekt.
+
+#### Proteintype har betydning: absorptionshastighed påvirker glukagonrespons
+
+Dao et al. (2025) viste at postprandiel glykæmi varierede næsten 2-fold på tværs af proteinkilder ved T1D:
+
+| Proteinkilde | Glukose iAUC (mmol-min/L) | Relativ effekt |
+|-------------|--------------------------|----------------|
+| Kylling | 203 +/- 66 | Lavest |
+| Æg | 263 +/- 100 | Lav |
+| Oksekød | 309 +/- 89 | Medium |
+| Laks | 338 +/- 83 | Medium-høj |
+| Whey | 397 +/- 115 | Højest |
+
+Hurtigt absorberbare proteiner (whey) forårsager en større, tidligere glukagonspids end langsomt absorberbare proteiner (kylling, casein). Dette er klinisk relevant: en whey-proteinshake vil have en hurtigere, større BG-påvirkning end et kyllingebryst med samme proteinindhold.
+
+#### Kliniske insulindoseringsanbefalinger for protein
+
+Der er endnu ingen konsensusalgoritme (ADA 2026-retningslinjer), men flere evidensbaserede tilgange findes:
+
+**1. Fat-Protein Unit (FPU) metoden (Pankowska):**
+- 1 FPU = 100 kcal fra fedt + protein = 10 g kulhydratækvivalent i insulinbehov
+- Eksempel: 26 g protein + 22 g fedt = 302 kcal = 3 FPU = 30 g kulhydratækvivalent
+- Leveres som forlænget/dual-wave bolus over 3-8 timer
+- **Advarsel:** øger hypoglykæmirisiko ved normalt store måltider (~33% hypofrekvens)
+
+**2. Procenttillægsmetoden (Bell et al. / ISPAD 2022):**
+- For måltider med > 40 g fedt OG > 25 g protein: øg kulhydratberegnet dosis med 25-35%
+- Split: 50% upfront, 50% forlænget over 2-2,5 timer
+- ISPAD 2022 foreslår at starte med 20% ekstra for fedt-/proteinrige måltider
+
+**3. New Zealand-metoden (til lavkulhydratdiæter <= 100 g KH/dag):**
+- Brug ICR x 2 til protein (fx hvis ICR = 1:10 for kulhydrat, brug 1:20 for protein)
+- Eksempel: 60 g protein / 20 = 3 enheder
+
+**4. Timing-baseret tilgang (Campbell):**
+- Giv IKKE ekstra insulin ved måltidsstart (60% oplevede hypoglykæmi)
+- Giv 30% ekstra insulin 3 timer efter måltidet (0% hypoglykæmi)
+
+**5. Kvantitativt estimat fra kliniske data:**
+- Totalt måltidsinsulin steg med ~0,12 enheder per gram protein i blandede måltider
+- Ca. 1 enhed korrektionsinsulin per 8 g protein i et kulhydratholdigt måltid
+- Bell et al.: fedt-/proteinrige måltider krævede 65% mere insulin (spredning 17-124%)
+
+**Klinisk hovedkonklusion:** Proteininsulin bør leveres *sent* (forlænget bolus eller forsinket injektion), ikke upfront, for at matche det 2-5 timers tidsforløb for proteins glykæmiske effekt.
+
+#### Oversigtstabel: proteins glykæmiske effekt ved T1D
+
+| Spørgsmål | Svar |
+|-----------|------|
+| Hæver protein BG ved T1D? | Ja, signifikant og konsistent |
+| Primær mekanisme | Umodvirket glukagonsekretion (ikke glukoneogenese) |
+| Faktisk glukose fra glukoneogenese | ~4-10 g per 50 g protein (8-19% konvertering, ikke 25-36%) |
+| Onset | ~90-100 min (vs ~15 min for kulhydrat) |
+| Peak | ~3 timer (vs ~1 time for kulhydrat) |
+| Varighed | > 5 timer |
+| Tærskel (protein alene) | >= 75 g for signifikant effekt |
+| Tærskel (med kulhydrat) | >= 12,5 g for signifikant effekt |
+| Dosis-respons | Non-lineær, tærskel-lignende (ikke proportional) |
+| Protein + fedt | Additive effekter |
+| Ekstra insulin nødvendigt | ~20-35% mere for proteinrige måltider, leveret forlænget |
+| Effekt af proteintype | Whey (hurtig) > oksekød > æg > kylling (langsom) |
 
 > **Kilder:**
-> - Smart CEM, et al. (2013). "Both dietary protein and fat increase postprandial glucose excursions in children with type 1 diabetes, and the effect is additive." *Diabetes Care*, 36(12):3897-3902.
-> - Bell KJ, et al. (2020). "Insulin dosing for fat and protein: Is it time?" *Diabetes Care*, 43(1):13-15.
-> - Dalla Man C, et al. (2025). "Simulation of High-Fat High-Protein Meals Using the UVA/Padova T1D Simulator." *IFAC-PapersOnLine*.
+> - Paterson MA, Smart CEM, Lopez PE, et al. (2016). "Influence of dietary protein on postprandial blood glucose levels in individuals with Type 1 diabetes mellitus using intensive insulin therapy." *Diabetic Medicine*, 33(5):592-598.
+> - Paterson MA, King BR, Smart CEM, et al. (2019). "Impact of dietary protein on postprandial glycaemic control and insulin requirements in Type 1 diabetes: a systematic review." *Diabetic Medicine*, 36(12):1585-1599.
+> - Smart CEM, Evans M, O'Connell SM, et al. (2013). "Both dietary protein and fat increase postprandial glucose excursions in children with type 1 diabetes, and the effect is additive." *Diabetes Care*, 36(12):3897-3902.
+> - Gannon MC, Nuttall FQ. (2013). "Dietary protein and the blood glucose concentration." *Diabetes*, 62(5):1371-1372.
+> - Fromentin C, Tome D, Nau F, et al. (2013). "Dietary proteins contribute little to glucose production, even under optimal gluconeogenic conditions in healthy humans." *Diabetes*, 62(5):1435-1442.
+> - Bell KJ, Smart CEM, Steil GM, et al. (2015). "Impact of fat, protein, and glycemic index on postprandial glucose control in type 1 diabetes: implications for intensive diabetes management in the continuous glucose monitoring era." *Diabetes Care*, 38(6):1008-1015.
+> - Bell KJ, Barclay AW, Petocz P, et al. (2020). "Factors beyond carbohydrate to consider when determining mealtime insulin doses: protein, fat, timing, and technology." *Diabetes Technology & Therapeutics*, 22(4):286-297.
+> - Dao L, Kowalski GM, Bruce CR, et al. (2025). "The glycemic impact of protein ingestion in people with type 1 diabetes." *Diabetes Care*, 48(4):509-520.
+> - Pankowska E, Blazik M, Groele L. (2012). "Does the fat-protein meal increase postprandial glucose level in type 1 diabetes patients on insulin pump?" *Diabetes Technology & Therapeutics*, 14(1):16-22.
+> - Bisgaard Bengtsen M, Moller N. (2021). "Mini-review: Glucagon responses in type 1 diabetes -- a matter of complexity." *Physiological Reports*, 9(16):e15009.
+> - Campbell MD, Walker M, King D, et al. (2016). "Carbohydrate counting at meal time followed by a small secondary bolus may be an effective strategy for managing postprandial hyperglycaemia following a high-fat meal in type 1 diabetes." *Diabetic Medicine*, 33(Suppl 1).
 
 ---
 

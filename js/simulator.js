@@ -7,7 +7,8 @@
 //
 //   1. Blood glucose (BG) dynamics — rises from food, falls from insulin
 //   2. Insulin pharmacokinetics — absorption, activity, and clearance
-//   3. Carbohydrate absorption — delayed by fat and protein content
+//   3. Carbohydrate absorption — delayed by fat content (pizza effect)
+//   3b. Protein absorption — amino acids → glucagon → hepatic glucose production
 //   4. Exercise effects — aerobic (BG-lowering) and anaerobic (BG-raising)
 //   5. Stress hormones — cortisol, glucagon, adrenaline affecting liver output
 //   6. Circadian rhythm — dawn effect (morning cortisol peak)
@@ -250,6 +251,63 @@ class Simulator {
         // Indeholder: { type, intensitet, startTime, varighed, typeDef, kcalPerMin }
         this.activeAktivitet = null;
 
+        // --- Fedt-kompartmenter (pizza-effekt) ---
+        // Fedt i maven og tarmen modellerer fedts forsinkelse af kulhydratabsorption.
+        // Fedt i tarmen (intestine) er den fysiologisk aktive variabel: det udløser
+        // CCK/GLP-1 hormoner der signalerer maven om at tømme langsommere (øget τG).
+        //
+        // Flow: mad → fatStomach →(τG)→ fatIntestine →(τFatAbs)→ absorberet
+        //
+        // τFatAbs = 150 min (fedt absorberes langsomt: galde-emulgering + lipase-spalting)
+        // Effekt: τG = 40 + 18 × ln(1 + fatIntestine / 10)
+        //
+        // Kilder: Smart 2013, Wolpert 2013, Lodefalk 2008, Gentilcore 2006
+        this.fatStomach = 0;            // Gram fedt i maven (tømmes med τG)
+        this.fatIntestine = 0;          // Gram fedt i tarmen (tømmes med τFatAbs=150 min)
+        this.TAU_FAT_ABS = 150;         // Tidskonstant for fedt-absorption i tarmen [min]
+
+        // --- Protein-kompartmenter (glukagon-drevet HGP) ---
+        // Protein modelleres som aminosyre-absorption der stimulerer glukagonsekretion.
+        // Ved T1D har patienten ingen endogen insulin-respons til at modvirke glukagonet,
+        // så aminosyrerne driver en umodvirket HGP-stigning via leveren.
+        //
+        // Dette er den PRIMÆRE mekanisme — IKKE direkte glukoneogenese fra protein.
+        // Isotop-studier viser kun 4-19% konvertering (Fromentin 2013, Nuttall 2001),
+        // men BG-stigningen ved T1D er langt større pga. glukagon-effekten (Paterson 2016).
+        //
+        // Flow: mad → proteinStomach →(τG)→ proteinGut →(τProtAbs)→ aminoAcidsBlood
+        //                                                                  ↓
+        //                                                        glukagon-stimulering
+        //                                                                  ↓
+        //                                                        proteinGlucagonLevel → EGP
+        //
+        // Tidsforløb (fra Paterson 2016):
+        //   Onset: ~60-90 min (aminosyrer skal absorberes fra tarmen først)
+        //   Peak:  ~150-180 min (3 timer efter måltid)
+        //   Varighed: >5 timer (langsom clearance)
+        //
+        // Dosis-respons (Paterson 2016):
+        //   <75g protein alene: minimal BG-effekt (inkretiner dominerer)
+        //   ≥75g protein alene: +1.6-1.7 mmol/L ved 4-5 timer
+        //   I blandet måltid: effekt allerede fra ~12.5g (insulin dækker KH, ikke glukagon)
+        //
+        // Kilder: Paterson 2016, Smart 2013, Gannon & Nuttall 2001/2013,
+        //         Fromentin 2013, Bell 2015/2020, Bengtsen 2021
+        this.proteinStomach = 0;        // Gram protein i maven (tømmes med τG)
+        this.proteinGut = 0;            // Gram protein i tarmen (absorberes med τProtAbs)
+        this.aminoAcidsBlood = 0;       // Aminosyre-niveau i blodet (arbitrær enhed, ~gram-ækvivalent)
+        this.proteinGlucagonLevel = 0;  // Glukagon-stimulering fra aminosyrer (adderes til stressMultiplier)
+        this.TAU_PROT_ABS = 90;         // Tidskonstant for protein-absorption fra tarm [min]
+                                        // Langsommere end KH (~40 min) men hurtigere end fedt (~150 min)
+        this.AA_DECAY_RATE = Math.log(2) / 60;  // Aminosyre-clearance halveringstid ~60 min
+        // Glukagon-stimulering: Hill-funktion med tærskel
+        // EC50=8: halvmaksimal effekt ved ~8g aminosyrer i blodet
+        // Hill n=2: moderat stej S-kurve (tærskeleffekt uden on/off)
+        // maxGlucagon=0.25: maks BG-stigning ~25% af EGP (matcher Paterson: +1.7 mmol/L ved 75g)
+        this.AA_EC50 = 8;               // Halvmaksimal glukagon-stimulering [g aminosyrer]
+        this.AA_HILL_N = 2;             // Hill-koefficient (stejlhed af dose-respons)
+        this.PROTEIN_GLUCAGON_MAX = 0.25; // Maks glukagon-bidrag til stressMultiplier
+
         // --- Aggregate state ---
         this.iob = 0;                  // Insulin On Board: total active fast insulin (units)
         this.cob = 0;                  // Carbs On Board: total unabsorbed carbs (grams)
@@ -270,6 +328,18 @@ class Simulator {
         // Ketonniveauet stiger ved insulinmangel + høj BG, og falder når der gives insulin.
         // Spilleren kan måle ketoner med et "keton-stik" (som fingerprik).
         this.ketoneLevel = 0.1;                 // Starter normalt (< 0.6 mmol/L)
+
+        // --- Fingerprik cooldown ---
+        // Teststrimler er dyre (~8 kr/stk) og stikket er ubehageligt.
+        // 3 timers cooldown simulerer at man ikke prikker sig hele tiden i virkeligheden.
+        this.fingerprickUsedTime = -Infinity; // Sidste fingerprik-tidspunkt (3t cooldown)
+        this.fingerprickOnCooldown = false;
+
+        // --- Keton-stik cooldown ---
+        // Keton-teststrimler er endnu dyrere (~20 kr/stk).
+        // 6 timers cooldown — man måler kun ketoner ved reel mistanke om insulinmangel.
+        this.ketoneTestUsedTime = -Infinity;
+        this.ketoneTestOnCooldown = false;
 
         // --- Emergency glucagon ---
         // Glucagon is a hormone that rapidly raises BG by telling the liver to dump glucose.
@@ -608,7 +678,7 @@ class Simulator {
         // Basis-variation: mean 0.15, std 0.03 (CV ~20%)
         // NOTE: Reduceret fra 0.30 til 0.15 fordi dawn-effekten nu er DELT
         // mellem HGP-stigning (denne kurve) og cirkadisk ISF-reduktion
-        // (circadianISF getter). Se FYSIOLOGI.md afsnit 8 for begrundelse.
+        // (circadianISF getter). Se PHYSIOLOGY.md section 8 for begrundelse.
         let amplitude = Math.max(0.05, Math.min(0.35, this.gaussRand(0.15, 0.03)));
 
         // Dårlig søvn forstærker dawn (+12% per mistet time søvn)
@@ -748,7 +818,7 @@ class Simulator {
     //
     // VIGTIGT: Denne model er bygget på mangelfuld evidens og klinisk
     // erfaring. Bør opdateres hvis bedre kvantitative data bliver
-    // tilgængelige. Se FYSIOLOGI.md afsnit 8 og VIDENSKAB.md afsnit 14.
+    // tilgængelige. Se PHYSIOLOGY.md section 8 og SCIENCE.md section 14.
     // =========================================================================
     get circadianISF() {
         const t = this.timeInMinutes;
@@ -921,15 +991,78 @@ class Simulator {
         const totalIOB = (this.hovorka.state[2] + this.hovorka.state[3]) / 1000;
         this.iob = Math.max(0, totalIOB - this.basalIOBbaseline);
 
-        // --- 2. BEREGN KULHYDRAT-RATE til Hovorka D1/D2 [mmol/min] ---
+        // --- 2. FEDT-KOMPARTMENTER OG DYNAMISK τG (pizza-effekt) ---
+        //
+        // Fedt modelleres med to kompartmenter parallelt til kulhydraternes D1/D2:
+        //   fatStomach → fatIntestine → absorberet (FFA i blodet)
+        //
+        // Fedt i tarmen udløser CCK/GLP-1 hormoner der bremser mavetømning.
+        // Effekten er logaritmisk mættende: de første 20g fedt bremser mest.
+        //
+        // Kilder: Smart 2013 (35g fedt forsinkede peak 47 min),
+        //         Wolpert 2013, Lodefalk 2008, Gentilcore 2006
+        // -----------------------------------------------------------------
+
+        // Fedt-kompartment ODE'er (Euler-integration, dt = simuleringstidsstep)
+        const currentTauG = 40 + 18 * Math.log(1 + this.fatIntestine / 10);
+        const fatStomachToIntestine = this.fatStomach / currentTauG * simulatedMinutesPassed;
+        const fatIntestineAbsorbed = this.fatIntestine / this.TAU_FAT_ABS * simulatedMinutesPassed;
+        this.fatStomach = Math.max(0, this.fatStomach - fatStomachToIntestine);
+        this.fatIntestine = Math.max(0, this.fatIntestine + fatStomachToIntestine - fatIntestineAbsorbed);
+
+        // Opdater Hovorka's τG dynamisk — dette påvirker D1→D2 og D2→blod raten
+        this.hovorka.tau_G = currentTauG;
+
+        // --- 2b. PROTEIN-KOMPARTMENTER OG GLUKAGON-DREVET HGP ---
+        //
+        // Protein modelleres med tre kompartmenter:
+        //   proteinStomach →(τG)→ proteinGut →(τProtAbs)→ aminoAcidsBlood →(decay)→ 0
+        //
+        // Aminosyrer i blodet stimulerer alfa-cellernes glukagonsekretion.
+        // Ved T1D er der ingen endogen insulinrespons → glukagon virker umodvirket
+        // → leveren øger glukoseproduktionen (HGP) via glycogenolyse/gluconeogenese.
+        //
+        // Dosis-respons: Hill-funktion (tærskeleffekt + mætning)
+        //   proteinGlucagonLevel = maxGlucagon × AA^n / (EC50^n + AA^n)
+        //
+        // Tidsforløb (matcher Paterson 2016):
+        //   Onset ~60-90 min, Peak ~150-180 min, Varighed >5 timer
+        //
+        // Kilder: Paterson 2016, Smart 2013, Gannon 2001/2013, Fromentin 2013,
+        //         Bell 2015/2020, Bengtsen 2021
+        // -----------------------------------------------------------------
+
+        // Protein transit: mave → tarm (deler τG med kulhydrater — blandes i samme mave)
+        const protStomachToGut = this.proteinStomach / currentTauG * simulatedMinutesPassed;
+        this.proteinStomach = Math.max(0, this.proteinStomach - protStomachToGut);
+
+        // Protein absorption: tarm → aminosyrer i blod (τProtAbs = 90 min)
+        // Langsommere end KH (~40 min) men hurtigere end fedt (~150 min)
+        // Proteiner skal spaltes af proteaser (pepsin, trypsin) før absorption
+        const protGutAbsorbed = this.proteinGut / this.TAU_PROT_ABS * simulatedMinutesPassed;
+        this.proteinGut = Math.max(0, this.proteinGut + protStomachToGut - protGutAbsorbed);
+
+        // Aminosyre-pool i blodet: tilføj absorberede + naturlig clearance
+        // Clearance via oxidation, proteinsyntese, og renal udskillelse (t½ ~60 min)
+        const aaDecay = this.aminoAcidsBlood * this.AA_DECAY_RATE * simulatedMinutesPassed;
+        this.aminoAcidsBlood = Math.max(0, this.aminoAcidsBlood + protGutAbsorbed - aaDecay);
+
+        // Glukagon-stimulering fra aminosyrer: Hill-funktion
+        // Giver tærskeleffekt (lidt protein = næsten ingen effekt) og mætning (meget protein platauer)
+        // EC50=8g: halvmaksimal ved ~8g aminosyrer i blodet
+        // Hill n=2: moderat S-kurve
+        // maxGlucagon=0.25: maks ~25% øget EGP (kalibreret til Paterson 2016: +1.7 mmol/L ved 75g)
+        const aaN = Math.pow(this.aminoAcidsBlood, this.AA_HILL_N);
+        const ec50N = Math.pow(this.AA_EC50, this.AA_HILL_N);
+        this.proteinGlucagonLevel = this.PROTEIN_GLUCAGON_MAX * aaN / (ec50N + aaN);
+
+        // --- BEREGN KULHYDRAT-RATE til Hovorka D1/D2 [mmol/min] ---
         //
         // Kulhydrater feedes ind i Hovorka's D1→D2 tarm-kompartmenter via
-        // carbRate. Modellens to-kompartment tarm-model (τG=40 min) giver
-        // automatisk realistisk absorption med forsinket peak og gradvis optag.
+        // carbRate. Med den dynamiske τG giver modellen automatisk langsommere
+        // absorption når der er fedt i tarmen (pizza-effekten).
         //
-        // Fedt påvirker τG (mavetømningshastighed) — dette håndteres ved at
-        // justere Hovorka's tau_G parameter dynamisk baseret på måltidets
-        // fedtindhold. Protein bidrager med ~25% som forsinkede kulhydrater.
+        // Protein påvirker BG via glukagon-stimulering (se ovenfor), IKKE som kulhydrater.
         //
         // Mad-items har en "spisetid" (10 min default) hvor carbRate er aktiv.
         let totalCarbRate = 0;
@@ -944,24 +1077,16 @@ class Simulator {
                 totalCarbRate += (food.carbs * 1000 / 180) / eatingDuration;
             }
 
-            // Protein som forsinkede kulhydrater (25% effekt, 30 min forsinkelse)
-            const proteinDelay = 30;
-            const proteinDuration = 60; // protein absorberes langsommere
-            if (food.protein > 0 &&
-                timeSinceConsumption >= proteinDelay &&
-                timeSinceConsumption < proteinDelay + proteinDuration) {
-                totalCarbRate += (food.protein * 0.25 * 1000 / 180) / proteinDuration;
-            }
-
             // COB tracking: estimer resterende kulhydrater baseret på tid.
-            // Hovorka's D1/D2 har τG=40, så ~95% absorberet efter 3*τG=120 min.
-            const carbDecay = Math.max(0, 1 - timeSinceConsumption / 120);
-            const protDecay = Math.max(0, 1 - Math.max(0, timeSinceConsumption - proteinDelay) / 120);
-            this.cob += food.carbs * carbDecay + food.protein * 0.25 * protDecay;
+            // Med dynamisk τG bruger vi den aktuelle τG til decay-estimat.
+            // Protein er IKKE del af COB — det påvirker BG via glukagon, ikke som kulhydrat.
+            const decayTime = 3 * currentTauG; // ~95% absorberet efter 3×τG
+            const carbDecay = Math.max(0, 1 - timeSinceConsumption / decayTime);
+            this.cob += food.carbs * carbDecay;
         });
-        // Fjern mad-entries efter 3 timer (al absorption færdig)
+        // Fjern mad-entries efter 6 timer (fedt kan forlænge absorption betydeligt)
         this.activeFood = this.activeFood.filter(f =>
-            (this.totalSimMinutes - f.startTime) < 180);
+            (this.totalSimMinutes - f.startTime) < 360);
 
         // --- 3. BEREGN PULS OG AKTIVITETSEFFEKTER ---
         // Aktivitetstypen bestemmer målpuls, E1-skalering, stress og stressreduktion.
@@ -1045,15 +1170,20 @@ class Simulator {
         //
         // Akut stress (Somogyi) driver EKSTRA glycogenolysis — kræver også glykogen.
         // Kronisk stress og circadian kortisol driver gluconeogenese — uafhængig af glykogen.
+        // Protein-glukagon driver EKSTRA glycogenolyse+gluconeogenese — kræver delvist glykogen.
         //
         // Effekt ved tom glycogen:
-        //   stressMultiplier = 0.5 + 0 + chronic + circadian (halveret baseline + ingen stress)
-        //   EGP ≈ EGP_0 × 0.5 ≈ F_01c ved BG~2.5 → BG ustabilt → falder under motion
+        //   stressMultiplier = 0.5 + 0 + chronic + circadian + protGlucagon×0.5
+        //   Protein-glukagon halveres ved tom glykogen (halvdelen er glycogenolyse-drevet)
         const glycogenBaseline = 0.5 * this.glycogenReserve; // 0.0-0.5 (glycogenolysis)
         const gngBaseline = 0.5;                              // altid 0.5 (gluconeogenese)
         const effectiveAcuteStress = this.acuteStressLevel * this.glycogenReserve;
+        // Protein-glukagon: ~50% via glycogenolyse (kræver glykogen), ~50% via gluconeogenese
+        // Ved tom glykogen forbliver gluconeogenese-delen (aminosyrer → glukose)
+        const effectiveProteinGlucagon = this.proteinGlucagonLevel *
+            (0.5 + 0.5 * this.glycogenReserve);
         const stressMultiplikator = glycogenBaseline + gngBaseline + effectiveAcuteStress +
-            this.chronicStressLevel + this.circadianKortisolNiveau;
+            this.chronicStressLevel + this.circadianKortisolNiveau + effectiveProteinGlucagon;
 
         this.hovorka.insulinRate = totalInsulinRate;
         // Kulhydrater feedes nu via Hovorka's D1→D2 tarm-model (ikke direkte Q1).
@@ -1193,7 +1323,7 @@ class Simulator {
                     const minutesTilKl12 = (12 * 60) - this.timeInMinutes;
                     this.graphMessages.push({
                         id: reminderId,
-                        text: "Husk basal insulin!",
+                        text: t('graph.basalReminder'),
                         expireTime: this.totalSimMinutes + Math.max(60, minutesTilKl12)
                     });
                 }
@@ -1210,6 +1340,8 @@ class Simulator {
         this.updateStats();
         this.checkGameOverConditions();
         this.updateGlucagonStatus();
+        this.updateFingerprickStatus();
+        this.updateKetoneTestStatus();
     }
 
     // =========================================================================
@@ -1332,10 +1464,10 @@ class Simulator {
                     // andre ligger man længe vågen (1.5t). Mean 1.0, std 0.3.
                     const sleepLoss = Math.max(0.3, Math.min(1.8, this.gaussRand(1.0, 0.3)));
                     this.lostSleepHoursTonight = Math.min(MAX_LOST_SLEEP, this.lostSleepHoursTonight + sleepLoss);
-                    logEvent(`Søvnforstyrrelse! Mistet ~${this.lostSleepHoursTonight.toFixed(1)} times søvn i nat.`, 'event');
+                    logEvent(t('log.sleepDisruption', {hours: this.lostSleepHoursTonight.toFixed(1)}), 'event');
                     this.graphMessages.push({
                         id: `sleep_disruption_${this.totalSimMinutes}`,
-                        text: `zZzz... -${this.lostSleepHoursTonight.toFixed(1)}t søvn`,
+                        text: t('graph.sleepLoss', {hours: this.lostSleepHoursTonight.toFixed(1)}),
                         expireTime: this.totalSimMinutes + 60 // Vis i 1 sim-time
                     });
                 }
@@ -1362,7 +1494,7 @@ class Simulator {
         if (this.lostSleepHoursTonight > 0 && this.sleepDebtAppliedForDay !== this.day) {
             const stressBoost = this.lostSleepHoursTonight * 0.06;
             this.chronicStressLevel = Math.min(1.0, this.chronicStressLevel + stressBoost);
-            logEvent(`Dårlig søvn: ${this.lostSleepHoursTonight}t tabt → insulinresistens øget ~${(stressBoost * 100).toFixed(0)}%`, 'event');
+            logEvent(t('log.sleepDebt', {hours: this.lostSleepHoursTonight, percent: (stressBoost * 100).toFixed(0)}), 'event');
             this.sleepDebtAppliedForDay = this.day;
             this.lostSleepHoursTonight = 0;
             this.lastNightAwakeningTime = -Infinity;
@@ -1394,16 +1526,19 @@ class Simulator {
      * during subsequent update() calls. Fat slows carb absorption significantly.
      *
      * @param {number} carbs   - Grams of carbohydrate (primary BG impact)
-     * @param {number} protein - Grams of protein (secondary BG impact, ~25% of carbs)
-     * @param {number} fat     - Grams of fat (slows absorption, no direct BG impact)
+     * @param {number} protein - Grams of protein (raises BG via glucagon-driven HGP, delayed onset)
+     * @param {number} fat     - Grams of fat (slows carb absorption via CCK/GLP-1, pizza effect)
      * @param {string} icon    - Emoji icon for the graph/log display (default: fork/knife)
      */
     addFood(carbs, protein, fat, icon = '🍴') {
         this.handleNightIntervention();
         const foodKcal = (carbs * 4) + (protein * 4) + (fat * 9); // Standard calorie calculation
         this.totalKcalConsumed += foodKcal;
-        logEvent(`Mad: ${carbs}g K, ${protein}g P, ${fat}g F`, 'food', {kcal: foodKcal, carbs, protein, icon});
-        this.activeFood.push({ carbs, protein, fat, startTime: this.totalSimMinutes, carbsAbsorbed: 0, proteinAbsorbed: 0 });
+        logEvent(t('log.food', {carbs, protein, fat}), 'food', {kcal: foodKcal, carbs, protein, icon});
+        this.activeFood.push({ carbs, protein, fat, startTime: this.totalSimMinutes, carbsAbsorbed: 0 });
+        // Fedt og protein tilføjes direkte til mave-kompartmenterne (blandes med eksisterende indhold)
+        this.fatStomach += fat;
+        this.proteinStomach += protein;
         playSound('eating');
     }
 
@@ -1426,7 +1561,7 @@ class Simulator {
      */
     addFastInsulin(dose) {
         this.handleNightIntervention();
-        logEvent(`Hurtig insulin: ${dose}E`, 'insulin-fast', {dose});
+        logEvent(t('log.fastInsulin', {dose}), 'insulin-fast', {dose});
 
         // -----------------------------------------------------------------
         // Randomiseret farmakokinetik — normalfordelt variation per injektion.
@@ -1484,7 +1619,7 @@ class Simulator {
     addLongInsulin(dose, injectionTime = this.totalSimMinutes, isSilent = false) {
          if (!isSilent) {
             this.handleNightIntervention();
-            logEvent(`Basal insulin: ${dose}E`, 'insulin-basal', {dose});
+            logEvent(t('log.basalInsulin', {dose}), 'insulin-basal', {dose});
             this.basalReminderGivenForDay[this.day-1] = true;
             // Fjern basal-reminder fra grafen med det samme
             this.graphMessages = this.graphMessages.filter(msg =>
@@ -1782,7 +1917,7 @@ class Simulator {
      */
     addAcuteStress(amount) {
         this.acuteStressLevel = Math.min(0.4, this.acuteStressLevel + amount);
-        logEvent(`Akut stresshormon-stigning: +${amount.toFixed(2)} (fx adrenalin/glukagon)`, 'event');
+        logEvent(t('log.acuteStress', {amount: amount.toFixed(2)}), 'event');
     }
 
     /**
@@ -1796,7 +1931,7 @@ class Simulator {
      */
     addChronicStress(amount) {
         this.chronicStressLevel = Math.min(1.5, this.chronicStressLevel + amount);
-        logEvent(`Kronisk stressniveau øget: +${amount.toFixed(2)} (fx kortisol ved sygdom)`, 'event');
+        logEvent(t('log.chronicStress', {amount: amount.toFixed(2)}), 'event');
     }
 
 
@@ -1845,8 +1980,12 @@ class Simulator {
 
         // Estimeret kcal (kun for fast varighed — åben akkumulerer løbende)
         const estimatedKcal = varighed ? (kcalPerMinute * varighed) : 0;
+        const actName = t(`activity.name.${type}`);
+        const actIntensity = t(`activity.intensity.${intensitet === 'Lav' ? 'low' : intensitet === 'Høj' ? 'high' : 'medium'}`);
+        const durationStr = varighed ? t('log.activity.duration.fixed', {min: varighed}) : t('log.activity.duration.open');
+        const kcalStr = estimatedKcal ? t('log.activity.kcal', {kcal: estimatedKcal}) : '';
         logEvent(
-            `Aktivitet: ${typeDef.navn} (${intensitet})${varighed ? `, ${varighed} min` : ', åben'}${estimatedKcal ? ` (~${estimatedKcal} kcal)` : ''}`,
+            t('log.activityStart', {name: actName, intensity: actIntensity, duration: durationStr, kcal: kcalStr}),
             'motion',
             { type, intensity: intensitet, duration: varighed, kcalBurned: estimatedKcal, icon: typeDef.icon }
         );
@@ -1925,8 +2064,10 @@ class Simulator {
             originalEvent.details.kcalBurned = Math.round(akt.kcalBurned);
         }
 
+        const endActName = t(`activity.name.${akt.type}`);
+        const endActIntensity = t(`activity.intensity.${akt.intensitet === 'Lav' ? 'low' : akt.intensitet === 'Høj' ? 'high' : 'medium'}`);
         logEvent(
-            `Aktivitet slut: ${akt.typeDef.navn} (${akt.intensitet}), ${Math.round(actualDuration)} min, ${Math.round(akt.kcalBurned)} kcal`,
+            t('log.activityEnd', {name: endActName, intensity: endActIntensity, duration: Math.round(actualDuration), kcal: Math.round(akt.kcalBurned)}),
             'motion-end',
             { type: akt.type, intensity: akt.intensitet, duration: Math.round(actualDuration), kcalBurned: Math.round(akt.kcalBurned), icon: akt.typeDef.icon }
         );
@@ -1950,9 +2091,13 @@ class Simulator {
      * Incurs only a 30-minute night penalty (vs. 120 for other interventions).
      */
     performFingerprick() {
+        // Cooldown-check: teststrimler er dyre og stikket gør ondt — 3 timers cooldown
+        const cooldownMinutes = 3 * 60;
+        if (this.totalSimMinutes - this.fingerprickUsedTime < cooldownMinutes) return;
+
         this.handleNightIntervention();
         const measuredBG = this.trueBG * (1 + (Math.random() * 0.1 - 0.05)); // ±5% error
-        logEvent(`Fingerprik: ${measuredBG.toFixed(1)} mmol/L`, 'fingerprick', {value: measuredBG.toFixed(1)});
+        logEvent(t('log.fingerprick', {value: measuredBG.toFixed(1)}), 'fingerprick', {value: measuredBG.toFixed(1)});
         cgmDataPoints.push({ time: this.totalSimMinutes, value: measuredBG, type: 'fingerprick' });
 
         // Floating label over målepunktet på grafen (spil-agtigt feedback)
@@ -1966,6 +2111,45 @@ class Simulator {
             duration: 90  // Synlig i 90 sim-minutter
         });
         playSound('intervention', 'B4');
+
+        this.fingerprickUsedTime = this.totalSimMinutes;
+        this.updateFingerprickStatus();
+    }
+
+    /**
+     * updateFingerprickStatus — Aktivér/deaktivér fingerprik-knappen baseret på cooldown.
+     *
+     * Teststrimler koster ~8 kr/stk og stikket er ubehageligt. I virkeligheden
+     * prikker man sig typisk 4-8 gange om dagen (hver 3. time).
+     * Cooldown: 3 simulerede timer. Lagkage-animation viser resterende tid.
+     */
+    updateFingerprickStatus() {
+        const cooldownMinutes = 3 * 60;
+        const timeSinceUsed = this.totalSimMinutes - this.fingerprickUsedTime;
+        const onCooldown = timeSinceUsed < cooldownMinutes;
+        this.fingerprickOnCooldown = onCooldown;
+
+        const btn = document.getElementById('fingerprickButton');
+        if (btn) {
+            if (onCooldown) {
+                btn.classList.add('on-cooldown');
+                btn.style.pointerEvents = 'none';
+                const pct = Math.min(100, (timeSinceUsed / cooldownMinutes) * 100);
+                btn.style.setProperty('--cooldown-pct', pct.toFixed(1));
+                // Vis resterende tid
+                const remaining = cooldownMinutes - timeSinceUsed;
+                const hours = Math.floor(remaining / 60);
+                const mins = Math.floor(remaining % 60);
+                const nameEl = btn.querySelector('.pc-name');
+                if (nameEl) nameEl.textContent = `${hours}t ${mins}m`;
+            } else {
+                btn.classList.remove('on-cooldown');
+                btn.style.removeProperty('pointer-events');
+                btn.style.removeProperty('--cooldown-pct');
+                const nameEl = btn.querySelector('.pc-name');
+                if (nameEl) nameEl.textContent = t('kit.fingerprick');
+            }
+        }
     }
 
     // =========================================================================
@@ -2016,6 +2200,10 @@ class Simulator {
      * Koster 30-minutters natpenalty (ligesom fingerprik).
      */
     performKetoneTest() {
+        // Cooldown-check: keton-strimler er dyre (~20 kr) — 6 timers cooldown
+        const cooldownMinutes = 6 * 60;
+        if (this.totalSimMinutes - this.ketoneTestUsedTime < cooldownMinutes) return;
+
         this.handleNightIntervention();
         const measured = this.ketoneLevel * (1 + (Math.random() * 0.2 - 0.1)); // ±10% fejl
         const measuredClamped = Math.max(0, measured);
@@ -2029,16 +2217,16 @@ class Simulator {
         // NB: Faste-ketose kan give 3-4 mmol/L uden fare — kontekst er vigtig!
         let statusShort;
         if (measuredClamped < 0.6) {
-            statusShort = 'OK';
+            statusShort = t('ketone.ok');
         } else if (measuredClamped < 1.5) {
-            statusShort = 'Forhøjet';
+            statusShort = t('ketone.elevated');
         } else if (measuredClamped < 3.0) {
-            statusShort = 'Høj!';
+            statusShort = t('ketone.high');
         } else {
-            statusShort = 'KRITISK!';
+            statusShort = t('ketone.critical');
         }
 
-        logEvent(`Keton-stik: ${measuredClamped.toFixed(1)} mmol/L — ${statusShort}`, 'ketone-test', { value: measuredClamped.toFixed(1) });
+        logEvent(t('log.ketoneTest', {value: measuredClamped.toFixed(1), status: statusShort}), 'ketone-test', { value: measuredClamped.toFixed(1) });
 
         // Floating label over CGM-positionen på grafen
         const popupColor = measuredClamped < 0.6 ? '#38a169' : measuredClamped < 1.5 ? '#d69e2e' : measuredClamped < 3.0 ? '#e67e22' : '#b91c1c';
@@ -2051,6 +2239,44 @@ class Simulator {
             duration: 120  // Synlig i 120 sim-minutter (lidt længere for keton)
         });
         playSound('intervention', 'B4');
+
+        this.ketoneTestUsedTime = this.totalSimMinutes;
+        this.updateKetoneTestStatus();
+    }
+
+    /**
+     * updateKetoneTestStatus — Aktivér/deaktivér keton-stik-knappen baseret på cooldown.
+     *
+     * Keton-teststrimler koster ~20 kr/stk. I virkeligheden måler man kun ketoner
+     * ved mistanke om insulinmangel (højt BG, kvalme, mavesmerter).
+     * Cooldown: 6 simulerede timer. Lagkage-animation viser resterende tid.
+     */
+    updateKetoneTestStatus() {
+        const cooldownMinutes = 6 * 60;
+        const timeSinceUsed = this.totalSimMinutes - this.ketoneTestUsedTime;
+        const onCooldown = timeSinceUsed < cooldownMinutes;
+        this.ketoneTestOnCooldown = onCooldown;
+
+        const btn = document.getElementById('ketoneTestButton');
+        if (btn) {
+            if (onCooldown) {
+                btn.classList.add('on-cooldown');
+                btn.style.pointerEvents = 'none';
+                const pct = Math.min(100, (timeSinceUsed / cooldownMinutes) * 100);
+                btn.style.setProperty('--cooldown-pct', pct.toFixed(1));
+                const remaining = cooldownMinutes - timeSinceUsed;
+                const hours = Math.floor(remaining / 60);
+                const mins = Math.floor(remaining % 60);
+                const nameEl = btn.querySelector('.pc-name');
+                if (nameEl) nameEl.textContent = `${hours}t ${mins}m`;
+            } else {
+                btn.classList.remove('on-cooldown');
+                btn.style.removeProperty('pointer-events');
+                btn.style.removeProperty('--cooldown-pct');
+                const nameEl = btn.querySelector('.pc-name');
+                if (nameEl) nameEl.textContent = t('kit.ketone');
+            }
+        }
     }
 
     /**
@@ -2085,7 +2311,7 @@ class Simulator {
                 btn.style.removeProperty('--cooldown-pct');
                 // Gendan label
                 const nameEl = btn.querySelector('.pc-name');
-                if (nameEl) nameEl.textContent = 'Glukagon';
+                if (nameEl) nameEl.textContent = t('kit.glucagon');
             }
         }
     }
@@ -2105,7 +2331,7 @@ class Simulator {
         const cooldownMinutes = 24 * 60;
         if (this.totalSimMinutes - this.glucagonUsedTime < cooldownMinutes) return;
         this.handleNightIntervention();
-        logEvent("Glukagon brugt! BG stiger hurtigt.", 'glucagon');
+        logEvent(t('log.glucagon'), 'glucagon');
 
         // Glucagon stimulerer leverens glykogenolyse → glukose dumpes i plasma.
         // Vi tilføjer glukose direkte til Hovorka-modellens Q1 (plasma-glukose)
@@ -2179,16 +2405,14 @@ class Simulator {
 
         // Condition 1: Severe hypoglycemia — instant death
         if (this.trueBG < 1.5) {
-            this.gameOver("Svær Hypoglykæmi", {
-                cause: `Dit blodsukker faldt til ${this.trueBG.toFixed(1)} mmol/L — under den kritiske grænse på 1.5 mmol/L.`,
-                explanation:
-                    `Hjernen er afhængig af glukose som energikilde. Ved meget lavt blodsukker ` +
-                    `kan hjernen ikke fungere normalt, hvilket fører til kramper, bevidstløshed og i værste fald død.`,
+            this.gameOver(t('game.over.hypo.name'), {
+                cause: t('game.over.hypo.cause', {bg: this.trueBG.toFixed(1)}),
+                explanation: t('game.over.hypo.explanation'),
                 tips: [
-                    'Spis hurtigt sukker (dextrose, juice) ved de første tegn på lavt blodsukker',
-                    'Hold øje med dit CGM — faldende kurve kræver handling',
-                    'Pas på kombinationen af insulin og motion — motion øger insulinens virkning og kan give uventet lavt blodsukker. Reducer dosis eller spis ekstra før motion',
-                    'Brug glukagon (✚) som nødbehandling ved alvorlig hypo'
+                    t('game.over.hypo.tip1'),
+                    t('game.over.hypo.tip2'),
+                    t('game.over.hypo.tip3'),
+                    t('game.over.hypo.tip4')
                 ]
             });
             return;
@@ -2196,16 +2420,13 @@ class Simulator {
 
         // Condition 2: Extreme weight change
         if (Math.abs(this.weightChangeKg) > 5.0) {
-            this.gameOver("Ekstrem Vægtændring", {
-                cause: `Din vægtændring oversteg 5 kg (${this.weightChangeKg.toFixed(1)} kg).`,
-                explanation:
-                    `En vægtændring over 5 kg på kort tid indikerer alvorlig ubalance mellem ` +
-                    `kalorieindtag og -forbrug. Ved diabetes kan dette skyldes manglende insulin ` +
-                    `(kroppen forbrænder fedt og muskler) eller for meget mad i forhold til aktivitetsniveauet.`,
+            this.gameOver(t('game.over.weight.name'), {
+                cause: t('game.over.weight.cause', {weight: this.weightChangeKg.toFixed(1)}),
+                explanation: t('game.over.weight.explanation'),
                 tips: [
-                    'Sørg for at spise regelmæssigt og tilstrækkeligt',
-                    'Hold øje med din kaloriebalance i statistikken',
-                    'Husk din daglige basal-insulin — uden den nedbryder kroppen væv'
+                    t('game.over.weight.tip1'),
+                    t('game.over.weight.tip2'),
+                    t('game.over.weight.tip3')
                 ]
             });
             return;
@@ -2237,27 +2458,20 @@ class Simulator {
             this.dkaWarning1Given = true;
             this.dkaGameOverTime = this.totalSimMinutes + 12 * 60; // 12 more hours until death
             // shouldPause = true (sidste parameter) → pauser spillet så spilleren kan læse advarslen
-            showPopup("Advarsel: Risiko for Ketoacidose!",
-                "Du har haft højt blodsukker i lang tid. Kendte symptomer på ketoacidose:<br><br>" +
-                "<strong>Tidlige tegn:</strong> Øget tørst, hyppig vandladning, træthed, mundtørhed.<br>" +
-                "<strong>Advarselstegn:</strong> Kvalme, mavesmerter, hurtig vejrtrækning, acetonlugt fra ånde.<br><br>" +
-                "💡 <strong>Tip:</strong> Tag et keton-stik (🧪) for at tjekke dit ketonniveau. Overvej om du har fået nok insulin.",
+            showPopup(t('dka.warning.title'),
+                t('dka.warning.message'),
                 false, true, false, true);
         }
         // DKA Death: 12 hours after the warning (18 hours total)
         if (this.dkaGameOverTime !== -1 && this.totalSimMinutes >= this.dkaGameOverTime) {
-            this.gameOver("Diabetisk Ketoacidose (DKA)", {
-                cause: `Ketonniveau: ${this.ketoneLevel.toFixed(1)} mmol/L — ukontrolleret syreophobning i blodet.`,
-                explanation:
-                    `Insulin styrer ikke kun blodsukkeret — det holder også fedtnedbrydningen i skak. ` +
-                    `Uden insulin nedbryder kroppen fedt ukontrolleret og danner ketonstoffer. ` +
-                    `I små mængder er ketoner harmløse, men uden insulin hober de sig op, ` +
-                    `blodet bliver surt (acidose), og organerne svigter.`,
+            this.gameOver(t('game.over.dka.name'), {
+                cause: t('game.over.dka.cause', {ketones: this.ketoneLevel.toFixed(1)}),
+                explanation: t('game.over.dka.explanation'),
                 tips: [
-                    'Hold øje med dit blodsukker — vedvarende høje værdier er et advarselstegn',
-                    'Tag et keton-stik (🧪) hvis dit blodsukker er højt i flere timer',
-                    'Giv insulin ved højt blodsukker — det er den vigtigste behandling',
-                    'Husk din daglige basal-insulin'
+                    t('game.over.dka.tip1'),
+                    t('game.over.dka.tip2'),
+                    t('game.over.dka.tip3'),
+                    t('game.over.dka.tip4')
                 ]
             });
             return;
@@ -2268,17 +2482,14 @@ class Simulator {
         if (this.day > 7) {
             const avg7d = this.calculateAverageBGForPeriod(7 * 24 * 60, true);
             if (avg7d !== null && avg7d > 15.0) {
-                this.gameOver("Sendiabetiske Komplikationer", {
-                    cause: `Dit gennemsnitlige BG over de sidste 7 dage var ${avg7d.toFixed(1)} mmol/L.`,
-                    explanation:
-                        `Vedvarende højt blodsukker skader blodkar og nerver i hele kroppen. ` +
-                        `Over tid fører det til alvorlige komplikationer som blindhed, nyresvigt, ` +
-                        `nerveskader og hjerte-kar-sygdom.`,
+                this.gameOver(t('game.over.complications.name'), {
+                    cause: t('game.over.complications.cause', {avg: avg7d.toFixed(1)}),
+                    explanation: t('game.over.complications.explanation'),
                     tips: [
-                        'Sigt efter at holde dit blodsukker mellem 4-10 mmol/L så meget som muligt',
-                        'Juster din insulin-dosering hvis dit blodsukker konsekvent er for højt',
-                        'Husk at basal-insulin er fundamentet for god blodsukker-kontrol',
-                        'Spis regelmæssigt og giv bolus-insulin til måltider'
+                        t('game.over.complications.tip1'),
+                        t('game.over.complications.tip2'),
+                        t('game.over.complications.tip3'),
+                        t('game.over.complications.tip4')
                     ]
                 });
                 return;

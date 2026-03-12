@@ -199,11 +199,23 @@ window.KCAL_PER_KG_WEIGHT = 7700;
 // Mock-funktioner
 window.logEvent = () => {};
 window.showPopup = () => {};
+window.showGameOverPopup = () => {};
 window.playSound = () => {};
 window.updateUI = () => {};
 window.drawGraph = () => {};
 window.updateSpeedStepperUI = () => {};
 window.updatePlayerFixedDataUI = () => {};
+
+// Kaloriekonstanter (bruges af simulator.js til vægtmodel)
+window.KCAL_PER_KG_WEIGHT = 7700;
+window.RESTING_KCAL_PER_DAY = 2200;
+window.RESTING_KCAL_PER_MINUTE = 2200 / (24 * 60);
+
+// i18n mock — t() returnerer bare nøglen (modellen testes, ikke UI-tekst)
+window.appSettings = { language: 'da' };
+window.I18N = { da: {}, en: {} };
+window.t = (key, vars) => { let text = key; if (vars) Object.entries(vars).forEach(([k, v]) => { text = text.replaceAll(`{${k}}`, v); }); return text; };
+window.tInsulinUnit = () => 'E';
 </script>
 <script src="../js/simulator.js"></script>
 <script>

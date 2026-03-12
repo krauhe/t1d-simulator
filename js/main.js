@@ -53,7 +53,7 @@ let debugLogLastTime = -Infinity;    // Sidste loggede sim-tid (undgå duplikate
 const DEBUG_LOG_INTERVAL = 5;        // Log hvert 5. sim-minut
 
 // CSV-header med alle relevante interne parametre
-const DEBUG_LOG_HEADER = 'Dag,Tid,SimMin,TrueBG,CgmBG,IOB,SubQ,PlasmaI,COB,Ketoner,x1,x2,x3,EGP,ExFac,StressMult,Stress_akut,Stress_kron,Puls,Points,VægtÆndring,Motion,HypoArea,CounterReg';
+const DEBUG_LOG_HEADER = 'Dag,Tid,SimMin,TrueBG,CgmBG,IOB,SubQ,PlasmaI,COB,FedtTarm,TauG,AminoAcid,ProtGluc,Ketoner,x1,x2,x3,EGP,ExFac,StressMult,Stress_akut,Stress_kron,Puls,Points,VægtÆndring,Motion,HypoArea,CounterReg';
 
 // debugLogTick() — kaldes fra updateUI() hvert frame. Logger kun hvis aktiveret
 // og der er gået mindst DEBUG_LOG_INTERVAL sim-minutter siden sidst.
@@ -73,7 +73,11 @@ function debugLogTick() {
         : 'nej';
 
     const hov = game.hovorka;
-    const stressMult = hov ? (1.0 + game.acuteStressLevel + game.chronicStressLevel + game.circadianKortisolNiveau) : 1.0;
+    // StressMult med glycogen-aware beregning + protein-glukagon
+    const _glyRes = game.glycogenReserve ?? 1.0;
+    const _protGluc = game.proteinGlucagonLevel * (0.5 + 0.5 * _glyRes);
+    const stressMult = hov ? (0.5 * _glyRes + 0.5 + game.acuteStressLevel * _glyRes +
+        game.chronicStressLevel + game.circadianKortisolNiveau + _protGluc) : 1.0;
     const subQ = hov ? (hov.state[2] + hov.state[3]) / 1000 : 0;
     const plasmaI = hov ? hov.state[6] : 0;
     const x1 = hov ? hov.state[7] : 0;
@@ -93,6 +97,10 @@ function debugLogTick() {
         subQ.toFixed(2),
         plasmaI.toFixed(1),
         game.cob.toFixed(1),
+        game.fatIntestine.toFixed(1),
+        (hov ? hov.tau_G.toFixed(0) : '40'),
+        game.aminoAcidsBlood.toFixed(1),
+        game.proteinGlucagonLevel.toFixed(3),
         game.ketoneLevel.toFixed(2),
         x1.toFixed(4),
         x2.toFixed(4),
@@ -149,6 +157,10 @@ function debugUpdateLiveValues() {
     const plasmaI = game.hovorka ? game.hovorka.state[6] : 0;
     set('dbgPlasmaI', plasmaI.toFixed(1));
     set('dbgCOB', game.cob.toFixed(1));
+    set('dbgFatInt', game.fatIntestine.toFixed(1));
+    set('dbgTauG', game.hovorka ? game.hovorka.tau_G.toFixed(0) : '40');
+    set('dbgAA', game.aminoAcidsBlood.toFixed(1));
+    set('dbgProtGluc', game.proteinGlucagonLevel.toFixed(3));
     set('dbgKetone', game.ketoneLevel.toFixed(2));
 
     // Hovorka insulin-aktionsvariable (de reelle drivere af BG-ændring)
@@ -169,8 +181,9 @@ function debugUpdateLiveValues() {
         const glycogenBaseline = 0.5 * glyRes;
         const gngBaseline = 0.5;
         const effectiveAcuteStress = game.acuteStressLevel * glyRes;
+        const effectiveProtGluc = game.proteinGlucagonLevel * (0.5 + 0.5 * glyRes);
         const stressMult = glycogenBaseline + gngBaseline + effectiveAcuteStress +
-            game.chronicStressLevel + game.circadianKortisolNiveau;
+            game.chronicStressLevel + game.circadianKortisolNiveau + effectiveProtGluc;
         const egp = Math.max(0, h.EGP_0 * (stressMult - h.state[9]));
         set('dbgEGP', egp.toFixed(3));
 
@@ -450,16 +463,17 @@ function showActivityActive(type, intensitet, varighed) {
     // Sæt info i panelet
     const setContent = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     setContent('activityActiveIcon', typeDef.icon);
-    setContent('activityActiveName', typeDef.navn);
-    setContent('activityActiveIntensity', intensitet);
+    setContent('activityActiveName', t(`activity.name.${type}`));
+    const intensityKey = intensitet === 'Lav' ? 'low' : intensitet === 'Høj' ? 'high' : 'medium';
+    setContent('activityActiveIntensity', t(`activity.intensity.${intensityKey}`));
 
     // Vis overlay på grafen
     const overlay = document.getElementById('activity-overlay');
     if (overlay) {
         overlay.style.display = 'block';
         setContent('activityOverlayIcon', typeDef.icon);
-        setContent('activityOverlayName', typeDef.navn);
-        setContent('activityOverlayIntensity', intensitet);
+        setContent('activityOverlayName', t(`activity.name.${type}`));
+        setContent('activityOverlayIntensity', t(`activity.intensity.${intensityKey}`));
         // Sæt border-farve til aktivitetstypen
         overlay.style.borderColor = typeDef.farve + '40';
     }
@@ -598,11 +612,11 @@ function showStopConfirmPopup() {
     overlay.className = 'popup-overlay';
     overlay.innerHTML = `
         <div class="popup-content" style="text-align:center; max-width:380px;">
-            <h2 style="color: var(--red); font-size: 1.4em;">Stop spil?</h2>
-            <p style="margin: 16px 0;">Er du sikker på at du vil stoppe simulationen? Al fremgang går tabt.</p>
+            <h2 style="color: var(--red); font-size: 1.4em;">${t('stop.title')}</h2>
+            <p style="margin: 16px 0;">${t('stop.message')}</p>
             <div style="display:flex; gap:12px; justify-content:center; margin-top:20px;">
-                <button id="stopConfirmYes" style="background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 4px 15px rgba(220,38,38,0.3);">Ja, stop</button>
-                <button id="stopConfirmNo" style="background: linear-gradient(135deg, #374151, #1f2937); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">Annuller</button>
+                <button id="stopConfirmYes" style="background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 4px 15px rgba(220,38,38,0.3);">${t('stop.yes')}</button>
+                <button id="stopConfirmNo" style="background: linear-gradient(135deg, #374151, #1f2937); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">${t('stop.cancel')}</button>
             </div>
         </div>
     `;
@@ -795,6 +809,7 @@ function initializeApp() {
 
     // --- Initial UI setup ---
     sizeCanvas();
+    translateDOM();   // Oversæt alle data-i18n elementer baseret på gemt sprog
     updatePlayerFixedDataUI();
     updateFoodDisplay();
     updateMotionKcal();
@@ -834,8 +849,8 @@ function initializeApp() {
             // Spillet kører → vis bekræftelsespopup
             showStopConfirmPopup();
         } else {
-            // Intet spil → start nyt
-            startGame();
+            // Intet spil → vis disclaimer (første gang) og start
+            showDisclaimerPopup(() => startGame());
         }
     });
     helpButton.addEventListener('click', showHelpPopup);
@@ -863,6 +878,28 @@ function initializeApp() {
         appSettings.muted = isMuted;
         saveSettings(appSettings);
     });
+
+    // --- Sprogskifter (DA ↔ EN) ---
+    const languageToggle = document.getElementById('languageToggle');
+    if (languageToggle) {
+        languageToggle.addEventListener('click', () => {
+            // Toggle mellem dansk og engelsk
+            appSettings.language = (appSettings.language === 'en') ? 'da' : 'en';
+            saveSettings(appSettings);
+            translateDOM();
+            // Opdater IOB-enhed (E/U) der ikke er dækket af data-i18n
+            const iobUnit = document.getElementById('iobUnit');
+            if (iobUnit) iobUnit.textContent = tInsulinUnit();
+            // Opdater aktivitetstype-eksempler (dynamisk tekst)
+            const selectedType = document.querySelector('.activity-type-chip.selected');
+            if (selectedType) {
+                const typeKey = selectedType.dataset.type;
+                const examplesEl = document.getElementById('activityTypeExamples');
+                if (examplesEl) examplesEl.textContent = t(`activity.examples.${typeKey}`);
+            }
+            playSound('menuOpen');
+        });
+    }
 
     // --- Hastigheds-stepper (◀ 4t/min ▶) med integreret pause ---
     const speeds = [60, 240, 720, 1440];
@@ -1007,7 +1044,7 @@ function initializeApp() {
             // Opdatér eksempler-tekst
             const typeDef = AKTIVITETSTYPER[selectedActivityType];
             const examplesEl = document.getElementById('activityTypeExamples');
-            if (examplesEl && typeDef) examplesEl.textContent = typeDef.eksempler;
+            if (examplesEl && typeDef) examplesEl.textContent = t(`activity.examples.${selectedActivityType}`);
             // Opdatér intensitet-ikoner (afslapning får egne ikoner)
             updateIntensityChips(selectedActivityType);
             updateMotionKcal();
@@ -1100,6 +1137,18 @@ function initializeApp() {
         debugLogLastTime = -Infinity;
         const countEl = document.getElementById('debugLogCount');
         if (countEl) countEl.textContent = '0 rækker';
+    });
+
+    // "Ryd al lokal data" — sletter alt gemt i localStorage for T1D-simulatoren
+    document.getElementById('debugClearAll').addEventListener('click', () => {
+        if (!confirm(t('debug.clearAll.confirm'))) return;
+        // Slet alle kendte nøgler
+        localStorage.removeItem('t1dSimSettings');
+        localStorage.removeItem('t1dSimHighscores');
+        localStorage.removeItem('diabetesDystenProfile');
+        localStorage.removeItem('disclaimerAccepted');
+        // Reload siden så alt starter fra scratch
+        location.reload();
     });
 
     // =========================================================================

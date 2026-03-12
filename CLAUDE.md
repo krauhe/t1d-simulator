@@ -31,7 +31,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Foreslå gerne forbedringer men implementer dem ikke uden godkendelse
 - Bevar altid simulationslogikken intakt ved UI-ændringer
 - **Foreslå ALTID at committe og pushe før store ændringer** — så der altid er et sikkert fallback-punkt
-- **Opdater `docs/VIDENSKAB.md`** løbende med nye emner der er relevante for blodglukoseregulering — også selvom de ikke implementeres i simulatoren. Dokumentet skal være en komplet videnskabelig oversigt over alle faktorer der påvirker BG ved T1D.
+- **Dokumentation: engelsk er primær, dansk er oversættelse.**
+  - Opdatér altid den engelske version først: `docs/PHYSIOLOGY.md` og `docs/SCIENCE.md`
+  - Bump `<!-- doc-version: YYYY-MM-DD-vN -->` markøren i toppen ved indholdsmæssige ændringer
+  - Danske oversættelser (`docs/FYSIOLOGI.da.md`, `docs/VIDENSKAB.da.md`) har en `<!-- translated-from: FILE doc-version: ... -->` markør der skal matche den engelske version
+  - Kør `bash tests/check-doc-sync.sh` for at tjekke at danske docs er i sync med engelske
+  - Opdatér `docs/SCIENCE.md` løbende med nye emner der er relevante for blodglukoseregulering — også selvom de ikke implementeres i simulatoren. Dokumentet skal være en komplet videnskabelig oversigt over alle faktorer der påvirker BG ved T1D.
 - **Hent ALTID relevante videnskabelige artikler** ned i `docs/references/` når nye emner tilføjes eller researches. Kilder skal så vidt muligt downloades som PDF. Filnavns-format: `Efternavn_Årstal[_RW]_Titel.ext` (fx `Hovorka_2004_NonlinearMPC.pdf`, `Cryer_2013_RW_GlucoseCounterregulation.pdf`). RW tilføjes kun ved review-artikler. Hvis PDF ikke er tilgængelig, gem som `.html` fra PMC eller lignende.
 
 ---
@@ -76,11 +81,15 @@ js/
   game.js       ← Game loop, startGame, resetGame, togglePause
   main.js       ← Globale variable, DOM-referencer, event listeners, init
 docs/
-  FYSIOLOGI.md  ← Beskrivelse af fysiologiske modeller, videnskabelige kilder, credits
-  VIDENSKAB.md  ← Systematisk gennemgang af ALLE faktorer der påvirker BG (23+ emner med referencer)
-  references/   ← Hentede videnskabelige artikler. Format: Efternavn_Årstal[_RW]_Titel.ext
+  PHYSIOLOGY.md      ← Engelsk (primær) — fysiologiske modeller, videnskabelige kilder, credits
+  SCIENCE.md         ← Engelsk (primær) — systematisk gennemgang af ALLE faktorer der påvirker BG
+  FYSIOLOGI.da.md    ← Dansk oversættelse af PHYSIOLOGY.md
+  VIDENSKAB.da.md    ← Dansk oversættelse af SCIENCE.md
+  references/        ← Hentede videnskabelige artikler. Format: Efternavn_Årstal[_RW]_Titel.ext
 tests/
-  simulation.test.js  ← Automatiserede tests (28 stk), kør med: node tests/simulation.test.js
+  simulation.test.js   ← Automatiserede tests (47 stk), kør med: node tests/simulation.test.js
+  model-validation.html ← Visuel modelvalidering i browser
+  check-doc-sync.sh    ← Tjek at danske docs matcher engelske versioner
 old/            ← Original enkeltfil-version (TB1Sim v42 beta.html) + referencefiler
 ```
 
@@ -115,21 +124,7 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
 
 ## Prioriteret todo-liste
 
-### Basale forbedringer (gør først)
-1. Moderne brugerinterface — ikke 90'er-stil
-2. "Du døde"-skærm med forklaring på dødsårsag (hypoglykæmi, ketoacidose osv.)
-   - 2b: Bedre definition af ketoacidose med symptomindikation før død
-   - 2c: Mulighed for ketose-stik måling
-3. ~~Personprofil — bruger kan indtaste vægt, ICR og ISF så simulatoren matcher deres egen diabetes~~ ✅ IMPLEMENTERET
-   - ~~3b: Spillet initieres fra midnat med stabilt blodsukker baseret på ICR og korrekt basal forudindgivet~~ ✅ IMPLEMENTERET
-   - Profil-popup vises ved klik på "Start Simulation" med vægt, ICR, ISF
-   - Basal dosis beregnes via 100-reglen: TDD = 100/ISF, basal = 45% af TDD
-   - Hvileforbrug skaleres med vægt (2200 kcal/dag ved 70 kg)
-   - Profil gemmes i localStorage og huskes mellem sessioner
-   - Vægt, basal dosis og hvileforbrug vises i stats-panelet
-
-### Mellemfristede features
-4. Highscore-liste med navn
+### Basale forbedringer
 5. Sandkasse-tilstand med scenarier/forhindringer man kan aktivere
 
 ### Høj prioritet (fysiologisk vigtig)
@@ -139,7 +134,7 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
     - Under insulinresistens vokser gabet → "dødzone" hvor insulin tilsyneladende ikke virker
     - Implementering: erstat lineære x1/x2/x3-effektligninger med Hill-funktioner
     - Kræver re-kalibrering af alle parametre og nye tests
-    - Se VIDENSKAB.md afsnit 25 for fuld videnskabelig baggrund
+    - Se SCIENCE.md afsnit 25 for fuld videnskabelig baggrund
 7. Insulin-kurver på grafen (visuelt overlay)
     - To linjer: hurtigvirkende (fx blå) og langtidsvirkende (fx lilla)
     - Tykkelse/amplitude proportional med aktiv insulin i systemet
@@ -160,95 +155,31 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
     - Netto-pil der viser den samlede retning (stiger/falder/stabilt)
     - Evt. fold-ud panel ved siden af/under grafen
     - Centralt pædagogisk værktøj: spilleren ser HVORFOR BG ændrer sig
-
 9. Easy mode — sværhedsgrad for nybegyndere
     - Ingen variabilitet: bioavailability=1.0, tauFactor=1.0, fast basal-varighed
     - Ingen CGM-støj/drift/diskontinuiteter — CGM viser sandt BG
-    - Fysiologi-hjælp: popup-tips der forklarer hvad der sker ("Din insulin er ved at peake", "Motion sænker dit BG pga. tre mekanismer: ...")
-    - Evt. foreslåede handlinger ("Du bør overveje at spise noget inden motion")
+    - Fysiologi-hjælp: popup-tips der forklarer hvad der sker
     - Fysiologi-panelet (TODO #8) altid synligt i easy mode
-    - God onboarding for spillere der aldrig har styret T1D
+9b. ~~Protein-modellering — protein → glukoneogenese → forsinket BG-stigning~~ ✅ IMPLEMENTERET
+    - Kompartmentmodel: proteinStomach →(τG)→ proteinGut →(τProtAbs=90min)→ aminoAcidsBlood
+    - Aminosyrer stimulerer glukagonsekretion via Hill-funktion (EC50=8g, n=2, max=0.25)
+    - Glukagon driver HGP via stressMultiplier (IKKE direkte kulhydrat-ækvivalent)
+    - Onset ~60-90 min, peak ~150-180 min, varighed >5 timer (matcher Paterson 2016)
+    - Tærskeleffekt: <10g protein = minimal effekt, ≥75g = signifikant BG-stigning
+    - Glykogen-afhængig: ~50% glycogenolyse + ~50% gluconeogenese
+    - Kilder: Paterson 2016, Smart 2013, Fromentin 2013, Gannon 2001/2013, Bell 2015/2020
+9c. ~~Fedt-forsinkelse af kulhydratabsorption ("pizza-effekten")~~ ✅ IMPLEMENTERET
+    - Fedt-kompartmentmodel: fatStomach →(τG)→ fatIntestine →(τFatAbs=150min)→ absorberet
+    - τG = 40 + 18 × ln(1 + fatIntestine / 10) — logaritmisk mætning
+    - Kalibreret mod Smart 2013 (35g fedt → ~47 min forsinkelse)
+    - Mad-interaktion (TODO #37): fedt fra tidligere måltid forsinker efterfølgende automatisk
+9d. FFA-induceret insulinresistens (forsinket fedt-effekt)
+    - Frie fedtsyrer fra fordøjelse hæmmer insulinvirkning i muskel
+    - Effekt starter ~2-4 timer efter fedt-måltid, peak ~5-6 timer
+    - Wolpert 2013: 60g fedt → 42% mere insulin nødvendigt, effekt 5-10 timer
+    - Implementering: ISF-reduktion proportional med absorberet fedt, forsinket
+    - Giver "anden bølge" af pizza-effekten (sen hyperglykæmi)
 
-9b. Fedt-forsinkelse af kulhydratabsorption ("pizza-effekten")
-    - **STATUS: IKKE IMPLEMENTERET** — koden accepterer `fat` parameter men justerer IKKE τG
-    - Eksponeret af modelvalidering (test 13): fedt-kurve er identisk med ren KH-kurve
-    - Fedt bør forsinke mavetømning → højere τG → bredere, lavere BG-peak
-    - Implementering: dynamisk τG baseret på måltidets fedtindhold (fx τG = 40 + fat * 0.5)
-    - Klinisk vigtigt: "pizza-effekten" er et af de mest forvirrende fænomener for T1D-patienter
-    - Se også TODO #37 (mad-interaktion) og #38 (differentierede sukkertyper)
-
-### Fremtidige features (tænk fremad i arkitekturen)
-10. Baner — realistiske hverdagsscenarier, fx:
-    - "Du løber 10 km til skolernes idrætsdag kl. 11–12"
-    - "Du glemte din insulin hjemmefra"
-    - "Du har feber" (øget insulinbehov)
-    - Uforudsete hændelser midt i en bane (fx uvirksom insulin pga. varme/kulde)
-    - Grafiske illustrationer af fysiologiske processer til ikke-fagkyndige
-11. Standard Diabetes-rapport (AGP):
-    - Estimeret HbA1c / GMI: `GMI = 3.31 + 0.02392 × mean_glucose_mg/dL`
-    - Gennemsnitlig glukosekurve med percentiler (25/50/75)
-    - TIR (4–10 mmol/L), TAR (> 10), TBR (< 4)
-    - Samlet insulinforbrug
-12. Multiplayer/familie-konkurrence om bedste blodsukkerkontrol
-13. Giv adgang til fysiologi-dokumenterne (docs/FYSIOLOGI.md og docs/VIDENSKAB.md) et sted i spillet — fx en "Videnskab"-knap i hjælp-popuppen eller en separat side
-14. Mere prominent disclaimer med flueben der skal bekræftes før spillet starter
-15. Kønsvalg (mand/kvinde) — påvirker BMR-beregning og evt. fysiologiske parametre
-16. Sprogskift (dansk/engelsk)
-    - **UI-labels:** Opret `js/i18n.js` med alle UI-strings i ét objekt per sprog (`da`, `en`)
-    - Alle hardcoded tekster i HTML/JS erstattes med `i18n[lang].nøgle`
-    - Sprogskifter-knap i settings-området (fx flag-ikon 🇩🇰/🇬🇧)
-    - Gem valgt sprog i localStorage
-    - **Docs:** Skriv FYSIOLOGI.md og VIDENSKAB.md på engelsk (primært sprog, bredere publikum)
-    - Evt. dansk version som `FYSIOLOGI.da.md` / `VIDENSKAB.da.md` (lavere prioritet)
-    - **README.md:** Engelsk (GitHub-standard)
-    - Script-load rækkefølge: `i18n.js` → `sounds.js` → ... (skal loades først)
-17. Avanceret debug-panel med alle interne variable synlige
-18. Mad-billede upload (genkend makronæring fra foto — AI-integration)
-19. ~~Styrketræning som separat motionstype (anaerob → akut BG-stigning)~~ ✅ IMPLEMENTERET
-    - Fire aktivitetstyper: Cardio, Styrketræning, Blandet sport, Afslapning
-    - Hver type har unik fysiologisk profil (e1Scaling, stress, stressReduction)
-    - Parametre defineret i AKTIVITETSTYPER-objekt i simulator.js
-20. ~~Stop/afbryd motion-knap~~ ✅ IMPLEMENTERET
-    - Stop-knap i dock-panel + floating overlay på grafen
-    - Varighed-valg: 15/30/60/åben (∞)
-    - Auto-stop ved planlagt varighed, manuel stop når som helst
-21. Ketonmåling med omkostning (begrænset antal stik eller tidscooldown)
-22. Fingerprik med omkostning (simuler at strimler koster penge)
-23. Væskebalance-model (lav prioritet — mest relevant for DKA-advarsler)
-24. Menstruationscyklus-effekt på insulinfølsomhed
-    - Lutealfasen (ca. dag 15–28): insulinfølsomhed falder ~50% (progesteron-drevet)
-    - Follikulærfasen (dag 1–14): normal/øget insulinfølsomhed
-    - Kræver kønsvalg (TODO 15) + cykluslængde-input
-    - Klinisk relevant: mange kvinder med T1D oplever uforklarlig hyperglykæmi før menstruation
-    - Reference: Yeung et al. 2024, Diabetes Care — Si falder fra 5.03 til 2.22 i lutealfase
-25. ~~Døgnvariation i insulinfølsomhed (cirkadisk ISF)~~ ✅ IMPLEMENTERET
-    - Hybrid model: HGP dawn (amplitude halveret til 0.15) + circadianISF (0.70–1.20)
-    - Morgen kl. 08: ISF ×0.70 + HGP ×1.15 → ~43% mere insulin nødvendigt
-    - Aften kl. 19: ISF ×1.20 → insulin virker ~17% bedre
-    - Inspireret af Toffanin 2013, dæmpet 50%, justeret efter klinisk erfaring
-    - Bygget på mangelfuld evidens — bør opdateres ved bedre data (Hinshaw 2013: mønster er individuelt)
-26. Alders-afhængigt insulinbehov
-    - Børn/teenagere: højere insulinresistens pga. væksthormon → højere basalbehov per kg
-    - Voksne: relativt stabilt insulinbehov
-    - Ældre (>65): øget insulinfølsomhed, men også nedsat kontraregulering
-    - Puberteten: op til 50% øget insulinbehov (væksthormon-peak)
-    - Kunne implementeres som aldersjusteret ISF/ICR i profil-popup
-    - Reference: Scheiner "Think Like a Pancreas", kapitel om livsaldre
-27. Sæsonvariation i insulinbehov
-    - HbA1c typisk højere om vinteren (9.1% vs 7.7% i en ungdomsstudie)
-    - Flere hypoglykæmi-episoder om sommeren (øget aktivitet, varme)
-    - Lav prioritet — mest relevant for langvarige simulationer
-    - Osmotisk diurese ved BG > 10 mmol/L (tørst, hyppig vandladning)
-    - Dehydrering forværrer DKA-forløb
-    - Kunne forbedre symptom-advarsler, men risikerer at forstyrre gameplay
-    - Overvej kun til "avanceret" tilstand eller baner med sygdomsscenarier
-28. Alkohol-effekt på blodsukker
-    - Akut: alkohol hæmmer glukoneogenese i leveren → hypoglykæmirisiko
-    - Forsinket effekt: op til 12-24 timer efter indtagelse
-    - Klinisk relevant: T1D-patienter skal være særligt opmærksomme
-29. Bruger-styret søvn/vågentid
-    - Spiller bestemmer selv hvornår de "går i seng" og "står op"
-    - Påvirker dawn-fænomenet, søvnkvalitet, og natlige interventioner
 30. Udvidet ketonmodel (IOB-drevet, ikke BG-drevet)
     - **Nuværende model er forkert:** ketoner stiger kun ved insulinmangel + BG > 12
     - **Korrekt:** ketogenese drives af lavt INSULIN-niveau, ikke højt blodsukker
@@ -261,75 +192,37 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
       - Ketonproduktion = f(IOB) — stiger når IOB < tærskel (fx 1.5 × basalrate)
       - BG er IKKE en input til ketonproduktion
       - Keton-clearance: mætnelig (Michaelis-Menten) — langsommere ved høje niveauer
-      - Protein-gluconeogenese driver indirekte ketogenese (oxaloacetat-forbrug)
-    - **DKA-behandling i spillet:** spilleren skal give sukker + insulin sammen
-      (insulin stopper ketoner, men sukker forhindrer hypo under behandling)
-    - **Pædagogisk mål:** vis at ketoner 1-3 ved faste/low-carb er normalt og uskadeligt
-    - **Low-carb fordel:** simulér at færre kulhydrater = jævnere BG, mindre variabilitet
-    - Se VIDENSKAB.md afsnit 23 for fuld videnskabelig baggrund og referencer
+    - Se SCIENCE.md afsnit 23 for fuld videnskabelig baggrund og referencer
+
+### Fremtidige features (tænk fremad i arkitekturen)
+9e. Fysiologisk ordbog / glossar
+    - In-game opslagsværk over underliggende fysiologiske effekter (dawn, Somogyi, pizza, HAAF, FFA-resistens...)
+    - Tilgængelig fra hjælp-popup eller som selvstændigt panel
+4. Global/delt highscore-liste (online leaderboard)
+10. Baner — realistiske hverdagsscenarier
+11. Standard Diabetes-rapport (AGP)
+12. Multiplayer/familie-konkurrence
+15. Kønsvalg (mand/kvinde) — påvirker BMR-beregning og evt. fysiologiske parametre
+18. Mad-billede upload (genkend makronæring fra foto — AI-integration)
+23. Væskebalance-model (lav prioritet — mest relevant for DKA-advarsler)
+24. Menstruationscyklus-effekt på insulinfølsomhed
+    - Kræver kønsvalg (TODO 15) + cykluslængde-input
+    - Reference: Yeung et al. 2024, Diabetes Care
+26. Alders-afhængigt insulinbehov
+27. Sæsonvariation i insulinbehov
+28. Alkohol-effekt på blodsukker
+29. Bruger-styret søvn/vågentid
 31. Symptom-indikationer på grafen (hypo + DKA)
-    - **Hypo-symptomer** (trueBG < ~3.5-3.8): svedtendens, rysten, hjertebanken, sultfølelse
-      - Afhængig af HAAF/counterRegFactor: jo mere svækket → jo svagere/senere symptomer
-      - Ved intakt counterRegFactor (~1.0): tydelige symptomer ved BG 3.5-3.8
-      - Ved svækket counterRegFactor (<0.5): symptomer først ved BG < 3.0 ("unawareness")
-    - **DKA-symptomer** (ketoner > 1.5–3.0): tørst, kvalme, mavesmerter, hurtig vejrtrækning, acetonlugt
-      - Fader gradvist ind på grafen som tekst-overlays ("Tørst...", "Kvalme...")
-      - Intensitet proportional med ketonniveau
-      - Pædagogisk: spilleren lærer at genkende tidlige DKA-tegn INDEN det bliver kritisk
-    - Visuelt: halvgennemsigtige tekst-labels der fader ind over grafen, evt. med pulserende effekt og lyd
-    - Pædagogisk: spilleren lærer at symptomer er kroppens alarm — og at de kan slukkes af gentagne hypoer (HAAF)
-    - Kobling til HAAF-model: `counterRegFactor` bestemmer tærskel og intensitet for hypo-symptomer
-32. Kalorieindhold vist på mad (kcal-mål synligt ved måltider)
-33. Game over-betingelser skal være synlige i spillet
-    - Spilleren skal kunne se alle metrics der kan føre til game over
-    - 7-dages gennemsnit BG skal vises i statistik (allerede delvist implementeret)
-    - Vægtændring slider allerede synlig
-    - Keton-niveau bør være synligt (ikke kun ved stik)
-    - Evt. "faresignaler" i UI når man nærmer sig game over-grænser
+    - Hypo-symptomer afhængig af HAAF/counterRegFactor
+    - DKA-symptomer fader gradvist ind som tekst-overlays
 34. Fysiologi-dokumenter som læsbare tekster
-    - FYSIOLOGI.md og VIDENSKAB.md skal omskrives til egentlige tekster for mennesker
-    - Ikke kun interne AI-noter — skal kunne læses af patienter, pårørende og sundhedspersonale
-    - På sigt tilgængelige fra spillet (se TODO #13)
 35. UI-redesign: RTS-inspireret layout
-    - Grafen som hovedvisning (svarende til "spillefeltet")
-    - Interventioner som ikoner med undermenuer i kanterne
-    - Statistik i fold-ind/ud panel
-    - Plads til bane-valg/præsentation i fremtiden
-    - Mørkt, konsekvent farveskema (CGM-app møder spil-HUD)
-    - Mockup: `mockups/rts-layout.html`
 36. Lyd-redesign
-    - Revurder hele lydsiden som del af UI-løftet
-    - Feedback-jingles: positiv lyd i target range, advarselstoner ved farezoner
-    - Kontekstuelle lyde: insulin-injektion, madspising, motion-start
-    - Stigende intensitet ved faldende/stigende BG (ikke bare én alarm)
-    - Ambient/baggrundslyd til at indikere generel tilstand (rolig=godt, urolig=fare)
-    - Vigtigt: lyde skal være subtile og ikke irriterende — spilleren skal VILLE have dem tændt
 37. Mad-interaktion: tidligere måltider påvirker efterfølgende
-    - Fedt i et måltid forsinker mavetømning → næste måltid kort efter absorberes også langsommere?
-    - Undersøg hvad nuværende implementering understøtter (D1/D2 kompartmenter deles allerede)
-    - Fiber før kulhydrat: bremser glukoseoptag (klinisk anbefalet strategi)
-38. Differentierede sukkertyper
-    - Glukose (dextrose): absorberes direkte, hurtigst mulige BG-stigning (τG ~10-15 min)
-    - Saccharose (bordsukker, lakridskonfekt): skal spaltes først → lidt langsommere (τG ~25-35 min)
-    - Stivelse (brød, ris): endnu langsommere (τG ~40-60 min)
-    - Klinisk relevant: glukose til akut hypo-korrektion, langsommere sukker når der er tid
-    - Kunne implementeres som forskellige τG-værdier per madtype
+38. Differentierede sukkertyper (glukose/saccharose/stivelse → forskellige τG-værdier)
 39. Bane-intro med fysiologi-tips
-    - Før en bane starter: vis kort beskrivelse af relevant fysiologi og tricks
-    - Fx motion-bane: "Motion sænker BG mest med aktiv insulin. Overvej at reducere bolus eller spise ekstra."
-    - Pædagogisk funktion: spilleren lærer fysiologien INDEN de møder udfordringen
 40. Glidende graf (LibreLink-stil)
-    - Når grafen er fyldt: nye data skubbes ind fra højre, gamle data glider ud til venstre
-    - Nuværende tid altid ved højre kant
-    - Giver en "levende" fornemmelse i stedet for statisk fyld-fra-venstre
-    - Som i Freestyle LibreLink appen — spilleren kender konceptet fra sin CGM
-    - Mockups: `mockups/hud-overlay.html`, `mockups/card-dock.html`
-41. "Dino-bane" — arkade-mode med forhindringer
-    - Glidende graf + forhindringer der kommer ind fra højre (som Googles offline dino-spil)
-    - Spilleren skal styre BG-kurven gennem åbninger (target range)
-    - Forhindringer tvinger til hurtige beslutninger (insulin/mad/motion)
-    - Fjollet/sjov bane der træner reaktionsevne og intuition for BG-dynamik
-    - Kræver glidende graf (TODO #40) som fundament
+41. "Dino-bane" — arkade-mode med forhindringer (kræver #40)
 
 ---
 
