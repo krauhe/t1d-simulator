@@ -8,3 +8,7 @@ docs/references/*.html
 
 # Developer input (screenshots etc.)
 developer input/
+
+# Gamle filer og arbejdsnotater
+old/
+fysiologisk-review.md
