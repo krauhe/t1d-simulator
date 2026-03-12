@@ -241,11 +241,14 @@ function createSim(profile = {}) {
  * @param {number} targetMinutes - Target time in totalSimMinutes
  */
 function advanceTo(sim, targetMinutes) {
-    // We simulate 1 sim-minute at a time.
-    // With speed=60: 1 real-second = 1 sim-minute
-    // So deltaTime = 1 second gives exactly 1 sim-minute.
+    // Advance in 5-minute steps for speed, then 1-minute for final approach.
+    // 5 min steps are stable for Hovorka ODE (Euler stable up to ~1 min per substep,
+    // and update() internally subdivides large steps).
+    while (sim.totalSimMinutes < targetMinutes - 5.01) {
+        sim.update(5.0); // 5 sim-minutes per call (internally subdivided)
+    }
     while (sim.totalSimMinutes < targetMinutes - 0.01) {
-        sim.update(1.0); // 1 real-second × speed 60 / 60 = 1 sim-minute
+        sim.update(1.0); // Final approach in 1-minute steps
     }
 }
 
@@ -266,12 +269,15 @@ function collectBG(sim, durationMinutes, sampleInterval = 5) {
     data.push({ time: sim.totalSimMinutes, bg: sim.trueBG });
 
     while (sim.totalSimMinutes < endTime - 0.01) {
-        // Advance 1 minute
-        sim.update(1.0);
+        // Advance in steps matching sample interval for speed
+        // (update() internally subdivides for ODE stability)
+        const remaining = endTime - sim.totalSimMinutes;
+        const step = Math.min(sampleInterval, remaining);
+        sim.update(step);
 
         // Sample at interval
         const elapsed = sim.totalSimMinutes - startTime;
-        if (elapsed % sampleInterval < 1.0) {
+        if (elapsed % sampleInterval < step + 0.01) {
             data.push({ time: sim.totalSimMinutes, bg: sim.trueBG });
         }
     }
