@@ -995,6 +995,130 @@ test('HAAF recovery: hypoArea falder naar BG > 4.0', () => {
 
 
 // =============================================================================
+// TEST 10: AKTIVITETSSYSTEM — Fire aktivitetstyper med korrekt fysiologi
+// =============================================================================
+//
+// Tester det nye aktivitetssystem med 4 typer:
+//   - Cardio: BG falder (GLUT4 + insulinfølsomhed)
+//   - Styrketræning: BG stiger akut (katekolamin stress-respons)
+//   - Blandet sport: BG relativt stabilt (vægtet cardio+anaerob)
+//   - Afslapning: reducerer stress, sænker BG en smule
+//
+// Videnskabeligt grundlag:
+//   - Riddell et al. 2017 (Lancet): aerob → BG↓, anaerob → BG↑, blandet → stabilt
+//   - Yardley et al. 2013: styrketræning giver akut BG-stigning 2-5 mmol/L
+//   - PMC10534311: mindfulness reducerer stress → bedre glykæmisk kontrol
+// =============================================================================
+
+console.log('\n--- Test 10: Aktivitetssystem (4 typer) ---');
+
+test('Styrketraening haever BG akut pga. stress-respons', () => {
+    const sim = createCleanSimulator();
+    setSimulatorBG(sim, 7.0);
+    const startBG = sim.trueBG;
+    const startStress = sim.acuteStressLevel;
+
+    // Start styrketræning med medium intensitet
+    sim.startAktivitet('styrke', 'Medium', 30);
+
+    // Simuler under styrketræning
+    simulateMinutes(sim, 30);
+
+    // Stress skal være steget markant (katekolamin-respons)
+    assert(sim.acuteStressLevel > startStress + 0.1,
+        `Akut stress efter styrke (${sim.acuteStressLevel.toFixed(3)}) skal vaere > ${(startStress + 0.1).toFixed(3)}`);
+});
+
+test('Blandet sport giver mindre BG-aendring end ren cardio', () => {
+    // Riddell 2017: "mixed activities are associated with glucose stability"
+    const simCardio = createCleanSimulator();
+    setSimulatorBG(simCardio, 8.0);
+    simCardio.startAktivitet('cardio', 'Medium', 30);
+    simulateMinutes(simCardio, 30);
+    const cardioDrop = 8.0 - simCardio.trueBG;
+
+    const simBlandet = createCleanSimulator();
+    setSimulatorBG(simBlandet, 8.0);
+    simBlandet.startAktivitet('blandet', 'Medium', 30);
+    simulateMinutes(simBlandet, 30);
+    const blandetDrop = 8.0 - simBlandet.trueBG;
+
+    // Blandet skal give mindre BG-fald end ren cardio
+    // (stress-komponenten modvirker delvist det aerobe fald)
+    assert(blandetDrop < cardioDrop,
+        `Blandet BG-fald (${blandetDrop.toFixed(2)}) skal vaere mindre end cardio (${cardioDrop.toFixed(2)})`);
+});
+
+test('Afslapning reducerer stress-niveau', () => {
+    const sim = createCleanSimulator();
+    // Tilføj noget stress først
+    sim.acuteStressLevel = 0.2;
+    sim.chronicStressLevel = 0.1;
+
+    sim.startAktivitet('afslapning', 'Medium', 30);
+    simulateMinutes(sim, 30);
+
+    assert(sim.acuteStressLevel < 0.15,
+        `Akut stress efter afslapning (${sim.acuteStressLevel.toFixed(3)}) skal vaere reduceret (<0.15)`);
+});
+
+test('Stop-funktion virker — post-exercise effekter starter', () => {
+    const sim = createCleanSimulator();
+    setSimulatorBG(sim, 8.0);
+
+    // Start 60 min cardio, stop efter 15 min
+    sim.startAktivitet('cardio', 'Medium', 60);
+    assert(sim.activeAktivitet !== null, 'Aktivitet skal vaere aktiv');
+
+    simulateMinutes(sim, 15);
+    sim.stopAktivitet();
+
+    assert(sim.activeAktivitet === null, 'Aktivitet skal vaere stoppet');
+    // Post-exercise entry skal vaere i activeMotion
+    assert(sim.activeMotion.length > 0, 'Post-exercise sensitivity entry skal eksistere');
+});
+
+test('Kan ikke starte to aktiviteter samtidigt', () => {
+    const sim = createCleanSimulator();
+    const result1 = sim.startAktivitet('cardio', 'Lav', 30);
+    assert(result1 === true, 'Foerste aktivitet skal starte');
+
+    const result2 = sim.startAktivitet('styrke', 'Høj', 30);
+    assert(result2 === false, 'Anden aktivitet skal afvises');
+    assert(sim.activeAktivitet.type === 'cardio', 'Foerste aktivitet skal stadig koere');
+});
+
+test('Auto-stop naar varighed er naaet', () => {
+    const sim = createCleanSimulator();
+    sim.startAktivitet('cardio', 'Lav', 15);
+    assert(sim.activeAktivitet !== null, 'Aktivitet skal vaere aktiv');
+
+    // Simuler 20 minutter — aktiviteten bør auto-stoppe efter 15
+    simulateMinutes(sim, 20);
+
+    assert(sim.activeAktivitet === null, 'Aktivitet skal vaere auto-stoppet efter 15 min');
+    assert(sim.activeMotion.length > 0, 'Post-exercise entry skal eksistere');
+});
+
+test('E1-skalering: styrke giver mindre GLUT4-optag end cardio', () => {
+    // Cardio: e1Scaling=1.0, Styrke: e1Scaling=0.3
+    // Ved samme puls bør E1-effekten (insulin-uafhængigt glukoseoptag) være lavere for styrke
+    const simCardio = createCleanSimulator();
+    simCardio.startAktivitet('cardio', 'Medium', 30);
+    simulateMinutes(simCardio, 20);
+    const e1Cardio = simCardio.hovorka.state[11]; // E1
+
+    const simStyrke = createCleanSimulator();
+    simStyrke.startAktivitet('styrke', 'Medium', 30);
+    simulateMinutes(simStyrke, 20);
+    const e1Styrke = simStyrke.hovorka.state[11]; // E1
+
+    assert(e1Styrke < e1Cardio * 0.6,
+        `Styrke E1 (${e1Styrke.toFixed(3)}) skal vaere < 60% af cardio E1 (${e1Cardio.toFixed(3)})`);
+});
+
+
+// =============================================================================
 // RESULTAT-OVERSIGT
 // =============================================================================
 

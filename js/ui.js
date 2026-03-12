@@ -160,6 +160,9 @@ function updateUI() {
     // --- Daglig max points tracking + stjernedryss ---
     updateDailyMaxPoints();
 
+    // --- Aktivitets-overlay: opdater timer og progress ---
+    if (typeof updateActivityOverlay === 'function') updateActivityOverlay();
+
     // --- Debug: log data + opdater live-værdier ---
     if (typeof debugLogTick === 'function') debugLogTick();
     if (typeof debugUpdateLiveValues === 'function') debugUpdateLiveValues();
@@ -425,6 +428,66 @@ function drawGraph() {
         }
     });
 
+    // --- Aktivitetsbånd: farvet bånd i bunden af grafen for aktive/afsluttede aktiviteter ---
+    // Tegner semi-transparente farvede bånd der viser hvornår aktiviteter fandt sted.
+    // Farve afhænger af aktivitetstype (grøn=cardio, rød=styrke, orange=blandet, lilla=afslapning).
+    const activityBandHeight = 10;
+    const activityBandY = padding.top + graphHeight - activityBandHeight - 18; // Lige over x-aksen
+    if (typeof AKTIVITETSTYPER !== 'undefined') {
+        // Tegn bånd for afsluttede aktiviteter (fra logHistory)
+        game.logHistory.forEach(event => {
+            if (event.type !== 'motion' || !event.details || !event.details.type) return;
+            const typeDef = AKTIVITETSTYPER[event.details.type];
+            if (!typeDef) return;
+            const startMin = event.time;
+            const duration = event.details.duration || 30;
+            const endMin = startMin + duration;
+            // Tegn kun hvis båndet er synligt i nuværende view
+            if (endMin < currentDayStartMinutes || startMin >= currentDayStartMinutes + totalMinutesInView) return;
+            const x1 = padding.left + Math.max(0, (startMin - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+            const x2 = padding.left + Math.min(1, (endMin - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+            graphCtx.fillStyle = typeDef.farve + '30'; // 30 = ~19% opacity
+            graphCtx.fillRect(x1, activityBandY, x2 - x1, activityBandHeight);
+            // Top-kant for synlighed
+            graphCtx.fillStyle = typeDef.farve + '60';
+            graphCtx.fillRect(x1, activityBandY, x2 - x1, 2);
+        });
+        // Tegn bånd for AKTIV aktivitet (igangværende)
+        if (game.activeAktivitet) {
+            const akt = game.activeAktivitet;
+            const typeDef = akt.typeDef;
+            const startMin = akt.startTime;
+            const nowMin = game.totalSimMinutes;
+            if (startMin >= currentDayStartMinutes && startMin < currentDayStartMinutes + totalMinutesInView) {
+                const x1 = padding.left + ((startMin - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+                const x2 = padding.left + ((nowMin - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+                // Aktivt bånd med pulserende opacity
+                const pulse = 0.25 + 0.1 * Math.sin(performance.now() / 500);
+                graphCtx.fillStyle = typeDef.farve + Math.round(pulse * 255).toString(16).padStart(2, '0');
+                graphCtx.fillRect(x1, activityBandY, x2 - x1, activityBandHeight);
+                graphCtx.fillStyle = typeDef.farve + '80';
+                graphCtx.fillRect(x1, activityBandY, x2 - x1, 2);
+                // Vis planlagt varighed som lysere skygge
+                if (akt.varighed) {
+                    const endMin = startMin + akt.varighed;
+                    if (nowMin < endMin) {
+                        const x3 = padding.left + ((endMin - currentDayStartMinutes) / totalMinutesInView) * graphWidth;
+                        graphCtx.fillStyle = typeDef.farve + '10';
+                        graphCtx.fillRect(x2, activityBandY, x3 - x2, activityBandHeight);
+                        // Stiplet kant for planlagt slutning
+                        graphCtx.strokeStyle = typeDef.farve + '30';
+                        graphCtx.setLineDash([3, 3]);
+                        graphCtx.beginPath();
+                        graphCtx.moveTo(x3, activityBandY);
+                        graphCtx.lineTo(x3, activityBandY + activityBandHeight);
+                        graphCtx.stroke();
+                        graphCtx.setLineDash([]);
+                    }
+                }
+            }
+        }
+    }
+
     // --- Event icons along the bottom of the graph ---
     // Food (emoji), insulin (syringe/pen), and exercise icons are drawn at
     // the x-position corresponding to their timestamp, near the bottom of the chart.
@@ -458,8 +521,9 @@ function drawGraph() {
                     graphCtx.fillStyle = 'rgba(200, 210, 230, 0.9)';
                     graphCtx.fillText(`${ke}g`, x, yPos - 14);
                 }
-            } else if (event.type === 'motion') {
-                graphCtx.fillText(event.icon, x, yPos);
+            } else if (event.type === 'motion' || event.type === 'motion-end') {
+                const motionIcon = (event.details && event.details.icon) || event.icon || '🏃';
+                graphCtx.fillText(motionIcon, x, yPos);
             } else if(event.type === 'glucagon') {
                 // Glukagon: rød sprøjte-emoji (💉) — samme størrelse som insulin, lidt større.
                 // Bruger samme _emojiOffCanvas teknik som insulin-ikoner.
@@ -826,7 +890,8 @@ function logEvent(message, type = 'info', details = {}) {
     let icon = '';
     switch(type) {
         case 'food': icon = details.icon || '🍴'; break;
-        case 'motion': icon = '🏃'; break;
+        case 'motion': icon = (details && details.icon) || '🏃'; break;
+        case 'motion-end': icon = '⏹'; break;
         case 'insulin-fast': icon = '💉'; break;   // Sprøjte for hurtig insulin
         case 'insulin-basal': icon = '💉'; break;  // Sprøjte for basal insulin
     }
@@ -855,14 +920,30 @@ function updateFoodDisplay() {
 }
 
 /**
- * updateMotionKcal — Update the estimated calorie burn for selected exercise settings.
+ * updateMotionKcal — Opdater estimeret kalorieforbrænding baseret på valgt
+ * aktivitetstype, intensitet og varighed.
  *
- * Calorie burn rates: Low=4, Medium=7, High=10 kcal per minute.
- * Total = rate * duration.
+ * Henter kcalPerMin fra AKTIVITETSTYPER og multiplicerer med varighed.
+ * Ved åben varighed vises kun rate (kcal/min).
  */
 function updateMotionKcal() {
-    let kcalPerMinute = motionIntensitySelect.value === "Lav" ? 4 : (motionIntensitySelect.value === "Medium" ? 7 : 10);
-    motionKcalDisplay.textContent = (kcalPerMinute * parseInt(motionDurationSelect.value)).toFixed(0);
+    // Find valgt aktivitetstype fra chips
+    const selectedChip = document.querySelector('.activity-type-chip.selected');
+    const type = selectedChip ? selectedChip.dataset.type : 'cardio';
+    const typeDef = (typeof AKTIVITETSTYPER !== 'undefined') ? AKTIVITETSTYPER[type] : null;
+    const intensitet = motionIntensitySelect.value;
+
+    const kcalPerMinute = typeDef ? (typeDef.kcalPerMin[intensitet] || 7) : 7;
+
+    // Find valgt varighed
+    const durationChip = document.querySelector('.duration-chip.selected');
+    const duration = durationChip ? durationChip.dataset.duration : '30';
+
+    if (duration === 'open') {
+        motionKcalDisplay.textContent = `~${kcalPerMinute}/min`;
+    } else {
+        motionKcalDisplay.textContent = (kcalPerMinute * parseInt(duration)).toFixed(0);
+    }
 }
 
 

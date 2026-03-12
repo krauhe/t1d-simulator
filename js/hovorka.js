@@ -114,6 +114,11 @@ class HovorkaModel {
         this.alpha = options.alpha || 1.79;   // Motions-forstærkning af insulinvirkning [dimensionsløs]
         this.beta = options.beta || 0.78;     // Direkte muskel-glukoseoptag [mmol/min]
         this.HR_base = options.HR_base || 60; // Hvilepuls [bpm]
+        // E1-skalering: styrer hvor meget puls driver GLUT4-optag.
+        // Sættes af Simulator baseret på aktivitetstype:
+        //   Cardio=1.0 (fuld), Styrke=0.3 (lille), Afslapning=0.0 (ingen)
+        // Påvirker IKKE pulsFaktor (insulinabsorption) — kun muskeloptag.
+        this.e1Scaling = 1.0;
 
         // -----------------------------------------------------------------
         // TILSTANDSVARIABLE (state vector, 13 elementer)
@@ -328,7 +333,12 @@ class HovorkaModel {
 
         // Puls-dreven motionseffekt — direkte muskel-glukoseoptag
         // Kun aktiv når hjertefrekvensen er over hvile.
-        const HR_effect = Math.max(0, (this.heartRate - this.HR_base) / this.HR_base);
+        const HR_effect_raw = Math.max(0, (this.heartRate - this.HR_base) / this.HR_base);
+        // HR_effect skaleres med e1Scaling for GLUT4-optag.
+        // Cardio: e1Scaling=1.0 → fuld GLUT4. Styrke: 0.3 → primært stress, ikke GLUT4.
+        // Afslapning: 0.0 → ingen GLUT4 (ingen fysisk aktivitet).
+        // pulsFaktor (insulinabsorption) bruger HR_effect_raw — den påvirkes af AL pulsøgning.
+        const HR_effect = HR_effect_raw * this.e1Scaling;
 
         // -----------------------------------------------------------------
         // DIFFERENTIALLIGNINGER (dX/dt for alle 13 tilstandsvariable)

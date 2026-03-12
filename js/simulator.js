@@ -38,6 +38,98 @@
 // Exports (global): Simulator class
 // =============================================================================
 
+// =============================================================================
+// AKTIVITETSTYPER — Data-drevet definition af alle aktivitetstyper
+// =============================================================================
+//
+// Hver aktivitetstype har sine egne fysiologiske parametre der bestemmer
+// hvordan den påvirker blodsukker, puls, stress og insulinfølsomhed.
+//
+// Nøgleparametre:
+//   hrTarget:        Målpuls per intensitetsniveau [bpm]
+//   e1Scaling:       Skalering af E1 (GLUT4 insulin-uafhængigt muskeloptag) [0-1]
+//   e2Scaling:       Skalering af E2 (post-exercise insulinfølsomhed) [0-1]
+//   stressPerMin:    Akut stress tilføjet per simuleringsminut (katekolamin-respons)
+//   kcalPerMin:      Kalorieforbrug per minut
+//   stressReduction: Stressreduktion per simuleringsminut (kun afslapning)
+//   vasodilatation:  Midlertidig ISF-forbedring under aktiviteten (kun afslapning)
+//   farve:           Farve til graf-bånd og UI-elementer
+//
+// Videnskabeligt grundlag:
+//   - Cardio: Riddell et al. 2017 (Lancet), Resalat et al. 2020 (E1/E2-model)
+//   - Styrketræning: Yardley et al. 2013 (Diabetes Care), Bally et al. 2015 (HIIT)
+//   - Blandet sport: Riddell 2017 ("mixed = glucose stability"), PMC6768890 (fodbold)
+//   - Afslapning: PMC10534311 (mindfulness meta-analyse), PMC8798588 (yoga+HPA-akse)
+// =============================================================================
+const AKTIVITETSTYPER = {
+    cardio: {
+        navn: "Cardio",
+        icon: "🏃",
+        eksempler: "Løb, cykling, svømning",
+        // Målpuls: moderat til høj — driver E1/E2 og pulsFaktor fuldt ud
+        hrTarget: { Lav: 100, Medium: 130, Høj: 160 },
+        e1Scaling: 1.0,        // Fuld GLUT4-effekt (insulin-uafhængigt muskeloptag)
+        e2Scaling: 1.0,        // Fuld post-exercise insulinfølsomhed
+        // Stress: ingen ved lav/medium, mild ved høj (langvarig intens cardio)
+        stressPerMin: { Lav: 0, Medium: 0, Høj: 0.005 },
+        kcalPerMin: { Lav: 4, Medium: 7, Høj: 10 },
+        stressReduction: 0,
+        vasodilatation: 0,
+        farve: "#10b981",      // Grøn
+    },
+    styrke: {
+        navn: "Styrketræning",
+        icon: "💪",
+        eksempler: "Vægttræning, crossfit, kropsvægt",
+        // Lavere puls end cardio — styrketræning er interval-baseret
+        hrTarget: { Lav: 85, Medium: 110, Høj: 135 },
+        e1Scaling: 0.3,        // Mindre kontinuerlig bevægelse → mindre GLUT4-optag
+        e2Scaling: 0.9,        // God post-exercise insulinfølsomhed (Yardley 2013)
+        // Stress ved ALLE intensiteter — katekolamin-respons er kernen i styrketræning
+        // BG stiger akut 2-5 mmol/L (HIIT: gennemsnit +3.7 mmol/L, Bally 2015)
+        stressPerMin: { Lav: 0.008, Medium: 0.015, Høj: 0.025 },
+        kcalPerMin: { Lav: 3, Medium: 5, Høj: 8 },
+        stressReduction: 0,
+        vasodilatation: 0,
+        farve: "#ef4444",      // Rød
+    },
+    blandet: {
+        navn: "Blandet sport",
+        icon: "⚽",
+        eksempler: "Fodbold, badminton, håndbold",
+        // Høj puls — blandet sport er ofte intenst (sprints + cardio base)
+        hrTarget: { Lav: 105, Medium: 135, Høj: 165 },
+        // Vægtet ~65% cardio / ~35% anaerob → moderat GLUT4 + moderat stress
+        // Riddell 2017: "mixed activities are associated with glucose stability"
+        e1Scaling: 0.65,
+        e2Scaling: 0.85,
+        // Moderat stress fra intermitterende sprints
+        stressPerMin: { Lav: 0.003, Medium: 0.006, Høj: 0.012 },
+        kcalPerMin: { Lav: 5, Medium: 8, Høj: 12 },
+        stressReduction: 0,
+        vasodilatation: 0,
+        farve: "#f59e0b",      // Orange
+    },
+    afslapning: {
+        navn: "Afslapning",
+        icon: "🧘",
+        eksempler: "Yoga, meditation, udstrækning",
+        // Puls ved eller under hvile — parasympatisk aktivering
+        hrTarget: { Lav: 58, Medium: 55, Høj: 52 },
+        e1Scaling: 0.0,        // Ingen muskeloptag (ikke fysisk aktivitet)
+        e2Scaling: 0.0,        // Ingen exercise sensitivity-boost
+        stressPerMin: { Lav: 0, Medium: 0, Høj: 0 },
+        kcalPerMin: { Lav: 1.5, Medium: 2, Høj: 2.5 },
+        // REDUCERER stress — parasympatisk aktivering sænker HPA-akse
+        // PMC10534311: mindfulness forbedrer glykæmisk kontrol via stressreduktion
+        stressReduction: { Lav: 0.005, Medium: 0.01, Høj: 0.015 },
+        // Perifer vasodilatation → mild ISF-forbedring under aktiviteten
+        // AHA: insulin-medieret vasodilatation er funktionelt koblet til glukoseoptag
+        vasodilatation: { Lav: 0.02, Medium: 0.03, Høj: 0.05 },
+        farve: "#8b5cf6",      // Lilla
+    }
+};
+
 class Simulator {
     // =========================================================================
     // CONSTRUCTOR — Initialize all simulation state
@@ -153,7 +245,10 @@ class Simulator {
         this.activeFood = [];           // Active food items being digested
         this.activeFastInsulin = [];    // Active fast-acting insulin doses
         this.activeLongInsulin = [];    // Active long-acting (basal) insulin doses
-        this.activeMotion = [];         // Active and recently completed exercise sessions
+        this.activeMotion = [];         // Afsluttede sessions (post-exercise effekter)
+        // Aktiv aktivitet — kun én ad gangen. null = ingen aktivitet i gang.
+        // Indeholder: { type, intensitet, startTime, varighed, typeDef, kcalPerMin }
+        this.activeAktivitet = null;
 
         // --- Aggregate state ---
         this.iob = 0;                  // Insulin On Board: total active fast insulin (units)
@@ -395,10 +490,23 @@ class Simulator {
             }
         });
 
-        // Final ISF = base ISF × cirkadisk faktor × resistensfaktor / motionsboost
+        // Afslapning vasodilatation — mild ISF-forbedring UNDER aktiviteten.
+        // Perifer vasodilatation øger blodgennemstrømning → insulin virker lidt bedre.
+        let vasodilatationFaktor = 1.0;
+        if (this.activeAktivitet) {
+            const typeDef = this.activeAktivitet.typeDef;
+            const vasoDil = typeof typeDef.vasodilatation === 'object'
+                ? (typeDef.vasodilatation[this.activeAktivitet.intensitet] || 0)
+                : (typeDef.vasodilatation || 0);
+            if (vasoDil > 0) {
+                vasodilatationFaktor = 1.0 + vasoDil; // fx 1.03 = 3% bedre ISF
+            }
+        }
+
+        // Final ISF = base ISF × cirkadisk faktor × resistensfaktor × vasodilatation / motionsboost
         // circadianISF < 1.0 om morgenen → lavere ISF → insulin virker dårligere
         // circadianISF > 1.0 om aftenen → højere ISF → insulin virker bedre
-        return (this.ISF * this.circadianISF * this.insulinResistanceFactor) / sensitivityIncreaseFactor;
+        return (this.ISF * this.circadianISF * this.insulinResistanceFactor * vasodilatationFaktor) / sensitivityIncreaseFactor;
     }
 
     /**
@@ -795,27 +903,55 @@ class Simulator {
         this.activeFood = this.activeFood.filter(f =>
             (this.totalSimMinutes - f.startTime) < 180);
 
-        // --- 3. BEREGN PULS (for motionseffekt i Hovorka E1/E2) ---
-        // Motionsintensitet mappes til målpuls:
-        //   Lav → 100 bpm, Medium → 130 bpm, Høj → 160 bpm
+        // --- 3. BEREGN PULS OG AKTIVITETSEFFEKTER ---
+        // Aktivitetstypen bestemmer målpuls, E1-skalering, stress og stressreduktion.
         // Puls stiger/falder GRADVIST via eksponentiel smoothing:
-        //   Under motion: t½ ≈ 2 min (hurtig stigning)
-        //   Efter motion:  t½ ≈ 5 min (gradvis recovery — realistisk)
-        // Stresskatekolaminer (anaerob) håndteres via acuteStressLevel
+        //   Under aktivitet: t½ ≈ 2 min (hurtig stigning)
+        //   Efter aktivitet:  t½ ≈ 5 min (gradvis recovery — realistisk)
         let targetHeartRate = this.hovorka.HR_base;
-        this.activeMotion.forEach(motion => {
-            if (this.totalSimMinutes >= motion.startTime &&
-                this.totalSimMinutes < (motion.startTime + motion.duration)) {
-                const hrMap = { "Lav": 100, "Medium": 130, "Høj": 160 };
-                targetHeartRate = Math.max(targetHeartRate, hrMap[motion.intensity] || 100);
+        let currentE1Scaling = 1.0; // Standard: fuld E1-effekt
 
-                // Anaerob komponent (høj intensitet): opbyg akut stress
-                if (motion.intensity === "Høj") {
-                    this.acuteStressLevel = Math.min(0.4,
-                        this.acuteStressLevel + 0.02 * simulatedMinutesPassed);
-                }
+        // Håndtér aktiv aktivitet
+        if (this.activeAktivitet) {
+            const akt = this.activeAktivitet;
+            const typeDef = akt.typeDef;
+
+            // Målpuls fra aktivitetstype og intensitet
+            targetHeartRate = typeDef.hrTarget[akt.intensitet] || typeDef.hrTarget.Medium;
+
+            // E1-skalering: styrer hvor meget puls driver GLUT4-optag
+            // Cardio=1.0 (fuld), Styrke=0.3 (lille), Afslapning=0.0 (ingen)
+            currentE1Scaling = typeDef.e1Scaling;
+
+            // Stress-tilføjelse per sim-minut (katekolamin-respons)
+            // Styrketræning: stress ved alle intensiteter → akut BG-stigning
+            // Cardio: kun mild stress ved høj intensitet
+            const stressRate = typeDef.stressPerMin[akt.intensitet] || 0;
+            if (stressRate > 0) {
+                this.acuteStressLevel = Math.min(0.4,
+                    this.acuteStressLevel + stressRate * simulatedMinutesPassed);
             }
-        });
+
+            // Stressreduktion (kun afslapning) — parasympatisk aktivering
+            // Reducerer BÅDE akut og kronisk stress over tid
+            const stressRedRate = typeof typeDef.stressReduction === 'object'
+                ? (typeDef.stressReduction[akt.intensitet] || 0)
+                : typeDef.stressReduction;
+            if (stressRedRate > 0) {
+                this.acuteStressLevel = Math.max(0,
+                    this.acuteStressLevel - stressRedRate * simulatedMinutesPassed);
+                this.chronicStressLevel = Math.max(0,
+                    this.chronicStressLevel - stressRedRate * 0.3 * simulatedMinutesPassed);
+            }
+
+            // Akkumulér kalorieforbrænding
+            akt.kcalBurned += akt.kcalPerMin * simulatedMinutesPassed;
+
+            // Auto-stop hvis fast varighed er sat og tiden er nået
+            if (akt.varighed && (this.totalSimMinutes - akt.startTime) >= akt.varighed) {
+                this.stopAktivitet();
+            }
+        }
 
         // Glidende puls: eksponentiel tilnærmelse mod targetHeartRate.
         // Hurtigere op (t½≈2 min) end ned (t½≈5 min) — fysiologisk realistisk.
@@ -835,6 +971,9 @@ class Simulator {
         this.hovorka.carbRate = totalCarbRate;
         this.hovorka.heartRate = currentHeartRate;
         this.hovorka.stressMultiplier = stressMultiplikator;
+        // E1-skalering: aktivitetstype bestemmer hvor meget puls driver GLUT4-optag.
+        // Cardio=1.0, Styrke=0.3, Blandet=0.65, Afslapning=0.0.
+        this.hovorka.e1Scaling = currentE1Scaling;
 
         // Kør Hovorka ODE'erne for dette tidsstep
         // Ved store tidsstep (høj simuleringshastighed) subdeler vi for stabilitet.
@@ -1462,49 +1601,108 @@ class Simulator {
 
 
     // =========================================================================
-    // EXERCISE — Start a workout session
+    // AKTIVITET — Start en aktivitetssession
     // =========================================================================
     //
-    // Creates an exercise entry in activeMotion[] that affects BG during the
-    // workout (aerobic + anaerobic components in update()) and enhances
-    // insulin sensitivity for hours afterwards (handled by currentISF getter).
+    // Starter en aktivitet baseret på type (cardio/styrke/blandet/afslapning),
+    // intensitet (Lav/Medium/Høj), og valgfri varighed (15/30/60/null=åben).
+    //
+    // Kun én aktivitet kan køre ad gangen. Aktiviteten påvirker BG gennem:
+    //   - E1/E2 i Hovorka-modellen (skaleret efter aktivitetstype)
+    //   - Stress-respons (katekolaminer ved styrke/blandet)
+    //   - Stressreduktion (parasympatisk aktivering ved afslapning)
+    //   - pulsFaktor (hurtigere insulinabsorption ved forhøjet puls)
     //
     // Post-exercise sensitivity boost:
-    //   - Duration scales with intensity: High=4x, Medium=2x, Low=1x the workout duration
-    //   - Magnitude scales with intensity: High=+100%, Medium=+75%, Low=+50% more sensitive
-    //   - Fades linearly from max to baseline over the post-exercise period
+    //   - Varighed: Høj=4×, Medium=2×, Lav=1× aktivitetens varighed
+    //   - Magnitude: Høj=+100%, Medium=+75%, Lav=+50% bedre insulinfølsomhed
+    //   - Fader lineært fra max til baseline over post-exercise perioden
     //
-    // @param {string} intensity - "Lav", "Medium", or "Høj" (Low/Medium/High)
-    // @param {string} duration  - Duration in minutes as a string (parsed to int)
+    // @param {string} type       - "cardio", "styrke", "blandet", "afslapning"
+    // @param {string} intensitet - "Lav", "Medium", "Høj"
+    // @param {number|null} varighed - Varighed i minutter (15/30/60), eller null=åben
     // =========================================================================
-    startMotion(intensity, duration) {
+    startAktivitet(type, intensitet, varighed) {
+        // Kan ikke starte ny aktivitet mens en kører
+        if (this.activeAktivitet) return false;
+
         this.handleNightIntervention();
-        const durationMinutes = parseInt(duration);
 
-        // Track calories burned for weight change calculation
-        let kcalPerMinute = intensity === "Lav" ? 4 : (intensity === "Medium" ? 7 : 10);
-        this.totalKcalBurnedMotion += kcalPerMinute * durationMinutes;
+        const typeDef = AKTIVITETSTYPER[type];
+        if (!typeDef) return false;
 
-        const kcalBurned = kcalPerMinute * durationMinutes;
-        logEvent(`Motion: ${intensity}, ${durationMinutes} min (${kcalBurned} kcal)`, 'motion', {intensity, duration: durationMinutes, kcalBurned});
+        const kcalPerMinute = typeDef.kcalPerMin[intensitet] || typeDef.kcalPerMin.Medium;
 
-        // Post-exercise insulin sensitivity boost parameters
-        let sensitivityDurationMinutes = durationMinutes * (intensity === "Høj" ? 4 : (intensity === "Medium" ? 2 : 1));
-        const maxSensIncrease = 1 + (intensity === "Høj" ? 1.0 : (intensity === "Medium" ? 0.75 : 0.5));
-
-        this.activeMotion.push({
-            intensity,
+        this.activeAktivitet = {
+            type,               // "cardio", "styrke", "blandet", "afslapning"
+            intensitet,         // "Lav", "Medium", "Høj"
             startTime: this.totalSimMinutes,
-            duration: durationMinutes,
-            sensitivityEndTime: this.totalSimMinutes + durationMinutes + sensitivityDurationMinutes,
-            maxSensitivityIncreaseFactor: maxSensIncrease
-        });
+            varighed,           // null = åben (kører til spilleren stopper)
+            typeDef,            // Reference til AKTIVITETSTYPER[type]
+            kcalPerMin: kcalPerMinute,
+            kcalBurned: 0       // Akkumuleret under aktiviteten
+        };
 
-        // Disable the motion button during the workout
-        // (setTimeout uses real time, adjusted by simulation speed)
-        startMotionButton.disabled = true;
-        setTimeout(() => { startMotionButton.disabled = false; }, durationMinutes * 60 * 1000 / this.simulationSpeed);
+        // Estimeret kcal (kun for fast varighed — åben akkumulerer løbende)
+        const estimatedKcal = varighed ? (kcalPerMinute * varighed) : 0;
+        logEvent(
+            `Aktivitet: ${typeDef.navn} (${intensitet})${varighed ? `, ${varighed} min` : ', åben'}${estimatedKcal ? ` (~${estimatedKcal} kcal)` : ''}`,
+            'motion',
+            { type, intensity: intensitet, duration: varighed, kcalBurned: estimatedKcal, icon: typeDef.icon }
+        );
+
         playSound('intervention', 'F4');
+        return true;
+    }
+
+    // =========================================================================
+    // STOP AKTIVITET — Afslut den aktive aktivitetssession
+    // =========================================================================
+    //
+    // Beregner faktisk varighed og kalorieforbrænding.
+    // Opretter en post-exercise sensitivity entry i activeMotion[]
+    // (bruger eksisterende ISF-boost mekanik).
+    // =========================================================================
+    stopAktivitet() {
+        if (!this.activeAktivitet) return;
+
+        const akt = this.activeAktivitet;
+        const actualDuration = this.totalSimMinutes - akt.startTime;
+
+        // Registrér kalorieforbrænding (inkl. løbende akkumulerede kcal)
+        this.totalKcalBurnedMotion += akt.kcalBurned;
+
+        // Post-exercise insulin sensitivity boost
+        // Skaleret med e2Scaling så afslapning (e2=0) ikke giver boost
+        const e2Scale = akt.typeDef.e2Scaling;
+        const sensitivityMultiplier = akt.intensitet === "Høj" ? 4 : (akt.intensitet === "Medium" ? 2 : 1);
+        const sensitivityDurationMinutes = actualDuration * sensitivityMultiplier * e2Scale;
+        const baseSensIncrease = akt.intensitet === "Høj" ? 1.0 : (akt.intensitet === "Medium" ? 0.75 : 0.5);
+        const maxSensIncrease = 1 + baseSensIncrease * e2Scale;
+
+        // Tilføj til activeMotion for post-exercise ISF-boost (eksisterende mekanik)
+        if (sensitivityDurationMinutes > 0) {
+            this.activeMotion.push({
+                intensity: akt.intensitet,
+                startTime: akt.startTime,
+                duration: actualDuration,
+                sensitivityEndTime: this.totalSimMinutes + sensitivityDurationMinutes,
+                maxSensitivityIncreaseFactor: maxSensIncrease
+            });
+        }
+
+        logEvent(
+            `Aktivitet slut: ${akt.typeDef.navn} (${akt.intensitet}), ${Math.round(actualDuration)} min, ${Math.round(akt.kcalBurned)} kcal`,
+            'motion-end',
+            { type: akt.type, intensity: akt.intensitet, duration: Math.round(actualDuration), kcalBurned: Math.round(akt.kcalBurned) }
+        );
+
+        this.activeAktivitet = null;
+    }
+
+    // Bagudkompatibel wrapper — bruges af eksisterende tests og evt. keyboard shortcuts
+    startMotion(intensity, duration) {
+        this.startAktivitet('cardio', intensity, parseInt(duration));
     }
 
     /**

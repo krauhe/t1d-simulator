@@ -67,9 +67,10 @@ function debugLogTick() {
     const day = game.day || 1;
     const h = String(Math.floor(game.timeInMinutes / 60)).padStart(2, '0');
     const m = String(Math.floor(game.timeInMinutes % 60)).padStart(2, '0');
-    // Tjek om der er aktiv motion (ikke afsluttet endnu)
-    const activeEx = game.activeMotion.find(m => game.totalSimMinutes < (m.startTime + m.duration));
-    const isExercising = activeEx ? activeEx.intensity : 'nej';
+    // Tjek om der er aktiv aktivitet
+    const isExercising = game.activeAktivitet
+        ? `${game.activeAktivitet.typeDef.navn}:${game.activeAktivitet.intensitet}`
+        : 'nej';
 
     const hov = game.hovorka;
     const stressMult = hov ? (1.0 + game.acuteStressLevel + game.chronicStressLevel + game.circadianKortisolNiveau) : 1.0;
@@ -393,6 +394,111 @@ function flyIconToGraph(emoji, sourceId, insulinType) {
 
 
 // =============================================================================
+// AKTIVITETS-UI — Vis/skjul aktiv-tilstand og opdater overlay
+// =============================================================================
+
+/**
+ * showActivityActive — Skift aktivitetspanelet til aktiv-tilstand og vis overlay.
+ * Viser timer, progress-bar og stop-knap i både dock-panel og graf-overlay.
+ */
+function showActivityActive(type, intensitet, varighed) {
+    const typeDef = AKTIVITETSTYPER[type];
+    if (!typeDef) return;
+
+    // Skjul setup, vis aktiv
+    const setupEl = document.getElementById('activity-setup');
+    const activeEl = document.getElementById('activity-active');
+    if (setupEl) setupEl.style.display = 'none';
+    if (activeEl) activeEl.style.display = 'block';
+
+    // Sæt info i panelet
+    const setContent = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setContent('activityActiveIcon', typeDef.icon);
+    setContent('activityActiveName', typeDef.navn);
+    setContent('activityActiveIntensity', intensitet);
+
+    // Vis overlay på grafen
+    const overlay = document.getElementById('activity-overlay');
+    if (overlay) {
+        overlay.style.display = 'block';
+        setContent('activityOverlayIcon', typeDef.icon);
+        setContent('activityOverlayName', typeDef.navn);
+        setContent('activityOverlayIntensity', intensitet);
+        // Sæt border-farve til aktivitetstypen
+        overlay.style.borderColor = typeDef.farve + '40';
+    }
+
+    // Animér dock-ikonet
+    const dockExercise = document.querySelector('.dock-item.d-exercise');
+    if (dockExercise) {
+        dockExercise.classList.add('activity-active');
+        dockExercise.style.setProperty('--activity-color', typeDef.farve);
+    }
+
+    // Sæt progress-bar farve
+    document.querySelectorAll('.activity-progress-fill').forEach(el => {
+        el.style.background = typeDef.farve;
+    });
+}
+
+/**
+ * hideActivityActive — Skift tilbage til setup-tilstand og skjul overlay.
+ */
+function hideActivityActive() {
+    const setupEl = document.getElementById('activity-setup');
+    const activeEl = document.getElementById('activity-active');
+    if (setupEl) setupEl.style.display = 'block';
+    if (activeEl) activeEl.style.display = 'none';
+
+    const overlay = document.getElementById('activity-overlay');
+    if (overlay) overlay.style.display = 'none';
+
+    const dockExercise = document.querySelector('.dock-item.d-exercise');
+    if (dockExercise) dockExercise.classList.remove('activity-active');
+}
+
+/**
+ * updateActivityOverlay — Opdatér timer og progress i overlay og panel.
+ * Kaldes fra updateUI() hvert frame.
+ */
+function updateActivityOverlay() {
+    if (!game || !game.activeAktivitet) {
+        // Hvis aktiviteten er stoppet (fx auto-stop), skjul UI
+        const overlay = document.getElementById('activity-overlay');
+        if (overlay && overlay.style.display !== 'none') hideActivityActive();
+        return;
+    }
+
+    const akt = game.activeAktivitet;
+    const elapsed = game.totalSimMinutes - akt.startTime;
+    const mins = Math.floor(elapsed);
+    const secs = Math.floor((elapsed - mins) * 60);
+    const timeStr = akt.varighed
+        ? `${mins}:${String(secs).padStart(2,'0')} / ${akt.varighed}:00`
+        : `${mins}:${String(secs).padStart(2,'0')}`;
+
+    // Opdatér timer
+    const setContent = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setContent('activityTimerPanel', timeStr);
+    setContent('activityOverlayTimer', timeStr);
+    setContent('activityKcalBurned', Math.round(akt.kcalBurned));
+
+    // Opdatér progress-bar (kun hvis fast varighed)
+    if (akt.varighed) {
+        const progress = Math.min(100, (elapsed / akt.varighed) * 100);
+        document.querySelectorAll('.activity-progress-fill').forEach(el => {
+            el.style.width = progress + '%';
+        });
+    } else {
+        // Åben varighed: fyld langsomt (pulserende effekt)
+        document.querySelectorAll('.activity-progress-fill').forEach(el => {
+            el.style.width = '100%';
+            el.style.opacity = '0.5';
+        });
+    }
+}
+
+// =============================================================================
 // SOS GLUCAGON — Fælles funktion til SOS-knap og B-shortcut
 // =============================================================================
 //
@@ -588,7 +694,6 @@ function initializeApp() {
     longInsulinValue = document.getElementById('longInsulinValue');
     giveLongInsulinButton = document.getElementById('giveLongInsulinButton');
     motionIntensitySelect = document.getElementById('motionIntensity');
-    motionDurationSelect = document.getElementById('motionDuration');
     startMotionButton = document.getElementById('startMotionButton');
     motionKcalDisplay = document.getElementById('motionKcalDisplay');
     fingerprickButton = document.getElementById('fingerprickButton');
@@ -796,14 +901,63 @@ function initializeApp() {
         if(game) { game.addLongInsulin(parseInt(longInsulinSlider.value)); flyIconToGraph('\u{1F489}', 'dock-panel-insulin', 'basal'); }
     });
 
-    // --- Motion controls ---
-    [motionIntensitySelect, motionDurationSelect].forEach(el =>
-        el.addEventListener('change', updateMotionKcal)
-    );
+    // --- Aktivitets-controls ---
+    // Valgt aktivitetstype og varighed (state for aktivitetspanelet)
+    let selectedActivityType = 'cardio';
+    let selectedDuration = 30; // null = åben
+
+    // Type-chips: klik vælger aktivitetstype
+    document.querySelectorAll('.activity-type-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.activity-type-chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+            selectedActivityType = chip.dataset.type;
+            // Opdatér eksempler-tekst
+            const typeDef = AKTIVITETSTYPER[selectedActivityType];
+            const examplesEl = document.getElementById('activityTypeExamples');
+            if (examplesEl && typeDef) examplesEl.textContent = typeDef.eksempler;
+            updateMotionKcal();
+        });
+    });
+
+    // Varighed-chips: klik vælger varighed
+    document.querySelectorAll('.duration-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.duration-chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+            selectedDuration = chip.dataset.duration === 'open' ? null : parseInt(chip.dataset.duration);
+            updateMotionKcal();
+        });
+    });
+
+    // Intensitet-chips opdaterer også kcal
+    // (den eksisterende listener i linje ~941 håndterer chip-valg,
+    //  men vi sørger for at kcal også opdateres)
+
+    // Start-knap
     startMotionButton.addEventListener('click', () => {
-        if(game && !startMotionButton.disabled) {
-            game.startMotion(motionIntensitySelect.value, motionDurationSelect.value);
-            flyIconToGraph('\u{1F3C3}', 'dock-panel-motion');
+        if (game && !game.activeAktivitet) {
+            const intensitet = motionIntensitySelect.value;
+            const success = game.startAktivitet(selectedActivityType, intensitet, selectedDuration);
+            if (success) {
+                const typeDef = AKTIVITETSTYPER[selectedActivityType];
+                flyIconToGraph(typeDef.icon, 'dock-panel-motion');
+                showActivityActive(selectedActivityType, intensitet, selectedDuration);
+            }
+        }
+    });
+
+    // Stop-knapper (både i panelet og overlay)
+    document.getElementById('stopActivityButton').addEventListener('click', () => {
+        if (game && game.activeAktivitet) {
+            game.stopAktivitet();
+            hideActivityActive();
+        }
+    });
+    document.getElementById('stopActivityOverlayButton').addEventListener('click', () => {
+        if (game && game.activeAktivitet) {
+            game.stopAktivitet();
+            hideActivityActive();
         }
     });
 
@@ -936,7 +1090,7 @@ function initializeApp() {
     });
 
     // =========================================================================
-    // #8: MOTION INTENSITETS-CHIPS — Klik skifter intensitet
+    // INTENSITETS-CHIPS — Klik skifter intensitet
     // =========================================================================
     document.querySelectorAll('.intensity-chip').forEach(chip => {
         chip.addEventListener('click', () => {

@@ -112,6 +112,23 @@
 
                     <!-- Advarsel: vises ved hurtigt faldende BG (skjult som standard) -->
                     <div id="steep-drop-warning">&#x26A0; ADVARSEL: Hurtigt faldende BG!</div>
+
+                    <!-- Aktivitets-overlay: vises under aktiv aktivitet (nederst til højre) -->
+                    <div id="activity-overlay" style="display:none;">
+                        <div class="activity-overlay-header">
+                            <span id="activityOverlayIcon">🏃</span>
+                            <span id="activityOverlayName">Cardio</span>
+                            <span class="activity-active-sep">·</span>
+                            <span id="activityOverlayIntensity">Medium</span>
+                        </div>
+                        <div class="activity-active-progress">
+                            <div class="activity-progress-bar">
+                                <div class="activity-progress-fill" id="activityOverlayProgressFill"></div>
+                            </div>
+                            <span class="activity-timer" id="activityOverlayTimer">0:00</span>
+                        </div>
+                        <button id="stopActivityOverlayButton" class="dp-btn btn-red btn-small">⏹ Stop</button>
+                    </div>
                 </div>
 
             </div>
@@ -479,34 +496,88 @@
             <button id="customFoodEat" class="dp-btn btn-yellow">&#x1F374; Spis</button>
         </div>
 
-        <!-- MOTION PANEL (#8: ikon-chips for intensitet, ingen h4) -->
+        <!-- AKTIVITETSPANEL — vælg type, intensitet, varighed -->
+        <!-- Setup-tilstand: type-chips, intensitet-chips, varighed-chips, start-knap -->
+        <!-- Aktiv-tilstand: type+intensitet, progress, timer, stop-knap -->
         <div id="dock-panel-motion" class="dock-panel">
-            <div class="dp-chip-row">
-                <div class="intensity-chip selected" data-intensity="Lav" title="Lav intensitet: gang, let cykling">
-                    <span class="pc-emoji">&#x1F6B6;</span><span class="pc-name">Lav</span>
+            <!-- === SETUP-TILSTAND (vises når ingen aktivitet kører) === -->
+            <div id="activity-setup">
+                <!-- Aktivitetstype: 4 chips med farve og ikon -->
+                <div class="dp-chip-row dp-type-chips">
+                    <div class="activity-type-chip selected" data-type="cardio" title="Cardio: løb, cykling, svømning — sænker BG" style="--chip-color: #10b981;">
+                        <span class="pc-emoji">🏃</span><span class="pc-name">Cardio</span>
+                    </div>
+                    <div class="activity-type-chip" data-type="styrke" title="Styrketræning: vægttræning, crossfit — hæver BG akut" style="--chip-color: #ef4444;">
+                        <span class="pc-emoji">💪</span><span class="pc-name">Styrke</span>
+                    </div>
+                    <div class="activity-type-chip" data-type="blandet" title="Blandet sport: fodbold, badminton — relativt stabilt BG" style="--chip-color: #f59e0b;">
+                        <span class="pc-emoji">⚽</span><span class="pc-name">Blandet</span>
+                    </div>
+                    <div class="activity-type-chip" data-type="afslapning" title="Afslapning: yoga, meditation — reducerer stress" style="--chip-color: #8b5cf6;">
+                        <span class="pc-emoji">🧘</span><span class="pc-name">Afslap</span>
+                    </div>
                 </div>
-                <div class="intensity-chip" data-intensity="Medium" title="Medium intensitet: jogging, svømning">
-                    <span class="pc-emoji">&#x1F3C3;</span><span class="pc-name">Medium</span>
+
+                <!-- Eksempler for valgt type (opdateres dynamisk) -->
+                <div class="dp-type-examples" id="activityTypeExamples">Løb, cykling, svømning</div>
+
+                <!-- Intensitet: 3 chips (som før) -->
+                <div class="dp-chip-row">
+                    <div class="intensity-chip selected" data-intensity="Lav" title="Lav intensitet">
+                        <span class="pc-emoji">&#x1F6B6;</span><span class="pc-name">Lav</span>
+                    </div>
+                    <div class="intensity-chip" data-intensity="Medium" title="Medium intensitet">
+                        <span class="pc-emoji">&#x1F3C3;</span><span class="pc-name">Medium</span>
+                    </div>
+                    <div class="intensity-chip" data-intensity="Høj" title="Høj intensitet">
+                        <span class="pc-emoji">&#x1F525;</span><span class="pc-name">Høj</span>
+                    </div>
                 </div>
-                <div class="intensity-chip" data-intensity="Høj" title="Høj intensitet: sprint, HIIT">
-                    <span class="pc-emoji">&#x1F525;</span><span class="pc-name">Høj</span>
+
+                <!-- Varighed: 4 chips (15/30/60/åben) -->
+                <div class="dp-chip-row dp-duration-chips">
+                    <div class="duration-chip" data-duration="15" title="15 minutter">
+                        <span class="pc-name">15 min</span>
+                    </div>
+                    <div class="duration-chip selected" data-duration="30" title="30 minutter">
+                        <span class="pc-name">30 min</span>
+                    </div>
+                    <div class="duration-chip" data-duration="60" title="1 time">
+                        <span class="pc-name">60 min</span>
+                    </div>
+                    <div class="duration-chip" data-duration="open" title="Åben varighed — kører til du trykker Stop">
+                        <span class="pc-name">∞</span>
+                    </div>
                 </div>
-            </div>
-            <select id="motionIntensity" style="display:none;">
-                <option value="Lav">Lav</option>
-                <option value="Medium">Medium</option>
-                <option value="Høj">Høj</option>
-            </select>
-            <div class="dp-row">
-                <label title="Længere tids motion har større og længerevarende effekt på BG og insulinfølsomhed.">Varighed</label>
-                <select id="motionDuration">
-                    <option value="15">15 min</option>
-                    <option value="30">30 min</option>
-                    <option value="60">1 time</option>
+
+                <!-- Skjulte selects til programmatisk brug -->
+                <select id="motionIntensity" style="display:none;">
+                    <option value="Lav">Lav</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Høj">Høj</option>
                 </select>
+
+                <div class="dp-food-info"><span id="motionKcalDisplay"></span> kcal</div>
+                <button id="startMotionButton" class="dp-btn btn-green">▶ Start aktivitet</button>
             </div>
-            <div class="dp-food-info"><span id="motionKcalDisplay"></span> kcal</div>
-            <button id="startMotionButton" class="dp-btn btn-green">&#x1F3C3; Start Motion</button>
+
+            <!-- === AKTIV-TILSTAND (vises når aktivitet kører) === -->
+            <div id="activity-active" style="display:none;">
+                <div class="activity-active-header">
+                    <span id="activityActiveIcon">🏃</span>
+                    <span id="activityActiveName">Cardio</span>
+                    <span class="activity-active-sep">·</span>
+                    <span id="activityActiveIntensity">Medium</span>
+                </div>
+                <div class="activity-active-progress">
+                    <div class="activity-progress-bar">
+                        <div class="activity-progress-fill" id="activityProgressFill"></div>
+                    </div>
+                    <span class="activity-timer" id="activityTimerPanel">0:00</span>
+                </div>
+                <div class="dp-food-info"><span id="activityKcalBurned">0</span> kcal forbrændt</div>
+                <button id="stopActivityButton" class="dp-btn btn-red">⏹ Stop aktivitet</button>
+            </div>
         </div>
 
         <!-- T1D KIT PANEL: druesukker, målinger og glukagon samlet -->
@@ -567,9 +638,9 @@
                     <div class="dock-icon">&#x1F37D;&#xFE0F;<span class="dock-key">X</span></div>
                     <span class="dock-label">Mad</span>
                 </div>
-                <div class="dock-item d-exercise" data-panel="dock-panel-motion" title="Start motion (C)">
+                <div class="dock-item d-exercise" data-panel="dock-panel-motion" title="Aktivitet (C)">
                     <div class="dock-icon">&#x1F3C3;<span class="dock-key">C</span></div>
-                    <span class="dock-label">Motion</span>
+                    <span class="dock-label">Aktivitet</span>
                 </div>
 
                 <div class="dock-separator"></div>

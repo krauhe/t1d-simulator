@@ -194,10 +194,24 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
 14. Mere prominent disclaimer med flueben der skal bekræftes før spillet starter
 15. Kønsvalg (mand/kvinde) — påvirker BMR-beregning og evt. fysiologiske parametre
 16. Sprogskift (dansk/engelsk)
+    - **UI-labels:** Opret `js/i18n.js` med alle UI-strings i ét objekt per sprog (`da`, `en`)
+    - Alle hardcoded tekster i HTML/JS erstattes med `i18n[lang].nøgle`
+    - Sprogskifter-knap i settings-området (fx flag-ikon 🇩🇰/🇬🇧)
+    - Gem valgt sprog i localStorage
+    - **Docs:** Skriv FYSIOLOGI.md og VIDENSKAB.md på engelsk (primært sprog, bredere publikum)
+    - Evt. dansk version som `FYSIOLOGI.da.md` / `VIDENSKAB.da.md` (lavere prioritet)
+    - **README.md:** Engelsk (GitHub-standard)
+    - Script-load rækkefølge: `i18n.js` → `sounds.js` → ... (skal loades først)
 17. Avanceret debug-panel med alle interne variable synlige
 18. Mad-billede upload (genkend makronæring fra foto — AI-integration)
-19. Styrketræning som separat motionstype (anaerob → akut BG-stigning)
-20. Stop/afbryd motion-knap
+19. ~~Styrketræning som separat motionstype (anaerob → akut BG-stigning)~~ ✅ IMPLEMENTERET
+    - Fire aktivitetstyper: Cardio, Styrketræning, Blandet sport, Afslapning
+    - Hver type har unik fysiologisk profil (e1Scaling, stress, stressReduction)
+    - Parametre defineret i AKTIVITETSTYPER-objekt i simulator.js
+20. ~~Stop/afbryd motion-knap~~ ✅ IMPLEMENTERET
+    - Stop-knap i dock-panel + floating overlay på grafen
+    - Varighed-valg: 15/30/60/åben (∞)
+    - Auto-stop ved planlagt varighed, manuel stop når som helst
 21. Ketonmåling med omkostning (begrænset antal stik eller tidscooldown)
 22. Fingerprik med omkostning (simuler at strimler koster penge)
 23. Væskebalance-model (lav prioritet — mest relevant for DKA-advarsler)

@@ -200,6 +200,9 @@ function resetGame() {
     // Ryd floating labels (DOM-elementer fra fingerprik/keton-stik)
     document.querySelectorAll('.floating-label').forEach(el => el.remove());
 
+    // Nulstil aktivitets-UI (skjul overlay, vis setup)
+    if (typeof hideActivityActive === 'function') hideActivityActive();
+
     // Ryd hændelsesloggen
     const logList = document.getElementById('event-log-list');
     if (logList) logList.innerHTML = '<div style="padding:4px; color:#a0aec0;">Ingen hændelser endnu</div>';

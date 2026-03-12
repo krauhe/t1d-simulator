@@ -17,7 +17,7 @@ Brug aldrig simulatoren som grundlag for medicinske beslutninger. Følg altid di
 3. [Glukose -- Kroppens brændstof](#glukose)
 4. [Insulin -- Nøglen til cellerne](#insulin)
 5. [Mad -- Fra tallerken til blodbane](#mad)
-6. [Motion -- Musklerne som glukosesvamp](#motion)
+6. [Aktivitet -- Fire aktivitetstyper med forskellig fysiologi](#motion)
 7. [Stresshormoner -- Kroppens modspil](#stresshormoner)
 8. [Dawn-fænomenet -- Morgenkortisol](#dawn)
 9. [Søvnforstyrrelse -- Natlige indgreb koster](#sovn)
@@ -377,154 +377,271 @@ Så et måltid med 40 gram protein vil påvirke blodsukkeret som yderligere
 ---
 
 <a name="motion"></a>
-## 6. Motion -- Musklerne som glukosesvamp
+## 6. Aktivitet -- Fire aktivitetstyper med forskellig fysiologi
 
 ### Grundidéen
 
-Motion påvirker blodsukkeret på flere måder samtidig. Modellens motionseffekter
-er baseret på udvidelsen beskrevet i **Resalat et al. (2020)**, som tilføjer
-to ekstra tilstandsvariable drevet af hjertefrekvens:
+Fysisk aktivitet påvirker blodsukkeret på flere måder samtidig -- og effekten
+afhænger kraftigt af **typen** af aktivitet. Simulatoren modellerer fire
+aktivitetstyper der dækker hele spektret fra intenst muskelarbejde til
+afspænding:
 
-- **E1 (kortvarig effekt):** Stiger hurtigt under træning (tidskonstant 20 min),
+| Type | Ikon | Eksempler | BG-effekt |
+|------|------|-----------|-----------|
+| **Cardio** | 🏃 | Løb, cykling, svømning | BG falder |
+| **Styrketræning** | 💪 | Vægttræning, crossfit | BG stiger akut, falder senere |
+| **Blandet sport** | ⚽ | Fodbold, badminton, håndbold | BG relativt stabilt |
+| **Afslapning** | 🧘 | Yoga, meditation, udstrækning | BG falder en smule |
+
+De tre første typer er variationer over motion med forskellige blandinger
+af aerob og anaerob aktivitet. Den fjerde (afslapning) virker via et helt
+andet fysiologisk system: stressreduktion og parasympatisk aktivering.
+
+### Motionsmodellen: E1 og E2
+
+Motionseffekterne er baseret på udvidelsen beskrevet i **Resalat et al. (2020)**,
+som tilføjer to ekstra tilstandsvariable drevet af hjertefrekvens:
+
+- **E1 (kortvarig effekt, τ = 20 min):** Stiger hurtigt under træning,
   falder hurtigt efter. Repræsenterer direkte muskel-glukoseoptag via
   GLUT4-translokation -- en mekanisme der virker UDEN insulin.
 
-- **E2 (langvarig effekt):** Stiger langsomt (tidskonstant 200 min) og falder
+- **E2 (langvarig effekt, τ = 200 min):** Stiger langsomt og falder
   langsomt. Repræsenterer den forstærkede insulinfølsomhed der varer timer
   efter træning er slut.
 
-### Aerob træning (løb, cykling)
+Nøgleinnovationen i simulatoren er parameteren **e1Scaling** som skalerer
+hvor meget puls driver GLUT4-optag for hver aktivitetstype. Styrketræning
+har lav e1Scaling (0.3) fordi musklerne arbejder i korte bursts, ikke
+kontinuerligt som ved cardio (e1Scaling = 1.0).
 
-Ved aerob træning dominerer to mekanismer:
+**Vigtigt:** e1Scaling påvirker KUN GLUT4-muskeloptag (E1). Den påvirker
+IKKE **pulsFaktor** (accelereret insulinabsorption fra det subkutane depot).
+PulsFaktor drives altid af den rå pulsstigning, uanset aktivitetstype --
+fordi øget blodgennemstrømning udvasker insulin uanset årsagen til den
+forhøjede puls.
+
+### Tre mekanismer der stacker
+
+Under fysisk aktivitet rammes blodsukkeret af tre samtidige mekanismer:
 
 **1. Direkte muskeloptag (E1) -- virker UDEN insulin:**
 
 Musklerne optager glukose direkte fra blodet under træning via
-GLUT4-translokation -- en mekanisme der **ikke kræver insulin**. Fysisk
-kontraktion af muskelfibrene alene er nok til at trække GLUT4-transportører
-op til celleoverfladen. Jo højere puls, jo mere optag.
-
-I modellen repræsenteres dette af tilstandsvariablen **E1** (kortvarig
-motionseffekt). E1 stiger hurtigt når pulsen er over hvileniveau
-(tidskonstant 20 min) og falder hurtigt efter træning. E1 trækker glukose
-ud af de perifere væv (Q2) direkte:
+GLUT4-translokation. Fysisk kontraktion af muskelfibrene alene er nok til
+at trække GLUT4-transportører op til celleoverfladen. I modellen:
 
 ```
+HR_effect_raw = (puls - hvilepuls) / hvilepuls
+HR_effect = HR_effect_raw × e1Scaling          ← skaleret per aktivitetstype
 dQ2 = ... - beta × E1 × HR_effect
 ```
 
-Her er `beta = 0.78` (optag-styrke) og `HR_effect` er den relative
-pulsstigning over hvile: `(puls - hvilepuls) / hvilepuls`. Ved puls 120
-og hvilepuls 60 er HR_effect = 1.0. Ved puls 160 er den ~1.67.
+Ved puls 120 og hvilepuls 60: HR_effect_raw = 1.0.
+Cardio (e1Scaling=1.0): HR_effect = 1.0 → fuld GLUT4-effekt.
+Styrke (e1Scaling=0.3): HR_effect = 0.3 → kun 30% GLUT4-effekt.
 
 **2. Forstærket insulinvirkning (E2) -- "exerciseFactor":**
 
 Motion gør insulin mere effektivt. Under og efter træning åbner musklerne
 flere kapillærer (øget perfusion), og cellernes insulinreceptorer bliver
-mere følsomme. Det betyder at det insulin der allerede er i blodet --
-**både bolus og basal** -- pludselig virker kraftigere.
-
-I modellen repræsenteres dette af tilstandsvariablen **E2** (langvarig
-motionseffekt). E2 stiger langsomt (tidskonstant 200 min, dvs. ~3.3 timer)
-og falder langsomt efter træning. Det er derfor insulinfølsomheden er
-forhøjet **timer efter** træning er slut.
-
-E2 påvirker blodsukkeret via **exerciseFactor**, en multiplikator der
-forstærker insulins transport-effekt (x1):
+mere følsomme. I modellen:
 
 ```
 exerciseFactor = 1 + alpha × E2²
 ```
 
-Lad os pakke den ud:
-
-- **alpha = 1.79** er en konstant fra Resalat et al. (2020) der bestemmer
-  hvor kraftigt motion forstærker insulin.
-- **E2** er den akkumulerede langvarige motionseffekt. Den starter på 0
-  ved hvile og stiger gradvist under træning.
-- **E2²** (E2 i anden potens) giver en progressiv kurve: lidt motion giver
-  lidt forstærkning, men meget motion giver *uforholdsmæssigt meget*
-  forstærkning. Det afspejler at kroppen åbner stadig flere kapillærer og
-  aktiverer flere GLUT4-receptorer jo længere træningen varer.
-- Resultatet ganges på **x1** i Q1-ligningen:
-  `dQ1 = ... - exerciseFactor × x1 × Q1`
-  Så insulin-drevet transport af glukose fra blod til muskler multipliceres
-  med exerciseFactor.
+- **alpha = 1.79** (Resalat et al. 2020) bestemmer forstærkningen
+- **E2²** giver progressiv kurve: lidt motion giver lidt forstærkning,
+  men meget motion giver *uforholdsmæssigt* meget forstærkning
 
 **Konkret eksempel:** Efter 60 min moderat løb (puls 130) er E2 ca. 0.45.
-exerciseFactor = 1 + 1.79 × 0.45² = 1 + 1.79 × 0.20 = **1.36** -- insulin
-virker 36% kraftigere. Efter 2 timer intensiv træning kan E2 nå ~0.8,
-og exerciseFactor = 1 + 1.79 × 0.64 = **2.15** -- insulin virker mere end
-dobbelt så kraftigt.
+exerciseFactor = 1 + 1.79 × 0.20 = **1.36** -- insulin virker 36% kraftigere.
 
-**Samlet motionseffekt -- tre mekanismer der stacker:**
+**3. Accelereret insulinabsorption (pulsFaktor):**
 
-Under motion rammes blodsukkeret af tre samtidige mekanismer:
+Øget blodgennemstrømning udvasker insulin hurtigere fra det subkutane depot.
+Denne effekt bruger den rå pulsstigning (IKKE skaleret med e1Scaling):
 
-1. **Direkte muskeloptag (E1)** -- insulin-uafhængigt, virker kun under
-   træning
-2. **Forstærket insulinvirkning (exerciseFactor via E2)** -- forstærker al
-   aktiv insulin, varer timer efter træning
-3. **Accelereret insulinabsorption (pulsFaktor)** -- hurtigere udvaskning
-   fra subkutant depot, gælder al insulin (bolus + basal)
+```
+pulsFaktor = 1 + HR_effect_raw × pulsFølsomhed
+```
 
-Det er kombinationen af alle tre der giver den voldsomme BG-sænkning
-mange T1D-patienter oplever under motion.
+Ved puls 120 → pulsFaktor ≈ 1.5× normal absorptionshastighed.
+Gælder al insulin (bolus + basal) og alle aktivitetstyper.
 
-Nettoresultat: blodsukkeret **falder** under aerob træning.
+---
 
-### Anaerob træning (styrke, sprint)
+### 🏃 Cardio (aerob træning)
 
-Ved høj intensitet udløses en katekolamin-respons (adrenalin). I modellen
-tilføjes akut stress (0.02 per simuleret minut ved høj intensitet), som øger
-leverens glukoseproduktion. Tallet 0.02 betyder at hvert simuleret minut
-med høj intensitet lægger 0.02 til det akutte stressniveau -- efter 10 min
-er akutStress = 0.20, hvilket øger leverens glukoseproduktion med 20%.
-Stresshormonerne har en halveringstid på ~60 min, så effekten aftager
-gradvist efter træning.
+**Parametre:** e1Scaling = 1.0, e2Scaling = 1.0, stress = 0/0/0.005
 
-Denne stress-effekt kan midlertidigt **overskride** det faldende blodsukker
-fra muskeloptaget.
+Ved aerob træning dominerer GLUT4-optag (E1) og forstærket insulinvirkning
+(E2). Alle tre mekanismer arbejder i samme retning: blodsukkeret **falder**.
 
-Nettoresultat: blodsukkeret kan **stige akut** under anaerob træning, men
-falder efterfølgende når stresshormonerne aftager og den forstærkede
-insulinfølsomhed (E2) tager over.
+Cardio er den aktivitetstype med størst BG-sænkende effekt. Ved T1D er
+effekten endda kraftigere end hos raske, fordi det injicerede insulin
+ikke kan "slukkes" som endogent insulin (Riddell et al. 2017). PulsFaktor
+udvasker desuden det subkutane depot hurtigere → mere cirkulerende insulin
+under træningen.
+
+**Nettoresultat:** BG falder, ofte markant.
+
+**Puls-målpunkter:**
+- Lav: 100 bpm (gang, let cykling)
+- Medium: 130 bpm (jogning, moderat cykling)
+- Høj: 160 bpm (løb, hård cykling, svømning)
+
+---
+
+### 💪 Styrketræning (anaerob træning)
+
+**Parametre:** e1Scaling = 0.3, e2Scaling = 0.9, stress = 0.008/0.015/0.025
+
+Styrketræning har en helt anden fysiologisk profil end cardio:
+
+**Akut BG-stigning via katekolamin-respons:**
+Muskelkontraktioner under høj belastning aktiverer det sympatiske nervesystem
+og udløser adrenalin og noradrenalin (katekolaminer). Disse stimulerer
+leveren til at frigive glukose via glykogenolyse. I modellen tilføjes
+akut stress ved ALLE intensiteter (0.008–0.025 per sim-minut).
+
+HIIT og tung styrketræning giver typisk en BG-stigning på 2–5 mmol/L
+(Bally et al. 2015: gennemsnit +3.7 mmol/L ved HIIT).
+
+**Laktat og Cori-cyklus (bidrager yderligere til BG-stigning):**
+Under anaerob træning producerer musklerne laktat. Via Cori-cyklus
+transporteres laktat til leveren, hvor det bruges som substrat til
+glukoneogenese (produktion af ny glukose). Dette bidrager yderligere
+til BG-stigningen ud over den direkte katekolamin-effekt.
+
+**Lavere GLUT4-optag:**
+Styrketræning er interval-baseret (sæt + pause), ikke kontinuerligt
+muskelarbejde. Derfor er e1Scaling kun 0.3 -- musklerne optager 70% mindre
+glukose direkte end ved cardio.
+
+**Forsinket BG-fald:**
+Efter styrketræning aftager stresshormonerne (halveringstid ~60 min),
+og den forstærkede insulinfølsomhed (E2, e2Scaling = 0.9) tager over.
+BG falder gradvist tilbage -- og kan falde under udgangspunktet pga.
+post-exercise insulinfølsomhed (Yardley et al. 2013).
+
+**Nettoresultat:** BG stiger akut, falder efterfølgende.
+
+**Puls-målpunkter:**
+- Lav: 85 bpm (lette vægte, maskiner)
+- Medium: 110 bpm (moderat belastning)
+- Høj: 135 bpm (tung belastning, crossfit)
+
+---
+
+### ⚽ Blandet sport
+
+**Parametre:** e1Scaling = 0.65, e2Scaling = 0.85, stress = 0.003/0.006/0.012
+
+Blandet sport (fodbold, badminton, håndbold) kombinerer aerobe og anaerobe
+elementer: en cardio-base (løb, bevægelse) afbrudt af intermitterende
+sprints, spring og kontakt. I modellen approksimeres dette som en vægtet
+blanding (~65% cardio / ~35% anaerob).
+
+**Riddell et al. (2017, Lancet)** konsensus: "mixed activities are associated
+with glucose stability" -- fordi de BG-sænkende (GLUT4, E2) og BG-hævende
+(stress) mekanismer delvist ophæver hinanden.
+
+**Nettoresultat:** BG relativt stabilt -- mindre fald end ren cardio,
+mindre stigning end ren styrke.
+
+**Puls-målpunkter:**
+- Lav: 105 bpm (opvarmning, let spil)
+- Medium: 135 bpm (normalt spil)
+- Høj: 165 bpm (intenst spil, kamp)
+
+---
+
+### 🧘 Afslapning (yoga, meditation, udstrækning)
+
+**Parametre:** e1Scaling = 0.0, e2Scaling = 0.0, stressReduction = 0.005/0.01/0.015
+
+Afslapning virker via et helt andet fysiologisk system end de tre andre
+aktivitetstyper. Der er ingen muskelbaseret GLUT4-effekt (e1Scaling = 0),
+ingen post-exercise insulinfølsomhed (e2Scaling = 0), og pulsen er ved
+eller under hvileniveau.
+
+**Parasympatisk aktivering og stressreduktion:**
+Yoga, meditation og vejrtrækningsøvelser aktiverer det parasympatiske
+nervesystem og dæmper HPA-aksen (hypothalamus-hypofyse-binyre-aksen).
+Det reducerer cirkulerende kortisol og katekolaminer. I modellen
+reduceres både `acuteStressLevel` og `chronicStressLevel` per sim-minut.
+
+Metatanalyse (Pascoe et al. 2023): yoga-interventioner reducerer kortisol
+signifikant og forbedrer glykæmisk kontrol hos T2D-patienter. For T1D er
+evidensen begrænset, men mekanismen (stressreduktion → lavere HGP) gælder.
+
+**Perifer vasodilatation:**
+Afslapningsøvelser øger perifer blodgennemstrømning (vasodilation), hvilket
+giver en mild forbedring af insulinfølsomheden under aktiviteten
+(2–5% ISF-boost). Denne effekt ophører når aktiviteten stopper.
+
+**Nettoresultat:** BG falder en smule, primært via reduceret leverproduktion
+(lavere stress → lavere HGP). Effekten er størst hvis spilleren i forvejen
+har forhøjet stressniveau.
+
+**Puls-målpunkter (ved/under hvile):**
+- Lav: 58 bpm (let udstrækning)
+- Medium: 55 bpm (yoga-flow)
+- Høj: 52 bpm (dyb meditation, body scan)
+
+---
 
 ### Puls-model
 
 Pulsen stiger og falder gradvist via eksponentiel udjævning:
 
-- Under motion: halveringstid ca. 2 minutter (hurtig stigning)
-- Efter motion: halveringstid ca. 5 minutter (gradvis recovery)
+- Under aktivitet: halveringstid ca. 2 minutter (hurtig stigning)
+- Efter aktivitet: halveringstid ca. 5 minutter (gradvis recovery)
 
-Intensiteten mappes til målpuls:
-- Lav: 100 bpm
-- Medium: 130 bpm
-- Høj: 160 bpm
+Målpulsen afhænger af aktivitetstype og intensitet (se tabeller ovenfor).
 
 ### Post-exercise insulinfølsomhed
 
 Efter træning er insulinfølsomheden forhøjet i en periode der afhænger
-af intensiteten:
+af intensiteten. Boostets størrelse skaleres med aktivitetstypens
+**e2Scaling** -- så cardio (1.0) giver fuld boost, styrke (0.9) næsten
+fuld, blandet (0.85) lidt mindre, og afslapning (0.0) ingen boost.
 
 | Intensitet | Følsomheds-boost | Varighed efter træning |
 |------------|-------------------|------------------------|
-| Lav | +50% | 1 * træningsvarighed |
-| Medium | +75% | 2 * træningsvarighed |
-| Høj | +100% | 4 * træningsvarighed |
+| Lav | +50% × e2Scaling | 1 × træningsvarighed |
+| Medium | +75% × e2Scaling | 2 × træningsvarighed |
+| Høj | +100% × e2Scaling | 4 × træningsvarighed |
 
 Boostet aftager lineært fra maksimum til normal over perioden.
+
+### Parametre-oversigt
+
+| Parameter | Cardio | Styrke | Blandet | Afslapning |
+|-----------|--------|--------|---------|------------|
+| e1Scaling (GLUT4) | 1.0 | 0.3 | 0.65 | 0.0 |
+| e2Scaling (post-ex ISF) | 1.0 | 0.9 | 0.85 | 0.0 |
+| Stress (Høj) | 0.005 | 0.025 | 0.012 | 0 |
+| StressReduction (Høj) | 0 | 0 | 0 | 0.015/min |
+| Vasodilatation (Høj) | 0 | 0 | 0 | 5% ISF |
+| Kcal/min (Høj) | 10 | 8 | 12 | 2.5 |
 
 ### Hvorfor er det vigtigt at forstå?
 
 - **Hypo-risiko:** Aerob træning med aktiv bolus-insulin kan give alvorlig
   hypoglykæmi. Reducer bolus eller spis ekstra før træning.
-- **Forsinket hypo:** 6-12 timer efter intensiv træning kan blodsukkeret
+- **Forsinket hypo:** 6–12 timer efter intensiv træning kan blodsukkeret
   falde pludseligt, især om natten.
 - **Styrketræning er anderledes:** Forvent en akut blodsukkerstigning under
-  styrketræning -- det er normalt og forbigående.
+  styrketræning -- det er normalt og forbigående (Bally 2015).
+- **Blandet sport giver stabilitet:** Fodbold/håndbold giver typisk mere
+  stabilt BG end ren cardio pga. intermitterende anaerobe elementer (Riddell 2017).
+- **Stress og BG hænger sammen:** Yoga/meditation kan sænke BG indirekte
+  ved at reducere stresshormoner. Særligt nyttigt ved forhøjet stressniveau.
 - **Motion om aftenen:** Forhøjet insulinfølsomhed om natten øger risikoen
-  for natlig hypoglykæmi.
+  for natlig hypoglykæmi -- uanset aktivitetstype.
 
 ---
 

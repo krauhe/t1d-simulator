@@ -27,6 +27,7 @@ Dokumentet fungerer som en vidensbase for T1D Simulator, men dækker også emner
 8. [Aerob motion -- løb, cykling, svømning](#8-aerob-motion--løb-cykling-svømning)
 9. [Anaerob træning -- styrketræning og sprint](#9-anaerob-træning--styrketræning-og-sprint)
 10. [Motionsinduceret inflammation -- når motion gør ondt](#10-motionsinduceret-inflammation--når-motion-gør-ondt)
+10b. [Afslapning, yoga og meditation](#10b-afslapning-yoga-og-meditation--stressreduktion-og-blodsukker)
 
 **Del 3: Hormoner og døgnrytme**
 11. [Kontraregulatoriske hormoner -- kroppens forsvar mod lavt blodsukker](#11-kontraregulatoriske-hormoner--kroppens-forsvar-mod-lavt-blodsukker)
@@ -302,6 +303,21 @@ Det forvirrende mønster -- stigning under træning, fald timer efter -- får ma
 > - Riddell MC, et al. (2017). "Exercise management in type 1 diabetes." *Lancet Diabetes Endocrinol*, 5(5):377-390.
 > - Yardley JE, et al. (2013). "Resistance versus aerobic exercise: acute effects on glycemia in type 1 diabetes." *Diabetes Care*, 36(3):537-542.
 
+### Laktat og Cori-cyklus -- en ekstra BG-stigning
+
+Under anaerob træning producerer musklerne store mængder **laktat (mælkesyre)** som biprodukt af glykolyse uden ilt. Laktaten transporteres via blodet til leveren, hvor den omdannes til glukose via **Cori-cyklus** (glukoneogenese fra laktat). Denne nyproducerede glukose frigives til blodet og bidrager til den akutte BG-stigning under styrketræning.
+
+HIIT-data (Bally et al. 2015, Rempel et al. 2018) viser:
+- BG steg i **97% af HIIT-sessioner** hos T1D-patienter (gennemsnit +3.7 mmol/L)
+- Stigningen i plasma-laktat korrelerer med BG-stigningen
+- Høj reproducerbarhed inden for individer (din krop reagerer ens hver gang)
+
+**Status i simulatoren:** Laktat/Cori-cyklus er ikke eksplicit modelleret som separat proces. Effekten fanges indirekte via den akutte stress-respons (katekolaminer → øget hepatisk glukoseproduktion). En fremtidig udvidelse kunne modellere laktat som separat state-variabel med omsætning i leveren.
+
+> **Ekstra kilder:**
+> - Bally L, et al. (2015). "Effects of HIIT vs moderate continuous exercise on glucose homeostasis and hormone response in T1DM." *PLOS ONE*, 10(8):e0136489.
+> - Rempel M, et al. (2018). "Reproducibility in the cardiometabolic responses to HIIT in adults with T1D." *Diabetes Metab Res Rev*, 35(4):e3134.
+
 ---
 
 ## 10. Motionsinduceret inflammation -- når motion gør ondt
@@ -335,6 +351,40 @@ Overgangen afhænger af din træningstilstand. En 10 km løbetur kan give markan
 > **Kilder:**
 > - Pedersen BK, Febbraio MA. (2008). "Muscle as an endocrine organ: focus on muscle-derived interleukin-6." *Physiol Rev*, 88(4):1379-1406.
 > - Petersen AMW, Pedersen BK. (2005). "The anti-inflammatory effect of exercise." *J Appl Physiol*, 98(4):1154-1162.
+
+---
+
+## 10b. Afslapning, yoga og meditation -- stressreduktion og blodsukker
+
+**Implementeret (via stressreduktion og vasodilatation)**
+
+De fleste tænker på fysisk aktivitet som det primære middel til at påvirke blodsukker. Men afslapningsteknikker som yoga, meditation og udstrækning kan også have en målbar effekt -- primært via stressreduktion.
+
+### Mekanismerne
+
+1. **Parasympatisk aktivering:** Yoga og meditation aktiverer det parasympatiske nervesystem ("rest and digest") og dæmper det sympatiske ("fight or flight"). Dette reducerer HPA-aksens (hypothalamus-hypofyse-binyre) aktivitet.
+
+2. **Kortisol-reduktion:** Lavere HPA-akse-aktivitet → lavere kortisol → lavere hepatisk glukoseproduktion (EGP). For T1D-patienter med forhøjet stress betyder dette et målbart BG-fald.
+
+3. **Perifer vasodilatation:** Afslapning og langsom udstrækning øger blodgennemstrømningen i perifere væv. Øget blodflow til muskler og fedtvæv forbedrer insulins virkning en smule (insulin-medieret vasodilatation er funktionelt koblet til glukoseoptag).
+
+### Evidens
+
+- En meta-analyse (PMC10534311, 2023) viser at mindfulness forbedrer glykæmisk kontrol målt ved HbA1c, primært via stressreduktion og bedre selvhåndtering.
+- Et RCT fra 2025 (Diabetology & Metabolic Syndrome) med T1D-teenagere viste at 3 måneders yoga gav lavere HbA1c og reduceret insulinbehov.
+- Evidensen er stærkere for T2D end T1D, men mekanismerne (stressreduktion, vasodilatation) er relevante for begge.
+
+### Hvad det betyder for T1D
+
+- Afslapning erstatter ikke insulin eller motion, men kan hjælpe med at reducere stressinduceret hyperglykæmi.
+- Særligt relevant i perioder med forhøjet stress (sygdom, eksamener, søvnmangel) hvor BG ellers er svær at kontrollere.
+- I simulatoren modelleres afslapning som stressreduktion (akut + kronisk) med en mild vasodilatation-bonus.
+
+> **Kilder:**
+> - Pascoe MC, et al. (2023). "The Effects of Mindfulness on Glycemic Control in People with Diabetes: An Overview of Systematic Reviews and Meta-Analyses." *Nutrients*, 15(19):4085.
+> - Shree Ganesh HR, et al. (2022). "Impact of an Integrated Yoga Therapy Protocol on Insulin Resistance and Glycemic Control in Patients with T2DM." *Int J Yoga*, 15(1):54-60.
+> - Mahmoud AA, et al. (2025). "The impact of three months of adjuvant yoga intervention on glycemic control among adolescents with type 1 diabetes." *Diabetol Metab Syndr*, 17:42.
+> - Baron AD, et al. (1999). "Insulin-Mediated Vasodilation and Glucose Uptake Are Functionally Linked in Humans." *Hypertension*, 33(1):554-558.
 
 ---
 
