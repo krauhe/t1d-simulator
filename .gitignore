@@ -1,0 +1,10 @@
+# Videnskabelige artikler — ophavsretligt beskyttede, synces via Dropbox
+# Kun SOURCES.md (referencelisten med DOI-links) trackes i Git
+docs/references/*.pdf
+docs/references/*.html
+
+# Lokale Claude Code settings
+.claude/settings.local.json
+
+# Developer input (screenshots etc.)
+developer input/
