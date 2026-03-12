@@ -814,7 +814,7 @@
           <p style="margin-top: 10px;">Modellen valideres løbende med automatiske tests:</p>
           <ul>
             <li><a href="tests/model-validation.html" target="_blank" style="color: var(--blue);">Visuel modelvalidering</a> — 17 testsektioner der kører simulatoren headless (uden UI) og plotter BG-kurver for forskellige scenarier. Testene verificerer baseline-stabilitet, cirkadisk ISF-variation, insulin- og kulhydrat dosis-respons, profil- og vægtafhængighed, motion, og ekstreme patientprofiler. Hver sektion beskriver hvad der testes, hvad vi forventer, og om resultatet matcher. Åbn filen direkte i en browser for at se graferne.</li>
-            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/tests/simulation.test.js" target="_blank" style="color: var(--blue);">Automatiserede enhedstests</a> — 47 tests der tjekker individuelle fysiologiske mekanismer (insulinvirkning, kulhydratabsorption, motion, stresshormoner, ketoner m.m.). Kør med <code>node tests/simulation.test.js</code>.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/tests/simulation.test.js" target="_blank" style="color: var(--blue);">Automatiserede enhedstests</a> — 57 tests der tjekker individuelle fysiologiske mekanismer (insulinvirkning, kulhydratabsorption, motion, stresshormoner, ketoner m.m.). Kør med <code>node tests/simulation.test.js</code>.</li>
           </ul>
         </details>
 
@@ -841,6 +841,8 @@
             <li><strong>Lever-glykogenpool:</strong> Massebalanceret (0–100g) med forbrug via glykogenolyse og genopfyldning via gluconeogenese + mad.</li>
             <li><strong>Søvnforstyrrelse:</strong> Natlige interventioner koster søvn → forhøjet kronisk stress og forstærket dawn-effekt næste morgen.</li>
             <li><strong>Vægt- og kaloriemodel:</strong> Energibalance med BMR-skalering og motionsforbrug → vægtændring over tid.</li>
+            <li><strong>Fedt-kompartmentmodel:</strong> To kompartmenter (mave → tarm) med dynamisk mavetømning. Fedt i tarmen udløser CCK/GLP-1 der bremser kulhydratabsorption (pizza-effekten). τG = 40 + 18×ln(1 + fedtTarm/10). Baseret på Smart 2013, Wolpert 2013.</li>
+            <li><strong>Protein-glukagonmodel:</strong> Tre-kompartment aminosyre-absorption (mave → tarm → blod) der driver glukagon-stimuleret leverproduktion via Hill-funktion. Erstatter den gamle 25%-kulhydrat-regel. Baseret på Paterson 2016, Fromentin 2013, Gannon 2013.</li>
           </ul>
 
           <p><strong>Teknologier</strong></p>
@@ -956,7 +958,7 @@
           <p style="margin-top: 10px;">The model is continuously validated with automated tests:</p>
           <ul>
             <li><a href="tests/model-validation.html" target="_blank" style="color: var(--blue);">Visual model validation</a> — 17 test sections that run the simulator headless (without UI) and plot BG curves for various scenarios.</li>
-            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/tests/simulation.test.js" target="_blank" style="color: var(--blue);">Automated unit tests</a> — 47 tests checking individual physiological mechanisms. Run with <code>node tests/simulation.test.js</code>.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/tests/simulation.test.js" target="_blank" style="color: var(--blue);">Automated unit tests</a> — 57 tests checking individual physiological mechanisms. Run with <code>node tests/simulation.test.js</code>.</li>
           </ul>
         </details>
 
@@ -983,6 +985,8 @@
             <li><strong>Liver glycogen pool:</strong> Mass-balanced (0–100 g) with consumption via glycogenolysis and replenishment via gluconeogenesis + food.</li>
             <li><strong>Sleep disruption:</strong> Nocturnal interventions cost sleep → elevated chronic stress and amplified dawn effect next morning.</li>
             <li><strong>Weight &amp; calorie model:</strong> Energy balance with BMR scaling and exercise expenditure → weight change over time.</li>
+            <li><strong>Fat compartment model:</strong> Two-compartment (stomach → intestine) with dynamic gastric emptying. Intestinal fat triggers CCK/GLP-1 feedback slowing carb absorption (pizza effect). τG = 40 + 18×ln(1 + fatIntestine/10). Based on Smart 2013, Wolpert 2013.</li>
+            <li><strong>Protein glucagon model:</strong> Three-compartment amino acid absorption (stomach → gut → blood) driving glucagon-stimulated hepatic glucose production via Hill function. Replaces the old 25% carb-equivalent rule. Based on Paterson 2016, Fromentin 2013, Gannon 2013.</li>
           </ul>
 
           <p><strong>Technologies</strong></p>
