@@ -234,45 +234,58 @@
                  Togles via debug-knappen i settings-gruppen (bunden).
                  Forbliver åben når man interagerer med resten af spillet. -->
             <div id="debug-sidebar">
-                <h5>Debug</h5>
-                <label class="dp-checkbox">
-                    <input type="checkbox" id="debugTrueBgCheckbox">
-                    <span>Sandt BG</span>
-                </label>
-                <label class="dp-checkbox">
-                    <input type="checkbox" id="debugLogCheckbox">
-                    <span>CSV log</span>
-                </label>
-                <div class="dp-log-controls" id="debugLogControls" style="display:none;">
-                    <div class="dp-log-status">
-                        <span id="debugLogStatus">Klar</span>
-                        <span id="debugLogCount">0 rækker</span>
+                <!-- Sticky top: screenshot + kontroller (altid synlige) -->
+                <div id="debug-sticky-top">
+                    <h5>Debug</h5>
+                    <label class="dp-checkbox">
+                        <input type="checkbox" id="debugTrueBgCheckbox">
+                        <span>Sandt BG</span>
+                    </label>
+                    <label class="dp-checkbox">
+                        <input type="checkbox" id="debugLogCheckbox">
+                        <span>CSV log</span>
+                    </label>
+                    <div class="dp-log-controls" id="debugLogControls" style="display:none;">
+                        <div class="dp-log-status">
+                            <span id="debugLogStatus">Klar</span>
+                            <span id="debugLogCount">0 rækker</span>
+                        </div>
+                        <button class="dp-btn" id="debugLogDownload" title="Download logfil som CSV">&#x1F4BE; CSV</button>
+                        <button class="dp-btn dp-btn-clear" id="debugLogClear" title="Ryd logdata">&#x1F5D1; Ryd</button>
                     </div>
-                    <button class="dp-btn" id="debugLogDownload" title="Download logfil som CSV">&#x1F4BE; CSV</button>
-                    <button class="dp-btn dp-btn-clear" id="debugLogClear" title="Ryd logdata">&#x1F5D1; Ryd</button>
+                    <button class="dp-btn" id="debugScreenshot" title="Download screenshot som PNG" style="margin-top:4px;width:100%;">&#x1F4F7; Screenshot</button>
                 </div>
-                <button class="dp-btn" id="debugScreenshot" title="Download screenshot som PNG" style="margin-top:4px;width:100%;">&#x1F4F7; Screenshot</button>
-                <div class="dp-divider"></div>
+
+                <!-- Scrollbar live-værdier opdelt i grupper -->
                 <div class="dp-live" id="debugLiveValues">
-                    <!-- Glukose -->
+
+                    <!-- ═══ GLUKOSE ═══ -->
+                    <div class="dbg-group-label">Glukose</div>
                     <div class="dp-row" title="Sandt blodsukker — den reelle værdi i modellen, uden CGM-forsinkelse eller støj">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#glukose" target="_blank">True BG</a></span>
                         <span class="dp-val" id="dbgTrueBG">--</span><span class="dp-unit">mmol/L</span></div>
                     <div class="dp-row" title="CGM blodsukker — hvad sensoren viser, med ~10 min forsinkelse og tilfældig støj">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#cgm" target="_blank">CGM BG</a></span>
                         <span class="dp-val" id="dbgCgmBG">--</span><span class="dp-unit">mmol/L</span></div>
+                    <div class="dp-row" title="Carbs On Board — resterende kulhydrater der endnu ikke er optaget fra tarmen">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#mad" target="_blank">COB</a></span>
+                        <span class="dp-val" id="dbgCOB">--</span><span class="dp-unit">g</span></div>
+                    <div class="dp-row" title="Ketonniveau — stiger ved insulinmangel. Over 3.0 = fare for ketoacidose (DKA)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#ketoner" target="_blank">Ketoner</a></span>
+                        <span class="dp-val" id="dbgKetone">--</span><span class="dp-unit">mmol/L</span></div>
 
-                    <!-- Insulin -->
+                    <!-- ═══ INSULIN ═══ -->
+                    <div class="dbg-group-label">Insulin</div>
                     <div class="dp-row" title="Bolus Insulin On Board — resterende aktivt hurtigvirkende insulin fra injektioner">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#insulin" target="_blank">Bolus IOB</a></span>
                         <span class="dp-val" id="dbgIOB">--</span><span class="dp-unit">E</span></div>
                     <div class="dp-row" title="Basal Insulin On Board — resterende injiceret dosis (uden bioavailability-korrektion)">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#insulin" target="_blank">Basal IOB</a></span>
                         <span class="dp-val" id="dbgBasalIOB">--</span><span class="dp-unit">E</span></div>
-                    <div class="dp-row" title="Basal flow → plasma: hvor hurtigt basalinsulin leveres til blodet lige nu (trapez-profil, direkte input)">
+                    <div class="dp-row" title="Basal flow → plasma: hvor hurtigt basalinsulin leveres til blodet lige nu">
                         <span class="dp-label">Basal flow</span>
                         <span class="dp-val" id="dbgBasalRate">--</span><span class="dp-unit">E/t</span></div>
-                    <div class="dp-row" title="Bolus flow → plasma: absorptionshastighed fra subkutant depot (S2/τ_I). Stiger langsomt efter injektion, peaker ~1-2t, aftager over 3-5t">
+                    <div class="dp-row" title="Bolus flow → plasma: absorptionshastighed fra subkutant depot (S2/τ_I)">
                         <span class="dp-label">Bolus flow</span>
                         <span class="dp-val" id="dbgBolusFlow">--</span><span class="dp-unit">E/t</span></div>
                     <div class="dp-row" title="Subkutant depot — insulin under huden der venter på at blive optaget (Hovorka S1+S2)">
@@ -282,17 +295,8 @@
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#insulin" target="_blank">Plasma I</a></span>
                         <span class="dp-val" id="dbgPlasmaI">--</span><span class="dp-unit">mU/L</span></div>
 
-                    <!-- Mad -->
-                    <div class="dp-row" title="Carbs On Board — resterende kulhydrater der endnu ikke er optaget fra tarmen">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#mad" target="_blank">COB</a></span>
-                        <span class="dp-val" id="dbgCOB">--</span><span class="dp-unit">g</span></div>
-
-                    <!-- Ketoner -->
-                    <div class="dp-row" title="Ketonniveau — stiger ved insulinmangel. Over 3.0 = fare for ketoacidose (DKA)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#ketoner" target="_blank">Ketoner</a></span>
-                        <span class="dp-val" id="dbgKetone">--</span><span class="dp-unit">mmol/L</span></div>
-
-                    <!-- Hovorka insulin-aktionsvariable -->
+                    <!-- ═══ HOVORKA-MODEL ═══ -->
+                    <div class="dbg-group-label">Hovorka-model</div>
                     <div class="dp-row" title="x1: Insulineffekt på glukosetransport — driver glukose fra plasma ind i perifere væv">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#kernemodellen" target="_blank">x1 (transport)</a></span>
                         <span class="dp-val" id="dbgX1">--</span><span class="dp-unit">min⁻¹</span></div>
@@ -302,54 +306,64 @@
                     <div class="dp-row" title="x3: Insulineffekt på leverens glukoseproduktion — undertrykker EGP">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#kernemodellen" target="_blank">x3 (EGP-sup)</a></span>
                         <span class="dp-val" id="dbgX3">--</span><span class="dp-unit">min⁻¹</span></div>
-
-                    <!-- Leverproduktion -->
-                    <div class="dp-row" title="Endogen Glukose Produktion — leverens frigivelse af glukose = EGP₀ × max(0, StressMult − x3)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#stresshormoner" target="_blank">EGP</a></span>
-                        <span class="dp-val" id="dbgEGP">--</span><span class="dp-unit">mmol/min</span></div>
-
-                    <!-- Motion -->
-                    <div class="dp-row" title="Exercise Factor — multiplikator på insulineffekten under motion = 1 + α × E2²">
+                    <div class="dp-row" title="Exercise Factor — multiplikator på insulineffekten under motion = 1 + alpha * E2^2">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#motion" target="_blank">ExerciseFac</a></span>
-                        <span class="dp-val" id="dbgExFac">--</span><span class="dp-unit">×</span></div>
-                    <div class="dp-row" title="Effektiv ISF — hvor meget 1E insulin sænker BG lige nu = profilISF × ExerciseFac">
+                        <span class="dp-val" id="dbgExFac">--</span><span class="dp-unit">x</span></div>
+                    <div class="dp-row" title="Effektiv ISF — hvor meget 1E insulin saenker BG lige nu = profilISF * ExerciseFac">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#insulin" target="_blank">ISF (eff.)</a></span>
                         <span class="dp-val" id="dbgISFeff">--</span><span class="dp-unit">(mmol/L)/E</span></div>
-                    <div class="dp-row" title="Simuleret puls — stiger ved motion, falder gradvist efter. Påvirker insulinabsorptionshastighed">
+                    <div class="dp-row" title="Simuleret puls — stiger ved motion, falder gradvist efter. Pavirker insulinabsorption">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#motion" target="_blank">Puls</a></span>
                         <span class="dp-val" id="dbgHR">--</span><span class="dp-unit">BPM</span></div>
 
-                    <!-- Stresshormoner -->
-                    <div class="dp-row" title="Akut stressniveau (adrenalin/glukagon) — stiger ved hypo og hård motion. t½ ~60 sim-min">
+                    <!-- ═══ LEVER & EGP ═══ -->
+                    <div class="dbg-group-label">Lever & EGP</div>
+                    <div class="dp-row" title="Endogen Glukose Produktion — leverens frigivelse af glukose = EGP_0 * max(0, StressMult - x3)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#stresshormoner" target="_blank">EGP</a></span>
+                        <span class="dp-val" id="dbgEGP">--</span><span class="dp-unit">mmol/min</span></div>
+                    <div class="dp-row" title="Lever-glykogen — endelig glycogenpool (0-120g). Forbruges af stress-drevet glykogenolyse og motion. Genopfyldes efter mad.">
+                        <span class="dp-label">Glykogen</span>
+                        <span class="dp-val" id="dbgGlycogen">--</span><span class="dp-unit">g</span></div>
+                    <div class="dp-row" title="Glycogen Reserve — afledt skalering (0-100%). Under 100% svækkes stress-drevet EGP proportionelt.">
+                        <span class="dp-label">GlyReserve</span>
+                        <span class="dp-val" id="dbgGlyReserve">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Stress-multiplikator — effektiv driver for EGP. Inkl. glycogen-skaleret akut stress + kronisk + dawn.">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#stresshormoner" target="_blank">StressMult</a></span>
+                        <span class="dp-val" id="dbgStressMult">--</span><span class="dp-unit">x</span></div>
+
+                    <!-- ═══ STRESSHORMONER ═══ -->
+                    <div class="dbg-group-label">Stresshormoner</div>
+                    <div class="dp-row" title="Akut stressniveau (adrenalin/glukagon) — stiger ved hypo og hard motion. t1/2 ~60 sim-min">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#stresshormoner" target="_blank">Stress (akut)</a></span>
                         <span class="dp-val" id="dbgAcute">--</span><span class="dp-unit"></span></div>
-                    <div class="dp-row" title="Kronisk stressniveau (kortisol) — stiger ved sygdom og søvnmangel. t½ ~12 sim-timer">
+                    <div class="dp-row" title="Kronisk stressniveau (kortisol) — stiger ved sygdom og sovnmangel. t1/2 ~12 sim-timer">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#stresshormoner" target="_blank">Stress (kron.)</a></span>
                         <span class="dp-val" id="dbgChronic">--</span><span class="dp-unit"></span></div>
-                    <div class="dp-row" title="Stress-multiplikator = 1.0 + akut + kronisk + dawn. Driver EGP (leverens glukoseproduktion)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#stresshormoner" target="_blank">StressMult</a></span>
-                        <span class="dp-val" id="dbgStressMult">--</span><span class="dp-unit">×</span></div>
-
-                    <!-- Dawn-effekt (ny) -->
-                    <div class="dp-row" title="Cirkadisk kortisol — dawn-fænomenet: kortisol-peak om morgenen (04:00-12:00) der hæver EGP">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#dawn" target="_blank">Dawn-effekt</a></span>
+                    <div class="dp-row" title="Cirkadisk kortisol — dawn-faenomenet: kortisol-peak om morgenen (04:00-12:00) der haever EGP">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#dawn" target="_blank">Dawn (HGP)</a></span>
                         <span class="dp-val" id="dbgDawn">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Cirkadisk ISF-faktor — doegnvariation i insulinfoelsomhed. 0.70 om morgenen (insulin virker 30% daarligere), 1.20 om aftenen (20% bedre)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#dawn" target="_blank">Dawn (ISF)</a></span>
+                        <span class="dp-val" id="dbgCircadianISF">--</span><span class="dp-unit">×</span></div>
+                    <div class="dp-row" title="Insulinresistens-faktor — stiger ved kronisk stress (1.0 + chronicStress × 0.5). Hojere = insulin virker daarligere">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#stresshormoner" target="_blank">InsResistans</a></span>
+                        <span class="dp-val" id="dbgInsResistance">--</span><span class="dp-unit">×</span></div>
 
-                    <!-- Søvn (ny) -->
-                    <div class="dp-row" title="Mistet søvn denne nat — natlige interventioner forstyrrer søvnen og øger insulinresistens">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#sovn" target="_blank">Søvntab</a></span>
+                    <!-- ═══ KONTRAREGULERING ═══ -->
+                    <div class="dbg-group-label">Kontraregulering</div>
+                    <div class="dp-row" title="Hypo-belastning — akkumuleret hypo-eksponering (tid × dybde under 3.0). Hoejere = mere tilvaenning">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#haaf" target="_blank">Hypo-bel.</a></span>
+                        <span class="dp-val" id="dbgHypoArea">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Kontraregulering — kroppens evne til at modvirke lavt BG. Falder ved gentagen hypo (hypo-tilvaenning)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#haaf" target="_blank">KontraReg</a></span>
+                        <span class="dp-val" id="dbgCounterReg">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Mistet sovn denne nat — natlige interventioner forstyrrer sovnen og oger insulinresistens">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#sovn" target="_blank">Sovntab</a></span>
                         <span class="dp-val" id="dbgSleep">--</span><span class="dp-unit">timer</span></div>
 
-                    <!-- HAAF -->
-                    <div class="dp-row" title="HAAF hypo-areal — akkumuleret hypo-eksponering (tid × dybde under 3.5). Højere = mere skade">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#haaf" target="_blank">HAAF area</a></span>
-                        <span class="dp-val" id="dbgHypoArea">--</span><span class="dp-unit"></span></div>
-                    <div class="dp-row" title="Kontrareguleringsfaktor — kroppens evne til at modvirke hypo. Falder ved gentagen hypo (HAAF)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#haaf" target="_blank">CounterReg</a></span>
-                        <span class="dp-val" id="dbgCounterReg">--</span><span class="dp-unit"></span></div>
-
-                    <!-- Scoring -->
-                    <div class="dp-row" title="Normoglykæmi-points — optjenes når BG er i målzonen (4–10 mmol/L)">
+                    <!-- ═══ SCORING ═══ -->
+                    <div class="dbg-group-label">Scoring</div>
+                    <div class="dp-row" title="Normoglykaemi-points — optjenes naar BG er i malzonen (4-10 mmol/L)">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.md#scoring" target="_blank">Points</a></span>
                         <span class="dp-val" id="dbgPoints">--</span><span class="dp-unit"></span></div>
                 </div>
@@ -364,28 +378,27 @@
              =============================================================== -->
 
         <!-- INSULIN PANEL — Vertikal opdeling: basal øverst, hurtig nederst -->
+        <!-- Bruger preset-chip layout (emoji + name + key) som mad- og aktivitetspanelet -->
         <div id="dock-panel-insulin" class="dock-panel">
             <!-- BASAL INSULIN — øverst -->
             <div class="dp-section dp-insulin-basal">
                 <label class="dp-section-label"><span class="insulin-icon-blue">💉</span> Basal</label>
-                <div class="dp-insulin-row">
-                    <div class="dp-preset-chips">
-                        <div class="insulin-preset" id="basalPreset1" title="A">
-                            <span class="ip-dose"><span id="basalPreset1Dose">--</span> E</span><span class="pc-key">A</span>
-                        </div>
-                        <div class="insulin-preset" id="basalPreset2" title="S">
-                            <span class="ip-dose"><span id="basalPreset2Dose">--</span> E</span><span class="pc-key">S</span>
-                        </div>
-                        <div class="insulin-preset" id="basalPreset3" title="D">
-                            <span class="ip-dose"><span id="basalPreset3Dose">--</span> E</span><span class="pc-key">D</span>
-                        </div>
+                <div class="dp-insulin-presets">
+                    <div class="preset-chip insulin-preset-chip" id="basalPreset1" title="A">
+                        <span class="pc-name"><span id="basalPreset1Dose">--</span> E</span><span class="pc-key">A</span>
                     </div>
-                    <div class="dp-custom-dose">
-                        <input type="range" id="longInsulinSlider" min="1" max="30" value="10" step="1">
-                        <button id="giveLongInsulinButton" class="dp-btn dp-btn-compact btn-blue" title="F">
-                            <span id="longInsulinValue">10</span> E<span class="pc-key">F</span>
-                        </button>
+                    <div class="preset-chip insulin-preset-chip" id="basalPreset2" title="S">
+                        <span class="pc-name"><span id="basalPreset2Dose">--</span> E</span><span class="pc-key">S</span>
                     </div>
+                    <div class="preset-chip insulin-preset-chip" id="basalPreset3" title="D">
+                        <span class="pc-name"><span id="basalPreset3Dose">--</span> E</span><span class="pc-key">D</span>
+                    </div>
+                </div>
+                <div class="dp-custom-dose">
+                    <input type="range" id="longInsulinSlider" min="1" max="30" value="10" step="1">
+                    <button id="giveLongInsulinButton" class="dp-btn dp-btn-compact btn-blue" title="F">
+                        <span id="longInsulinValue">10</span> E<span class="pc-key">F</span>
+                    </button>
                 </div>
                 <div class="dp-basal-hint" id="basalHint" title="Basalinsulin dækker kroppens grundbehov. Brug 100-reglen: TDD = 100/ISF, basal = 45% af TDD">
                     Anbefalet: <strong id="basalRecommendedDose">--</strong> E/dag
@@ -395,24 +408,22 @@
             <!-- HURTIG INSULIN — nederst (tættest på cursor) -->
             <div class="dp-section dp-insulin-fast">
                 <label class="dp-section-label"><span class="insulin-icon-teal">💉</span> Hurtig</label>
-                <div class="dp-insulin-row">
-                    <div class="dp-preset-chips">
-                        <div class="insulin-preset insulin-preset-fast" id="fastPreset1" title="Z">
-                            <span class="ip-dose">1 E</span><span class="pc-key">Z</span>
-                        </div>
-                        <div class="insulin-preset insulin-preset-fast" id="fastPreset2" title="X">
-                            <span class="ip-dose">2 E</span><span class="pc-key">X</span>
-                        </div>
-                        <div class="insulin-preset insulin-preset-fast" id="fastPreset4" title="C">
-                            <span class="ip-dose">4 E</span><span class="pc-key">C</span>
-                        </div>
+                <div class="dp-insulin-presets">
+                    <div class="preset-chip insulin-preset-chip insulin-preset-fast" id="fastPreset1" title="Z">
+                        <span class="pc-name">1 E</span><span class="pc-key">Z</span>
                     </div>
-                    <div class="dp-custom-dose">
-                        <input type="range" id="fastInsulinSlider" min="0.5" max="10" value="4" step="0.5">
-                        <button id="giveFastInsulinButton" class="dp-btn dp-btn-compact btn-teal" title="V">
-                            <span id="fastInsulinValue">4.0</span> E<span class="pc-key">V</span>
-                        </button>
+                    <div class="preset-chip insulin-preset-chip insulin-preset-fast" id="fastPreset2" title="X">
+                        <span class="pc-name">2 E</span><span class="pc-key">X</span>
                     </div>
+                    <div class="preset-chip insulin-preset-chip insulin-preset-fast" id="fastPreset4" title="C">
+                        <span class="pc-name">4 E</span><span class="pc-key">C</span>
+                    </div>
+                </div>
+                <div class="dp-custom-dose">
+                    <input type="range" id="fastInsulinSlider" min="0.5" max="10" value="4" step="0.5">
+                    <button id="giveFastInsulinButton" class="dp-btn dp-btn-compact btn-teal" title="V">
+                        <span id="fastInsulinValue">4.0</span> E<span class="pc-key">V</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -502,51 +513,51 @@
         <div id="dock-panel-motion" class="dock-panel">
             <!-- === SETUP-TILSTAND (vises når ingen aktivitet kører) === -->
             <div id="activity-setup">
-                <!-- Aktivitetstype: 4 chips med farve og ikon -->
+                <!-- Aktivitetstype: 4 chips med farve, ikon og tastatur-genvej -->
                 <div class="dp-chip-row dp-type-chips">
                     <div class="activity-type-chip selected" data-type="cardio" title="Cardio: løb, cykling, svømning — sænker BG" style="--chip-color: #10b981;">
-                        <span class="pc-emoji">🏃</span><span class="pc-name">Cardio</span>
+                        <span class="pc-emoji">🏃</span><span class="pc-name">Cardio</span><span class="pc-key">Q</span>
                     </div>
                     <div class="activity-type-chip" data-type="styrke" title="Styrketræning: vægttræning, crossfit — hæver BG akut" style="--chip-color: #ef4444;">
-                        <span class="pc-emoji">💪</span><span class="pc-name">Styrke</span>
+                        <span class="pc-emoji">💪</span><span class="pc-name">Styrke</span><span class="pc-key">W</span>
                     </div>
                     <div class="activity-type-chip" data-type="blandet" title="Blandet sport: fodbold, badminton — relativt stabilt BG" style="--chip-color: #f59e0b;">
-                        <span class="pc-emoji">⚽</span><span class="pc-name">Blandet</span>
+                        <span class="pc-emoji">⚽</span><span class="pc-name">Blandet</span><span class="pc-key">E</span>
                     </div>
                     <div class="activity-type-chip" data-type="afslapning" title="Afslapning: yoga, meditation — reducerer stress" style="--chip-color: #8b5cf6;">
-                        <span class="pc-emoji">🧘</span><span class="pc-name">Afslap</span>
+                        <span class="pc-emoji">🧘</span><span class="pc-name">Afslap</span><span class="pc-key">R</span>
                     </div>
                 </div>
 
                 <!-- Eksempler for valgt type (opdateres dynamisk) -->
                 <div class="dp-type-examples" id="activityTypeExamples">Løb, cykling, svømning</div>
 
-                <!-- Intensitet: 3 chips (som før) -->
+                <!-- Intensitet: 3 chips med tastatur-genveje -->
                 <div class="dp-chip-row">
                     <div class="intensity-chip selected" data-intensity="Lav" title="Lav intensitet">
-                        <span class="pc-emoji">&#x1F6B6;</span><span class="pc-name">Lav</span>
+                        <span class="pc-emoji">&#x1F6B6;</span><span class="pc-name">Lav</span><span class="pc-key">A</span>
                     </div>
                     <div class="intensity-chip" data-intensity="Medium" title="Medium intensitet">
-                        <span class="pc-emoji">&#x1F3C3;</span><span class="pc-name">Medium</span>
+                        <span class="pc-emoji">&#x1F3C3;</span><span class="pc-name">Medium</span><span class="pc-key">S</span>
                     </div>
                     <div class="intensity-chip" data-intensity="Høj" title="Høj intensitet">
-                        <span class="pc-emoji">&#x1F525;</span><span class="pc-name">Høj</span>
+                        <span class="pc-emoji">&#x1F525;</span><span class="pc-name">Høj</span><span class="pc-key">D</span>
                     </div>
                 </div>
 
-                <!-- Varighed: 4 chips (15/30/60/åben) -->
+                <!-- Varighed = START: tryk starter aktiviteten med valgt type+intensitet -->
                 <div class="dp-chip-row dp-duration-chips">
-                    <div class="duration-chip" data-duration="15" title="15 minutter">
-                        <span class="pc-name">15 min</span>
+                    <div class="duration-chip duration-start" data-duration="15" title="Start 15 min aktivitet">
+                        <span class="pc-name">▶ 15m</span><span class="pc-key">Z</span>
                     </div>
-                    <div class="duration-chip selected" data-duration="30" title="30 minutter">
-                        <span class="pc-name">30 min</span>
+                    <div class="duration-chip duration-start" data-duration="30" title="Start 30 min aktivitet">
+                        <span class="pc-name">▶ 30m</span><span class="pc-key">X</span>
                     </div>
-                    <div class="duration-chip" data-duration="60" title="1 time">
-                        <span class="pc-name">60 min</span>
+                    <div class="duration-chip duration-start" data-duration="60" title="Start 60 min aktivitet">
+                        <span class="pc-name">▶ 60m</span><span class="pc-key">C</span>
                     </div>
-                    <div class="duration-chip" data-duration="open" title="Åben varighed — kører til du trykker Stop">
-                        <span class="pc-name">∞</span>
+                    <div class="duration-chip duration-start" data-duration="open" title="Start åben aktivitet — kører til du trykker Stop">
+                        <span class="pc-name">▶ ∞</span><span class="pc-key">V</span>
                     </div>
                 </div>
 
@@ -558,7 +569,8 @@
                 </select>
 
                 <div class="dp-food-info"><span id="motionKcalDisplay"></span> kcal</div>
-                <button id="startMotionButton" class="dp-btn btn-green">▶ Start aktivitet</button>
+                <!-- Start-knap fjernet — duration-chips starter aktiviteten direkte -->
+                <button id="startMotionButton" class="dp-btn btn-green" style="display:none;">▶ Start aktivitet</button>
             </div>
 
             <!-- === AKTIV-TILSTAND (vises når aktivitet kører) === -->
@@ -576,7 +588,7 @@
                     <span class="activity-timer" id="activityTimerPanel">0:00</span>
                 </div>
                 <div class="dp-food-info"><span id="activityKcalBurned">0</span> kcal forbrændt</div>
-                <button id="stopActivityButton" class="dp-btn btn-red">⏹ Stop aktivitet</button>
+                <button id="stopActivityButton" class="dp-btn btn-red" style="position:relative;">⏹ Stop<span class="pc-key">Z</span></button>
             </div>
         </div>
 
@@ -705,9 +717,10 @@
           </p>
           <p style="text-align: right; color: var(--text-muted); font-style: italic;">— Kristian R Harreby</p>
           <p class="disclaimer" style="color: #ef4444;">
-            <strong>Disclaimer:</strong> Simulationen er IKKE en guide til kliniske
-            beslutninger. Konsulter altid sundhedspersonale for rådgivning om din
-            egen situation.
+            <strong>⚠️ Medicinsk ansvarsfraskrivelse:</strong> Denne simulator er
+            IKKE et medicinsk udstyr (jf. EU MDR 2017/745). Den er udelukkende til
+            undervisningsbrug. Brug den ikke til at beregne insulindoser eller
+            træffe behandlingsbeslutninger. Rådfør dig altid med dit behandlerteam.
           </p>
         </details>
 
@@ -726,7 +739,7 @@
             <li><strong>Svær hypoglykæmi:</strong> Sandt BG falder under 1.5 mmol/L — hjernen kan ikke fungere.</li>
             <li><strong>Ketoacidose (DKA):</strong> Vedvarende højt BG uden tilstrækkeligt insulin. Du advares med symptomer først.</li>
             <li><strong>Vægtændring:</strong> Samlet ændring overstiger ±5 kg.</li>
-            <li><strong>Komplikationer:</strong> 14-dages gennemsnits-BG over 15 mmol/L.</li>
+            <li><strong>Komplikationer:</strong> 7-dages gennemsnits-BG over 15 mmol/L.</li>
           </ul>
         </details>
 
@@ -743,15 +756,19 @@
         <details class="help-section">
           <summary>Fysiologi &amp; Interventioner</summary>
           <ul>
-            <li><strong>Mad:</strong> Kulhydrater hæver BG hurtigt (20-60 min). Protein bidrager langsomt (~25% af kulhydrateffekt). Fedt forsinker al absorption.</li>
+            <li><strong>Mad:</strong> Kulhydrater hæver BG hurtigt (20-60 min). Protein bidrager langsomt (~25% af kulhydrateffekt, forsinket 30 min).</li>
             <li><strong>Hurtig insulin:</strong> Onset 10-15 min, peak 1-2 timer, varighed 3-5 timer. Sænker BG med ca. ISF pr. enhed.</li>
             <li><strong>Basal insulin:</strong> Dækker kroppens grundbehov over 24+ timer. Husk den dagligt!</li>
-            <li><strong>Motion:</strong> Sænker BG under aktivitet og øger insulinfølsomheden i op til 30 timer efter. Pas på — motion forstærker aktiv insulin markant!</li>
+            <li><strong>Aktivitet:</strong> Fire typer med forskellig fysiologi:
+              <strong>Cardio</strong> (BG falder — muskeloptag),
+              <strong>Styrketræning</strong> (BG stiger akut — stresshormoner),
+              <strong>Blandet sport</strong> (moderat effekt),
+              <strong>Afslapning</strong> (reducerer stress). Motion øger insulinfølsomheden i mange timer efter — pas på forsinket hypoglykæmi!</li>
             <li><strong>Glucagon:</strong> Nødbehandling ved svær hypoglykæmi. Hæver BG kraftigt over 20-30 min. Brug kun i nødsituationer.</li>
-            <li><strong>Dawn-effekt:</strong> Leveren frigiver ekstra glukose om morgenen (ca. 04:00-08:00) pga. kortisol-stigning.</li>
+            <li><strong>Dawn-effekt:</strong> Leveren frigiver ekstra glukose om morgenen (ca. 04:00-08:00), og insulin virker dårligere. Kræver mere insulin til morgenmad.</li>
             <li><strong>Søvn:</strong> Natlige interventioner (22:00-07:00) forstyrrer søvnen og øger insulinresistensen næste dag.</li>
             <li><strong>Kontraregulering:</strong> Hypoglykæmi udløser stresshormoner der hæver BG — men ved T1D er denne respons svag.</li>
-            <li><strong>HAAF:</strong> Gentagen hypoglykæmi svækker kroppens evne til at modvirke lavt blodsukker yderligere. Undgå hypo for at bevare denne beskyttelse!</li>
+            <li><strong>Hypo-tilvænning:</strong> Gentagen hypoglykæmi svækker kroppens evne til at mærke og modvirke lavt blodsukker. Undgå hypo for at bevare denne beskyttelse!</li>
           </ul>
         </details>
 
@@ -773,19 +790,28 @@
           </ul>
           <p style="margin-top: 10px;">Modellen valideres løbende med automatiske tests:</p>
           <ul>
-            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/tests/model-validation.html" target="_blank" style="color: var(--blue);">Visuel modelvalidering</a> — 12 testsektioner der kører simulatoren headless (uden UI) og plotter BG-kurver for forskellige scenarier. Testene verificerer baseline-stabilitet, cirkadisk ISF-variation, insulin- og kulhydrat dosis-respons, profil- og vægtafhængighed, motion, og ekstreme patientprofiler. Hver sektion beskriver hvad der testes, hvad vi forventer, og om resultatet matcher. Åbn filen direkte i en browser for at se graferne.</li>
-            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/tests/simulation.test.js" target="_blank" style="color: var(--blue);">Automatiserede enhedstests</a> — 29 tests der tjekker individuelle fysiologiske mekanismer (insulinvirkning, kulhydratabsorption, motion, stresshormoner, ketoner m.m.). Kør med <code>node tests/simulation.test.js</code>.</li>
+            <li><a href="tests/model-validation.html" target="_blank" style="color: var(--blue);">Visuel modelvalidering</a> — 17 testsektioner der kører simulatoren headless (uden UI) og plotter BG-kurver for forskellige scenarier. Testene verificerer baseline-stabilitet, cirkadisk ISF-variation, insulin- og kulhydrat dosis-respons, profil- og vægtafhængighed, motion, og ekstreme patientprofiler. Hver sektion beskriver hvad der testes, hvad vi forventer, og om resultatet matcher. Åbn filen direkte i en browser for at se graferne.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/tests/simulation.test.js" target="_blank" style="color: var(--blue);">Automatiserede enhedstests</a> — 47 tests der tjekker individuelle fysiologiske mekanismer (insulinvirkning, kulhydratabsorption, motion, stresshormoner, ketoner m.m.). Kør med <code>node tests/simulation.test.js</code>.</li>
           </ul>
         </details>
 
         <details class="help-section">
-          <summary>Credits</summary>
+          <summary>Credits &amp; Udvikling</summary>
+          <p><strong>Idé &amp; Projektledelse</strong></p>
+          <p>Kristian R. Harreby</p>
+          <p><strong>Implementering</strong></p>
+          <p>Kristian R. Harreby</p>
+          <p>AI-assistenter: Claude (Anthropic) og Gemini (Google).</p>
+          <p style="color: var(--text-muted); font-size: 12px;">Bemærk: Kildekode og automatiserede tests er primært genereret via AI og har ikke gennemgået en fuldstændig manuel audit.</p>
+          <p><strong>Videnskabeligt fundament</strong></p>
           <ul>
-            <li><strong>Idé &amp; projektledelse:</strong> Kristian R Harreby</li>
-            <li><strong>Implementering:</strong> Kristian R Harreby, Claude (Anthropic), Gemini (Google)</li>
-            <li><strong>Fysiologisk model:</strong> Baseret på Hovorka et al. (2004)</li>
-            <li><strong>Open source:</strong> <a href="https://github.com/JonasNM/svelte-flask-hovorka-simulator" target="_blank" style="color: var(--blue);">svelte-flask-hovorka-simulator</a> af Jonas Nordhassel Myhre</li>
-            <li><strong>Lydeffekter:</strong> <a href="https://tonejs.github.io/" target="_blank" style="color: var(--blue);">Tone.js</a></li>
+            <li><strong>Fysiologisk model:</strong> Baseret på den matematiske model for glukose-insulin-dynamik af <a href="https://doi.org/10.1109/TBME.2004.827938" target="_blank" style="color: var(--blue);">Hovorka et al. (2004)</a>.</li>
+            <li><strong>Open source-grundlag:</strong> Inspireret af og delvist baseret på <a href="https://github.com/JonasNM/svelte-flask-hovorka-simulator" target="_blank" style="color: var(--blue);">svelte-flask-hovorka-simulator</a> af Jonas Nordhassel Myhre.</li>
+          </ul>
+          <p><strong>Teknologier &amp; Biblioteker</strong></p>
+          <ul>
+            <li><strong>Lyd:</strong> Implementeret med <a href="https://tonejs.github.io/" target="_blank" style="color: var(--blue);">Tone.js</a>.</li>
+            <li><strong>Licens:</strong> Udgives som Open Source under <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" style="color: var(--blue);">GNU General Public License v3 (GPLv3)</a>.</li>
           </ul>
         </details>
     </template>

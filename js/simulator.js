@@ -407,6 +407,51 @@ class Simulator {
         this.HAAF_DAMAGE_SCALE = 30;      // Skala for skade [mmol·min/L]
         this.HAAF_RECOVERY_HALFLIFE = 3 * 24 * 60; // Recovery t½ [sim-min] (3 dage)
 
+        // --- Lever-glykogenpool (massebalanceret model i gram) ---
+        //
+        // Leveren indeholder ~80-100g glykogen hos en voksen. Dette er en
+        // ENDELIG brændstofkilde for hurtig glukoseproduktion (glykogenolyse).
+        //
+        // Massebalancen er eksplicit — glukose opstår IKKE fra ingenting:
+        //
+        // FORBRUG (tømmer poolen):
+        //   1. Stress-drevet glykogenolyse — glukagon/adrenalin omdanner
+        //      glykogen → glukose. Raten er proportional med den akutte stress
+        //      der ligger over baseline. Beregnes fra EGP-formlens stress-komponent.
+        //   2. Motion-drevet forbrug — under motion bruger muskler leverglykogen
+        //      indirekte via Cori-cyklus (laktat → lever → glukose → blod → muskler).
+        //      Raten stiger med aktivitetens intensitet (kcal/min som proxy).
+        //
+        // GENOPFYLDNING (fylder poolen):
+        //   1. Gluconeogenese — leveren syntetiserer glukose fra aminosyrer,
+        //      laktat og glycerol. Konstant ~0.1 g/min (6 g/time). Kræver IKKE
+        //      glykogen og er derfor altid tilgængelig.
+        //   2. Kulhydrat-absorption — når BG er over basalniveau og insulin er
+        //      til stede, lagrer leveren overskuds-glukose som glykogen.
+        //      ~30-40% af absorberede kulhydrater lagres i leveren.
+        //
+        // EFFEKT PÅ MODELLEN:
+        //   glycogenReserve = min(1.0, liverGlycogenGrams / GLYCOGEN_STRESS_THRESHOLD)
+        //   effectiveAcuteStress = acuteStressLevel × glycogenReserve
+        //   → Når glykogen < 15g: stress-drevet EGP falder proportionelt
+        //   → Ved 0g: kun gluconeogenese-baseline leverer glukose
+        //
+        // Typisk forløb:
+        //   Hypo alene:          ~7-10 g/time forbrug → 90g holder i ~10 timer
+        //   Høj cardio:          ~25-35 g/time → 90g holder i ~3 timer
+        //   Høj cardio + hypo:   ~35-45 g/time → under stressTærskel (15g) efter ~2 timer
+        //   Recovery (spisning):  ~20-30 g/time (hurtig ved mad)
+        //   Recovery (faste):     ~6 g/time (kun gluconeogenese)
+        //
+        // Kilder: Roden 2001 (lever-glykogen, MRS-måling)
+        //         Petersen 2004 (glycogen repletion efter motion)
+        //         Trefts 2015 (exercise + hepatic glucose output)
+        //         Gonzalez 2016 (postprandial liver glycogen synthesis)
+        this.liverGlycogenGrams = 90;           // Start: 90g (normal postabsorptiv voksen)
+        this.LIVER_GLYCOGEN_MAX = 120;          // Max kapacitet [g]
+        this.GLYCOGEN_STRESS_THRESHOLD = 15;    // Under dette gram svækkes stress-EGP
+        this.glycogenReserve = 1.0;             // Afledt: 0.0-1.0, skalerer EGP og stress
+
         // Initialiser Hovorka-modellen til steady-state.
         // initializeSteadyState finder automatisk den insulin-rate der giver
         // target BG=5.5 mmol/L, uanset patientens ISF/basal-dosis.
@@ -474,19 +519,33 @@ class Simulator {
         // Start with no sensitivity increase (factor = 1.0 = no change)
         let sensitivityIncreaseFactor = 1.0;
 
-        // Check each active/recent exercise session for post-exercise sensitivity boost
+        // Check each active/recent exercise session for post-exercise sensitivity boost.
+        // Eksponentielt henfald: kraftig effekt lige efter motion, aftager hurtigt
+        // de første timer, men med en lang hale der varer op til ~24 timer.
+        //
+        // Halveringstider (sensitivityHalfLife):
+        //   Lav intensitet:  t½ = 3 timer → mærkbar effekt i ~6-8 timer
+        //   Medium:          t½ = 4 timer → mærkbar effekt i ~10-12 timer
+        //   Høj:             t½ = 5 timer → mærkbar effekt i ~14-18 timer
+        //
+        // Klinisk evidens: Riddell 2017 (Lancet) rapporterer 24-48 timers øget
+        // insulinfølsomhed efter motion. Halveringstiderne er valgt så daglig
+        // motion giver overlap → vedvarende lavere insulinbehov.
+        //
+        // sensitivityEndTime bruges som oprydnings-cutoff (boost < 1%).
         this.activeMotion.forEach(motion => {
-            // sensitivityEndTime = when the post-exercise sensitivity boost wears off
             if (this.totalSimMinutes < motion.sensitivityEndTime) {
-                // Calculate how far into the post-exercise sensitivity period we are
-                const timeIntoSensitivityEffect = this.totalSimMinutes - (motion.startTime + motion.duration);
-                const totalSensitivityDuration = motion.sensitivityEndTime - (motion.startTime + motion.duration);
-                if (totalSensitivityDuration <= 0) return; // Guard against division by zero
+                const timeAfterExercise = this.totalSimMinutes - (motion.startTime + motion.duration);
+                if (timeAfterExercise < 0) return; // Stadig under motion — håndteres af E1/E2
 
-                // Linear fade from maxSensitivityIncreaseFactor down to 1.0
-                // At start of post-exercise: full boost. At end: no boost.
-                const currentIncrease = (motion.maxSensitivityIncreaseFactor - 1) * (1 - (timeIntoSensitivityEffect / totalSensitivityDuration));
-                sensitivityIncreaseFactor = Math.max(sensitivityIncreaseFactor, 1 + currentIncrease);
+                // Eksponentielt henfald: boost × 2^(-t/t½)
+                const halfLife = motion.sensitivityHalfLife || 240;
+                const decay = Math.pow(0.5, timeAfterExercise / halfLife);
+                const currentIncrease = (motion.maxSensitivityIncreaseFactor - 1) * decay;
+
+                if (currentIncrease > 0.005) { // Cutoff: < 0.5% boost = negligibelt
+                    sensitivityIncreaseFactor = Math.max(sensitivityIncreaseFactor, 1 + currentIncrease);
+                }
             }
         });
 
@@ -747,6 +806,7 @@ class Simulator {
 
         // Calculate how many simulated minutes this tick represents
         const simulatedMinutesPassed = deltaTimeSeconds * this.simulationSpeed / 60;
+        this.lastSimulatedMinutesPassed = simulatedMinutesPassed; // Gemmes til checkGameOverConditions
         this.totalSimMinutes += simulatedMinutesPassed;
         this.timeInMinutes = this.totalSimMinutes % (24 * 60); // Wrap at midnight
         this.day = Math.floor(this.totalSimMinutes / (24*60)) + 1;
@@ -953,6 +1013,18 @@ class Simulator {
             }
         }
 
+        // --- Hypo-reduceret motionskapacitet ---
+        // Ved lav BG kan kroppen ikke opretholde høj fysisk aktivitet.
+        // Hjernen prioriterer glukose → muskler svækkes → puls falder.
+        // BG ≥ 3.5: fuld kapacitet (factor=1.0)
+        // BG  = 2.5: halveret kapacitet (factor=0.5)
+        // BG ≤ 2.0: minimal kapacitet (factor≈0.1) — næsten bevidstløs
+        // Implementeret som lineær interpolation fra hvilepuls mod målpuls.
+        if (this.trueBG < 3.5 && targetHeartRate > this.hovorka.HR_base) {
+            const hypoFactor = Math.max(0.05, Math.min(1.0, (this.trueBG - 1.5) / 2.0));
+            targetHeartRate = this.hovorka.HR_base + (targetHeartRate - this.hovorka.HR_base) * hypoFactor;
+        }
+
         // Glidende puls: eksponentiel tilnærmelse mod targetHeartRate.
         // Hurtigere op (t½≈2 min) end ned (t½≈5 min) — fysiologisk realistisk.
         const isRising = targetHeartRate > this.smoothHeartRate;
@@ -962,7 +1034,25 @@ class Simulator {
         const currentHeartRate = this.smoothHeartRate;
 
         // --- 4. SÆT HOVORKA-INPUTS OG KØR MODELLEN ---
-        const stressMultiplikator = 1.0 + this.acuteStressLevel +
+        //
+        // StressMultiplier bestemmer leverens glukose-output (EGP).
+        // Normal baseline (1.0) består af to komponenter:
+        //   - 50% glycogenolysis: omdanner glykogen → glukose (kræver glykogen!)
+        //   - 50% gluconeogenese: syntetiserer glukose fra aminosyrer/laktat (altid aktiv)
+        //
+        // Når leverglykogenet er udtømt, falder glycogenolysis-delen til 0,
+        // og kun gluconeogenese (0.5) forbliver. EGP halveres.
+        //
+        // Akut stress (Somogyi) driver EKSTRA glycogenolysis — kræver også glykogen.
+        // Kronisk stress og circadian kortisol driver gluconeogenese — uafhængig af glykogen.
+        //
+        // Effekt ved tom glycogen:
+        //   stressMultiplier = 0.5 + 0 + chronic + circadian (halveret baseline + ingen stress)
+        //   EGP ≈ EGP_0 × 0.5 ≈ F_01c ved BG~2.5 → BG ustabilt → falder under motion
+        const glycogenBaseline = 0.5 * this.glycogenReserve; // 0.0-0.5 (glycogenolysis)
+        const gngBaseline = 0.5;                              // altid 0.5 (gluconeogenese)
+        const effectiveAcuteStress = this.acuteStressLevel * this.glycogenReserve;
+        const stressMultiplikator = glycogenBaseline + gngBaseline + effectiveAcuteStress +
             this.chronicStressLevel + this.circadianKortisolNiveau;
 
         this.hovorka.insulinRate = totalInsulinRate;
@@ -1503,6 +1593,12 @@ class Simulator {
         // Opdater HAAF (hypoArea akkumulering + recovery)
         this.updateHAAF(simulatedMinutesPassed);
 
+        // --- Lever-glykogenreserve: depletion og recovery ---
+        // Glykogenreserven udtømmes når akut stress driver glykogenolyse,
+        // og ekstra hurtigt under motion (muskler forbruger også glykogen).
+        // Recovery sker langsomt via gluconeogenese når BG er normalt.
+        this.updateGlycogenReserve(simulatedMinutesPassed);
+
         // Clamp to zero to prevent floating-point drift below zero
         this.acuteStressLevel = Math.max(0, this.acuteStressLevel);
         this.chronicStressLevel = Math.max(0, this.chronicStressLevel);
@@ -1563,6 +1659,110 @@ class Simulator {
         // 0.7 er range (fra 0.3 til 1.0)
         // HAAF_DAMAGE_SCALE bestemmer hvor hurtigt vi når gulvet
         this.counterRegFactor = 0.3 + 0.7 * Math.exp(-this.hypoArea / this.HAAF_DAMAGE_SCALE);
+    }
+
+    // =========================================================================
+    // LEVER-GLYKOGENPOOL — Massebalanceret model (gram)
+    // =========================================================================
+    //
+    // Eksplicit pool der fyldes og tømmes. Glukose opstår ALDRIG fra ingenting —
+    // al glykogenolyse-output trækkes fra poolen, og genopfyldning kræver
+    // enten gluconeogenese (langsom) eller kulhydrat-absorption (hurtig).
+    //
+    // FORBRUG:
+    //   1. Stress-drevet glykogenolyse (Somogyi/kontraregulering):
+    //      Beregnes fra EGP-formlens stress-komponent:
+    //      stressEGP = EGP_0 × acuteStressLevel [mmol/min] → omregnet til gram
+    //      Ved stress=0.4, 70kg: 1.127 × 0.4 × 0.180 = 0.081 g/min ≈ 5 g/time
+    //
+    //   2. Motion-drevet forbrug (lever forsyner muskler via Cori-cyklus):
+    //      Beregnes fra kcalPerMin × glycogenFraktion:
+    //        - Lever-glycogen dækker ~25% af motions-energiforbruget via carbs
+    //        - 1g glycogen ≈ 4 kcal
+    //      Medium cardio (7 kcal/min): 7 × 0.25 / 4 = 0.44 g/min ≈ 26 g/time
+    //      Høj cardio (10 kcal/min):   10 × 0.25 / 4 = 0.63 g/min ≈ 38 g/time
+    //
+    // GENOPFYLDNING:
+    //   1. Gluconeogenese: konstant 0.10 g/min (6 g/time) — uafhængig af glykogen
+    //      Substrat: aminosyrer, laktat, glycerol — altid tilgængelige.
+    //
+    //   2. Postprandial glycogensyntese: når BG > 5.0 mmol/L, lagrer leveren
+    //      overskuds-glukose som glykogen. Rate proportional med BG-overskud:
+    //        storageRate = 0.12 × (BG - 5.0) g/min
+    //      Ved BG=8.0 (post-måltid): 0.36 g/min ≈ 22 g/time
+    //      Gonzalez 2016: ~40-60g lever-glycogen genopfyldt efter stort måltid.
+    //
+    // EFFEKT PÅ STRESSMODELLEN:
+    //   glycogenReserve = min(1.0, liverGlycogenGrams / GLYCOGEN_STRESS_THRESHOLD)
+    //   → Under 15g: stress-drevet EGP aftager proportionelt
+    //   → Ved 0g: stressEGP = 0, kun gluconeogenese-baseline (altid aktiv)
+    //
+    // Kilder: Roden 2001, Petersen 2004, Trefts 2015, Gonzalez 2016
+    // =========================================================================
+    updateGlycogenReserve(simulatedMinutesPassed) {
+        const dt = simulatedMinutesPassed;
+
+        // --- FORBRUG 1: Basal glycogenolysis (normalt EGP-bidrag) ---
+        // I postabsorptiv tilstand kommer ~50% af leverens EGP fra glycogenolysis.
+        // Denne rate er proportional med EGP_0 og uafhængig af stress.
+        // For 70kg: 1.127 × 0.5 × 0.180 = 0.101 g/min ≈ 6 g/time.
+        // NB: Kun aktiv når der ER glykogen. Ved tom pool: EGP falder til 50%.
+        const basalGlycogenolysis_gPerMin = this.hovorka.EGP_0 * 0.5 * 0.180;
+
+        // --- FORBRUG 2: Stress-drevet ekstra glykogenolyse ---
+        // Akut stress (glukagon/adrenalin) driver YDERLIGERE glycogenolysis
+        // udover den basale. Beregnet fra stress-niveauet.
+        // Ved stress=0.4, 70kg: 1.127 × 0.4 × 0.180 = 0.081 g/min ≈ 5 g/time.
+        const stressEGP_gPerMin = this.hovorka.EGP_0 * this.acuteStressLevel * 0.180;
+
+        // --- FORBRUG 3: Motion-drevet leverglykogen-forbrug ---
+        // Under motion forsyner leveren muskler med glukose via blodbanen.
+        // Lever-glycogen dækker ~25% af energiforbruget via kulhydrater.
+        // 1g glycogen ≈ 4 kcal.
+        // Medium cardio (7 kcal/min): 7 × 0.25 / 4 = 0.44 g/min ≈ 26 g/time.
+        let exerciseEGP_gPerMin = 0;
+        if (this.activeAktivitet) {
+            const kcalPerMin = this.activeAktivitet.kcalPerMin || 5;
+            const liverGlycogenFraction = 0.25;
+            exerciseEGP_gPerMin = kcalPerMin * liverGlycogenFraction / 4.0;
+        }
+
+        // Total forbrug fra glykogenpoolen [g/min]
+        const totalConsumption = basalGlycogenolysis_gPerMin + stressEGP_gPerMin + exerciseEGP_gPerMin;
+
+        // --- GENOPFYLDNING 1: Gluconeogenese (konstant baggrund) ---
+        // Leveren syntetiserer glukose fra aminosyrer, laktat og glycerol.
+        // ~50% af GNG-output leveres direkte til blodet (som EGP).
+        // ~50% kan genlagres som glykogen (kun ved normal BG, dvs. intet underskud).
+        // Netto-replenishment ≈ basal glycogenolysis i steady state → pool stabil.
+        // Ved hypo (BG < 4.0): al GNG bruges til akut glukose-levering, ikke lagring.
+        const gngReplenishment = (this.trueBG >= 4.0) ? basalGlycogenolysis_gPerMin : 0;
+
+        // --- GENOPFYLDNING 2: Postprandial glycogensyntese ---
+        // Når BG er forhøjet (efter mad), lagrer leveren overskuds-glukose.
+        // Insulin fremmer glycogensyntese — her approksimeret via BG-niveau
+        // (høj BG korrelerer med tilgængelig insulin post-prandialt).
+        // Ved BG=8.0: 0.12 × 3.0 = 0.36 g/min ≈ 22 g/time.
+        // Gonzalez 2016: ~40-60g lever-glycogen genopfyldt efter stort måltid.
+        let postprandialStorage = 0;
+        if (this.trueBG > 5.0 && this.liverGlycogenGrams < this.LIVER_GLYCOGEN_MAX) {
+            const bgExcess = this.trueBG - 5.0;
+            postprandialStorage = Math.min(1.0, 0.12 * bgExcess); // max 1 g/min
+        }
+
+        // --- MASSEBALANCE: opdater poolen ---
+        const totalReplenishment = gngReplenishment + postprandialStorage;
+        this.liverGlycogenGrams += (totalReplenishment - totalConsumption) * dt;
+
+        // Clamp til [0, max]
+        this.liverGlycogenGrams = Math.max(0, Math.min(this.LIVER_GLYCOGEN_MAX, this.liverGlycogenGrams));
+
+        // --- AFLEDT: glycogenReserve for EGP-skalering ---
+        // Lineær skalering: fuldt effektiv over tærskel, aftagende under.
+        // glycogenReserve = 1.0 når liverGlycogenGrams ≥ 15g
+        // glycogenReserve → 0.0 når liverGlycogenGrams → 0g
+        // Påvirker BÅDE basal glycogenolysis-andelen (50%) og stress-EGP i stressMultiplier.
+        this.glycogenReserve = Math.min(1.0, this.liverGlycogenGrams / this.GLYCOGEN_STRESS_THRESHOLD);
     }
 
     // =========================================================================
@@ -1672,29 +1872,63 @@ class Simulator {
         // Registrér kalorieforbrænding (inkl. løbende akkumulerede kcal)
         this.totalKcalBurnedMotion += akt.kcalBurned;
 
-        // Post-exercise insulin sensitivity boost
-        // Skaleret med e2Scaling så afslapning (e2=0) ikke giver boost
+        // Post-exercise insulin sensitivity boost (eksponentielt henfald)
+        //
+        // Halveringstid afhænger af intensitet:
+        //   Lav: t½ = 180 min (3 timer) — let motion, kort boost
+        //   Medium: t½ = 240 min (4 timer) — moderat motion, god boost
+        //   Høj: t½ = 300 min (5 timer) — hård motion, lang boost
+        //
+        // maxSensIncrease bestemmer peak-boost lige efter motion:
+        //   Lav: ×1.50 (50% bedre ISF)
+        //   Medium: ×1.75 (75% bedre ISF)
+        //   Høj: ×2.00 (100% bedre ISF)
+        //
+        // Skaleret med e2Scaling så afslapning (e2=0) ikke giver boost.
+        //
+        // Eksempel: 30 min medium cardio (e2=1.0):
+        //   Peak: ISF ×1.75 → insulin virker 75% bedre lige efter
+        //   t=2t: ×1.53 (−29%) — "hurtigt på vej op" ✓
+        //   t=4t: ×1.375 (halveret)
+        //   t=8t: ×1.19
+        //   t=12t: ×1.09
+        //   t=24t: ×1.01 — næsten væk
+        //
+        // Daglig motion: overlappende haler giver vedvarende lavere insulinbehov.
+        // Stop med motion i 2 dage → al hale er væk → insulinbehov stiger markant.
         const e2Scale = akt.typeDef.e2Scaling;
-        const sensitivityMultiplier = akt.intensitet === "Høj" ? 4 : (akt.intensitet === "Medium" ? 2 : 1);
-        const sensitivityDurationMinutes = actualDuration * sensitivityMultiplier * e2Scale;
+        const halfLife = (akt.intensitet === "Høj" ? 300 : (akt.intensitet === "Medium" ? 240 : 180));
+        const sensitivityHalfLife = halfLife * e2Scale;
         const baseSensIncrease = akt.intensitet === "Høj" ? 1.0 : (akt.intensitet === "Medium" ? 0.75 : 0.5);
         const maxSensIncrease = 1 + baseSensIncrease * e2Scale;
 
-        // Tilføj til activeMotion for post-exercise ISF-boost (eksisterende mekanik)
-        if (sensitivityDurationMinutes > 0) {
+        // Cutoff: 7 halveringstider → boost < 0.8%, oprydning af gamle entries
+        const sensitivityCutoffMinutes = sensitivityHalfLife * 7;
+
+        // Tilføj til activeMotion for post-exercise ISF-boost
+        if (sensitivityHalfLife > 0 && maxSensIncrease > 1.0) {
             this.activeMotion.push({
                 intensity: akt.intensitet,
                 startTime: akt.startTime,
                 duration: actualDuration,
-                sensitivityEndTime: this.totalSimMinutes + sensitivityDurationMinutes,
+                sensitivityEndTime: this.totalSimMinutes + sensitivityCutoffMinutes,
+                sensitivityHalfLife: sensitivityHalfLife,
                 maxSensitivityIncreaseFactor: maxSensIncrease
             });
+        }
+
+        // Opdater det originale motion-event med faktisk varighed
+        // (så aktivitetsbåndet i grafen viser den reelle varighed, ikke den planlagte)
+        const originalEvent = this.logHistory.findLast(e => e.type === 'motion' && e.details && e.details.type === akt.type && e.time === akt.startTime);
+        if (originalEvent) {
+            originalEvent.details.duration = Math.round(actualDuration);
+            originalEvent.details.kcalBurned = Math.round(akt.kcalBurned);
         }
 
         logEvent(
             `Aktivitet slut: ${akt.typeDef.navn} (${akt.intensitet}), ${Math.round(actualDuration)} min, ${Math.round(akt.kcalBurned)} kcal`,
             'motion-end',
-            { type: akt.type, intensity: akt.intensitet, duration: Math.round(actualDuration), kcalBurned: Math.round(akt.kcalBurned) }
+            { type: akt.type, intensity: akt.intensitet, duration: Math.round(actualDuration), kcalBurned: Math.round(akt.kcalBurned), icon: akt.typeDef.icon }
         );
 
         this.activeAktivitet = null;
@@ -2029,12 +2263,13 @@ class Simulator {
             return;
         }
 
-        // Condition 4: Chronic complications (after 14 days of gameplay)
-        if (this.day > 14) {
-            const avg14d = this.calculateAverageBGForPeriod(14 * 24 * 60, true);
-            if (avg14d !== null && avg14d > 15.0) {
+        // Condition 4: Chronic complications (after 7 days of gameplay)
+        // Matcher statistik-perioden der vises i UI (7-dages gennemsnit).
+        if (this.day > 7) {
+            const avg7d = this.calculateAverageBGForPeriod(7 * 24 * 60, true);
+            if (avg7d !== null && avg7d > 15.0) {
                 this.gameOver("Sendiabetiske Komplikationer", {
-                    cause: `Dit gennemsnitlige BG over de sidste 14 dage var ${avg14d.toFixed(1)} mmol/L.`,
+                    cause: `Dit gennemsnitlige BG over de sidste 7 dage var ${avg7d.toFixed(1)} mmol/L.`,
                     explanation:
                         `Vedvarende højt blodsukker skader blodkar og nerver i hele kroppen. ` +
                         `Over tid fører det til alvorlige komplikationer som blindhed, nyresvigt, ` +

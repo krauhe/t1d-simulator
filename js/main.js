@@ -163,10 +163,20 @@ function debugUpdateLiveValues() {
         set('dbgX3', h.state[9].toFixed(4));
 
         // EGP: leverens aktuelle glukoseproduktion [mmol/min]
-        // = EGP_0 × max(0, stressMultiplier - x3)
-        const stressMult = 1.0 + game.acuteStressLevel + game.chronicStressLevel + game.circadianKortisolNiveau;
+        // Glycogen-aware stressMult: baseline = 50% glycogenolyse (kræver glykogen) + 50% gluconeogenese (altid aktiv)
+        // Akut stress skaleres også med glycogenReserve (glykogenolyse-drevet)
+        const glyRes = game.glycogenReserve ?? 1.0;
+        const glycogenBaseline = 0.5 * glyRes;
+        const gngBaseline = 0.5;
+        const effectiveAcuteStress = game.acuteStressLevel * glyRes;
+        const stressMult = glycogenBaseline + gngBaseline + effectiveAcuteStress +
+            game.chronicStressLevel + game.circadianKortisolNiveau;
         const egp = Math.max(0, h.EGP_0 * (stressMult - h.state[9]));
         set('dbgEGP', egp.toFixed(3));
+
+        // Lever-glykogen: gram i poolen (0–120g) og reserve-skalering (0–100%)
+        set('dbgGlycogen', (game.liverGlycogenGrams ?? 90).toFixed(1));
+        set('dbgGlyReserve', ((glyRes * 100).toFixed(0)) + '%');
 
         // ExerciseFactor: multiplikator på insulinvirkning fra motion
         // 1.0 = ingen motion, >1 = insulin virker stærkere
@@ -174,11 +184,9 @@ function debugUpdateLiveValues() {
         const exFac = 1 + h.alpha * E2 * E2;
         set('dbgExFac', exFac.toFixed(2));
 
-        // ISF (effektiv): profilISF × ExerciseFac — viser hvor meget 1E insulin
-        // reelt sænker BG lige nu. ExerciseFac er den primære dynamiske modulator
-        // fra Hovorka-modellen (motion forstærker insulinvirkning).
-        const isfEff = game.ISF * exFac;
-        set('dbgISFeff', isfEff.toFixed(1));
+        // ISF (effektiv): den samlede effektive ISF med ALLE modifikatorer
+        // = profilISF × circadianISF × insulinResistanceFactor × vasodilatation / motionsboost
+        set('dbgISFeff', game.currentISF.toFixed(1));
 
         set('dbgStressMult', stressMult.toFixed(3));
     }
@@ -187,8 +195,12 @@ function debugUpdateLiveValues() {
     set('dbgChronic', game.chronicStressLevel.toFixed(3));
     set('dbgHR', (h ? h.heartRate : 60).toFixed(0));
 
-    // Dawn-effekt: cirkadisk kortisol-niveau (0.0 = ingen, ~0.3 = peak kl. 08:00)
+    // Dawn (HGP): cirkadisk kortisol-niveau (0.0 = ingen, ~0.3 = peak kl. 08:00)
     set('dbgDawn', game.circadianKortisolNiveau.toFixed(3));
+    // Dawn (ISF): cirkadisk ISF-faktor (0.70 morgen, 1.20 aften)
+    set('dbgCircadianISF', game.circadianISF.toFixed(2));
+    // Insulinresistens-faktor: 1.0 + chronicStress × 0.5
+    set('dbgInsResistance', game.insulinResistanceFactor.toFixed(2));
 
     // Søvntab: akkumuleret mistet søvn denne nat (timer)
     set('dbgSleep', game.lostSleepHoursTonight.toFixed(1));
@@ -215,22 +227,46 @@ function debugDownloadLog() {
 }
 
 
-// debugDownloadScreenshot() — tager screenshot af hele spilvinduet via html2canvas-fallback.
-// Bruger canvas-elementets toDataURL() for grafen, og html2canvas for resten.
-// Simpel implementation: screenshot af hele game-container via DOM→canvas.
-function debugDownloadScreenshot() {
-    const container = document.getElementById('game-container');
-    if (!container) return;
-
-    // Brug html2canvas hvis tilgængeligt, ellers fallback til ren graf-screenshot
-    if (typeof html2canvas !== 'undefined') {
-        html2canvas(container, { backgroundColor: '#0f1923' }).then(canvas => {
-            triggerCanvasDownload(canvas);
+// debugDownloadScreenshot() — ægte skærmgrab via Screen Capture API.
+// Beder brugeren vælge faneblad/skærm, fanger ét frame og downloader som PNG.
+// Fallback: hvis API'en ikke er tilgængelig, bruges graf-canvas alene.
+async function debugDownloadScreenshot() {
+    try {
+        // Bed browseren om adgang til skærmbillede (brugeren vælger fane/skærm)
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: { displaySurface: 'browser' },  // foreslå aktuel fane
+            preferCurrentTab: true                   // Chrome 94+: vælg denne fane automatisk
         });
-    } else {
+
+        // Vent ét frame så billedet er stabilt
+        const track = stream.getVideoTracks()[0];
+        const settings = track.getSettings();
+
+        // Tegn frame på et offscreen-canvas
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.muted = true;
+        await video.play();
+
+        // Vent ét frame mere for at sikre video er klar
+        await new Promise(r => requestAnimationFrame(r));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = settings.width || video.videoWidth;
+        canvas.height = settings.height || video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Stop stream med det samme (fjerner "deler skærm"-banneret)
+        track.stop();
+
+        // Download billedet
+        triggerCanvasDownload(canvas);
+    } catch (err) {
+        // Brugeren afviste delingsdialogen, eller API'en er ikke tilgængelig
+        console.warn('Screen capture afbrudt:', err.message);
         // Fallback: download kun graf-canvas
-        if (!bgGraphCanvas) return;
-        triggerCanvasDownload(bgGraphCanvas);
+        if (bgGraphCanvas) triggerCanvasDownload(bgGraphCanvas);
     }
 }
 
@@ -471,17 +507,43 @@ function updateActivityOverlay() {
 
     const akt = game.activeAktivitet;
     const elapsed = game.totalSimMinutes - akt.startTime;
-    const mins = Math.floor(elapsed);
-    const secs = Math.floor((elapsed - mins) * 60);
+
+    // Formatér tid som "Xh Ym" over 60 min, ellers "X min"
+    const fmtTime = (totalMin) => {
+        const m = Math.floor(totalMin);
+        if (m >= 60) return `${Math.floor(m / 60)}t ${m % 60}m`;
+        return `${m} min`;
+    };
     const timeStr = akt.varighed
-        ? `${mins}:${String(secs).padStart(2,'0')} / ${akt.varighed}:00`
-        : `${mins}:${String(secs).padStart(2,'0')}`;
+        ? `${fmtTime(elapsed)} / ${fmtTime(akt.varighed)}`
+        : fmtTime(elapsed);
 
     // Opdatér timer
     const setContent = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     setContent('activityTimerPanel', timeStr);
     setContent('activityOverlayTimer', timeStr);
     setContent('activityKcalBurned', Math.round(akt.kcalBurned));
+
+    // --- Dynamisk overlay-position ---
+    // Default: bottom-right (væk fra CGM-hero og dock).
+    // Flyttes til bottom-left KUN når aktuelle CGM-målinger er i højre side
+    // af grafen og ville blive skjult bag overlayets.
+    const overlay = document.getElementById('activity-overlay');
+    if (overlay) {
+        const currentDayStartMinutes = (game.day - 1) * 1440;
+        const minutesIntoDay = game.totalSimMinutes - currentDayStartMinutes;
+        const dayProgress = minutesIntoDay / 1440; // 0.0 til 1.0
+
+        // Overlay er ~180px bredt. Når aktuel tid er i højre ~18% af grafen
+        // (ca. efter kl. 19:40), flyttes overlay til venstre så CGM-data er synlig.
+        if (dayProgress > 0.82) {
+            overlay.style.left = '70px';
+            overlay.style.right = 'auto';
+        } else {
+            overlay.style.left = 'auto';
+            overlay.style.right = '32px';
+        }
+    }
 
     // Opdatér progress-bar (kun hvis fast varighed)
     if (akt.varighed) {
@@ -906,6 +968,23 @@ function initializeApp() {
     let selectedActivityType = 'cardio';
     let selectedDuration = 30; // null = åben
 
+    // Intensitet-ikoner per aktivitetstype
+    // Afslapning bruger "niveau" i stedet for "intensitet" og har egne ikoner
+    const INTENSITET_IKONER = {
+        default: { Lav: '\u{1F6B6}', Medium: '\u{1F3C3}', Høj: '\u{1F525}' },
+        afslapning: { Lav: '\u{1F9D8}', Medium: '\u{1F9D8}', Høj: '\u{1F9D8}' }
+    };
+
+    // Opdatér intensitet-chips ikoner og labels baseret på aktivitetstype
+    function updateIntensityChips(type) {
+        const ikoner = INTENSITET_IKONER[type] || INTENSITET_IKONER.default;
+        document.querySelectorAll('.intensity-chip').forEach(chip => {
+            const level = chip.dataset.intensity;
+            const emojiEl = chip.querySelector('.pc-emoji');
+            if (emojiEl && ikoner[level]) emojiEl.textContent = ikoner[level];
+        });
+    }
+
     // Type-chips: klik vælger aktivitetstype
     document.querySelectorAll('.activity-type-chip').forEach(chip => {
         chip.addEventListener('click', () => {
@@ -916,35 +995,34 @@ function initializeApp() {
             const typeDef = AKTIVITETSTYPER[selectedActivityType];
             const examplesEl = document.getElementById('activityTypeExamples');
             if (examplesEl && typeDef) examplesEl.textContent = typeDef.eksempler;
+            // Opdatér intensitet-ikoner (afslapning får egne ikoner)
+            updateIntensityChips(selectedActivityType);
             updateMotionKcal();
         });
     });
 
-    // Varighed-chips: klik vælger varighed
+    // Varighed-chips = START-knapper: klik starter aktiviteten direkte
+    function startActivityWithDuration(duration) {
+        if (!game || game.activeAktivitet) return;
+        const intensitet = motionIntensitySelect.value;
+        const success = game.startAktivitet(selectedActivityType, intensitet, duration);
+        if (success) {
+            const typeDef = AKTIVITETSTYPER[selectedActivityType];
+            flyIconToGraph(typeDef.icon, 'dock-panel-motion');
+            showActivityActive(selectedActivityType, intensitet, duration);
+        }
+    }
+
     document.querySelectorAll('.duration-chip').forEach(chip => {
         chip.addEventListener('click', () => {
-            document.querySelectorAll('.duration-chip').forEach(c => c.classList.remove('selected'));
-            chip.classList.add('selected');
-            selectedDuration = chip.dataset.duration === 'open' ? null : parseInt(chip.dataset.duration);
-            updateMotionKcal();
+            const duration = chip.dataset.duration === 'open' ? null : parseInt(chip.dataset.duration);
+            startActivityWithDuration(duration);
         });
     });
 
-    // Intensitet-chips opdaterer også kcal
-    // (den eksisterende listener i linje ~941 håndterer chip-valg,
-    //  men vi sørger for at kcal også opdateres)
-
-    // Start-knap
+    // Start-knap (skjult, beholdt for bagudkompatibilitet)
     startMotionButton.addEventListener('click', () => {
-        if (game && !game.activeAktivitet) {
-            const intensitet = motionIntensitySelect.value;
-            const success = game.startAktivitet(selectedActivityType, intensitet, selectedDuration);
-            if (success) {
-                const typeDef = AKTIVITETSTYPER[selectedActivityType];
-                flyIconToGraph(typeDef.icon, 'dock-panel-motion');
-                showActivityActive(selectedActivityType, intensitet, selectedDuration);
-            }
-        }
+        startActivityWithDuration(selectedDuration);
     });
 
     // Stop-knapper (både i panelet og overlay)
@@ -1189,6 +1267,40 @@ function initializeApp() {
             if (key === 'g') { showCustomFoodPanel(); return true; }
         }
 
+        // --- Aktivitetspanel åbent ---
+        // Type: Q=Cardio, W=Styrke, E=Blandet, R=Afslapning
+        // Intensitet: A=Lav, S=Medium, D=Høj
+        // Start (varighed): Z=15min, X=30min, C=60min, V=Åben
+        // Stop (når aktiv): Z=Stop
+        if (isPanelOpen('dock-panel-motion')) {
+            // Hvis aktivitet er aktiv: Z = stop
+            if (game.activeAktivitet) {
+                if (key === 'z') { game.stopAktivitet(); hideActivityActive(); return true; }
+                return false; // Ingen andre genveje under aktiv aktivitet
+            }
+            // Type-valg (QWER)
+            const typeMap = { q: 'cardio', w: 'styrke', e: 'blandet', r: 'afslapning' };
+            if (typeMap[key]) {
+                const chip = document.querySelector(`.activity-type-chip[data-type="${typeMap[key]}"]`);
+                if (chip) chip.click();
+                return true;
+            }
+            // Intensitet-valg (ASD)
+            const intMap = { a: 'Lav', s: 'Medium', d: 'Høj' };
+            if (intMap[key]) {
+                const chip = document.querySelector(`.intensity-chip[data-intensity="${intMap[key]}"]`);
+                if (chip) chip.click();
+                return true;
+            }
+            // Start med varighed (ZXCV)
+            const durMap = { z: 15, x: 30, c: 60, v: null };
+            if (key in durMap) {
+                startActivityWithDuration(durMap[key]);
+                return true;
+            }
+            return false;
+        }
+
         // --- Diabetes-kit panel åbent ---
         // Z=Druesukker, X=Fingerprik, C=Keton-stik, V=Glukagon
         if (isPanelOpen('dock-panel-kit')) {
@@ -1243,7 +1355,7 @@ function initializeApp() {
         // --- Panel allerede åbent: enkelt-tryk sub-handling ---
         // Når panelet er synligt behøver man kun trykke én tast
         // Inkluderer B (æble i mad-panel) og G (lav selv i mad-panel)
-        if (['z', 'x', 'c', 'v', 'a', 's', 'd', 'f', 'b', 'g'].includes(key)) {
+        if (['z', 'x', 'c', 'v', 'a', 's', 'd', 'f', 'b', 'g', 'q', 'w', 'e', 'r'].includes(key)) {
             // Prøv sub-handling først (hvis relevant panel er åbent)
             if (executeSubAction(key)) {
                 e.preventDefault();

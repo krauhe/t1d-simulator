@@ -61,7 +61,7 @@ h3 { font-size: 14px; margin: 16px 0 4px 0; color: var(--muted); }
 
 canvas {
     width: 100%;
-    height: 220px;
+    height: 240px;
     border-radius: 8px;
     background: #12141c;
     margin: 8px 0;
@@ -83,9 +83,9 @@ canvas {
 }
 
 .legend-color {
-    width: 18px;
+    width: 22px;
     height: 3px;
-    border-radius: 1px;
+    border-radius: 2px;
 }
 
 /* Tabel til numeriske resultater — kompakt, smal, tæt på hinanden */
@@ -294,7 +294,13 @@ function runScenario(profile, interventionTimeH, intervention, measureHours = 6)
 // =========================================================================
 
 // Farvepalette til kurver (op til 8 linjer)
-const COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#a855f7', '#06b6d4', '#f97316', '#ec4899'];
+// Semantisk farvepalet — bruges som fallback når series ikke har eksplicit color.
+// Rækkefølge: blå, orange, grøn, lilla, cyan, pink, amber, rød.
+const COLORS = ['#3b82f6', '#f59e0b', '#22c55e', '#a855f7', '#06b6d4', '#ec4899', '#fbbf24', '#ef4444'];
+
+// Kontrol-farve: altid grå, altid stiplet — neutral reference i alle grafer.
+const CTRL_COLOR = '#6b7280';
+const CTRL_DASH = [6, 4];
 
 /**
  * Tegn multiple BG-kurver på ét canvas.
@@ -311,7 +317,8 @@ function drawChart(canvas, series, opts = {}) {
     ctx.scale(dpr, dpr);
 
     const W = rect.width, H = rect.height;
-    const pad = { top: 12, right: 16, bottom: 28, left: 44 };
+    // Øget padding: plads til skarpe, læsbare labels
+    const pad = { top: 16, right: 20, bottom: 36, left: 52 };
     const plotW = W - pad.left - pad.right;
     const plotH = H - pad.top - pad.bottom;
 
@@ -333,30 +340,38 @@ function drawChart(canvas, series, opts = {}) {
     ctx.fillStyle = '#12141c';
     ctx.fillRect(0, 0, W, H);
 
-    // Target zone (4-10 mmol/L)
+    // Target zone (4-10 mmol/L) — svagt grønt område
     const tLow = opts.targetLow ?? 4;
     const tHigh = opts.targetHigh ?? 10;
     ctx.fillStyle = 'rgba(34, 197, 94, 0.07)';
     ctx.fillRect(pad.left, toY(tHigh), plotW, toY(tLow) - toY(tHigh));
 
-    // Hypo-zone (< 4)
+    // Hypo-zone (< 4) — svagt rødt område
     ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
     ctx.fillRect(pad.left, toY(tLow), plotW, toY(yMin) - toY(tLow));
 
-    // Grid linjer
-    ctx.strokeStyle = '#2a2d3a';
-    ctx.lineWidth = 0.5;
-    ctx.setLineDash([3, 3]);
+    // Grid linjer — øget kontrast for bedre læsbarhed
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([4, 4]);
     for (let y = Math.ceil(yMin); y <= yMax; y += 2) {
         ctx.beginPath();
         ctx.moveTo(pad.left, toY(y));
         ctx.lineTo(W - pad.right, toY(y));
         ctx.stroke();
     }
+    // Vertikale grid-linjer (tidsaksen)
+    const xStepMin = xRange > 600 ? 120 : 60;
+    for (let t = Math.ceil(xMin / xStepMin) * xStepMin; t <= xMax; t += xStepMin) {
+        ctx.beginPath();
+        ctx.moveTo(toX(t), pad.top);
+        ctx.lineTo(toX(t), pad.top + plotH);
+        ctx.stroke();
+    }
     ctx.setLineDash([]);
 
-    // Target-linjer (4 og 10)
-    ctx.strokeStyle = 'rgba(34, 197, 94, 0.3)';
+    // Target-linjer (4 og 10) — tydeligere grønne linjer
+    ctx.strokeStyle = 'rgba(34, 197, 94, 0.35)';
     ctx.lineWidth = 1;
     [tLow, tHigh].forEach(y => {
         ctx.beginPath();
@@ -365,40 +380,62 @@ function drawChart(canvas, series, opts = {}) {
         ctx.stroke();
     });
 
-    // Y-akse labels
-    ctx.fillStyle = '#8b8d97';
-    ctx.font = '10px Inter, sans-serif';
+    // Akselinjer — tydelig ramme omkring plotområdet
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top);
+    ctx.lineTo(pad.left, pad.top + plotH);
+    ctx.lineTo(pad.left + plotW, pad.top + plotH);
+    ctx.stroke();
+
+    // Y-akse labels — skarpere font, bedre kontrast
+    ctx.fillStyle = '#a1a1aa';
+    ctx.font = '11px Inter, -apple-system, sans-serif';
     ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
     for (let y = Math.ceil(yMin); y <= yMax; y += 2) {
-        ctx.fillText(y.toString(), pad.left - 6, toY(y) + 3);
+        ctx.fillText(y.toString(), pad.left - 8, toY(y));
     }
 
-    // X-akse labels
+    // X-akse labels — skarpere font, bedre kontrast
     ctx.textAlign = 'center';
-    const xStepMin = xRange > 600 ? 120 : 60; // 2t eller 1t skridt
+    ctx.textBaseline = 'top';
     for (let t = Math.ceil(xMin / xStepMin) * xStepMin; t <= xMax; t += xStepMin) {
         const hours = (t / 60) % 24;
         const label = opts.xIsClockTime
             ? `${String(Math.floor(hours)).padStart(2, '0')}:00`
             : `${((t - xMin) / 60).toFixed(0)}t`;
-        ctx.fillText(label, toX(t), H - pad.bottom + 16);
+        ctx.fillText(label, toX(t), pad.top + plotH + 6);
     }
 
-    // Y-akse titel
+    // Y-akse titel — større, tydeligere
     ctx.save();
-    ctx.translate(12, pad.top + plotH / 2);
+    ctx.translate(14, pad.top + plotH / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = '#8b8d97';
-    ctx.font = '10px Inter, sans-serif';
+    ctx.fillStyle = '#a1a1aa';
+    ctx.font = '11px Inter, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('mmol/L', 0, 0);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(opts.yLabel || 'mmol/L', 0, 0);
     ctx.restore();
 
-    // Tegn kurver
+    // X-akse titel (valgfri)
+    if (opts.xLabel) {
+        ctx.fillStyle = '#a1a1aa';
+        ctx.font = '11px Inter, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(opts.xLabel, pad.left + plotW / 2, H - 4);
+    }
+
+    // Tegn kurver — anti-aliased linjer med round caps
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     series.forEach((s, i) => {
         const color = s.color || COLORS[i % COLORS.length];
         ctx.strokeStyle = color;
-        ctx.lineWidth = s.lineWidth || 1.8;
+        ctx.lineWidth = s.lineWidth || 2.0;
         ctx.setLineDash(s.dash || []);
         ctx.beginPath();
         s.data.forEach((d, j) => {
@@ -548,7 +585,7 @@ addSection(
         const peakH = ((stats.peakTime % 1440) / 60).toFixed(1);
         const nadirH = ((stats.nadirTime % 1440) / 60).toFixed(1);
 
-        const series = [{ label: 'BG (ISF=3.0, 70kg)', data }];
+        const series = [{ label: 'BG (ISF=3.0, 70kg)', data, color: '#3b82f6' }];
         drawChart(canvas, series, { yMin: 2, yMax: 22, xIsClockTime: true });
         legendDiv.innerHTML = buildLegend(series);
 
@@ -638,10 +675,10 @@ addSection(
         const ratioReal = eDropReal / Math.max(mDropReal, 0.1);
 
         const series = [
-            { label: `Morgen 3E insulin`, data: morningData },
-            { label: `Morgen kontrol (0E)`, data: morningCtrlData, dash: [6, 4] },
-            { label: `Aften 3E insulin`, data: eveningData },
-            { label: `Aften kontrol (0E)`, data: eveningCtrlData, dash: [6, 4] }
+            { label: `Morgen kontrol (0E)`, data: morningCtrlData, color: CTRL_COLOR, dash: CTRL_DASH },
+            { label: `Aften kontrol (0E)`, data: eveningCtrlData, color: '#9ca3af', dash: CTRL_DASH },
+            { label: `Morgen 3E insulin`, data: morningData, color: '#f59e0b' },
+            { label: `Aften 3E insulin`, data: eveningData, color: '#06b6d4' }
         ];
         drawChart(canvas, series, { yMin: 0, yMax: 14 });
         legendDiv.innerHTML = buildLegend(series);
@@ -684,8 +721,10 @@ addSection(
         advanceTo(simCtrl, 14 * 60);
         clampBG(simCtrl, 12.0);
         const ctrlData = collectBG(simCtrl, 6 * 60);
-        allSeries.push({ label: '0E kontrol', data: ctrlData, dash: [6, 4] });
+        allSeries.push({ label: '0E kontrol', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH });
 
+        // Insulin i blå toner — mørkere = større dosis
+        const insulinColors = ['#93c5fd', '#60a5fa', '#3b82f6', '#2563eb'];
         doses.forEach((dose, i) => {
             const sim = createSim(DEFAULT_PROFILE);
             advanceTo(sim, 14 * 60);
@@ -699,7 +738,7 @@ addSection(
             const ctrlAtNadir = nadirIdx < ctrlData.length ? ctrlData[nadirIdx].bg : ctrlData[ctrlData.length-1].bg;
             const realDrop = ctrlAtNadir - stats.nadir;
             results.push({ dose, startBG, ...stats, drop: startBG - stats.nadir, realDrop, ctrlAtNadir });
-            allSeries.push({ label: `${dose}E (effekt ${realDrop.toFixed(1)})`, data });
+            allSeries.push({ label: `${dose}E (effekt ${realDrop.toFixed(1)})`, data, color: insulinColors[i] });
         });
 
         drawChart(canvas, allSeries, { yMin: 0, yMax: 16 });
@@ -744,8 +783,10 @@ addSection(
         const simCtrl = createSim(DEFAULT_PROFILE);
         advanceTo(simCtrl, 14 * 60);
         const ctrlData = collectBG(simCtrl, 6 * 60);
-        allSeries.push({ label: '0g kontrol', data: ctrlData, dash: [6, 4] });
+        allSeries.push({ label: '0g kontrol', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH });
 
+        // Kulhydrater i orange/amber toner — mørkere = større dosis
+        const carbColors = ['#fde68a', '#fbbf24', '#f59e0b'];
         carbDoses.forEach((carbs, i) => {
             const sim = createSim(DEFAULT_PROFILE);
             advanceTo(sim, 14 * 60);
@@ -758,7 +799,7 @@ addSection(
             const ctrlAtPeak = peakIdx < ctrlData.length ? ctrlData[peakIdx].bg : ctrlData[ctrlData.length-1].bg;
             const realRise = stats.peak - ctrlAtPeak;
             results.push({ carbs, startBG, ...stats, rise: stats.peak - startBG, realRise, ctrlAtPeak });
-            allSeries.push({ label: `${carbs}g (effekt +${realRise.toFixed(1)})`, data });
+            allSeries.push({ label: `${carbs}g (effekt +${realRise.toFixed(1)})`, data, color: carbColors[i] });
         });
 
         drawChart(canvas, allSeries, { yMin: 2, yMax: 24 });
@@ -802,8 +843,10 @@ addSection(
         advanceTo(simCtrl, 14 * 60);
         clampBG(simCtrl, 10.0);
         const ctrlData = collectBG(simCtrl, 6 * 60);
-        allSeries.push({ label: '0E kontrol', data: ctrlData, dash: [6, 4] });
+        allSeries.push({ label: '0E kontrol', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH });
 
+        // Profiler i lilla toner — lysere = lavere ISF (resistens), mørkere = højere ISF (følsom)
+        const profileColors = ['#c084fc', '#a855f7', '#7c3aed'];
         isfs.forEach((isf, i) => {
             const sim = createSim({ weight: 70, isf, icr: Math.round(isf * 10 / 3) });
             advanceTo(sim, 14 * 60);
@@ -816,7 +859,7 @@ addSection(
             const ctrlAtNadir = nadirIdx < ctrlData.length ? ctrlData[nadirIdx].bg : ctrlData[ctrlData.length-1].bg;
             const realDrop = ctrlAtNadir - stats.nadir;
             results.push({ isf, startBG, ...stats, drop: startBG - stats.nadir, realDrop });
-            allSeries.push({ label: `ISF=${isf} (effekt ${realDrop.toFixed(1)})`, data });
+            allSeries.push({ label: `ISF=${isf} (effekt ${realDrop.toFixed(1)})`, data, color: profileColors[i] });
         });
 
         drawChart(canvas, allSeries, { yMin: 0, yMax: 14 });
@@ -858,8 +901,10 @@ addSection(
         advanceTo(simCtrl, 14 * 60);
         clampBG(simCtrl, 10.0);
         const ctrlData = collectBG(simCtrl, 6 * 60);
-        allSeries.push({ label: '0E kontrol (70kg)', data: ctrlData, dash: [6, 4] });
+        allSeries.push({ label: '0E kontrol (70kg)', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH });
 
+        // Vægt i cyan toner — lysere = lettere patient
+        const weightColors = ['#67e8f9', '#06b6d4', '#0e7490'];
         weights.forEach((weight, i) => {
             const sim = createSim({ weight, isf: 3.0, icr: 10 });
             advanceTo(sim, 14 * 60);
@@ -872,7 +917,7 @@ addSection(
             const ctrlAtNadir = nadirIdx < ctrlData.length ? ctrlData[nadirIdx].bg : ctrlData[ctrlData.length-1].bg;
             const realDrop = ctrlAtNadir - stats.nadir;
             results.push({ weight, startBG, ...stats, drop: startBG - stats.nadir, realDrop });
-            allSeries.push({ label: `${weight}kg (effekt ${realDrop.toFixed(1)})`, data });
+            allSeries.push({ label: `${weight}kg (effekt ${realDrop.toFixed(1)})`, data, color: weightColors[i] });
         });
 
         drawChart(canvas, allSeries, { yMin: 0, yMax: 14 });
@@ -1013,10 +1058,10 @@ addSection(
         const eRealRise = eStats.peak - eCtrlAtPeak;
 
         const series = [
-            { label: `Morgen 40g`, data: morningData },
-            { label: `Morgen kontrol (0g)`, data: morningCtrlData, dash: [6, 4] },
-            { label: `Aften 40g`, data: eveningData },
-            { label: `Aften kontrol (0g)`, data: eveningCtrlData, dash: [6, 4] }
+            { label: `Morgen kontrol (0g)`, data: morningCtrlData, color: CTRL_COLOR, dash: CTRL_DASH },
+            { label: `Aften kontrol (0g)`, data: eveningCtrlData, color: '#9ca3af', dash: CTRL_DASH },
+            { label: `Morgen 40g`, data: morningData, color: '#f59e0b' },
+            { label: `Aften 40g`, data: eveningData, color: '#06b6d4' }
         ];
         drawChart(canvas, series, { yMin: 2, yMax: 22 });
         legendDiv.innerHTML = buildLegend(series);
@@ -1086,10 +1131,10 @@ addSection(
         const eStats = bgStats(eveningData);
 
         const series = [
-            { label: `Morgen 40g + 4E`, data: morningData },
-            { label: `Morgen 40g + 0E`, data: morningCtrlData, dash: [6, 4] },
-            { label: `Aften 40g + 4E`, data: eveningData },
-            { label: `Aften 40g + 0E`, data: eveningCtrlData, dash: [6, 4] }
+            { label: `Morgen 40g + 0E`, data: morningCtrlData, color: CTRL_COLOR, dash: CTRL_DASH },
+            { label: `Aften 40g + 0E`, data: eveningCtrlData, color: '#9ca3af', dash: CTRL_DASH },
+            { label: `Morgen 40g + 4E`, data: morningData, color: '#f59e0b' },
+            { label: `Aften 40g + 4E`, data: eveningData, color: '#06b6d4' }
         ];
         drawChart(canvas, series, { yMin: 0, yMax: 22 });
         legendDiv.innerHTML = buildLegend(series);
@@ -1157,9 +1202,9 @@ addSection(
         const bReal = bCtrlAtNadir - bStats.nadir;
 
         const series = [
-            { label: `Ingen motion (kontrol)`, data: ctrlData, dash: [6, 4] },
-            { label: `Motion uden insulin`, data: dataA },
-            { label: `Motion + 2E bolus`, data: dataB }
+            { label: `Ingen motion (kontrol)`, data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH },
+            { label: `Motion uden insulin`, data: dataA, color: '#22c55e' },
+            { label: `Motion + 2E bolus`, data: dataB, color: '#4ade80' }
         ];
         drawChart(canvas, series, { yMin: 0, yMax: 12 });
         legendDiv.innerHTML = buildLegend(series);
@@ -1206,8 +1251,8 @@ addSection(
         const iStats = bgStats(bolusData);
 
         const series = [
-            { label: 'Baseline 24t (120kg, ISF=1.5)', data: baseData, dash: [4, 4] },
-            { label: '5E fra BG=12 kl. 14', data: bolusData }
+            { label: 'Baseline 24t (120kg, ISF=1.5)', data: baseData, color: CTRL_COLOR, dash: CTRL_DASH },
+            { label: '5E fra BG=12 kl. 14', data: bolusData, color: '#3b82f6' }
         ];
         drawChart(canvas, series, { yMin: 0, yMax: 16 });
         legendDiv.innerHTML = buildLegend(series);
@@ -1261,9 +1306,9 @@ addSection(
         const s2 = bgStats(data2E);
 
         const series = [
-            { label: 'Baseline (50kg, ISF=5.0)', data: baseData, dash: [4, 4] },
-            { label: `1E (fald ${(s1.start - s1.nadir).toFixed(1)})`, data: data1E },
-            { label: `2E (fald ${(s2.start - s2.nadir).toFixed(1)})`, data: data2E, color: '#ef4444' }
+            { label: 'Baseline (50kg, ISF=5.0)', data: baseData, color: CTRL_COLOR, dash: CTRL_DASH },
+            { label: `1E (fald ${(s1.start - s1.nadir).toFixed(1)})`, data: data1E, color: '#3b82f6' },
+            { label: `2E overdosis (fald ${(s2.start - s2.nadir).toFixed(1)})`, data: data2E, color: '#ef4444' }
         ];
         drawChart(canvas, series, { yMin: 0, yMax: 14 });
         legendDiv.innerHTML = buildLegend(series);
@@ -1330,10 +1375,10 @@ addSection(
         const fStats = bgStats(fatData);
 
         const series = [
-            { label: '0g kontrol', data: ctrlData, dash: [6, 4] },
-            { label: '40g KH', data: carbData },
-            { label: '40g KH + 30g protein', data: protData },
-            { label: '40g KH + 30g fedt', data: fatData }
+            { label: '0g kontrol', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH },
+            { label: '40g KH', data: carbData, color: '#f59e0b' },
+            { label: '40g KH + 30g protein', data: protData, color: '#a855f7' },
+            { label: '40g KH + 30g fedt', data: fatData, color: '#fbbf24' }
         ];
         drawChart(canvas, series, { yMin: 2, yMax: 18 });
         legendDiv.innerHTML = buildLegend(series);
@@ -1396,9 +1441,9 @@ addSection(
         const sSplit = bgStats(dataSplit);
 
         const series = [
-            { label: '0E kontrol', data: ctrlData, dash: [6, 4] },
-            { label: '6E enkelt', data: data6E },
-            { label: '3E + 3E (30 min split)', data: dataSplit }
+            { label: '0E kontrol', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH },
+            { label: '6E enkelt', data: data6E, color: '#3b82f6' },
+            { label: '3E + 3E (30 min split)', data: dataSplit, color: '#60a5fa' }
         ];
         drawChart(canvas, series, { yMin: 0, yMax: 14 });
         legendDiv.innerHTML = buildLegend(series);
@@ -1447,7 +1492,7 @@ addSection(
         const odStats = bgStats(dataOD);
 
         const series = [
-            { label: '0E kontrol', data: ctrlData, dash: [6, 4] },
+            { label: '0E kontrol', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH },
             { label: '8E overdosis', data: dataOD, color: '#ef4444' }
         ];
         drawChart(canvas, series, { yMin: 0, yMax: 12 });
@@ -1510,7 +1555,7 @@ addSection(
         }
 
         const series = [
-            { label: '0g kontrol', data: ctrlData, dash: [6, 4] },
+            { label: '0g kontrol', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH },
             { label: '100g KH uden insulin', data: data100, color: '#ef4444' }
         ];
         drawChart(canvas, series, { yMin: 2, yMax: Math.max(stats.peak + 2, 20) });
@@ -1567,9 +1612,9 @@ addSection(
         const pStats = bgStats(protData);
 
         const series = [
-            { label: '0g kontrol', data: ctrlData, dash: [6, 4] },
-            { label: '15g rene KH', data: carbData },
-            { label: '60g protein (≈15g KH)', data: protData }
+            { label: '0g kontrol', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH },
+            { label: '15g rene KH', data: carbData, color: '#f59e0b' },
+            { label: '60g protein (≈15g KH)', data: protData, color: '#a855f7' }
         ];
         drawChart(canvas, series, { yMin: 3, yMax: 14 });
         legendDiv.innerHTML = buildLegend(series);

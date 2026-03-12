@@ -1489,53 +1489,40 @@ body {
     gap: 6px;
 }
 /* (dp-shortcut-hint fjernet — genveje vises nu via title/mouseover) */
-.dp-insulin-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+/* --- Insulin presets: bruger preset-chip layout (emoji + name + key) som mad-panelet --- */
+.dp-insulin-presets {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
 }
-.dp-preset-chips {
-    display: flex;
-    gap: 4px;
-    flex-shrink: 0;
-}
-.insulin-preset {
-    display: flex;
-    align-items: center;
+.insulin-preset-chip {
+    /* Arver .preset-chip styling — uden emoji, kun dosis-tekst */
     justify-content: center;
-    position: relative;
-    background: rgba(37, 99, 235, 0.15);
-    border: 1px solid rgba(96, 165, 250, 0.25);
-    border-radius: 8px;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: all 0.2s var(--bounce);
-    min-width: 48px;
-    white-space: nowrap;
+    padding: 10px 8px;
 }
-.insulin-preset:hover {
-    background: rgba(37, 99, 235, 0.3);
+.insulin-preset-chip .pc-name {
+    font-size: 14px;
+    font-weight: var(--font-weight-value);
+    font-variant-numeric: tabular-nums;
+}
+/* Basal presets: blå */
+.dp-insulin-basal .insulin-preset-chip {
+    background: rgba(37, 99, 235, 0.12);
+    border-color: rgba(96, 165, 250, 0.25);
+}
+.dp-insulin-basal .insulin-preset-chip:hover {
+    background: rgba(37, 99, 235, 0.25);
     border-color: rgba(96, 165, 250, 0.5);
-    transform: scale(1.08);
 }
-.insulin-preset-fast {
-    background: rgba(13, 148, 136, 0.15);
+/* Hurtig presets: teal */
+.dp-insulin-fast .insulin-preset-chip {
+    background: rgba(13, 148, 136, 0.12);
     border-color: rgba(45, 212, 191, 0.25);
 }
-.insulin-preset-fast:hover {
-    background: rgba(13, 148, 136, 0.3);
+.dp-insulin-fast .insulin-preset-chip:hover {
+    background: rgba(13, 148, 136, 0.25);
     border-color: rgba(45, 212, 191, 0.5);
-}
-.ip-dose {
-    font-size: var(--font-ui);
-    font-weight: var(--font-weight-value);
-    color: var(--text-primary);
-    line-height: 1;
-}
-.ip-label {
-    font-size: var(--font-ui-sm);
-    color: var(--text-muted);
-    line-height: 1;
 }
 .dp-custom-dose {
     display: flex;
@@ -1658,10 +1645,44 @@ body {
 }
 #debug-sidebar.visible {
     width: 280px;
-    padding: 12px 14px;
+    padding: 0;                         /* padding styres af sticky-top og live-values */
     margin: var(--panel-gap) var(--panel-gap) var(--panel-gap) 0;
     border: 1px solid var(--border-subtle);
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 2 * var(--panel-gap));
+}
+/* Sticky top: screenshot-knap og checkboxes forbliver synlige ved scroll */
+#debug-sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-elevated);
+    padding: 12px 14px 8px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+/* Scrollbar live-data-område */
+#debug-sidebar .dp-live {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 14px 14px;
+}
+/* Gruppe-overskrifter i debug-panelet */
+.dbg-group-label {
+    grid-column: 1 / -1;               /* spænd over alle 3 grid-kolonner */
+    font-size: var(--font-ui-sm);
+    font-weight: var(--font-weight-heading);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    margin: 10px 0 4px;
+    padding: 2px 0 3px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.dbg-group-label:first-child {
+    margin-top: 0;                      /* ingen ekstra margin øverst */
 }
 /* Debug h5: matcher stats-panelets sektionsoverskrifter */
 #debug-sidebar h5 {
@@ -2346,18 +2367,20 @@ body {
 }
 
 /* --- Aktivitetstype-chips (cardio, styrke, blandet, afslapning) --- */
+/* Aktivitetstype-chips: samme layout som preset-chip (emoji 24px, name, key) */
 .activity-type-chip {
     flex: 1;
+    position: relative;
     background: color-mix(in srgb, var(--chip-color, #10b981) 10%, transparent);
     border: 1px solid color-mix(in srgb, var(--chip-color, #10b981) 20%, transparent);
     border-radius: var(--radius-md);
-    padding: 6px 2px;
+    padding: 8px 4px;
     text-align: center;
     cursor: pointer;
     transition: all 0.25s var(--bounce);
 }
 .activity-type-chip:hover {
-    transform: scale(1.05) translateY(-2px);
+    transform: scale(1.1) translateY(-3px);
     background: color-mix(in srgb, var(--chip-color, #10b981) 20%, transparent);
 }
 .activity-type-chip.selected {
@@ -2365,8 +2388,9 @@ body {
     border-color: color-mix(in srgb, var(--chip-color, #10b981) 50%, transparent);
     box-shadow: 0 0 12px color-mix(in srgb, var(--chip-color, #10b981) 25%, transparent);
 }
-.activity-type-chip .pc-emoji { font-size: 16px; }
-.activity-type-chip .pc-name { font-size: 11px; }
+/* Matcher preset-chip emoji/name-størrelse */
+.activity-type-chip .pc-emoji { font-size: 24px; display: block; }
+.activity-type-chip .pc-name { font-size: var(--font-ui-sm); margin-top: 3px; color: var(--text-muted); }
 .activity-type-chip.selected .pc-name { color: var(--text-primary); }
 
 /* Eksempler for valgt aktivitetstype */
@@ -2381,6 +2405,7 @@ body {
 /* --- Intensitets-chips (lav, medium, høj) --- */
 .intensity-chip {
     flex: 1;
+    position: relative;
     background: var(--green-dim);
     border: 1px solid rgba(16, 185, 129, 0.15);
     border-radius: var(--radius-md);
@@ -2403,31 +2428,31 @@ body {
 }
 
 /* --- Varighed-chips (15, 30, 60, ∞) --- */
+/* Duration-chips = START-knapper: grøn accent indikerer at tryk starter aktiviteten */
 .duration-chip {
     flex: 1;
-    background: rgba(100, 116, 139, 0.1);
-    border: 1px solid rgba(100, 116, 139, 0.2);
+    position: relative;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
     border-radius: var(--radius-md);
-    padding: 6px 4px;
+    padding: 8px 4px;
     text-align: center;
     cursor: pointer;
     transition: all 0.25s var(--bounce);
 }
 .duration-chip:hover {
-    transform: scale(1.05) translateY(-2px);
-    background: rgba(100, 116, 139, 0.2);
+    transform: scale(1.08) translateY(-2px);
+    background: rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
 }
-.duration-chip.selected {
-    background: rgba(59, 130, 246, 0.2);
-    border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.15);
+.duration-chip:active {
+    transform: scale(0.95);
 }
 .duration-chip .pc-name {
     font-size: 12px;
-    color: var(--text-secondary);
-}
-.duration-chip.selected .pc-name {
-    color: var(--text-primary);
+    font-weight: 600;
+    color: rgba(16, 185, 129, 0.9);
 }
 
 /* --- Aktiv-tilstand i dock-panelet --- */
@@ -2474,16 +2499,19 @@ body {
 #activity-overlay {
     position: absolute;
     bottom: 32px;
-    right: 70px;
+    left: auto;
+    right: 32px;       /* Default: bottom-right (væk fra dock og CGM-hero) */
     background: var(--bg-card-glass);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(148, 163, 184, 0.15);
     border-radius: var(--radius-lg);
-    padding: 10px 14px;
+    padding: 8px 14px;
     z-index: 20;
     min-width: 160px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    /* Smooth slide ved position-skift og fade ved visning/skjulning */
+    transition: opacity 0.3s ease, transform 0.3s ease, left 0.4s ease, right 0.4s ease;
 }
 #activity-overlay .activity-overlay-header {
     display: flex;

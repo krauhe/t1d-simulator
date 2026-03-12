@@ -435,12 +435,17 @@ function drawGraph() {
     const activityBandY = padding.top + graphHeight - activityBandHeight - 18; // Lige over x-aksen
     if (typeof AKTIVITETSTYPER !== 'undefined') {
         // Tegn bånd for afsluttede aktiviteter (fra logHistory)
+        // Skip den aktive aktivitets motion-event — den tegnes live nedenfor
+        const activeStartTime = game.activeAktivitet ? game.activeAktivitet.startTime : null;
         game.logHistory.forEach(event => {
             if (event.type !== 'motion' || !event.details || !event.details.type) return;
+            // Skip aktiv aktivitet (tegnes live med pulserende effekt)
+            if (activeStartTime !== null && event.time === activeStartTime) return;
             const typeDef = AKTIVITETSTYPER[event.details.type];
             if (!typeDef) return;
             const startMin = event.time;
-            const duration = event.details.duration || 30;
+            const duration = event.details.duration;
+            if (!duration) return; // Åben varighed uden afslutning — tegnes ikke som historik
             const endMin = startMin + duration;
             // Tegn kun hvis båndet er synligt i nuværende view
             if (endMin < currentDayStartMinutes || startMin >= currentDayStartMinutes + totalMinutesInView) return;
@@ -521,9 +526,11 @@ function drawGraph() {
                     graphCtx.fillStyle = 'rgba(200, 210, 230, 0.9)';
                     graphCtx.fillText(`${ke}g`, x, yPos - 14);
                 }
-            } else if (event.type === 'motion' || event.type === 'motion-end') {
+            } else if (event.type === 'motion') {
                 const motionIcon = (event.details && event.details.icon) || event.icon || '🏃';
                 graphCtx.fillText(motionIcon, x, yPos);
+            } else if (event.type === 'motion-end') {
+                // Vis IKKE stop-ikon på grafen — båndet viser allerede varigheden
             } else if(event.type === 'glucagon') {
                 // Glukagon: rød sprøjte-emoji (💉) — samme størrelse som insulin, lidt større.
                 // Bruger samme _emojiOffCanvas teknik som insulin-ikoner.

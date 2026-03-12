@@ -1118,6 +1118,111 @@ test('E1-skalering: styrke giver mindre GLUT4-optag end cardio', () => {
 });
 
 
+// --- Test 11: Lever-glykogenpool (massebalanceret model i gram) ---
+console.log('\n--- Test 11: Lever-glykogenpool (gram-baseret depletion + recovery) ---');
+
+test('Lever-glykogen starter ved 90g', () => {
+    const sim = createCleanSimulator();
+    assert(sim.liverGlycogenGrams === 90,
+        `liverGlycogenGrams skal starte ved 90 (var ${sim.liverGlycogenGrams})`);
+    assert(sim.glycogenReserve === 1.0,
+        `glycogenReserve skal vaere 1.0 ved 90g (var ${sim.glycogenReserve})`);
+});
+
+test('Lever-glykogen falder under langvarig hypo (stress-drevet glykogenolyse)', () => {
+    const sim = createCleanSimulator();
+    // Tving BG lavt og tilføj akut stress for at simulere Somogyi
+    sim.hovorka.state[4] = 2.0 * sim.hovorka.V_G; // Q1 → BG=2.0
+    sim.trueBG = 2.0;
+    sim.addAcuteStress(0.4); // Fuld Somogyi-respons
+
+    const startGrams = sim.liverGlycogenGrams;
+
+    // Simuler 60 minutter med lavt BG
+    for (let i = 0; i < 60; i++) {
+        sim.updateStressHormones(1.0);
+    }
+
+    const consumed = startGrams - sim.liverGlycogenGrams;
+    assert(consumed > 2,
+        `Lever-glykogen skal falde maalbart efter 60 min hypo (forbrugt: ${consumed.toFixed(1)}g)`);
+    assert(sim.liverGlycogenGrams < startGrams,
+        `liverGlycogenGrams (${sim.liverGlycogenGrams.toFixed(1)}g) skal vaere under start (${startGrams}g)`);
+});
+
+test('Motion drainer glykogen markant hurtigere end hypo alene', () => {
+    const simRest = createCleanSimulator();
+    const simExercise = createCleanSimulator();
+
+    // Samme udgangspunkt: lav BG + stress
+    simRest.hovorka.state[4] = 2.5 * simRest.hovorka.V_G;
+    simRest.trueBG = 2.5;
+    simRest.addAcuteStress(0.4);
+
+    simExercise.hovorka.state[4] = 2.5 * simExercise.hovorka.V_G;
+    simExercise.trueBG = 2.5;
+    simExercise.addAcuteStress(0.4);
+    simExercise.startAktivitet('cardio', 'Medium', 60);
+
+    // Simuler 45 minutter
+    for (let i = 0; i < 45; i++) {
+        simRest.updateStressHormones(1.0);
+        simExercise.updateStressHormones(1.0);
+    }
+
+    assert(simExercise.liverGlycogenGrams < simRest.liverGlycogenGrams,
+        `Motion+hypo (${simExercise.liverGlycogenGrams.toFixed(1)}g) skal give lavere glykogen end hypo alene (${simRest.liverGlycogenGrams.toFixed(1)}g)`);
+
+    // Motion bør drainere markant mere (>3× pga. kcal-forbrug)
+    const restConsumed = 90 - simRest.liverGlycogenGrams;
+    const exerciseConsumed = 90 - simExercise.liverGlycogenGrams;
+    assert(exerciseConsumed > restConsumed * 2,
+        `Motion-drain (${exerciseConsumed.toFixed(1)}g) bør vaere >2× hvile-drain (${restConsumed.toFixed(1)}g)`);
+});
+
+test('Lever-glykogen kan ikke gaa under 0g', () => {
+    const sim = createCleanSimulator();
+    sim.hovorka.state[4] = 2.0 * sim.hovorka.V_G;
+    sim.trueBG = 2.0;
+    sim.addAcuteStress(0.4);
+    sim.startAktivitet('cardio', 'Høj', null);
+
+    // Simuler MEGET lang tid (300 min høj cardio + hypo)
+    for (let i = 0; i < 300; i++) {
+        sim.updateStressHormones(1.0);
+    }
+
+    assert(sim.liverGlycogenGrams >= 0,
+        `liverGlycogenGrams kan ikke vaere negativ (var ${sim.liverGlycogenGrams.toFixed(2)}g)`);
+    assert(sim.glycogenReserve >= 0,
+        `glycogenReserve kan ikke vaere negativ (var ${sim.glycogenReserve.toFixed(3)})`);
+});
+
+test('Lever-glykogen genoprettes via gluconeogenese + mad', () => {
+    const sim = createCleanSimulator();
+    // Udtøm glycogen (motion drainer hurtigt)
+    sim.hovorka.state[4] = 2.5 * sim.hovorka.V_G;
+    sim.trueBG = 2.5;
+    sim.addAcuteStress(0.3);
+    sim.startAktivitet('cardio', 'Høj', null);
+    for (let i = 0; i < 180; i++) {
+        sim.updateStressHormones(1.0);
+    }
+    sim.stopAktivitet();
+    const depletedGrams = sim.liverGlycogenGrams;
+
+    // Normaliser BG (simuler måltid) og lad glycogen recovere
+    sim.hovorka.state[4] = 8.0 * sim.hovorka.V_G;
+    sim.trueBG = 8.0;
+    sim.acuteStressLevel = 0;
+    for (let i = 0; i < 180; i++) { // 3 timer med BG=8.0
+        sim.updateStressHormones(1.0);
+    }
+
+    assert(sim.liverGlycogenGrams > depletedGrams + 10,
+        `Lever-glykogen skal stige markant ved BG=8.0 (var ${sim.liverGlycogenGrams.toFixed(1)}g, depleteret: ${depletedGrams.toFixed(1)}g)`);
+});
+
 // =============================================================================
 // RESULTAT-OVERSIGT
 // =============================================================================
