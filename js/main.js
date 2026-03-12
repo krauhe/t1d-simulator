@@ -25,7 +25,7 @@
 // Holdes som `let` (uinitialiseret) og tildeles i initializeApp() efter DOM er klar.
 // Andre filer (simulator.js, ui.js) tilgår disse direkte via variabelnavne.
 // =============================================================================
-let startButton, helpButton, pauseButton, profileButton, speedSelector, dayDisplay,
+let startButton, helpButton, highscoreButton, pauseButton, profileButton, speedSelector, dayDisplay,
     timeDisplay, cgmValueDisplayGraph, normoPointsDisplay, normoPointsWeighting,
     muteButton, carbsSlider, carbsValue, proteinSlider, proteinValue, fatSlider,
     fatValue, giveFoodButton, foodInfoDisplay, foodKcalDisplay, foodKeDisplay,
@@ -708,6 +708,9 @@ function toggleDebugSidebar() {
     const sidebar = document.getElementById('debug-sidebar');
     if (!sidebar) return;
     sidebar.classList.toggle('visible');
+    // Gem indstilling
+    appSettings.debugOpen = sidebar.classList.contains('visible');
+    saveSettings(appSettings);
     // Resize canvas da debug-sidebar ændrer tilgængelig bredde for grafen
     setTimeout(sizeCanvas, 350);
 }
@@ -720,6 +723,7 @@ function initializeApp() {
     // --- Tildel alle DOM element-referencer ---
     startButton = document.getElementById('startButton');
     helpButton = document.getElementById('helpButton');
+    highscoreButton = document.getElementById('highscoreButton');
     pauseButton = document.getElementById('pauseButton');
     profileButton = document.getElementById('profileButton');
     speedSelector = document.getElementById('speedStepper');
@@ -835,6 +839,7 @@ function initializeApp() {
         }
     });
     helpButton.addEventListener('click', showHelpPopup);
+    highscoreButton.addEventListener('click', showHighscorePopup);
     // pauseButton listener er nu i speed-stepper opsætningen nedenfor
 
     // Profil-knap: åbner profil-popup til redigering af vægt/ICR/ISF
@@ -843,12 +848,20 @@ function initializeApp() {
     });
 
     // --- Mute button: toggler lyd (#12: ikon viser nuværende status) ---
+    // Initialisér ikon fra gemt indstilling
+    const muteIconInit = document.getElementById('muteIcon');
+    if (muteIconInit) muteIconInit.textContent = isMuted ? '\u{1F507}' : '\u{1F50A}';
+    if (isMuted && sounds && Tone.Destination) Tone.Destination.mute = true;
+
     muteButton.addEventListener('click', () => {
         isMuted = !isMuted;
         // Vis nuværende status: 🔊 = lyd tændt, 🔇 = lyd slukket
         const muteIcon = document.getElementById('muteIcon');
         if (muteIcon) muteIcon.textContent = isMuted ? '\u{1F507}' : '\u{1F50A}';
         if (sounds && Tone.Destination) Tone.Destination.mute = isMuted;
+        // Gem indstilling
+        appSettings.muted = isMuted;
+        saveSettings(appSettings);
     });
 
     // --- Hastigheds-stepper (◀ 4t/min ▶) med integreret pause ---
@@ -1060,8 +1073,12 @@ function initializeApp() {
         });
     }
 
-    // --- Debug checkboxes ---
-    debugTrueBgCheckbox.addEventListener('change', () => { if(game) drawGraph(); });
+    // --- Debug checkboxes (gem indstilling ved ændring) ---
+    debugTrueBgCheckbox.addEventListener('change', () => {
+        appSettings.debugTrueBG = debugTrueBgCheckbox.checked;
+        saveSettings(appSettings);
+        if(game) drawGraph();
+    });
 
     // Debug log checkbox: aktiver/deaktiver CSV-logning
     const debugLogCheckbox = document.getElementById('debugLogCheckbox');
@@ -1071,6 +1088,8 @@ function initializeApp() {
         debugLogControls.style.display = debugLogEnabled ? 'flex' : 'none';
         const statusEl = document.getElementById('debugLogStatus');
         if (statusEl) statusEl.textContent = debugLogEnabled ? 'Logger...' : 'Klar';
+        appSettings.debugLog = debugLogEnabled;
+        saveSettings(appSettings);
     });
 
     // Debug log download, screenshot og ryd knapper
@@ -1375,17 +1394,17 @@ function initializeApp() {
         }
     });
 
-    // --- DEV DEFAULTS: Slå debug-features til automatisk under udvikling ---
-    // Fjern denne blok når spillet er klar til release.
+    // --- Gendan debug-indstillinger fra localStorage ---
+    // Bruges i stedet for hardkodede DEV DEFAULTS — gemmes automatisk ved ændring.
     const debugSidebar = document.getElementById('debug-sidebar');
-    if (debugSidebar) debugSidebar.classList.add('visible');
+    if (debugSidebar && appSettings.debugOpen) debugSidebar.classList.add('visible');
 
-    // Vis sand BG-linje (blå) som standard
-    if (debugTrueBgCheckbox) debugTrueBgCheckbox.checked = true;
+    // Sand BG-linje
+    if (debugTrueBgCheckbox) debugTrueBgCheckbox.checked = appSettings.debugTrueBG;
 
-    // Aktiver CSV-logning som standard
+    // CSV-logning
     const debugLogCheckboxEl = document.getElementById('debugLogCheckbox');
-    if (debugLogCheckboxEl) {
+    if (debugLogCheckboxEl && appSettings.debugLog) {
         debugLogCheckboxEl.checked = true;
         debugLogEnabled = true;
         const ctrl = document.getElementById('debugLogControls');

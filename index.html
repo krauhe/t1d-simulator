@@ -37,6 +37,7 @@
                     <button class="top-btn start-btn-prominent" id="startButton" title="Start en ny simulation">&#x25B6; Start</button>
                     <button class="top-btn profile-btn" id="profileButton" title="Rediger personprofil">&#x1F464; Profil</button>
                     <button class="top-btn profile-btn" id="helpButton" title="Hjælp og information">&#x2139;&#xFE0F; Hjælp</button>
+                    <button class="top-btn profile-btn" id="highscoreButton" title="Vis highscore-listen">&#x1F3C6; Highscore</button>
                 </div>
             </div>
 
@@ -377,12 +378,12 @@
              men i et kompakt, mørkt design med slide-animationer.
              =============================================================== -->
 
-        <!-- INSULIN PANEL — Vertikal opdeling: basal øverst, hurtig nederst -->
-        <!-- Bruger preset-chip layout (emoji + name + key) som mad- og aktivitetspanelet -->
+        <!-- INSULIN PANEL — Kompakt layout: basal øverst, hurtig nederst -->
+        <!-- Hver sektion: label + presets + slider på én kompakt linje -->
         <div id="dock-panel-insulin" class="dock-panel">
-            <!-- BASAL INSULIN — øverst -->
-            <div class="dp-section dp-insulin-basal">
-                <label class="dp-section-label"><span class="insulin-icon-blue">💉</span> Basal</label>
+            <!-- BASAL INSULIN — øverste række -->
+            <label class="dp-section-label"><span class="insulin-icon-blue">💉</span> Basal</label>
+            <div class="dp-section dp-insulin-basal dp-insulin-row">
                 <div class="dp-insulin-presets">
                     <div class="preset-chip insulin-preset-chip" id="basalPreset1" title="A">
                         <span class="pc-name"><span id="basalPreset1Dose">--</span> E</span><span class="pc-key">A</span>
@@ -400,14 +401,14 @@
                         <span id="longInsulinValue">10</span> E<span class="pc-key">F</span>
                     </button>
                 </div>
-                <div class="dp-basal-hint" id="basalHint" title="Basalinsulin dækker kroppens grundbehov. Brug 100-reglen: TDD = 100/ISF, basal = 45% af TDD">
-                    Anbefalet: <strong id="basalRecommendedDose">--</strong> E/dag
-                </div>
+            </div>
+            <div class="dp-basal-hint" id="basalHint" title="Basalinsulin dækker kroppens grundbehov. Brug 100-reglen: TDD = 100/ISF, basal = 45% af TDD">
+                Anbefalet: <strong id="basalRecommendedDose">--</strong> E/dag
             </div>
             <div class="dp-divider"></div>
-            <!-- HURTIG INSULIN — nederst (tættest på cursor) -->
-            <div class="dp-section dp-insulin-fast">
-                <label class="dp-section-label"><span class="insulin-icon-teal">💉</span> Hurtig</label>
+            <!-- HURTIG INSULIN — nederste række -->
+            <label class="dp-section-label"><span class="insulin-icon-teal">💉</span> Hurtig</label>
+            <div class="dp-section dp-insulin-fast dp-insulin-row">
                 <div class="dp-insulin-presets">
                     <div class="preset-chip insulin-preset-chip insulin-preset-fast" id="fastPreset1" title="Z">
                         <span class="pc-name">1 E</span><span class="pc-key">Z</span>

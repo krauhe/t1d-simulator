@@ -839,7 +839,10 @@ function showGameOverPopup(cause, details, points) {
     const content = document.createElement('div');
     content.className = 'popup-content game-over-popup';
 
-    // Byg indhold
+    // Hent dag-nummer fra simulatoren
+    const dayReached = game ? game.day : 1;
+
+    // Byg indhold — nu med navnefelt til highscore
     content.innerHTML = `
         <h2 class="go-title">Game Over</h2>
         <div class="go-cause">${cause}</div>
@@ -849,6 +852,20 @@ function showGameOverPopup(cause, details, points) {
             <div class="go-star">&#x2B50;</div>
             <div class="go-points-num">${points.toFixed(1)}</div>
             <div class="go-points-label">Normoglykæmi-points</div>
+        </div>
+
+        <div class="go-highscore-entry">
+            <label for="goPlayerName" style="font-size:0.85em; color:var(--text-muted);">Gem din score:</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" id="goPlayerName" placeholder="Dit navn" maxlength="20"
+                    style="flex:1; padding:6px 10px; border-radius:var(--radius-sm);
+                    border:1px solid var(--border); background:var(--bg-input,#1a1a2e);
+                    color:var(--text-primary); font-size:0.95em;">
+                <button id="goSaveScoreBtn" style="padding:6px 14px; border-radius:var(--radius-sm);
+                    background:var(--accent-gold,#f59e0b); color:#000; border:none; cursor:pointer;
+                    font-weight:600; white-space:nowrap;">Gem</button>
+            </div>
+            <div id="goSaveResult" style="font-size:0.8em; color:var(--accent-gold,#f59e0b); margin-top:4px;"></div>
         </div>
 
         <div class="go-section">
@@ -869,10 +886,146 @@ function showGameOverPopup(cause, details, points) {
     overlay.appendChild(content);
     document.body.appendChild(overlay);
 
+    // Gem score-knap
+    const saveBtn = document.getElementById('goSaveScoreBtn');
+    const nameInput = document.getElementById('goPlayerName');
+    const resultDiv = document.getElementById('goSaveResult');
+
+    // Sæt fokus på navnefeltet
+    setTimeout(() => nameInput.focus(), 100);
+
+    // Enter-tast i navnefeltet gemmer scoren
+    nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveBtn.click();
+    });
+
+    saveBtn.addEventListener('click', () => {
+        const rank = saveHighscore(nameInput.value, points, dayReached, cause);
+        if (rank > 0) {
+            resultDiv.textContent = `Gemt! Du er nr. ${rank} på highscore-listen.`;
+        } else {
+            resultDiv.textContent = 'Gemt!';
+        }
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Gemt';
+        nameInput.disabled = true;
+
+        // Pop-lyd
+        playSound('menuOpen');
+
+        // Zoom-ud animation på highscore-entry og ryk indhold op
+        const entryDiv = document.querySelector('.go-highscore-entry');
+        if (entryDiv) {
+            entryDiv.classList.add('go-hs-saved');
+        }
+        // Scroll popup op mod toppen så resultatet er synligt
+        content.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
     document.getElementById('gameOverResetBtn').addEventListener('click', () => {
         document.body.removeChild(overlay);
         resetGame();
     });
+}
+
+
+// =============================================================================
+// HIGHSCORE POPUP — Vis lokal highscore-liste
+// =============================================================================
+//
+// Viser en tabel med top 10 scores fra localStorage.
+// Pauser spillet mens popup er åben (som hjælp-popup).
+// Åbnes via Highscore-knappen i top-bar.
+// =============================================================================
+function showHighscorePopup() {
+    if (document.querySelector('.popup-overlay')) return; // Kun én popup ad gangen
+    if (game && !isPaused) togglePause();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'popup-overlay';
+    const content = document.createElement('div');
+    content.className = 'popup-content help-popup';
+
+    const scores = loadHighscores();
+
+    // Medal-ikoner for top 3 i stedet for tal
+    const rankDisplay = (i) => {
+        if (i === 0) return '\u{1F947}';  // 🥇
+        if (i === 1) return '\u{1F948}';  // 🥈
+        if (i === 2) return '\u{1F949}';  // 🥉
+        return (i + 1).toString();
+    };
+
+    let tableHTML = '';
+    if (scores.length === 0) {
+        tableHTML = '<p style="text-align:center; color:var(--text-muted);">Ingen scores endnu. Spil et spil!</p>';
+    } else {
+        tableHTML = `
+        <table class="highscore-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Navn</th>
+                    <th>Points</th>
+                    <th>Dag</th>
+                    <th>Game Over</th>
+                    <th>Dato</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${scores.map((s, i) => `
+                <tr${i === 0 ? ' class="hs-gold"' : i === 1 ? ' class="hs-silver"' : i === 2 ? ' class="hs-bronze"' : ''}>
+                    <td>${rankDisplay(i)}</td>
+                    <td>${escapeHtml(s.name)}</td>
+                    <td>${s.points.toFixed(1)}</td>
+                    <td>${s.day}</td>
+                    <td style="font-size:0.8em;">${escapeHtml(s.cause || '')}</td>
+                    <td style="font-size:0.8em; color:var(--text-muted);">${s.date || ''}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
+    }
+
+    content.innerHTML = `
+        <div class="hs-header">
+            <span class="hs-trophy">\u{1F3C6}</span>
+            <h2>Highscores</h2>
+        </div>
+        ${tableHTML}
+        <div class="popup-button-container" style="margin-top:18px;">
+            <button id="hs-close-btn">Luk</button>
+        </div>
+        ${scores.length > 0 ? '<div style="text-align:center; margin-top:12px;"><a href="#" id="hs-clear-btn" style="font-size:0.75em; color:var(--text-muted); text-decoration:underline; cursor:pointer;">Slet alle scores</a></div>' : ''}
+    `;
+
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+
+    document.getElementById('hs-close-btn').addEventListener('click', () => {
+        document.body.removeChild(overlay);
+        if (game && isPaused && !game.isGameOver) togglePause();
+    });
+
+    const clearBtn = document.getElementById('hs-clear-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Slet alle highscores?')) {
+                try { localStorage.removeItem(HIGHSCORE_KEY); } catch (e) {}
+                document.body.removeChild(overlay);
+                showHighscorePopup(); // Genåbn med tom liste
+            }
+        });
+    }
+}
+
+/**
+ * escapeHtml — Sikker HTML-escaping af brugerinput (navne i highscore-listen).
+ * Forhindrer XSS ved at erstatte <, >, &, " og ' med HTML-entiteter.
+ */
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
 }
 
 

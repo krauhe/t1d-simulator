@@ -18,9 +18,127 @@
 // Exports (global): isMuted, sounds, playSound()
 // =============================================================================
 
+// =============================================================================
+// SETTINGS — Persistente brugerindstillinger gemt i localStorage.
+//
+// Gemmes som JSON under nøglen 't1dSimSettings'. Indeholder:
+//   muted:      Lyd slået fra (boolean)
+//   debugOpen:  Debug-panel synligt (boolean)
+//   debugTrueBG: Vis sand BG-linje på grafen (boolean)
+//   debugLog:   CSV-logning aktiv (boolean)
+//   language:   Sprogkode — 'da' eller 'en' (forberedt til fremtidig brug)
+//
+// Profil (vægt/ISF/ICR) gemmes separat under 'diabetesDystenProfile' — se ui.js.
+// =============================================================================
+const SETTINGS_KEY = 't1dSimSettings';
+const DEFAULT_SETTINGS = {
+    muted: false,
+    debugOpen: true,       // DEV DEFAULT — sæt til false ved release
+    debugTrueBG: true,     // DEV DEFAULT — sæt til false ved release
+    debugLog: true,        // DEV DEFAULT — sæt til false ved release
+    language: 'da'
+};
+
+/**
+ * loadSettings — Hent gemte indstillinger fra localStorage.
+ * Returnerer et objekt med alle settings (manglende felter udfyldes med defaults).
+ */
+function loadSettings() {
+    try {
+        const stored = localStorage.getItem(SETTINGS_KEY);
+        if (stored) return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+    } catch (e) { /* localStorage utilgængeligt — brug defaults */ }
+    return { ...DEFAULT_SETTINGS };
+}
+
+/**
+ * saveSettings — Gem indstillinger til localStorage.
+ * @param {object} settings — Fuldt settings-objekt (alle felter)
+ */
+function saveSettings(settings) {
+    try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (e) { /* localStorage utilgængeligt */ }
+}
+
+// Indlæs gemte indstillinger ved opstart
+const appSettings = loadSettings();
+
+// =============================================================================
+// HIGHSCORE — Lokal highscore-liste gemt i localStorage.
+//
+// Gemmes som JSON-objekt under nøglen 't1dSimHighscores':
+//   { version: "X.Y", scores: [ { name, points, day, cause, date }, ... ] }
+//
+// Sorteret efter points (højeste først), max 10 indgange.
+//
+// VERSIONERING: Når HIGHSCORE_VERSION ændres (fx ved ændringer i scoring,
+// fysiologi eller game over-betingelser), slettes gamle scores automatisk.
+// Scores fra forskellige spilversioner er ikke sammenlignelige.
+// =============================================================================
+const HIGHSCORE_KEY = 't1dSimHighscores';
+const HIGHSCORE_VERSION = '0.1';  // Bump ved ændringer der påvirker scoring
+const MAX_HIGHSCORES = 10;
+
+/**
+ * loadHighscores — Hent highscore-listen fra localStorage.
+ * Returnerer et sorteret array (højeste score først).
+ * Returnerer tom liste hvis versionen ikke matcher (gamle scores slettes).
+ */
+function loadHighscores() {
+    try {
+        const stored = localStorage.getItem(HIGHSCORE_KEY);
+        if (stored) {
+            const data = JSON.parse(stored);
+            // Gammel format (bare et array) eller forkert version → slet
+            if (Array.isArray(data) || data.version !== HIGHSCORE_VERSION) {
+                localStorage.removeItem(HIGHSCORE_KEY);
+                return [];
+            }
+            if (Array.isArray(data.scores)) {
+                return data.scores.sort((a, b) => b.points - a.points);
+            }
+        }
+    } catch (e) { /* localStorage utilgængeligt */ }
+    return [];
+}
+
+/**
+ * saveHighscore — Gem en ny highscore-indgang.
+ * Tilføjer til listen, sorterer, og beholder kun top 10.
+ * @param {string} name   — Spillerens navn
+ * @param {number} points — Normoglykæmi-points
+ * @param {number} day    — Dag spilleren nåede til
+ * @param {string} cause  — Game over-årsag
+ * @returns {number} Placeringen (1-indexed), eller -1 hvis ikke i top 10
+ */
+function saveHighscore(name, points, day, cause) {
+    const list = loadHighscores();
+    const entry = {
+        name: name.trim() || 'Anonym',
+        points: Math.round(points * 10) / 10,
+        day: day,
+        cause: cause,
+        date: new Date().toISOString().slice(0, 10)  // YYYY-MM-DD
+    };
+    list.push(entry);
+    list.sort((a, b) => b.points - a.points);
+    const trimmed = list.slice(0, MAX_HIGHSCORES);
+    try {
+        localStorage.setItem(HIGHSCORE_KEY, JSON.stringify({
+            version: HIGHSCORE_VERSION,
+            scores: trimmed
+        }));
+    } catch (e) { /* localStorage utilgængeligt */ }
+    // Returnér placering (1-indexed)
+    const rank = trimmed.findIndex(e => e === entry);
+    return rank >= 0 ? rank + 1 : -1;
+}
+
 // --- Sound State ---
 // Global flag to mute/unmute all sounds. Toggled by the mute button in the UI.
-let isMuted = false;
+// Initialiseret fra gemte indstillinger.
+let isMuted = appSettings.muted;
 
 // --- Tone.js Sound Setup ---
 // Each property is a different synthesizer for a different type of game event.

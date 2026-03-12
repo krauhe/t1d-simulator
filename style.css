@@ -284,7 +284,7 @@ body {
 
 /* Ingen hover-effekt på badges — de er kun informative, ikke interaktive */
 
-.badge-icon { font-size: 14px; }
+.badge-icon { font-size: 18px; }
 .badge-num { font-weight: var(--font-weight-value); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .badge-label { color: var(--text-muted); font-size: var(--font-ui); }
 .badge-weight { color: var(--text-muted); font-size: var(--font-ui-sm); margin-left: 2px; transition: color 0.3s; }
@@ -319,11 +319,12 @@ body {
     display: inline-block;
 }
 
-/* Points-badge: grøn farve for scoring, fast bredde */
+/* Points-badge: grøn farve for scoring, fast bredde, større font */
 .status-badge.points .badge-num {
     color: var(--green);
     min-width: 42px;
     text-align: right;
+    font-size: 1.5em;
     display: inline-block;
     font-variant-numeric: tabular-nums;
 }
@@ -337,9 +338,10 @@ body {
     background: var(--bg-card-glass);
     border: 1px solid rgba(52, 211, 153, 0.15);
     border-radius: var(--radius-lg);
-    padding: 8px 14px;
+    padding: 10px 18px;
     backdrop-filter: blur(24px);
     box-shadow: 0 0 15px rgba(52, 211, 153, 0.1), 0 0 30px rgba(0, 0, 0, 0.2);
+    gap: 6px;
 }
 
 /* Dag-badge: fast bredde */
@@ -1489,12 +1491,29 @@ body {
     gap: 6px;
 }
 /* (dp-shortcut-hint fjernet — genveje vises nu via title/mouseover) */
-/* --- Insulin presets: bruger preset-chip layout (emoji + name + key) som mad-panelet --- */
+/* --- Insulin panel: kompakt rækkede layout (label | presets | slider) --- */
+.dp-insulin-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.dp-row-label {
+    font-size: var(--font-ui);
+    font-weight: var(--font-weight-heading);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    min-width: 60px;
+}
 .dp-insulin-presets {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
     gap: 6px;
-    margin-bottom: 8px;
+    flex-shrink: 0;
 }
 .insulin-preset-chip {
     /* Arver .preset-chip styling — uden emoji, kun dosis-tekst */
@@ -2030,6 +2049,118 @@ body {
     margin-bottom: 3px !important;
 }
 
+/* Highscore-entry i game over popup */
+.go-highscore-entry {
+    margin: 12px 0 16px;
+    padding: 12px;
+    background: rgba(255, 200, 50, 0.04);
+    border: 1px solid rgba(255, 200, 50, 0.12);
+    border-radius: var(--radius-md);
+    text-align: left;
+    transition: all 0.5s var(--bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+/* Efter gem: zoom væk og kollapser */
+.go-highscore-entry.go-hs-saved {
+    transform: scale(0);
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+    height: 0;
+    overflow: hidden;
+    border: none;
+}
+
+/* =============================================================================
+   HIGHSCORE TABEL — Styling for highscore-popup
+   ============================================================================= */
+
+.highscore-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    font-variant-numeric: tabular-nums;
+}
+
+.highscore-table th {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 2px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.highscore-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Top 3 — guld, sølv, bronze med glow og animation */
+.highscore-table tr.hs-gold td {
+    color: #fbbf24;
+    font-weight: 700;
+}
+.highscore-table tr.hs-gold {
+    background: rgba(251, 191, 36, 0.08);
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+}
+.highscore-table tr.hs-silver td {
+    color: #c0c7d0;
+    font-weight: 600;
+}
+.highscore-table tr.hs-silver {
+    background: rgba(192, 199, 208, 0.05);
+    text-shadow: 0 0 6px rgba(192, 199, 208, 0.25);
+}
+.highscore-table tr.hs-bronze td {
+    color: #cd7f32;
+    font-weight: 600;
+}
+.highscore-table tr.hs-bronze {
+    background: rgba(205, 127, 50, 0.05);
+    text-shadow: 0 0 6px rgba(205, 127, 50, 0.25);
+}
+
+/* Rank-nummer for top 3: erstatter tal med medal-emoji via CSS + JS */
+.highscore-table tr.hs-gold td:first-child,
+.highscore-table tr.hs-silver td:first-child,
+.highscore-table tr.hs-bronze td:first-child {
+    font-size: 1.2em;
+}
+
+/* Highscore popup header — trofæ med glow */
+.hs-header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+.hs-trophy {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 4px;
+    animation: hs-trophy-glow 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.5));
+}
+@keyframes hs-trophy-glow {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.3)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.7)); transform: scale(1.05); }
+}
+.hs-header h2 {
+    margin: 0 !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 40%, #fcd34d 60%, #fbbf24 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: hs-title-shimmer 4s ease-in-out infinite;
+}
+@keyframes hs-title-shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
 
 /* =============================================================================
    PROFIL POPUP — Patient-profil opsætning
@@ -2386,7 +2517,24 @@ body {
 .activity-type-chip.selected {
     background: color-mix(in srgb, var(--chip-color, #10b981) 30%, transparent);
     border-color: color-mix(in srgb, var(--chip-color, #10b981) 50%, transparent);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--chip-color, #10b981) 25%, transparent);
+}
+/* Pulserende glow via pseudo-element — animationen kører uafbrudt på ::after,
+   uafhængigt af hvornår .selected tilføjes/fjernes. Alle chips pulser i takt. */
+.activity-type-chip::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    animation: chip-glow-cycle 1s ease-in-out infinite;
+}
+.activity-type-chip.selected::after {
+    opacity: 1;
+}
+@keyframes chip-glow-cycle {
+    0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--chip-color, #10b981) 20%, transparent); }
+    50% { box-shadow: 0 0 18px color-mix(in srgb, var(--chip-color, #10b981) 45%, transparent); }
 }
 /* Matcher preset-chip emoji/name-størrelse */
 .activity-type-chip .pc-emoji { font-size: 24px; display: block; }
@@ -2421,7 +2569,23 @@ body {
 .intensity-chip.selected {
     background: rgba(16, 185, 129, 0.3);
     border-color: rgba(52, 211, 153, 0.5);
-    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+/* Pulserende glow via ::after — kører altid i takt, synlig kun for .selected */
+.intensity-chip::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    animation: intensity-glow-cycle 1s ease-in-out infinite;
+}
+.intensity-chip.selected::after {
+    opacity: 1;
+}
+@keyframes intensity-glow-cycle {
+    0%, 100% { box-shadow: 0 0 8px rgba(16, 185, 129, 0.15); }
+    50% { box-shadow: 0 0 18px rgba(16, 185, 129, 0.4); }
 }
 .intensity-chip.selected .pc-name {
     color: var(--text-primary);
