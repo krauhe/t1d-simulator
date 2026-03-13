@@ -8,7 +8,9 @@ T1D Simulator is an educational game for newly diagnosed Type 1 Diabetes patient
 
 ## Try it
 
-Open `index.html` in a browser. No installation, no server, no build step required.
+**[Play online](https://krauhe.github.io/t1d-simulator/)** — no installation required.
+
+Or clone/download and open `index.html` in a browser. No server, no build step needed.
 
 ## What is simulated?
 
