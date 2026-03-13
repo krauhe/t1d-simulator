@@ -94,6 +94,12 @@ class HovorkaModel {
         this.k_a3 = 0.03;             // Deaktivering: EGP [1/min]
         this.k_b3 = this.S_IE * this.k_a3;  // Aktivering: EGP
 
+        // Basis k_b-værdier (uden dynamiske ISF-modifikatorer).
+        // Gemmes her så setISFModifier() kan skalere relativt til udgangspunktet.
+        this.base_k_b1 = this.k_b1;
+        this.base_k_b2 = this.k_b2;
+        this.base_k_b3 = this.k_b3;
+
         this.k_e = 0.138;             // Insulin-eliminationsrate fra plasma [1/min]
 
         // CGM-sensor forsinkelseskonstant
@@ -234,6 +240,27 @@ class HovorkaModel {
         return (this.state[0] + this.state[1]) * 180 / 1000;  // D1+D2 i mmol → gram
     }
 
+
+    // =========================================================================
+    // setISFModifier — Dynamisk skalering af insulinfølsomhed
+    // =========================================================================
+    //
+    // Skalerer k_b1/k_b2/k_b3 med en modifier relativt til basisværdierne.
+    // Modifier = 1.0 → ingen ændring (basis insulinfølsomhed).
+    // Modifier < 1.0 → insulin virker dårligere (fx morgen, stress).
+    // Modifier > 1.0 → insulin virker bedre (fx aften, post-motion).
+    //
+    // Kaldes fra Simulator.update() hvert tick med den samlede ISF-modifier
+    // beregnet fra circadianISF, insulinResistanceFactor, post-motion boost
+    // og vasodilatation.
+    //
+    // @param {number} modifier - Samlet ISF-skaleringsfaktor (>0)
+    // =========================================================================
+    setISFModifier(modifier) {
+        this.k_b1 = this.base_k_b1 * modifier;
+        this.k_b2 = this.base_k_b2 * modifier;
+        this.k_b3 = this.base_k_b3 * modifier;
+    }
 
     // =========================================================================
     // step — Et enkelt simulationstrin (Euler-integration)
@@ -387,11 +414,14 @@ class HovorkaModel {
                     + this.k_12 * Q2 + U_G + EGP;
 
         // Perifær glukose (Q2): muskler og fedtvæv
-        //   + exerciseFactor * x1 * Q1: ind fra plasma (insulin-drevet)
-        //   - k_12 * Q2: tilbage til plasma
-        //   - x2 * Q2: forbrænding i musklerne
-        //   - beta * E1 / HRbase: direkte muskeloptag under motion (insulin-uafhængigt)
-        const dQ2 = exerciseFactor * x1 * Q1 - (this.k_12 + x2) * Q2
+        //   + exerciseFactor * x1 * Q1: ind fra plasma (insulin-drevet transport)
+        //   - k_12 * Q2: passiv diffusion tilbage til plasma (IKKE motionspåvirket)
+        //   - exerciseFactor * x2 * Q2: insulin-drevet forbrænding i muskler
+        //     (Resalat 2020: exerciseFactor = 1 + alpha*E2² forstærker BEGGE
+        //      insulin-medierede processer: transport x1*Q1 OG disposal x2*Q2)
+        //   - beta * E1 * HR_effect: direkte muskeloptag under motion (insulin-uafhængigt)
+        const dQ2 = exerciseFactor * x1 * Q1 - this.k_12 * Q2
+                    - exerciseFactor * x2 * Q2
                     - this.beta * E1 * HR_effect;
 
         // Plasma insulin: tilførsel fra depot, elimination fra kroppen

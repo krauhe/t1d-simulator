@@ -632,10 +632,12 @@ class Simulator {
             }
         }
 
-        // Final ISF = base ISF × cirkadisk faktor × resistensfaktor × vasodilatation / motionsboost
+        // Final ISF = base ISF × cirkadisk faktor × vasodilatation × motionsboost / resistensfaktor
         // circadianISF < 1.0 om morgenen → lavere ISF → insulin virker dårligere
         // circadianISF > 1.0 om aftenen → højere ISF → insulin virker bedre
-        return (this.ISF * this.circadianISF * this.insulinResistanceFactor * vasodilatationFaktor) / sensitivityIncreaseFactor;
+        // insulinResistanceFactor > 1.0 ved stress → divideres → lavere ISF → insulin virker dårligere
+        // sensitivityIncreaseFactor > 1.0 efter motion → ganges → højere ISF → insulin virker bedre
+        return (this.ISF * this.circadianISF * vasodilatationFaktor * sensitivityIncreaseFactor) / this.insulinResistanceFactor;
     }
 
     /**
@@ -1193,6 +1195,17 @@ class Simulator {
         // E1-skalering: aktivitetstype bestemmer hvor meget puls driver GLUT4-optag.
         // Cardio=1.0, Styrke=0.3, Blandet=0.65, Afslapning=0.0.
         this.hovorka.e1Scaling = currentE1Scaling;
+
+        // Dynamisk ISF-modifier → Hovorka k_b-skalering.
+        // Beregner den samlede ISF-modifier fra alle dynamiske faktorer
+        // (circadian, stress-resistens, post-motion boost, vasodilatation)
+        // og sender den til Hovorka-modellen så ODE'erne afspejler den aktuelle
+        // insulinfølsomhed — ikke kun display-værdien.
+        //
+        // NB: Vi bruger currentISF / this.ISF for at få den rene modifier
+        // uden basis-ISF (som allerede er indlejret i S_IT/S_ID/S_IE).
+        const isfModifier = this.currentISF / this.ISF;
+        this.hovorka.setISFModifier(isfModifier);
 
         // Kør Hovorka ODE'erne for dette tidsstep
         // Ved store tidsstep (høj simuleringshastighed) subdeler vi for stabilitet.
