@@ -10,8 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
     <!-- Tone.js: Web Audio framework for lydeffekter (CDN, pinned version) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
-    <!-- html2canvas: Screenshot af DOM-elementer (CDN, pinned version) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -703,9 +701,6 @@
             </div>
         </div><!-- /bottom-bar -->
 
-        <!-- Skjult glucagon-knap: den rigtige knap der håndterer cooldown-logik.
-             SOS dock-item'et trigger denne via JavaScript. -->
-        <button id="glucagonButton" style="display:none;"></button>
     </div>
 
     <!-- ===================================================================
@@ -771,7 +766,7 @@
           <ul>
             <li><strong>Space</strong> — Pause / Fortsæt</li>
             <li><strong>Z</strong> — Insulin &nbsp; <strong>X</strong> — Mad &nbsp; <strong>C</strong> — Motion</li>
-            <li><strong>V</strong> — Målinger &nbsp; <strong>B</strong> — Glucagon (nødhjælp)</li>
+            <li><strong>V</strong> — Målinger / Nødkit</li>
             <li>Når et panel er åbent: brug <strong>Z-V</strong> og <strong>A-G</strong> som koordinatsystem for genveje</li>
           </ul>
         </details>
@@ -915,7 +910,7 @@
           <ul>
             <li><strong>Space</strong> — Pause / Resume</li>
             <li><strong>Z</strong> — Insulin &nbsp; <strong>X</strong> — Food &nbsp; <strong>C</strong> — Activity</li>
-            <li><strong>V</strong> — Measurements &nbsp; <strong>B</strong> — Glucagon (emergency)</li>
+            <li><strong>V</strong> — Measurements / Emergency kit</li>
             <li>When a panel is open: use <strong>Z-V</strong> and <strong>A-G</strong> as a coordinate system for shortcuts</li>
           </ul>
         </details>

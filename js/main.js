@@ -28,11 +28,11 @@
 let startButton, helpButton, highscoreButton, pauseButton, profileButton, speedSelector, dayDisplay,
     timeDisplay, cgmValueDisplayGraph, normoPointsDisplay, normoPointsWeighting,
     muteButton, carbsSlider, carbsValue, proteinSlider, proteinValue, fatSlider,
-    fatValue, giveFoodButton, foodInfoDisplay, foodKcalDisplay, foodKeDisplay,
+    fatValue, foodKcalDisplay, foodKeDisplay,
     dextroButton, burgerButton, avocadoButton, chickenButton, cakeButton,
     sodaButton, saladButton, cerealButton, fastInsulinSlider, fastInsulinValue,
     giveFastInsulinButton, longInsulinSlider, longInsulinValue, giveLongInsulinButton,
-    motionIntensitySelect, motionDurationSelect, startMotionButton, motionKcalDisplay,
+    motionIntensitySelect, startMotionButton, motionKcalDisplay,
     fingerprickButton, ketoneTestButton, debugTrueBgCheckbox,
     iobDisplay, cobDisplay, bgGraphCanvas, graphCtx,
     weightChangeValue, steepDropWarningDiv, weightDisplay, icrDisplay, isfDisplay,
@@ -320,8 +320,6 @@ const MAX_GRAPH_POINTS_PER_DAY = 288;
 
 // Kaloriekonstanter
 const KCAL_PER_KG_WEIGHT = 7700;  // kcal pr. kg kropsvægt-ændring
-const RESTING_KCAL_PER_DAY = 2200;
-const RESTING_KCAL_PER_MINUTE = RESTING_KCAL_PER_DAY / (24 * 60);
 
 
 // =============================================================================
@@ -755,8 +753,6 @@ function initializeApp() {
     proteinValue = document.getElementById('proteinValue');
     fatSlider = document.getElementById('fatSlider');
     fatValue = document.getElementById('fatValue');
-    giveFoodButton = document.getElementById('giveFoodButton');
-    foodInfoDisplay = document.getElementById('foodInfoDisplay');
     foodKcalDisplay = document.getElementById('foodKcalDisplay');
     foodKeDisplay = document.getElementById('foodKeDisplay');
     dextroButton = document.getElementById('dextroButton');
@@ -778,7 +774,6 @@ function initializeApp() {
     motionKcalDisplay = document.getElementById('motionKcalDisplay');
     fingerprickButton = document.getElementById('fingerprickButton');
     ketoneTestButton = document.getElementById('ketoneTestButton');
-    // glucagonButton fjernet — glukagon er nu i kit-panelet (kitGlucagonButton)
     debugTrueBgCheckbox = document.getElementById('debugTrueBgCheckbox');
     iobDisplay = document.getElementById('iobDisplay');
     cobDisplay = document.getElementById('cobDisplay');
@@ -1256,16 +1251,6 @@ function initializeApp() {
         toggle.addEventListener('click', () => {
             const section = toggle.closest('.stats-section');
             if (section) section.classList.toggle('collapsed');
-        });
-    });
-
-    // =========================================================================
-    // SETTINGS TOOLS — Debug, fysiologi, hjælp, lyd (i bottom-bar th)
-    // =========================================================================
-    document.querySelectorAll('.settings-item[data-panel]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleDockPanel(btn.dataset.panel);
         });
     });
 

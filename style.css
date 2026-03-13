@@ -491,7 +491,7 @@ body {
 .speed-state-icon {
     font-size: 8px;
     letter-spacing: -2px;
-    color: var(--accent);
+    color: var(--blue);
     display: inline-block;
     width: 26px;
     text-align: left;
@@ -557,11 +557,6 @@ body {
     cursor: not-allowed;
     transform: none;
 }
-
-.icon-btn {
-    padding: 6px 10px;
-}
-
 
 /* =============================================================================
    MAIN AREA — To-kolonne layout med graf og stats sidebar
@@ -922,19 +917,6 @@ body {
     margin: 10px 0;
 }
 
-/* TIR stacked bar: visuelt overblik over tidfordeling */
-.tir-bar-container {
-    margin: 8px 0;
-}
-
-.tir-bar {
-    height: 14px;
-    border-radius: 7px;
-    display: flex;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.04);
-}
-
 /* Stats-tabel: 4-kolonne grid (label | 1d | 7d | unit) */
 .stats-table {
     display: grid;
@@ -1052,29 +1034,6 @@ body {
     color: var(--text-primary);
     margin-bottom: 6px;
 }
-
-#weightChangeSlider {
-    width: 100%;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.06);
-    outline: none;
-    border-radius: 4px;
-}
-
-#weightChangeSlider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: var(--thumb-color, var(--green));
-    cursor: default;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
-}
-
 
 /* =============================================================================
    DOCK CONTAINER — macOS Dock-inspireret bar i bunden
@@ -1283,16 +1242,7 @@ body {
     z-index: 2;
 }
 
-/* Debug: grå/neutral */
-.dock-item.d-debug .dock-icon {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-    border-color: rgba(255, 255, 255, 0.08);
-}
-.dock-item.d-debug:hover .dock-icon {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.06));
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.08);
-}
+
 
 
 /* =============================================================================
@@ -1348,20 +1298,6 @@ body {
 }
 
 /* (dock-panel-wide fjernet — mad-panelet bruger nu standard bredde med 5-kolonne grid) */
-
-/* Panel-header */
-.dock-panel h4 {
-    font-size: var(--font-ui-lg);
-    font-weight: var(--font-weight-label);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-primary);
-}
-
-.dp-icon { font-size: 20px; }
-.dp-title { color: var(--text-primary); }
 
 /* Panel-rækker (label + slider/select + value) */
 .dp-row {
@@ -1497,18 +1433,6 @@ body {
     gap: 8px;
     flex-wrap: wrap;
 }
-.dp-row-label {
-    font-size: var(--font-ui);
-    font-weight: var(--font-weight-heading);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    min-width: 60px;
-}
 .dp-insulin-presets {
     display: flex;
     gap: 6px;
@@ -1637,13 +1561,6 @@ body {
 #customCarbsSlider { accent-color: #60a5fa; }   /* Kulhydrat: blå */
 #customProteinSlider { accent-color: #a78bfa; }  /* Protein: lilla */
 #customFatSlider { accent-color: #fbbf24; }      /* Fedt: gul */
-
-/* --- Målinger panel grid --- */
-.dp-measure-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
 
 /* --- Debug panel: vises under corner-tools i top-right --- */
 /* Debug-sidebar: flow-element i main-area, til højre for stats-panel.
@@ -1974,23 +1891,8 @@ body {
 
 .go-star {
     font-size: 40px;
-    animation: go-star-pulse 2s ease-in-out infinite, go-star-spin 6s linear infinite;
-    filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.6));
-}
-
-@keyframes go-star-pulse {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.4)); }
-    50% { transform: scale(1.15); filter: drop-shadow(0 0 24px rgba(255, 200, 50, 0.8)); }
-}
-
-@keyframes go-star-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Kombiner pulse + spin korrekt */
-.go-star {
     animation: go-star-combo 6s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.6));
 }
 
 @keyframes go-star-combo {
@@ -2082,7 +1984,7 @@ body {
 .highscore-table th {
     text-align: left;
     padding: 6px 8px;
-    border-bottom: 2px solid var(--border);
+    border-bottom: 2px solid var(--border-medium);
     color: var(--text-muted);
     font-size: 0.8em;
     text-transform: uppercase;
@@ -2801,66 +2703,10 @@ body {
 }
 
 /* --- Corner tools (debug + fysiologi) — nu i top-bar højre side --- */
-.corner-tool-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s var(--bounce);
-    opacity: 0.6;
-}
-.corner-tool-btn:hover {
-    opacity: 1;
-    transform: scale(1.1);
-    background: var(--bg-hover);
-    border-color: var(--border-medium);
-}
-
-/* --- #15: Sammenklappelige stats-sektioner --- */
-.stats-collapse-toggle {
-    cursor: pointer;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.stats-collapse-toggle:hover {
-    color: var(--text-secondary) !important;
-}
-.collapse-arrow {
-    font-size: var(--font-ui-sm);
-    transition: transform 0.2s;
-}
-.stats-section.collapsible .stats-collapse-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s var(--smooth);
-}
-.stats-section.collapsible:not(.collapsed) .stats-collapse-content {
-    max-height: 300px;
-}
-.stats-section.collapsible:not(.collapsed) .collapse-arrow {
-    transform: rotate(90deg);
-}
-
 /* --- #17: Badge-numre mere synlige --- */
 .badge-num {
     font-weight: var(--font-weight-value);
     color: #e8f0f8;
-}
-
-/* --- Points max-dag display (ved siden af score) --- */
-.points-best {
-    font-size: var(--font-ui-sm);
-    color: var(--yellow);
-    margin-left: 4px;
-    opacity: 0.8;
 }
 
 /* --- Flyvende ikon-animation: fra panel til graf ved handling --- */

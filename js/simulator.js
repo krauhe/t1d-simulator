@@ -876,7 +876,6 @@ class Simulator {
 
         // Calculate how many simulated minutes this tick represents
         const simulatedMinutesPassed = deltaTimeSeconds * this.simulationSpeed / 60;
-        this.lastSimulatedMinutesPassed = simulatedMinutesPassed; // Gemmes til checkGameOverConditions
         this.totalSimMinutes += simulatedMinutesPassed;
         this.timeInMinutes = this.totalSimMinutes % (24 * 60); // Wrap at midnight
         this.day = Math.floor(this.totalSimMinutes / (24*60)) + 1;
@@ -925,7 +924,7 @@ class Simulator {
             const tailOffDuration = ins.totalDuration - endOfPlateau;
             if (timeSinceInjection < timeToPlateau) effectFactor = timeSinceInjection / timeToPlateau;
             else if (timeSinceInjection < endOfPlateau) effectFactor = 1.0;
-            else if (timeSinceInjection < ins.totalDuration) effectFactor = 1.0 - (timeSinceInjection - endOfPlateau) / tailOffDuration;
+            else if (timeSinceInjection < ins.totalDuration && tailOffDuration > 0) effectFactor = 1.0 - (timeSinceInjection - endOfPlateau) / tailOffDuration;
             // Bioavailability: kun en del af dosen når blodbanen (resten nedbrydes lokalt).
             // Ældre injektioner (før denne feature) har ingen bioavailability → default 1.0.
             const ba = ins.bioavailability || 1.0;
@@ -1535,7 +1534,7 @@ class Simulator {
         const foodKcal = (carbs * 4) + (protein * 4) + (fat * 9); // Standard calorie calculation
         this.totalKcalConsumed += foodKcal;
         logEvent(t('log.food', {carbs, protein, fat}), 'food', {kcal: foodKcal, carbs, protein, icon});
-        this.activeFood.push({ carbs, protein, fat, startTime: this.totalSimMinutes, carbsAbsorbed: 0 });
+        this.activeFood.push({ carbs, protein, fat, startTime: this.totalSimMinutes });
         // Fedt og protein tilføjes direkte til mave-kompartmenterne (blandes med eksisterende indhold)
         this.fatStomach += fat;
         this.proteinStomach += protein;
@@ -1591,14 +1590,8 @@ class Simulator {
         const tauFactor = Math.max(0.50, Math.min(1.60,
             this.gaussRand(1.0, 0.25)));                                    // mean 1.0, CV 25%
 
-        // Onset og varighed (metadata til UI, ikke brugt af Hovorka-ODE)
-        const onset = 10 + Math.random() * 5;                              // 10-15 min
-        const timeToPeak = 45 + (dose * 5) + (Math.random() * 20);         // Scales with dose
-        const totalDuration = 120 + (dose * 12) + (Math.random() * 60);    // Scales with dose
-
         this.activeFastInsulin.push({
             dose, injectionTime: this.totalSimMinutes,
-            onset, timeToPeak, totalDuration,
             bioavailability, tauFactor
         });
         this.lastInsulinTime = this.totalSimMinutes;
@@ -1737,6 +1730,10 @@ class Simulator {
         // Clamp to zero to prevent floating-point drift below zero
         this.acuteStressLevel = Math.max(0, this.acuteStressLevel);
         this.chronicStressLevel = Math.max(0, this.chronicStressLevel);
+
+        // Opdatér insulinresistens fra kronisk stress (fx søvnmangel).
+        // chronicStressLevel ~0.5 → 25% øget insulinresistens.
+        this.insulinResistanceFactor = 1.0 + this.chronicStressLevel * 0.5;
     }
 
     // =========================================================================
@@ -1911,9 +1908,9 @@ class Simulator {
      *
      * Examples: high-intensity exercise, emotional shock, adrenaline rush.
      * An amount of 0.5 represents a moderate stress reaction.
-     * Capped at 2.0 to prevent runaway liver glucose production.
+     * Capped at 0.4 to prevent runaway liver glucose production.
      *
-     * @param {number} amount - Stress increment (0.0-2.0 scale)
+     * @param {number} amount - Stress increment (0.0-0.4 scale)
      */
     addAcuteStress(amount) {
         this.acuteStressLevel = Math.min(0.4, this.acuteStressLevel + amount);
@@ -2289,7 +2286,6 @@ class Simulator {
         const cooldownMinutes = 24 * 60;
         const timeSinceUsed = this.totalSimMinutes - this.glucagonUsedTime;
         const onCooldown = timeSinceUsed < cooldownMinutes;
-        this.glucagonOnCooldown = onCooldown;
         // Glukagon-knappen er nu i kit-panelet (kitGlucagonButton)
         const btn = document.getElementById('kitGlucagonButton');
         if (btn) {
