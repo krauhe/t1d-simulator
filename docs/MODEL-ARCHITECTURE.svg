@@ -1,0 +1,268 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 920" style="font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#fff">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L9,5L0,9" fill="#666"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L9,5L0,9" fill="#1976D2"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L9,5L0,9" fill="#388E3C"/></marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L9,5L0,9" fill="#E65100"/></marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L9,5L0,9" fill="#C62828"/></marker>
+    <marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L9,5L0,9" fill="#6A1B9A"/></marker>
+  </defs>
+
+  <!-- ══════════ TITLE ══════════ -->
+  <text x="460" y="24" text-anchor="middle" font-size="17" font-weight="700" fill="#263238">T1D SIMULATOR — MODEL ARCHITECTURE</text>
+  <text x="460" y="44" text-anchor="middle" font-size="11" fill="#78909C">Hovorka 2004 Core (13 State Variables) + Simulator Extensions</text>
+
+  <!-- ══════════ PLAYER ACTIONS ══════════ -->
+  <rect x="80" y="58" width="760" height="40" rx="8" fill="#FFF8E1" stroke="#F9A825" stroke-width="1.5"/>
+  <text x="460" y="72" text-anchor="middle" font-size="9.5" fill="#F57F17" font-weight="700" letter-spacing="2">PLAYER ACTIONS</text>
+  <line x1="333" y1="76" x2="333" y2="95" stroke="#EEE0B0" stroke-width="1"/>
+  <line x1="587" y1="76" x2="587" y2="95" stroke="#EEE0B0" stroke-width="1"/>
+  <text x="206" y="92" text-anchor="middle" font-size="12" fill="#5D4037">Food (C / F / P grams)</text>
+  <text x="460" y="92" text-anchor="middle" font-size="12" fill="#5D4037">Insulin (bolus / basal)</text>
+  <text x="714" y="92" text-anchor="middle" font-size="12" fill="#5D4037">Activity (type / HR)</text>
+
+  <!-- Lines from actions to subsystems -->
+  <line x1="206" y1="98" x2="155" y2="130" stroke="#BDBDBD" stroke-width="1.2" marker-end="url(#a)"/>
+  <line x1="460" y1="98" x2="460" y2="130" stroke="#BDBDBD" stroke-width="1.2" marker-end="url(#a)"/>
+  <line x1="714" y1="98" x2="760" y2="130" stroke="#BDBDBD" stroke-width="1.2" marker-end="url(#a)"/>
+
+  <!-- ══════════ GUT ABSORPTION ══════════ -->
+  <g transform="translate(25,132)">
+    <rect width="270" height="115" rx="8" fill="#E8F5E9" stroke="#388E3C" stroke-width="1.5"/>
+    <text x="135" y="17" text-anchor="middle" font-size="9.5" fill="#2E7D32" font-weight="700" letter-spacing="1.5">GUT ABSORPTION</text>
+    <!-- D1 -->
+    <rect x="18" y="28" width="80" height="30" rx="6" fill="#fff" stroke="#66BB6A" stroke-width="1.2"/>
+    <text x="58" y="47" text-anchor="middle" font-size="13" font-weight="700" fill="#2E7D32">D1</text>
+    <text x="120" y="39" font-size="10" fill="#558B2F">Stomach</text>
+    <text x="120" y="52" font-size="9" fill="#7CB342">carb pool 1</text>
+    <!-- Arrow D1→D2 -->
+    <line x1="58" y1="58" x2="58" y2="72" stroke="#388E3C" stroke-width="1.2" marker-end="url(#ag)"/>
+    <text x="80" y="69" font-size="9" fill="#7CB342" font-style="italic">1/τ_G</text>
+    <!-- D2 -->
+    <rect x="18" y="74" width="80" height="30" rx="6" fill="#fff" stroke="#66BB6A" stroke-width="1.2"/>
+    <text x="58" y="93" text-anchor="middle" font-size="13" font-weight="700" fill="#2E7D32">D2</text>
+    <text x="120" y="85" font-size="10" fill="#558B2F">Small intestine</text>
+    <text x="120" y="98" font-size="9" fill="#7CB342">τ_G=40min, A_G=0.8</text>
+  </g>
+
+  <!-- ══════════ SUBCUTANEOUS INSULIN ══════════ -->
+  <g transform="translate(325,132)">
+    <rect width="270" height="115" rx="8" fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
+    <text x="135" y="17" text-anchor="middle" font-size="9.5" fill="#1565C0" font-weight="700" letter-spacing="1.5">SUBCUTANEOUS INSULIN</text>
+    <!-- S1 -->
+    <rect x="18" y="28" width="80" height="30" rx="6" fill="#fff" stroke="#64B5F6" stroke-width="1.2"/>
+    <text x="58" y="47" text-anchor="middle" font-size="13" font-weight="700" fill="#1565C0">S1</text>
+    <text x="120" y="39" font-size="10" fill="#1976D2">SC depot 1</text>
+    <text x="120" y="52" font-size="9" fill="#42A5F5">injection site</text>
+    <!-- Arrow S1→S2 -->
+    <line x1="58" y1="58" x2="58" y2="72" stroke="#1976D2" stroke-width="1.2" marker-end="url(#ab)"/>
+    <text x="80" y="69" font-size="9" fill="#42A5F5" font-style="italic">1/τ_I</text>
+    <!-- S2 -->
+    <rect x="18" y="74" width="80" height="30" rx="6" fill="#fff" stroke="#64B5F6" stroke-width="1.2"/>
+    <text x="58" y="93" text-anchor="middle" font-size="13" font-weight="700" fill="#1565C0">S2</text>
+    <text x="120" y="85" font-size="10" fill="#1976D2">SC depot 2</text>
+    <text x="120" y="98" font-size="9" fill="#42A5F5">τ_I=55min × pulseFactor</text>
+  </g>
+
+  <!-- ══════════ EXERCISE EFFECTS ══════════ -->
+  <g transform="translate(625,132)">
+    <rect width="270" height="115" rx="8" fill="#FFF3E0" stroke="#F57C00" stroke-width="1.5"/>
+    <text x="135" y="17" text-anchor="middle" font-size="9.5" fill="#E65100" font-weight="700" letter-spacing="1.5">EXERCISE EFFECTS</text>
+    <!-- E1 -->
+    <rect x="18" y="28" width="80" height="30" rx="6" fill="#fff" stroke="#FFB74D" stroke-width="1.2"/>
+    <text x="58" y="47" text-anchor="middle" font-size="13" font-weight="700" fill="#E65100">E1</text>
+    <text x="120" y="39" font-size="10" fill="#EF6C00">GLUT4 uptake</text>
+    <text x="120" y="52" font-size="9" fill="#FB8C00">τ = 20 min (fast)</text>
+    <!-- E2 -->
+    <rect x="18" y="74" width="80" height="30" rx="6" fill="#fff" stroke="#FFB74D" stroke-width="1.2"/>
+    <text x="58" y="93" text-anchor="middle" font-size="13" font-weight="700" fill="#E65100">E2</text>
+    <text x="120" y="85" font-size="10" fill="#EF6C00">ISF boost</text>
+    <text x="120" y="98" font-size="9" fill="#FB8C00">τ = 200 min (slow)</text>
+    <!-- Note: no arrow between E1/E2 — they are independent -->
+    <text x="135" y="64" text-anchor="middle" font-size="8.5" fill="#BF360C">driven by heart rate</text>
+  </g>
+
+  <!-- ══════════ ARROWS TO Q1 ══════════ -->
+  <!-- U_G from GUT -->
+  <line x1="160" y1="247" x2="160" y2="278" stroke="#388E3C" stroke-width="1.8" marker-end="url(#ag)"/>
+  <text x="130" y="268" font-size="10" fill="#388E3C" font-weight="600" font-style="italic">U_G</text>
+  <!-- U_I from SUBCUT -->
+  <line x1="460" y1="247" x2="460" y2="278" stroke="#1976D2" stroke-width="1.8" marker-end="url(#ab)"/>
+  <text x="430" y="268" font-size="10" fill="#1976D2" font-weight="600" font-style="italic">U_I</text>
+  <!-- From EXERCISE -->
+  <line x1="730" y1="247" x2="730" y2="278" stroke="#F57C00" stroke-width="1.8" marker-end="url(#ao)"/>
+  <text x="742" y="262" font-size="9" fill="#E65100" font-weight="600">β·E1·HR</text>
+  <line x1="820" y1="247" x2="820" y2="278" stroke="#F57C00" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ao)"/>
+  <text x="832" y="262" font-size="9" fill="#E65100" font-weight="600">exFactor</text>
+  <text x="832" y="274" font-size="8" fill="#FB8C00">1+α·E2²</text>
+
+  <!-- ══════════ Q1 — PLASMA GLUCOSE ══════════ -->
+  <g transform="translate(25,280)">
+    <rect width="870" height="108" rx="10" fill="#FFEBEE" stroke="#E53935" stroke-width="1.8"/>
+    <rect x="15" y="10" width="80" height="34" rx="7" fill="#fff" stroke="#EF5350" stroke-width="1.5"/>
+    <text x="55" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#C62828">Q1</text>
+    <text x="115" y="24" font-size="13" font-weight="600" fill="#B71C1C">PLASMA GLUCOSE</text>
+    <text x="115" y="40" font-size="11" fill="#C62828">BG = Q1 / V_G (mmol/L)</text>
+
+    <!-- Sources -->
+    <text x="480" y="18" font-size="10" fill="#2E7D32" font-weight="600">Sources (+):</text>
+    <text x="480" y="32" font-size="10" fill="#555">U_G — food absorption from gut</text>
+    <text x="480" y="45" font-size="10" fill="#555">EGP — liver glucose production</text>
+    <text x="480" y="58" font-size="10" fill="#555">k₁₂·Q2 — return from peripheral tissue</text>
+
+    <!-- Drains -->
+    <text x="480" y="75" font-size="10" fill="#C62828" font-weight="600">Drains (−):</text>
+    <text x="480" y="89" font-size="10" fill="#555">F₀₁c — brain consumption (~5.5 g/hr)</text>
+    <text x="480" y="102" font-size="10" fill="#555">F_R — renal clearance (BG &gt; 9 mmol/L)</text>
+
+    <!-- Transport drain shown as arrow to Q2 -->
+    <text x="25" y="70" font-size="10" fill="#C62828" font-weight="600">Transport (→Q2):</text>
+    <text x="25" y="84" font-size="10" fill="#555">x1·Q1·exerciseFactor</text>
+    <text x="25" y="97" font-size="9" fill="#888">(insulin-driven, enhanced by exercise)</text>
+  </g>
+
+  <!-- ══════════ ARROWS Q1 ↔ Q2 ══════════ -->
+  <!-- Q1 → Q2 (left side) -->
+  <line x1="180" y1="388" x2="180" y2="420" stroke="#C62828" stroke-width="1.8" marker-end="url(#ar)"/>
+  <text x="110" y="410" font-size="9.5" fill="#C62828" font-weight="600" font-style="italic">x1·Q1·exF</text>
+  <!-- Q2 → Q1 (right side, return) -->
+  <line x1="350" y1="420" x2="350" y2="388" stroke="#C62828" stroke-width="1.2" marker-end="url(#ar)"/>
+  <text x="362" y="410" font-size="9.5" fill="#C62828" font-weight="600" font-style="italic">k₁₂·Q2</text>
+
+  <!-- ══════════ Q2 — PERIPHERAL GLUCOSE ══════════ -->
+  <g transform="translate(25,422)">
+    <rect width="870" height="78" rx="10" fill="#FFEBEE" stroke="#E53935" stroke-width="1.8"/>
+    <rect x="15" y="10" width="80" height="34" rx="7" fill="#fff" stroke="#EF5350" stroke-width="1.5"/>
+    <text x="55" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#C62828">Q2</text>
+    <text x="115" y="24" font-size="13" font-weight="600" fill="#B71C1C">PERIPHERAL GLUCOSE</text>
+    <text x="115" y="40" font-size="11" fill="#C62828">Muscles &amp; adipose tissue</text>
+
+    <text x="480" y="24" font-size="10" fill="#555">− exerciseFactor · x2 · Q2</text>
+    <text x="640" y="24" font-size="9.5" fill="#888">(insulin-driven disposal)</text>
+    <text x="480" y="42" font-size="10" fill="#555">− β · E1 · HR_effect</text>
+    <text x="640" y="42" font-size="9.5" fill="#888">(GLUT4 direct muscle uptake)</text>
+
+    <!-- exFactor and E1 annotations -->
+    <text x="480" y="62" font-size="9" fill="#E65100">exerciseFactor = 1 + α·E2²  (Resalat 2020)</text>
+    <text x="480" y="73" font-size="9" fill="#E65100">E1 scales with heart rate and activity type (e1Scaling)</text>
+  </g>
+
+  <!-- ══════════ I — PLASMA INSULIN + x1/x2/x3 ══════════ -->
+  <g transform="translate(25,520)">
+    <rect width="870" height="130" rx="10" fill="#E8EAF6" stroke="#3949AB" stroke-width="1.8"/>
+
+    <!-- I box -->
+    <rect x="15" y="10" width="80" height="34" rx="7" fill="#fff" stroke="#5C6BC0" stroke-width="1.5"/>
+    <text x="55" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#283593">I</text>
+    <text x="115" y="24" font-size="13" font-weight="600" fill="#1A237E">PLASMA INSULIN</text>
+    <text x="115" y="40" font-size="11" fill="#3949AB">dI = U_I / V_I − k_e · I</text>
+
+    <!-- Drives label -->
+    <text x="40" y="62" font-size="10" fill="#283593" font-weight="600">I drives three action variables:</text>
+
+    <!-- x1 box -->
+    <rect x="40" y="68" width="55" height="26" rx="5" fill="#fff" stroke="#7986CB" stroke-width="1.2"/>
+    <text x="67" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="#283593">x1</text>
+    <text x="108" y="79" font-size="10" fill="#3949AB" font-weight="600">Transport</text>
+    <text x="108" y="91" font-size="9.5" fill="#555">dx = kb1·I − ka1·x1    moves glucose Q1 → Q2</text>
+
+    <!-- x2 box -->
+    <rect x="40" y="96" width="55" height="26" rx="5" fill="#fff" stroke="#7986CB" stroke-width="1.2"/>
+    <text x="67" y="114" text-anchor="middle" font-size="13" font-weight="700" fill="#283593">x2</text>
+    <text x="108" y="107" font-size="10" fill="#3949AB" font-weight="600">Disposal</text>
+    <text x="108" y="119" font-size="9.5" fill="#555">dx = kb2·I − ka2·x2    burns glucose in Q2</text>
+
+    <!-- ISF modifier annotation (right side) -->
+    <rect x="530" y="58" width="325" height="65" rx="6" fill="#EDE7F6" stroke="#7E57C2" stroke-width="1" stroke-dasharray="4,2"/>
+    <text x="545" y="74" font-size="10" fill="#4A148C" font-weight="600">ISF Modifier → scales kb1/kb2/kb3 each tick</text>
+    <text x="545" y="89" font-size="9.5" fill="#6A1B9A">ISFmod = circadianISF × postExerciseBoost</text>
+    <text x="545" y="103" font-size="9.5" fill="#6A1B9A">         × vasodilatation / insulinResistanceFactor</text>
+    <text x="545" y="117" font-size="8.5" fill="#9575CD">(Toffanin 2013: 0.70 morning — 1.20 evening)</text>
+
+    <!-- x3 box -->
+    <rect x="380" y="96" width="55" height="26" rx="5" fill="#fff" stroke="#7986CB" stroke-width="1.2"/>
+    <text x="407" y="114" text-anchor="middle" font-size="13" font-weight="700" fill="#283593">x3</text>
+    <text x="448" y="107" font-size="10" fill="#3949AB" font-weight="600">EGP Suppression</text>
+    <text x="448" y="119" font-size="9.5" fill="#555">dx = kb3·I − ka3·x3</text>
+
+    <!-- Arrow from I to x's -->
+    <line x1="55" y1="44" x2="55" y2="60" stroke="#3949AB" stroke-width="1" marker-end="url(#ab)"/>
+  </g>
+
+  <!-- Arrow from x3 down to LIVER -->
+  <line x1="430" y1="650" x2="430" y2="672" stroke="#3949AB" stroke-width="1.5" marker-end="url(#ab)"/>
+  <text x="442" y="666" font-size="9" fill="#3949AB" font-weight="600" font-style="italic">x3</text>
+
+  <!-- ══════════ LIVER — EGP ══════════ -->
+  <g transform="translate(25,674)">
+    <rect width="545" height="88" rx="10" fill="#F3E5F5" stroke="#7B1FA2" stroke-width="1.8"/>
+    <text x="20" y="20" font-size="13" font-weight="600" fill="#4A148C">LIVER — Endogenous Glucose Production</text>
+    <text x="20" y="38" font-size="11.5" fill="#6A1B9A" font-weight="600" font-family="Consolas,Monaco,monospace">EGP = EGP₀ × max(0, stressMultiplier − x3)</text>
+    <text x="20" y="56" font-size="10" fill="#555">stressMultiplier = baseline(glycogen) + gluconeogenesis(0.5)</text>
+    <text x="20" y="70" font-size="10" fill="#555">  + acuteStress + chronicStress + circadianCortisol</text>
+    <text x="20" y="84" font-size="10" fill="#555">  + proteinGlucagon</text>
+    <text x="380" y="84" font-size="9" fill="#9C27B0">x3 &gt; stress → liver stops</text>
+  </g>
+
+  <!-- Arrow from EGP up to Q1 -->
+  <line x1="80" y1="674" x2="80" y2="388" stroke="#7B1FA2" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ap)"/>
+  <text x="56" y="540" font-size="9.5" fill="#7B1FA2" font-weight="600" font-style="italic" transform="rotate(-90,56,540)">EGP → Q1</text>
+
+  <!-- ══════════ CGM SENSOR ══════════ -->
+  <g transform="translate(600,674)">
+    <rect width="295" height="88" rx="10" fill="#ECEFF1" stroke="#546E7A" stroke-width="1.8"/>
+    <rect x="15" y="12" width="55" height="28" rx="6" fill="#fff" stroke="#78909C" stroke-width="1.2"/>
+    <text x="42" y="31" text-anchor="middle" font-size="14" font-weight="700" fill="#37474F">C</text>
+    <text x="85" y="24" font-size="12" font-weight="600" fill="#263238">CGM SENSOR</text>
+    <text x="85" y="40" font-size="10" fill="#546E7A">what the player sees</text>
+    <text x="15" y="60" font-size="10.5" fill="#37474F" font-family="Consolas,Monaco,monospace">dC = ka_int·(BG − C)</text>
+    <text x="15" y="75" font-size="10" fill="#555">~10 min delay + noise ± 0.3</text>
+    <text x="15" y="85" font-size="10" fill="#555">+ slow drift ± 0.5 mmol/L</text>
+  </g>
+
+  <!-- Arrow from Q1 to CGM -->
+  <line x1="850" y1="388" x2="850" y2="674" stroke="#546E7A" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#a)"/>
+  <text x="860" y="540" font-size="9" fill="#546E7A" font-style="italic" transform="rotate(90,860,540)">BG → CGM (delayed)</text>
+
+  <!-- ══════════ LEGEND ══════════ -->
+  <g transform="translate(25,785)">
+    <rect width="870" height="120" rx="8" fill="#FAFAFA" stroke="#E0E0E0" stroke-width="1"/>
+    <text x="15" y="18" font-size="10" fill="#555" font-weight="700" letter-spacing="1">LEGEND</text>
+
+    <!-- State variable -->
+    <rect x="15" y="26" width="40" height="18" rx="4" fill="#fff" stroke="#888" stroke-width="1"/>
+    <text x="35" y="39" text-anchor="middle" font-size="9" font-weight="700" fill="#333">Xx</text>
+    <text x="65" y="39" font-size="10" fill="#555">= State variable (13 total, solved with Euler integration each tick)</text>
+
+    <!-- Arrow -->
+    <line x1="15" y1="54" x2="50" y2="54" stroke="#666" stroke-width="1.5" marker-end="url(#a)"/>
+    <text x="65" y="58" font-size="10" fill="#555">= Substance flow (with rate constant label)</text>
+
+    <!-- Dashed arrow -->
+    <line x1="15" y1="72" x2="50" y2="72" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a)"/>
+    <text x="65" y="76" font-size="10" fill="#555">= Indirect / modulatory effect</text>
+
+    <!-- Color legend -->
+    <rect x="480" y="26" width="14" height="14" rx="3" fill="#E8F5E9" stroke="#388E3C" stroke-width="1"/>
+    <text x="500" y="37" font-size="10" fill="#555">Gut / food</text>
+    <rect x="580" y="26" width="14" height="14" rx="3" fill="#E3F2FD" stroke="#1976D2" stroke-width="1"/>
+    <text x="600" y="37" font-size="10" fill="#555">Insulin</text>
+    <rect x="670" y="26" width="14" height="14" rx="3" fill="#FFF3E0" stroke="#F57C00" stroke-width="1"/>
+    <text x="690" y="37" font-size="10" fill="#555">Exercise</text>
+    <rect x="770" y="26" width="14" height="14" rx="3" fill="#FFEBEE" stroke="#E53935" stroke-width="1"/>
+    <text x="790" y="37" font-size="10" fill="#555">Glucose</text>
+
+    <rect x="480" y="48" width="14" height="14" rx="3" fill="#E8EAF6" stroke="#3949AB" stroke-width="1"/>
+    <text x="500" y="59" font-size="10" fill="#555">Insulin action</text>
+    <rect x="600" y="48" width="14" height="14" rx="3" fill="#F3E5F5" stroke="#7B1FA2" stroke-width="1"/>
+    <text x="620" y="59" font-size="10" fill="#555">Liver (EGP)</text>
+    <rect x="710" y="48" width="14" height="14" rx="3" fill="#ECEFF1" stroke="#546E7A" stroke-width="1"/>
+    <text x="730" y="59" font-size="10" fill="#555">CGM sensor</text>
+    <rect x="480" y="70" width="14" height="14" rx="3" fill="#EDE7F6" stroke="#7E57C2" stroke-width="1" stroke-dasharray="4,2"/>
+    <text x="500" y="81" font-size="10" fill="#555">Dynamic ISF modifier (new)</text>
+
+    <!-- Key equations -->
+    <text x="15" y="97" font-size="10" fill="#888">Key: τ = time constant (min) · exFactor = exerciseFactor = 1+α·E2² · pulseFactor = 1+(HR−HR_rest)/HR_rest × 0.5</text>
+    <text x="15" y="112" font-size="10" fill="#888">Source: Hovorka et al. 2004 (core) · Resalat et al. 2020 (exercise) · Toffanin 2013 (circadian) · simulator extensions</text>
+  </g>
+</svg>

@@ -73,8 +73,13 @@ differential equations (ODEs) describing how glucose and insulin move through th
 On top of this validated core, the simulator adds extensions for food composition,
 exercise physiology, stress hormones, circadian rhythms, and more.
 
-The diagram below shows all 13 state variables (named boxes), the flows between them
+The diagram below shows all 13 state variables (colored boxes), the flows between them
 (arrows with rate constants), and the player actions that drive the system.
+
+![Model Architecture — Compartment Diagram](MODEL-ARCHITECTURE.svg)
+
+<details>
+<summary>Text version of the diagram (for accessibility / plain text)</summary>
 
 ```
                               PLAYER ACTIONS
@@ -143,6 +148,7 @@ The diagram below shows all 13 state variables (named boxes), the flows between 
            exF / exFactor = exerciseFactor = 1 + α · E2²
            τ = time constant (minutes)
 ```
+</details>
 
 ### The 13 State Variables — Quick Reference
 
