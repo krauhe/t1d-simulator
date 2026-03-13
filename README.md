@@ -2,84 +2,112 @@
 
 **Play it safe, before it really counts.**
 
-T1D Simulator er et uddannelsesspil for nydiagnosticerede type 1 diabetes-patienter. Spilleren styrer blodglukose via insulin, mad og motion i et sikkert simuleret miljø med hurtig feedback — uden risiko for rigtige konsekvenser.
+T1D Simulator is an educational game for newly diagnosed Type 1 Diabetes patients. The player learns to manage blood glucose through insulin, food and exercise in a safe simulated environment with rapid feedback — no real-world consequences.
 
-> **⚠️ Medical Disclaimer / Medicinsk ansvarsfraskrivelse — see [below](#-license--disclaimer)**
+> **⚠️ Medical Disclaimer — see [below](#-license--disclaimer)**
 
-## Prøv det
+## Try it
 
-Åbn `index.html` i en browser. Ingen installation, ingen server, ingen build-trin.
+Open `index.html` in a browser. No installation, no server, no build step required.
 
-Eller besøg den hostede version: [t1d-simulator](https://krauhe.github.io/t1d-simulator/) *(kommer snart)*
+## What is simulated?
 
-## Hvad simuleres?
-
-- **Glukose-insulin-dynamik** baseret på Hovorka et al. (2004) — en klinisk valideret model fra Cambridge
-- **Kulhydratabsorption** med variabel mavetømning
-- **Insulinfarmakokinetik** med subkutant depot, plasma og effektkompartment
-- **Fire aktivitetstyper** (cardio, styrketræning, blandet sport, afslapning) med distinkt fysiologi
-- **Stresshormoner** (kortisol, adrenalin) med dawn-fænomen og Somogyi-effekt
-- **CGM-simulation** med realistisk sensor-forsinkelse, støj og drift
-- **Ketonstofskifte** og DKA-progression ved insulinmangel
-- **Hypoglykæmi-unawareness (HAAF)** — svækket kontraregulering ved gentagne hypoer
+- **Glucose-insulin dynamics** based on [Hovorka et al. (2004)](https://doi.org/10.1109/TBME.2004.827938) — a clinically validated model from Cambridge
+- **Carbohydrate absorption** with variable gastric emptying
+- **Fat compartment model** — two-compartment (stomach → intestine) with CCK/GLP-1 feedback slowing carb absorption ("pizza effect")
+- **Protein glucagon model** — amino acid absorption driving glucagon-stimulated hepatic glucose production via Hill function
+- **Insulin pharmacokinetics** with subcutaneous depot, plasma and effect compartments
+- **Four activity types** (cardio, strength training, mixed sport, relaxation) with distinct physiology
+- **Stress hormones** (cortisol, adrenaline) with dawn phenomenon and Somogyi effect
+- **Circadian ISF variation** — morning insulin resistance vs. evening sensitivity
+- **CGM simulation** with realistic sensor delay, noise and drift
+- **Ketone metabolism** and DKA progression during insulin deficiency
+- **Hypoglycemia unawareness (HAAF)** — impaired counter-regulation after repeated hypos
+- **Liver glycogen pool** — mass-balanced with glycogenolysis and replenishment
+- **Sleep disruption** — nocturnal interventions increase next-day insulin resistance
+- **Weight & calorie model** — energy balance with BMR scaling and exercise expenditure
 
 ## Screenshots
 
-*(kommer snart)*
+*(coming soon)*
 
 ## Tech stack
 
-- Vanilla HTML / CSS / JavaScript — ingen frameworks, ingen dependencies
-- [Tone.js](https://tonejs.github.io/) til lydeffekter (loaded fra CDN)
-- Hovorka 2004 ODE-model (11 tilstandsvariable) løst med Euler-integration
+- Vanilla HTML / CSS / JavaScript — no frameworks, no build step
+- [Tone.js](https://tonejs.github.io/) for sound effects (loaded from CDN)
+- Hovorka 2004 ODE model (11 state variables) solved with Euler integration
 
-## Dokumentation
+## Documentation
 
 - [Physiological model](docs/PHYSIOLOGY.md) — How the simulator engine works (Hovorka 2004, insulin, exercise, stress hormones)
 - [Scientific overview](docs/SCIENCE.md) — All factors affecting blood sugar in T1D (25+ topics with references)
 - [Fysiologisk model (dansk)](docs/FYSIOLOGI.da.md) | [Videnskabelig oversigt (dansk)](docs/VIDENSKAB.da.md)
-- [Automatiserede tests](tests/simulation.test.js) — 47 tests, kør med `node tests/simulation.test.js`
+- [Automated tests](tests/simulation.test.js) — 57 unit tests, run with `node tests/simulation.test.js`
+- [Visual model validation](tests/model-validation.html) — 17 test scenarios with plotted BG curves (open in browser)
 
-## Fil-struktur
+## File structure
 
 ```
-index.html          ← Åbn denne i en browser
-style.css           ← Al styling
+index.html          ← Open this in a browser
+style.css           ← All styling
 js/
-  sounds.js         ← Lydeffekter (Tone.js)
-  hovorka.js        ← Hovorka 2004 glukose-insulin ODE-model
-  simulator.js      ← Simulator-klasse: fysiologi + spilmekanik
-  ui.js             ← Graf, UI-opdatering, popups
+  sounds.js         ← Sound effects (Tone.js)
+  i18n.js           ← Internationalization (Danish/English)
+  hovorka.js        ← Hovorka 2004 glucose-insulin ODE model
+  simulator.js      ← Simulator class: physiology + game mechanics
+  ui.js             ← Graph, UI updates, popups
   game.js           ← Game loop, start/reset/pause
-  main.js           ← Event listeners, DOM-referencer, init
+  main.js           ← Event listeners, DOM references, init
 docs/
   PHYSIOLOGY.md     ← Technical model description (English, primary)
   SCIENCE.md        ← Scientific background (English, primary)
   FYSIOLOGI.da.md   ← Danish translation of PHYSIOLOGY.md
   VIDENSKAB.da.md   ← Danish translation of SCIENCE.md
-  references/       ← Downloadede videnskabelige artikler
+  references/       ← Downloaded scientific articles
 tests/
-  simulation.test.js ← Automatiserede enhedstests
+  simulation.test.js   ← Automated unit tests
+  model-validation.html ← Visual model validation (browser)
 ```
 
 ## Credits
 
-- **Idé, design og projektledelse:** Kristian R Harreby
-- **Implementering:** Kristian R Harreby med assistance fra AI-værktøjer (Claude/Anthropic, Gemini/Google)
-- **Fysiologisk model:** Baseret på [Hovorka et al. (2004)](https://doi.org/10.1109/TBME.2004.827938), udvidet med motionsmodel fra [Resalat et al. (2020)](https://pmc.ncbi.nlm.nih.gov/articles/PMC7449052/)
-- **Inspiration:** [svelte-flask-hovorka-simulator](https://github.com/JonasNM/svelte-flask-hovorka-simulator) af Jonas Nordhassel Myhre
-- **Lydeffekter:** [Tone.js](https://tonejs.github.io/)
+**Idea, design & physiological modelling**
+
+Kristian R. Harreby — with AI-assisted research and implementation (Claude, Anthropic & Gemini, Google).
+
+*Note: Source code and automated tests are primarily generated via AI and have not undergone a complete manual audit.*
+
+**Core model**
+
+- **[Hovorka et al. (2004)](https://doi.org/10.1109/TBME.2004.827938):** Glucose-insulin ODE model with 11 state variables — covers insulin pharmacokinetics, carbohydrate absorption, and glucose kinetics.
+- **Open source foundation:** Inspired by [svelte-flask-hovorka-simulator](https://github.com/JonasNM/svelte-flask-hovorka-simulator) by Jonas Nordhassel Myhre.
+
+**Model extensions** (Kristian R. Harreby, AI-assisted)
+
+- **Exercise model:** Two extra compartments (E1/E2) with four activity types (cardio, strength, mixed, relaxation) — based on Resalat et al. 2020, Riddell et al. 2017.
+- **Stress hormone system:** Acute stress (adrenaline/glucagon, t½ 60 min) and chronic stress (cortisol, t½ 12 hours) with automatic Somogyi response during hypoglycaemia.
+- **Dawn phenomenon:** Circadian cortisol peak (04:00→08:00) increasing hepatic glucose production in the morning. Regenerates daily with individual variation.
+- **Circadian ISF:** Diurnal variation in insulin sensitivity (0.70–1.20) — morning insulin resistance vs. evening sensitivity. Based on Toffanin 2013, Hinshaw 2013.
+- **HAAF model:** Hypo unawareness based on accumulated hypoglycaemia burden. Repeated hypos progressively impair counter-regulation — based on Cryer 2013.
+- **Ketone model:** Production during insulin deficiency, clearance with sufficient insulin. DKA progression with warnings.
+- **Liver glycogen pool:** Mass-balanced (0–100 g) with consumption via glycogenolysis and replenishment via gluconeogenesis + food.
+- **Sleep disruption:** Nocturnal interventions cost sleep → elevated chronic stress and amplified dawn effect next morning.
+- **Weight & calorie model:** Energy balance with BMR scaling and exercise expenditure → weight change over time.
+- **Fat compartment model:** Two-compartment (stomach → intestine) with dynamic gastric emptying. Intestinal fat triggers CCK/GLP-1 feedback slowing carb absorption (pizza effect). τG = 40 + 18×ln(1 + fatIntestine/10). Based on Smart 2013, Wolpert 2013.
+- **Protein glucagon model:** Three-compartment amino acid absorption (stomach → gut → blood) driving glucagon-stimulated hepatic glucose production via Hill function. Replaces the old 25% carb-equivalent rule. Based on Paterson 2016, Fromentin 2013, Gannon 2013.
+
+**Technologies**
+
+- **Sound:** [Tone.js](https://tonejs.github.io/)
+- **License:** [GNU General Public License v3 (GPLv3)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 ### Development Status & AI Disclosure
 
 **This simulator is an experimental prototype.**
 
-- **AI-Generated Code:** The vast majority of the codebase, including the mathematical models and logic, has been generated using AI (primarily Claude/Anthropic and Gemini/Google).
-- **Testing:** While the project includes automated tests (47 unit tests + 17 visual validation scenarios), these tests were also designed and implemented by AI.
-- **Verification:** The code has not undergone a full manual audit or clinical validation. It should be treated as a "proof of concept" rather than a verified medical simulation.
-- **Development Purpose:** This project is a study in using AI to build educational tools for Type 1 Diabetes (T1D). It is shared to encourage collaboration and further validation.
+All design and architecture decisions are made by the project owner (Kristian R. Harreby). The codebase — including mathematical models, game logic and automated tests — is primarily generated using AI (Claude/Anthropic and Gemini/Google). Code is reviewed, tested and adapted by the project owner, but a line-by-line audit has not been performed.
 
-All design and architecture decisions are made by the project owner (Kristian R Harreby). AI-generated code is reviewed, tested and adapted by the project owner — but a line-by-line audit has not been performed.
+The project includes 57 automated unit tests and 17 visual validation scenarios to verify physiological behaviour.
 
 ## ⚖️ License & Disclaimer
 
@@ -89,9 +117,9 @@ This project is licensed under the **GNU General Public License v3.0** — see t
 
 You are free to use, modify and redistribute this software under the terms of the GPLv3. Any derivative work must also be distributed under GPLv3.
 
-Copyright © 2026 Kristian R Harreby
+Copyright © 2025–2026 Kristian R. Harreby
 
-### Medical Disclaimer (English)
+### Medical Disclaimer
 
 **This software is NOT a medical device** as defined by the EU Medical Device Regulation (MDR 2017/745) or any equivalent regulation. It is an **educational simulator** developed for learning purposes only.
 
@@ -100,23 +128,12 @@ Copyright © 2026 Kristian R Harreby
 - **Always** consult your physician, endocrinologist, or diabetes care team before making changes to your diabetes management.
 - The authors accept no liability for any harm resulting from the use or misuse of this software.
 
-### Medicinsk ansvarsfraskrivelse (Dansk)
-
-**Denne software er IKKE et medicinsk udstyr** som defineret i EU's Medical Device Regulation (MDR 2017/745) eller tilsvarende regulering. Den er en **uddannelsessimulator** udviklet udelukkende til undervisningsbrug.
-
-- **Brug ikke** denne simulator til at beregne insulindoser, justere behandlingsplaner eller træffe kliniske beslutninger.
-- De fysiologiske modeller er forenklede tilnærmelser af menneskets stofskifte. De tager ikke højde for individuel variation og er ikke valideret til klinisk brug.
-- **Rådfør dig altid** med din læge, endokrinolog eller diabetesteam, før du ændrer i din behandling.
-- Forfatterne påtager sig intet ansvar for skade som følge af brug eller misbrug af denne software.
-
 ---
 
-## Støt projektet
+## Support the project
 
-Hvis T1D Simulator har været nyttigt for dig eller din familie, kan du støtte videreudviklingen via MobilePay:
+If T1D Simulator has been useful to you or your family, you can support further development via MobilePay:
 
-**MobilePay Box: T1DSim — 5540MY**
+[![Support via MobilePay](https://img.shields.io/badge/MobilePay-T1DSim-7B68EE?style=for-the-badge)](https://qr.mobilepay.dk/box/0946757d-b34b-4b1e-8302-f0a67fc49c69/pay-in)
 
-[![Støt via MobilePay](https://img.shields.io/badge/MobilePay-T1DSim%20(5540MY)-7B68EE?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6Ii8+PC9zdmc+)](https://mobilepay.dk/box/5540MY)
-
-Alle donationer går til hosting, videnskabelige artikler og videreudvikling.
+All donations go towards hosting, scientific articles and continued development.

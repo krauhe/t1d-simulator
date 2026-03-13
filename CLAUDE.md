@@ -180,6 +180,17 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
     - Implementering: ISF-reduktion proportional med absorberet fedt, forsinket
     - Giver "anden bølge" af pizza-effekten (sen hyperglykæmi)
 
+9e2. Glukotoksicitet — hyperglykæmi-induceret insulinresistens
+    - Vedvarende højt BG (>10-12 mmol/L) forværrer insulinfølsomhed progressivt
+    - 24 timer ved 20 mmol/L → 26% reduktion i glukoseoptagelse (Vuorinen-Markkola 1992)
+    - Dårligt reguleret T1D (HbA1c >9%) → 30-50% mere insulin nødvendigt
+    - Mekanismer: oxidativt stress, hexosamin-pathway, AGEs, PKC-aktivering, GLUT4-nedregulering
+    - Implementering: dynamisk ISF-modifikator baseret på rullende BG-gennemsnit (24-72 timer)
+    - Tærskel ~10-12 mmol/L, maks ~30-40% ISF-reduktion ved BG >20 mmol/L
+    - Opløsning: eksponentiel decay med t½ ~24-48 timer efter normalisering
+    - Interagerer med (men separat fra) FFA-induceret resistens (9d)
+    - Se SCIENCE.md afsnit 28 for fuld videnskabelig baggrund
+
 30. Udvidet ketonmodel (IOB-drevet, ikke BG-drevet)
     - **Nuværende model er forkert:** ketoner stiger kun ved insulinmangel + BG > 12
     - **Korrekt:** ketogenese drives af lavt INSULIN-niveau, ikke højt blodsukker

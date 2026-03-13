@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-03-12-v2 -->
+<!-- doc-version: 2026-03-13-v1 -->
 # Blood Glucose Regulation in Type 1 Diabetes -- A Complete Knowledge Overview
 
 *This guide covers all known factors that affect blood glucose in people with type 1 diabetes. It is written for patients, family members, and healthcare professionals -- with scientific depth for those who want it.*
@@ -1320,6 +1320,108 @@ The simplest validated model with only 4 parameters. Used primarily for analysis
 The most detailed multi-organ model with 19 compartments. Includes liver, kidneys, periphery, brain, and gut as separate units. Too complex for real-time simulation, but valuable as a reference for physiological correctness.
 
 > Sorensen JT. (1985). PhD Thesis, MIT.
+
+## 28. Glucotoxicity -- when high blood sugar causes insulin resistance
+
+Glucotoxicity is the phenomenon where sustained hyperglycemia itself causes insulin resistance. The tissues become less responsive to insulin -- not because there is too little insulin, but because chronic high glucose has damaged the intracellular signaling pathways. This creates a vicious cycle: high blood sugar → insulin resistance → even higher blood sugar → more resistance.
+
+For T1D patients this is clinically very important: a period of poor control (illness, forgotten basal, pump failure) can lead to unexpectedly high insulin requirements that persist for days to weeks even after the original cause is resolved.
+
+### Mechanisms
+
+Brownlee (2001, 2005) proposed a unifying mechanism: all major pathways of hyperglycemic damage stem from **overproduction of superoxide by the mitochondrial electron transport chain**. When excess glucose floods the cell, the mitochondria generate excessive reactive oxygen species (ROS), which then activate four damaging pathways:
+
+**1. Hexosamine biosynthesis pathway (HBP)**
+
+Normally ~2-5% of intracellular glucose enters this pathway. During hyperglycemia the flux increases substantially. The end product (UDP-GlcNAc) drives O-GlcNAcylation of key insulin signaling proteins, impairing IRS-1 phosphorylation and GLUT4 translocation. In cell studies, 8 hours of 25 mM glucose reduced maximal insulin-stimulated glucose transport by 40-50% (Marshall 1991, Buse 2006).
+
+**2. Protein Kinase C (PKC) activation**
+
+Hyperglycemia increases diacylglycerol (DAG) synthesis from glycolytic intermediates. DAG activates PKC isoforms (especially PKC-β and PKC-θ), which phosphorylate IRS-1 on inhibitory serine residues, blocking downstream Akt signaling. PKC also stimulates NADPH oxidase, generating more superoxide in a positive feedback loop.
+
+**3. Advanced Glycation End Products (AGEs)**
+
+Free glucose reacts with proteins to form AGEs, mediated by the precursor methylglyoxal. AGE-RAGE signaling activates NF-κB and JNK pathways, causing chronic inflammation and reduced GLUT4 protein content (~30% reduction in animal models).
+
+**4. Polyol pathway**
+
+Aldose reductase converts excess glucose to sorbitol, consuming NADPH. This depletes the cell's antioxidant capacity (less reduced glutathione), leaving it vulnerable to oxidative damage.
+
+**5. GLUT4 downregulation**
+
+All pathways converge on reduced GLUT4 transporter expression and impaired translocation to the cell membrane. Both the number of transporters and their ability to reach the membrane surface are compromised (Yki-Järvinen 1992).
+
+### Time course
+
+The effect develops and resolves on multiple time scales:
+
+| Time scale | Development | Resolution |
+|------------|-------------|------------|
+| Hours | 24h of hyperglycemia (~20 mmol/L) reduced whole-body glucose disposal by 26% and nonoxidative disposal by 54% in T1D patients (Vuorinen-Markkola 1992) | Acute GLUT4 translocation defect partially reversible within hours of normoglycemia |
+| Days | Progressive worsening with continued hyperglycemia | Near-normoglycemia for 24h doubled postprandial glycogen synthesis |
+| Weeks–months | Full glucotoxic insulin resistance established | HbA1c < 7% for > 1 year needed to normalize hepatic glycogen synthesis |
+| Years | Epigenetic changes (DNA methylation, histone modification) — "metabolic memory" | DCCT/EDIC: prior hyperglycemia effects persist years after normalization |
+
+### Magnitude
+
+Poorly controlled T1D patients (HbA1c > 9%) typically require **30-50% more insulin** than expected, partly due to glucotoxicity. Even moderate hyperglycemia has a measurable effect: the German Diabetes Study found insulin sensitivity inversely correlated with fasting glycemia even at near-normal levels (HbA1c ~6.7%).
+
+Key experimental results:
+
+- **24h at 20 mmol/L**: 26% reduction in whole-body glucose disposal in T1D (Vuorinen-Markkola 1992)
+- **Long-standing T1D**: ~40% lower insulin-stimulated glucose disposal vs. healthy controls
+- **Phlorizin normalization**: reversing hyperglycemia immediately restored insulin sensitivity in diabetic rats (Rossetti 1987)
+
+### Distinction from lipotoxicity (FFA-induced insulin resistance)
+
+| Feature | Glucotoxicity | Lipotoxicity |
+|---------|---------------|--------------|
+| Primary trigger | Chronic hyperglycemia | Elevated free fatty acids |
+| Key mediators | ROS, hexosamine products, AGEs | DAG from lipid metabolism, ceramides |
+| Signaling block | Downstream at Akt; GLUT4 translocation | Upstream at IRS-1; PKC-θ serine phosphorylation |
+| Time to develop | Hours (24h measurable) | Hours (2-6h after fat meal/lipid infusion) |
+| Reversibility | Hours to months depending on severity | Hours after FFA normalization (acute component) |
+
+The two mechanisms interact: Monaco et al. (2017) proposed that glucotoxicity drives intramuscular lipid accumulation in T1D ("glucolipotoxicity"), potentially explaining why even well-controlled T1D patients show elevated intramyocellular lipids.
+
+### Clinical relevance for T1D
+
+- **Sick days / pump failures**: After prolonged hyperglycemia, total daily insulin requirements may increase 30-50%. Patients should anticipate needing more insulin than usual for days after regaining control.
+- **The vicious cycle**: If a patient does not increase their insulin dose in response to glucotoxic resistance, BG stays high, further worsening resistance. Breaking the cycle — even briefly — begins reversing the acute component within hours.
+- **"Metabolic memory"**: The DCCT/EDIC study showed that periods of poor control leave lasting epigenetic marks that increase complication risk for years, even after subsequent improvement. Early tight control matters disproportionately.
+- **Newly diagnosed patients**: Insulin sensitivity often improves in the first months after diagnosis (honeymoon period) partly because correcting chronic hyperglycemia reverses glucotoxicity.
+
+### Simulator implementation notes
+
+Glucotoxicity could be modeled as a **dynamic ISF modifier** driven by recent glycemic history:
+
+- Track a rolling average of BG over the past 24-72 hours
+- When the rolling average exceeds a threshold (~10-12 mmol/L), apply a progressive ISF reduction
+- Maximum effect: ~30-40% ISF reduction at sustained BG > 20 mmol/L
+- Resolution: exponential decay with t½ of ~24-48 hours after normalization
+- This would interact with (but be separate from) FFA-induced resistance (section 9d in the todo list)
+
+### References
+
+> Rossetti L, Giaccari A, DeFronzo RA. (1990). "Glucose Toxicity." *Diabetes Care*, 13(6):610-630. — The foundational review establishing glucose toxicity as a concept.
+
+> Brownlee M. (2001). "Biochemistry and molecular cell biology of diabetic complications." *Nature*, 414(6865):813-820. — Unifying mechanism: mitochondrial superoxide overproduction.
+
+> Brownlee M. (2005). "The Pathobiology of Diabetic Complications: A Unifying Mechanism." *Diabetes*, 54(6):1615-1625. DOI: 10.2337/diabetes.54.6.1615.
+
+> Rossetti L, Smith D, Shulman GI, et al. (1987). "Correction of hyperglycemia with phlorizin normalizes tissue sensitivity to insulin in diabetic rats." *J Clin Invest*, 79(5):1510-1515. DOI: 10.1172/JCI112981. — First in vivo evidence that hyperglycemia per se causes insulin resistance.
+
+> Vuorinen-Markkola H, Koivisto VA, Yki-Järvinen H. (1992). "Mechanisms of hyperglycemia-induced insulin resistance in whole body and skeletal muscle of type I diabetic patients." *Diabetes*, 41(5):571-580. — 24h hyperglycemia study in T1D.
+
+> Yki-Järvinen H. (1990). "Acute and chronic effects of hyperglycaemia on glucose metabolism." *Diabetologia*, 33:579-585.
+
+> Buse MG. (2006). "Hexosamines, insulin resistance and the complications of diabetes: current status." *Am J Physiol Endocrinol Metab*, 290:E1-E8.
+
+> Monaco CMF, et al. (2017/2024). "Mechanisms of insulin resistance in type 1 diabetes mellitus: A case of glucolipotoxicity in skeletal muscle." *J Cell Physiol*.
+
+> Apostolopoulou M, et al. (2025). "Insulin Resistance in Type 1 Diabetes: Pathophysiological, Clinical, and Therapeutic Relevance." *Endocrine Reviews*, 46(3):317. — Comprehensive 2025 review covering glucotoxicity in T1D.
+
+> DCCT/EDIC Research Group. "Understanding Metabolic Memory: The Prolonged Influence of Glycemia During the Diabetes Control and Complications Trial on Future Risks of Complications During EDIC." — Epigenetic metabolic memory.
 
 ---
 
