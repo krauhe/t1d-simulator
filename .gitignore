@@ -12,3 +12,7 @@ developer input/
 # Gamle filer og arbejdsnotater
 old/
 fysiologisk-review.md
+review*.txt
+
+# Mockups (design-eksperimenter, ikke produktion)
+mockups/
