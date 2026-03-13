@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-03-12-v1 -->
+<!-- doc-version: 2026-03-13-v1 -->
 # Physiological Model — T1D Simulator
 
 *This page is the technical documentation of the simulator's physiological engine.
@@ -65,6 +65,130 @@ tick it calculates:
 - What the CGM sensor would show (with delay and noise)
 
 The result is a new blood glucose level that is displayed on the graph.
+
+### Model Architecture — Compartment Diagram
+
+The engine is built on the **Hovorka 2004** compartment model: 13 coupled ordinary
+differential equations (ODEs) describing how glucose and insulin move through the body.
+On top of this validated core, the simulator adds extensions for food composition,
+exercise physiology, stress hormones, circadian rhythms, and more.
+
+The diagram below shows all 13 state variables (named boxes), the flows between them
+(arrows with rate constants), and the player actions that drive the system.
+
+```
+                              PLAYER ACTIONS
+                  ┌───────────┬───────────┬───────────┐
+                  │   Food    │  Insulin  │ Activity  │
+                  │ (C/F/P g) │  (units)  │ (type/HR) │
+                  └─────┬─────┴─────┬─────┴─────┬─────┘
+                        │           │           │
+          ┌─────────────┘           │           └─────────────┐
+          │                         │                         │
+          ▼                         ▼                         ▼
+  ┌───── GUT ─────┐      ┌── SUBCUTANEOUS ───┐      ┌──── EXERCISE ────┐
+  │               │      │                    │      │                   │
+  │  D1 (stomach) │      │  S1 (depot 1)      │      │  E1   τ = 20 min │
+  │   ↓  1/τ_G    │      │   ↓  1/τ_I         │      │  (GLUT4 uptake)  │
+  │  D2 (gut)     │      │  S2 (depot 2)      │      │  E2   τ = 200 min│
+  │   ↓  × A_G    │      │   ↓  × pulseFactor │      │  (ISF boost)     │
+  └───────┬───────┘      └────────┬───────────┘      └──┬────────────┬──┘
+          │                       │                     │            │
+          │ U_G                   │ U_I            β·E1·HR      exFactor
+          │                       │                     │     (1+α·E2²)
+          ▼                       ▼                     ▼            │
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  Q1 — PLASMA GLUCOSE                  BG = Q1 / V_G  (mmol/L)      │
+  │                                                                      │
+  │  Sources (+):                     Drains (−):                        │
+  │    U_G    food absorption           F₀₁c  brain (~5.5 g/hr)         │
+  │    EGP    liver production          F_R   kidneys (BG > 9 mmol/L)   │
+  │    k₁₂·Q2  return from muscles     x1·Q1·exF  transport → Q2       │
+  └──────────────────┬───────────────────────────────▲───────────────────┘
+                     │ x1·Q1·exerciseFactor          │ k₁₂·Q2
+                     ▼                               │
+  ┌──────────────────────────────────────────────────┴───────────────────┐
+  │  Q2 — PERIPHERAL GLUCOSE             (muscles & adipose tissue)     │
+  │                                                                      │
+  │  − exerciseFactor · x2 · Q2          insulin-driven disposal        │
+  │  − β · E1 · HR_effect                GLUT4 direct muscle uptake     │
+  └──────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  I — PLASMA INSULIN                   dI = U_I / V_I − k_e · I     │
+  │                                                                      │
+  │   ──→ x1 (transport)    dx = kb1·I − ka1·x1    moves Q1 → Q2       │
+  │   ──→ x2 (disposal)     dx = kb2·I − ka2·x2    burns glucose in Q2 │
+  │   ──→ x3 (EGP suppr.)   dx = kb3·I − ka3·x3    suppresses liver    │
+  │                                                                      │
+  │  kb1/kb2/kb3 dynamically scaled by ISF modifier each tick:          │
+  │    ISFmod = circadianISF × postExBoost × vasodil / insulinResist    │
+  └──────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  LIVER — EGP = EGP₀ × max(0, stressMultiplier − x3)                │
+  │                                                                      │
+  │  stressMultiplier = baseline(glycogen) + gluconeogenesis (0.5)      │
+  │    + acuteStress (hypo/exercise)     + circadianCortisol (dawn)     │
+  │    + chronicStress (sleep/illness)   + proteinGlucagon (amino acids)│
+  └──────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  C — CGM SENSOR          dC = ka_int · (BG − C)  + noise + drift   │
+  │                          ~10 min delay from true BG                 │
+  └──────────────────────────────────────────────────────────────────────┘
+
+  Legend:  D1, Q1, x1 ... = state variables (13 total, see table below)
+           ──→  = substance flow with rate constant
+           exF / exFactor = exerciseFactor = 1 + α · E2²
+           τ = time constant (minutes)
+```
+
+### The 13 State Variables — Quick Reference
+
+These are the Hovorka model's "memory" — everything the simulation needs to know
+to compute the next time step. They are updated every simulated minute via
+Euler integration: `new = old + (rate of change) × dt`.
+
+| # | State | Full name | What it represents | Unit | Details |
+|:-:|:-----:|-----------|-------------------|:----:|:-------:|
+| 0 | **D1** | Stomach | Carbohydrate awaiting gastric emptying | mmol | [§5 Food](#food) |
+| 1 | **D2** | Gut | Carbohydrate being absorbed in small intestine | mmol | [§5 Food](#food) |
+| 2 | **S1** | SC depot 1 | Injected insulin under the skin (first pool) | mU | [§4 Insulin](#insulin) |
+| 3 | **S2** | SC depot 2 | Insulin moving toward absorption (second pool) | mU | [§4 Insulin](#insulin) |
+| 4 | **Q1** | Plasma glucose | Glucose in the blood — the "BG" you measure | mmol | [§3 Glucose](#glucose) |
+| 5 | **Q2** | Peripheral glucose | Glucose stored in muscles and fat tissue | mmol | [§3 Glucose](#glucose) |
+| 6 | **I** | Plasma insulin | Insulin concentration in the bloodstream | mU/L | [§4 Insulin](#insulin) |
+| 7 | **x1** | Transport action | Insulin signal: move glucose from blood to muscles | 1/min | [§4 Insulin](#insulin) |
+| 8 | **x2** | Disposal action | Insulin signal: burn glucose in muscles | 1/min | [§4 Insulin](#insulin) |
+| 9 | **x3** | EGP suppression | Insulin signal: tell liver to stop producing glucose | — | [§4 Insulin](#insulin) |
+| 10 | **C** | CGM reading | Interstitial glucose — what the sensor shows (~10 min delay) | mmol/L | [§12 CGM](#cgm) |
+| 11 | **E1** | Exercise (short) | GLUT4-mediated direct muscle glucose uptake | — | [§6 Activity](#activity) |
+| 12 | **E2** | Exercise (long) | Long-lasting enhancement of insulin sensitivity | — | [§6 Activity](#activity) |
+
+### Simulator Extensions — Beyond Hovorka 2004
+
+The original Hovorka model handles glucose, insulin, and basic gut absorption.
+The simulator adds the following physiological extensions to create a more
+realistic and educational experience:
+
+| Extension | What it does | Key mechanism | Details |
+|-----------|-------------|---------------|:-------:|
+| **Fat compartment** | Fat delays carb absorption ("pizza effect") | τ_G = 40 + 18·ln(1 + fat/10) min | [§5 Food](#food) |
+| **Protein → glucagon** | Protein raises BG via liver stimulation | Amino acids → Hill function → ↑ HGP | [§5 Food](#food) |
+| **Acute stress** | Hypo/exercise → adrenaline → rapid liver response | t½ = 60 min, cap at 0.4 | [§7 Stress](#stress-hormones) |
+| **Chronic stress** | Sleep loss/illness → cortisol → sustained resistance | t½ = 12 hours | [§7 Stress](#stress-hormones) |
+| **Hepatic glycogen** | Finite liver glucose store limits stress response | 90g pool, depleted by stress/exercise | [§7 Stress](#stress-hormones) |
+| **Dawn phenomenon** | Morning cortisol → ↑ HGP | Sine curve, peak 08:00, amplitude 0.15 | [§8 Dawn](#dawn) |
+| **Circadian ISF** | Insulin sensitivity varies over 24 hours | 0.70 (morning) – 1.20 (evening) | [§8 Dawn](#dawn) |
+| **ISF → ODE feedback** | All ISF modifiers drive the actual simulation | kb1/kb2/kb3 scaled each tick | [§8 Dawn](#dawn) |
+| **Post-exercise ISF** | Improved sensitivity for hours after exercise | Exponential decay, t½ = 3–5 hours | [§6 Activity](#activity) |
+| **Sleep disruption** | Nighttime interventions increase chronic stress | +12% dawn amplitude per lost hour | [§9 Sleep](#sleep) |
+| **HAAF** | Repeated hypos blunt counterregulation | Area-based sigmoid decay, floor = 0.3 | [§10 HAAF](#haaf) |
+| **Ketone/DKA model** | Insulin deficiency → ketoacidosis → game over | Warning at 6h, game over at 18h | [§11 Ketones](#ketones) |
+| **CGM noise & drift** | Realistic sensor inaccuracy | Gaussian σ = 0.3 mmol/L, drift ±0.5 | [§12 CGM](#cgm) |
+| **Insulin variability** | Each injection absorbs slightly differently | Bioavailability CV ~10%, τ_I CV ~25% | [§13 Variability](#variability) |
+| **Weight model** | Calorie balance → body weight changes | BMR = 31.4 kcal/kg/day | [§14 Weight](#weight) |
 
 ---
 
