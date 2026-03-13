@@ -1,4 +1,4 @@
-<!-- translated-from: PHYSIOLOGY.md doc-version: 2026-03-12-v1 -->
+<!-- translated-from: MODEL-IMPLEMENTATION.md doc-version: 2026-03-12-v1 -->
 # Fysiologisk Model -- T1D Simulator
 
 *Denne side er den tekniske dokumentation af simulatorens fysiologiske motor.
@@ -1485,7 +1485,7 @@ Vigtige begrænsninger:
 
 7. **Keton-model:** Forenklet i forhold til den fulde fysiologi. Nuværende model
    bruger BG > 12 som trigger, men ketogenese drives primært af insulinniveau
-   (se afsnit 11 og VIDENSKAB.da.md afsnit 23). Faste-ketose er ikke modelleret.
+   (se afsnit 11 og BG-VIDENSKAB.da.md afsnit 23). Faste-ketose er ikke modelleret.
    Rigtig ketoacidose involverer pH-ændringer, dehydrering og
    elektrolytforstyrrelser der ikke er modelleret.
 

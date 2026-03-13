@@ -41,9 +41,9 @@ Or clone/download and open `index.html` in a browser. No server, no build step n
 
 ## Documentation
 
-- [Physiological model](docs/PHYSIOLOGY.md) — How the simulator engine works (Hovorka 2004, insulin, exercise, stress hormones)
-- [Scientific overview](docs/SCIENCE.md) — All factors affecting blood sugar in T1D (25+ topics with references)
-- [Fysiologisk model (dansk)](docs/FYSIOLOGI.da.md) | [Videnskabelig oversigt (dansk)](docs/VIDENSKAB.da.md)
+- [Physiological model](docs/MODEL-IMPLEMENTATION.md) — How the simulator engine works (Hovorka 2004, insulin, exercise, stress hormones)
+- [Scientific overview](docs/BG-SCIENCE.md) — All factors affecting blood sugar in T1D (25+ topics with references)
+- [Fysiologisk model (dansk)](docs/MODEL-IMPLEMENTERING.da.md) | [Videnskabelig oversigt (dansk)](docs/BG-VIDENSKAB.da.md)
 - [Automated tests](tests/simulation.test.js) — 57 unit tests, run with `node tests/simulation.test.js`
 - [Visual model validation](tests/model-validation.html) — 17 test scenarios with plotted BG curves (open in browser)
 
@@ -61,10 +61,10 @@ js/
   game.js           ← Game loop, start/reset/pause
   main.js           ← Event listeners, DOM references, init
 docs/
-  PHYSIOLOGY.md     ← Technical model description (English, primary)
-  SCIENCE.md        ← Scientific background (English, primary)
-  FYSIOLOGI.da.md   ← Danish translation of PHYSIOLOGY.md
-  VIDENSKAB.da.md   ← Danish translation of SCIENCE.md
+  MODEL-IMPLEMENTATION.md     ← Technical model description (English, primary)
+  BG-SCIENCE.md        ← Scientific background (English, primary)
+  MODEL-IMPLEMENTERING.da.md   ← Danish translation of MODEL-IMPLEMENTATION.md
+  BG-VIDENSKAB.da.md   ← Danish translation of BG-SCIENCE.md
   references/       ← Downloaded scientific articles
 tests/
   simulation.test.js   ← Automated unit tests

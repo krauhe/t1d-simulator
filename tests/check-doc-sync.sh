@@ -4,8 +4,8 @@
 #
 # Two sync directions:
 #   1. Docs: English is primary → Danish follows
-#      PHYSIOLOGY.md (en) → FYSIOLOGI.da.md (da)
-#      SCIENCE.md (en)    → VIDENSKAB.da.md (da)
+#      MODEL-IMPLEMENTATION.md (en) → MODEL-IMPLEMENTERING.da.md (da)
+#      BG-SCIENCE.md (en)    → BG-VIDENSKAB.da.md (da)
 #
 #   2. Help templates: Danish is primary → English follows
 #      help-content-da → help-content-en
@@ -117,8 +117,8 @@ check_help_sync() {
 echo "=== Documentation sync check ==="
 echo ""
 echo "Docs (English primary -> Danish translation):"
-check_doc_pair "$DOCS_DIR/PHYSIOLOGY.md" "$DOCS_DIR/FYSIOLOGI.da.md"
-check_doc_pair "$DOCS_DIR/SCIENCE.md" "$DOCS_DIR/VIDENSKAB.da.md"
+check_doc_pair "$DOCS_DIR/MODEL-IMPLEMENTATION.md" "$DOCS_DIR/MODEL-IMPLEMENTERING.da.md"
+check_doc_pair "$DOCS_DIR/BG-SCIENCE.md" "$DOCS_DIR/BG-VIDENSKAB.da.md"
 
 echo ""
 echo "Help templates (Danish primary -> English translation):"

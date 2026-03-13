@@ -32,11 +32,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Bevar altid simulationslogikken intakt ved UI-ændringer
 - **Foreslå ALTID at committe og pushe før store ændringer** — så der altid er et sikkert fallback-punkt
 - **Dokumentation: engelsk er primær, dansk er oversættelse.**
-  - Opdatér altid den engelske version først: `docs/PHYSIOLOGY.md` og `docs/SCIENCE.md`
+  - Opdatér altid den engelske version først: `docs/MODEL-IMPLEMENTATION.md` og `docs/BG-SCIENCE.md`
   - Bump `<!-- doc-version: YYYY-MM-DD-vN -->` markøren i toppen ved indholdsmæssige ændringer
-  - Danske oversættelser (`docs/FYSIOLOGI.da.md`, `docs/VIDENSKAB.da.md`) har en `<!-- translated-from: FILE doc-version: ... -->` markør der skal matche den engelske version
+  - Danske oversættelser (`docs/MODEL-IMPLEMENTERING.da.md`, `docs/BG-VIDENSKAB.da.md`) har en `<!-- translated-from: FILE doc-version: ... -->` markør der skal matche den engelske version
   - Kør `bash tests/check-doc-sync.sh` for at tjekke at danske docs er i sync med engelske
-  - Opdatér `docs/SCIENCE.md` løbende med nye emner der er relevante for blodglukoseregulering — også selvom de ikke implementeres i simulatoren. Dokumentet skal være en komplet videnskabelig oversigt over alle faktorer der påvirker BG ved T1D.
+  - Opdatér `docs/BG-SCIENCE.md` løbende med nye emner der er relevante for blodglukoseregulering — også selvom de ikke implementeres i simulatoren. Dokumentet skal være en komplet videnskabelig oversigt over alle faktorer der påvirker BG ved T1D.
 - **Hent ALTID relevante videnskabelige artikler** ned i `docs/references/` når nye emner tilføjes eller researches. Kilder skal så vidt muligt downloades som PDF. Filnavns-format: `Efternavn_Årstal[_RW]_Titel.ext` (fx `Hovorka_2004_NonlinearMPC.pdf`, `Cryer_2013_RW_GlucoseCounterregulation.pdf`). RW tilføjes kun ved review-artikler. Hvis PDF ikke er tilgængelig, gem som `.html` fra PMC eller lignende.
 
 ---
@@ -81,10 +81,10 @@ js/
   game.js       ← Game loop, startGame, resetGame, togglePause
   main.js       ← Globale variable, DOM-referencer, event listeners, init
 docs/
-  PHYSIOLOGY.md      ← Engelsk (primær) — fysiologiske modeller, videnskabelige kilder, credits
-  SCIENCE.md         ← Engelsk (primær) — systematisk gennemgang af ALLE faktorer der påvirker BG
-  FYSIOLOGI.da.md    ← Dansk oversættelse af PHYSIOLOGY.md
-  VIDENSKAB.da.md    ← Dansk oversættelse af SCIENCE.md
+  MODEL-IMPLEMENTATION.md      ← Engelsk (primær) — fysiologiske modeller, videnskabelige kilder, credits
+  BG-SCIENCE.md         ← Engelsk (primær) — systematisk gennemgang af ALLE faktorer der påvirker BG
+  MODEL-IMPLEMENTERING.da.md    ← Dansk oversættelse af MODEL-IMPLEMENTATION.md
+  BG-VIDENSKAB.da.md    ← Dansk oversættelse af BG-SCIENCE.md
   references/        ← Hentede videnskabelige artikler. Format: Efternavn_Årstal[_RW]_Titel.ext
 tests/
   simulation.test.js   ← Automatiserede tests (47 stk), kør med: node tests/simulation.test.js
@@ -134,7 +134,7 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
     - Under insulinresistens vokser gabet → "dødzone" hvor insulin tilsyneladende ikke virker
     - Implementering: erstat lineære x1/x2/x3-effektligninger med Hill-funktioner
     - Kræver re-kalibrering af alle parametre og nye tests
-    - Se SCIENCE.md afsnit 25 for fuld videnskabelig baggrund
+    - Se BG-SCIENCE.md afsnit 25 for fuld videnskabelig baggrund
 7. Insulin-kurver på grafen (visuelt overlay)
     - To linjer: hurtigvirkende (fx blå) og langtidsvirkende (fx lilla)
     - Tykkelse/amplitude proportional med aktiv insulin i systemet
@@ -189,7 +189,7 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
     - Tærskel ~10-12 mmol/L, maks ~30-40% ISF-reduktion ved BG >20 mmol/L
     - Opløsning: eksponentiel decay med t½ ~24-48 timer efter normalisering
     - Interagerer med (men separat fra) FFA-induceret resistens (9d)
-    - Se SCIENCE.md afsnit 28 for fuld videnskabelig baggrund
+    - Se BG-SCIENCE.md afsnit 28 for fuld videnskabelig baggrund
 
 30. Udvidet ketonmodel (IOB-drevet, ikke BG-drevet)
     - **Nuværende model er forkert:** ketoner stiger kun ved insulinmangel + BG > 12
@@ -203,7 +203,7 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
       - Ketonproduktion = f(IOB) — stiger når IOB < tærskel (fx 1.5 × basalrate)
       - BG er IKKE en input til ketonproduktion
       - Keton-clearance: mætnelig (Michaelis-Menten) — langsommere ved høje niveauer
-    - Se SCIENCE.md afsnit 23 for fuld videnskabelig baggrund og referencer
+    - Se BG-SCIENCE.md afsnit 23 for fuld videnskabelig baggrund og referencer
 
 ### Fremtidige features (tænk fremad i arkitekturen)
 9e. Fysiologisk ordbog / glossar

@@ -264,37 +264,37 @@
                     <!-- ═══ GLUKOSE ═══ -->
                     <div class="dbg-group-label">Glukose</div>
                     <div class="dp-row" title="Sandt blodsukker — den reelle værdi i modellen, uden CGM-forsinkelse eller støj">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#glukose" target="_blank">True BG</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#glukose" target="_blank">True BG</a></span>
                         <span class="dp-val" id="dbgTrueBG">--</span><span class="dp-unit">mmol/L</span></div>
                     <div class="dp-row" title="CGM blodsukker — hvad sensoren viser, med ~10 min forsinkelse og tilfældig støj">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#cgm" target="_blank">CGM BG</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#cgm" target="_blank">CGM BG</a></span>
                         <span class="dp-val" id="dbgCgmBG">--</span><span class="dp-unit">mmol/L</span></div>
                     <div class="dp-row" title="Carbs On Board — resterende kulhydrater der endnu ikke er optaget fra tarmen">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#mad" target="_blank">COB</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#mad" target="_blank">COB</a></span>
                         <span class="dp-val" id="dbgCOB">--</span><span class="dp-unit">g</span></div>
                     <div class="dp-row" title="Fedt i tarmen — udløser CCK/GLP-1 der bremser mavetømning (pizza-effekten). Højere = langsommere KH-absorption">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#mad" target="_blank">Tarm-fedt</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#mad" target="_blank">Tarm-fedt</a></span>
                         <span class="dp-val" id="dbgFatInt">--</span><span class="dp-unit">g</span></div>
                     <div class="dp-row" title="Dynamisk τG — mavetømningshastighed. Baseline=40 min, stiger med fedt i tarmen. Højere τG = langsommere absorption">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#mad" target="_blank">τG</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#mad" target="_blank">τG</a></span>
                         <span class="dp-val" id="dbgTauG">40</span><span class="dp-unit">min</span></div>
                     <div class="dp-row" title="Aminosyrer i blodet — fra protein-fordøjelse. Driver glukagon-sekretion → øget leverproduktion (HGP). EC50=8g, Hill n=2">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#mad" target="_blank">AminoAcid</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#mad" target="_blank">AminoAcid</a></span>
                         <span class="dp-val" id="dbgAA">--</span><span class="dp-unit">g</span></div>
                     <div class="dp-row" title="Protein-glukagon — aminosyre-drevet glukagon-stimulering. Adderes til stressMultiplier → øger EGP. Max 0.25 (=25% øget HGP)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#mad" target="_blank">ProtGluc</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#mad" target="_blank">ProtGluc</a></span>
                         <span class="dp-val" id="dbgProtGluc">--</span><span class="dp-unit"></span></div>
                     <div class="dp-row" title="Ketonniveau — stiger ved insulinmangel. Over 3.0 = fare for ketoacidose (DKA)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#ketoner" target="_blank">Ketoner</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#ketoner" target="_blank">Ketoner</a></span>
                         <span class="dp-val" id="dbgKetone">--</span><span class="dp-unit">mmol/L</span></div>
 
                     <!-- ═══ INSULIN ═══ -->
                     <div class="dbg-group-label">Insulin</div>
                     <div class="dp-row" title="Bolus Insulin On Board — resterende aktivt hurtigvirkende insulin fra injektioner">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#insulin" target="_blank">Bolus IOB</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">Bolus IOB</a></span>
                         <span class="dp-val" id="dbgIOB">--</span><span class="dp-unit">E</span></div>
                     <div class="dp-row" title="Basal Insulin On Board — resterende injiceret dosis (uden bioavailability-korrektion)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#insulin" target="_blank">Basal IOB</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">Basal IOB</a></span>
                         <span class="dp-val" id="dbgBasalIOB">--</span><span class="dp-unit">E</span></div>
                     <div class="dp-row" title="Basal flow → plasma: hvor hurtigt basalinsulin leveres til blodet lige nu">
                         <span class="dp-label">Basal flow</span>
@@ -303,37 +303,37 @@
                         <span class="dp-label">Bolus flow</span>
                         <span class="dp-val" id="dbgBolusFlow">--</span><span class="dp-unit">E/t</span></div>
                     <div class="dp-row" title="Subkutant depot — insulin under huden der venter på at blive optaget (Hovorka S1+S2)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#insulin" target="_blank">SubQ depot</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">SubQ depot</a></span>
                         <span class="dp-val" id="dbgSubQ">--</span><span class="dp-unit">E</span></div>
                     <div class="dp-row" title="Plasma-insulin — insulin i blodbanen der aktivt virker på cellerne (Hovorka state[6])">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#insulin" target="_blank">Plasma I</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">Plasma I</a></span>
                         <span class="dp-val" id="dbgPlasmaI">--</span><span class="dp-unit">mU/L</span></div>
 
                     <!-- ═══ HOVORKA-MODEL ═══ -->
                     <div class="dbg-group-label">Hovorka-model</div>
                     <div class="dp-row" title="x1: Insulineffekt på glukosetransport — driver glukose fra plasma ind i perifere væv">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#kernemodellen" target="_blank">x1 (transport)</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#kernemodellen" target="_blank">x1 (transport)</a></span>
                         <span class="dp-val" id="dbgX1">--</span><span class="dp-unit">min⁻¹</span></div>
                     <div class="dp-row" title="x2: Insulineffekt på glukoseforbrug — øger cellernes forbrænding af glukose">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#kernemodellen" target="_blank">x2 (disposal)</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#kernemodellen" target="_blank">x2 (disposal)</a></span>
                         <span class="dp-val" id="dbgX2">--</span><span class="dp-unit">min⁻¹</span></div>
                     <div class="dp-row" title="x3: Insulineffekt på leverens glukoseproduktion — undertrykker EGP">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#kernemodellen" target="_blank">x3 (EGP-sup)</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#kernemodellen" target="_blank">x3 (EGP-sup)</a></span>
                         <span class="dp-val" id="dbgX3">--</span><span class="dp-unit">min⁻¹</span></div>
                     <div class="dp-row" title="Exercise Factor — multiplikator på insulineffekten under motion = 1 + alpha * E2^2">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#motion" target="_blank">ExerciseFac</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#motion" target="_blank">ExerciseFac</a></span>
                         <span class="dp-val" id="dbgExFac">--</span><span class="dp-unit">x</span></div>
                     <div class="dp-row" title="Effektiv ISF — hvor meget 1E insulin saenker BG lige nu = profilISF * ExerciseFac">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#insulin" target="_blank">ISF (eff.)</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">ISF (eff.)</a></span>
                         <span class="dp-val" id="dbgISFeff">--</span><span class="dp-unit">(mmol/L)/E</span></div>
                     <div class="dp-row" title="Simuleret puls — stiger ved motion, falder gradvist efter. Pavirker insulinabsorption">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#motion" target="_blank">Puls</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#motion" target="_blank">Puls</a></span>
                         <span class="dp-val" id="dbgHR">--</span><span class="dp-unit">BPM</span></div>
 
                     <!-- ═══ LEVER & EGP ═══ -->
                     <div class="dbg-group-label">Lever & EGP</div>
                     <div class="dp-row" title="Endogen Glukose Produktion — leverens frigivelse af glukose = EGP_0 * max(0, StressMult - x3)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#stresshormoner" target="_blank">EGP</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stresshormoner" target="_blank">EGP</a></span>
                         <span class="dp-val" id="dbgEGP">--</span><span class="dp-unit">mmol/min</span></div>
                     <div class="dp-row" title="Lever-glykogen — endelig glycogenpool (0-120g). Forbruges af stress-drevet glykogenolyse og motion. Genopfyldes efter mad.">
                         <span class="dp-label">Glykogen</span>
@@ -342,43 +342,43 @@
                         <span class="dp-label">GlyReserve</span>
                         <span class="dp-val" id="dbgGlyReserve">--</span><span class="dp-unit"></span></div>
                     <div class="dp-row" title="Stress-multiplikator — effektiv driver for EGP. Inkl. glycogen-skaleret akut stress + kronisk + dawn.">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#stresshormoner" target="_blank">StressMult</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stresshormoner" target="_blank">StressMult</a></span>
                         <span class="dp-val" id="dbgStressMult">--</span><span class="dp-unit">x</span></div>
 
                     <!-- ═══ STRESSHORMONER ═══ -->
                     <div class="dbg-group-label">Stresshormoner</div>
                     <div class="dp-row" title="Akut stressniveau (adrenalin/glukagon) — stiger ved hypo og hard motion. t1/2 ~60 sim-min">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#stresshormoner" target="_blank">Stress (akut)</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stresshormoner" target="_blank">Stress (akut)</a></span>
                         <span class="dp-val" id="dbgAcute">--</span><span class="dp-unit"></span></div>
                     <div class="dp-row" title="Kronisk stressniveau (kortisol) — stiger ved sygdom og sovnmangel. t1/2 ~12 sim-timer">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#stresshormoner" target="_blank">Stress (kron.)</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stresshormoner" target="_blank">Stress (kron.)</a></span>
                         <span class="dp-val" id="dbgChronic">--</span><span class="dp-unit"></span></div>
                     <div class="dp-row" title="Cirkadisk kortisol — dawn-faenomenet: kortisol-peak om morgenen (04:00-12:00) der haever EGP">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#dawn" target="_blank">Dawn (HGP)</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#dawn" target="_blank">Dawn (HGP)</a></span>
                         <span class="dp-val" id="dbgDawn">--</span><span class="dp-unit"></span></div>
                     <div class="dp-row" title="Cirkadisk ISF-faktor — doegnvariation i insulinfoelsomhed. 0.70 om morgenen (insulin virker 30% daarligere), 1.20 om aftenen (20% bedre)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#dawn" target="_blank">Dawn (ISF)</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#dawn" target="_blank">Dawn (ISF)</a></span>
                         <span class="dp-val" id="dbgCircadianISF">--</span><span class="dp-unit">×</span></div>
                     <div class="dp-row" title="Insulinresistens-faktor — stiger ved kronisk stress (1.0 + chronicStress × 0.5). Hojere = insulin virker daarligere">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#stresshormoner" target="_blank">InsResistans</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stresshormoner" target="_blank">InsResistans</a></span>
                         <span class="dp-val" id="dbgInsResistance">--</span><span class="dp-unit">×</span></div>
 
                     <!-- ═══ KONTRAREGULERING ═══ -->
                     <div class="dbg-group-label">Kontraregulering</div>
                     <div class="dp-row" title="Hypo-belastning — akkumuleret hypo-eksponering (tid × dybde under 3.0). Hoejere = mere tilvaenning">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#haaf" target="_blank">Hypo-bel.</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#haaf" target="_blank">Hypo-bel.</a></span>
                         <span class="dp-val" id="dbgHypoArea">--</span><span class="dp-unit"></span></div>
                     <div class="dp-row" title="Kontraregulering — kroppens evne til at modvirke lavt BG. Falder ved gentagen hypo (hypo-tilvaenning)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#haaf" target="_blank">KontraReg</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#haaf" target="_blank">KontraReg</a></span>
                         <span class="dp-val" id="dbgCounterReg">--</span><span class="dp-unit"></span></div>
                     <div class="dp-row" title="Mistet sovn denne nat — natlige interventioner forstyrrer sovnen og oger insulinresistens">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#sovn" target="_blank">Sovntab</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#sovn" target="_blank">Sovntab</a></span>
                         <span class="dp-val" id="dbgSleep">--</span><span class="dp-unit">timer</span></div>
 
                     <!-- ═══ SCORING ═══ -->
                     <div class="dbg-group-label">Scoring</div>
                     <div class="dp-row" title="Normoglykaemi-points — optjenes naar BG er i malzonen (4-10 mmol/L)">
-                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md#scoring" target="_blank">Points</a></span>
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#scoring" target="_blank">Points</a></span>
                         <span class="dp-val" id="dbgPoints">--</span><span class="dp-unit"></span></div>
                 </div>
             </div>
@@ -803,8 +803,8 @@
           <summary>Baggrund og test</summary>
           <p>Simulatoren er bygget på validerede fysiologiske modeller og videnskabelig litteratur. Vil du vide mere?</p>
           <ul>
-            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/FYSIOLOGI.da.md" target="_blank" style="color: var(--blue);">Fysiologisk model</a> — Hvordan simulatorens motor virker: Hovorka-modellen, insulin, motion, stresshormoner m.m.</li>
-            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/VIDENSKAB.da.md" target="_blank" style="color: var(--blue);">Videnskabelig oversigt</a> — Alle faktorer der påvirker blodsukker ved T1D, baseret på forskning og klinisk erfaring.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTERING.da.md" target="_blank" style="color: var(--blue);">Fysiologisk model</a> — Hvordan simulatorens motor virker: Hovorka-modellen, insulin, motion, stresshormoner m.m.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/BG-VIDENSKAB.da.md" target="_blank" style="color: var(--blue);">Videnskabelig oversigt</a> — Alle faktorer der påvirker blodsukker ved T1D, baseret på forskning og klinisk erfaring.</li>
           </ul>
           <p style="margin-top: 10px;">Modellen valideres løbende med automatiske tests:</p>
           <ul>
@@ -947,8 +947,8 @@
           <summary>Background &amp; Testing</summary>
           <p>The simulator is built on validated physiological models and scientific literature. Want to learn more?</p>
           <ul>
-            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/PHYSIOLOGY.md" target="_blank" style="color: var(--blue);">Physiological model</a> — How the simulator engine works: the Hovorka model, insulin, exercise, stress hormones, etc.</li>
-            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/SCIENCE.md" target="_blank" style="color: var(--blue);">Scientific overview</a> — All factors affecting blood sugar in T1D, based on research and clinical experience.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md" target="_blank" style="color: var(--blue);">Physiological model</a> — How the simulator engine works: the Hovorka model, insulin, exercise, stress hormones, etc.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/BG-SCIENCE.md" target="_blank" style="color: var(--blue);">Scientific overview</a> — All factors affecting blood sugar in T1D, based on research and clinical experience.</li>
           </ul>
           <p style="margin-top: 10px;">The model is continuously validated with automated tests:</p>
           <ul>

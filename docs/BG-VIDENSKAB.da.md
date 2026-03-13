@@ -1,4 +1,4 @@
-<!-- translated-from: SCIENCE.md doc-version: 2026-03-12-v2 -->
+<!-- translated-from: BG-SCIENCE.md doc-version: 2026-03-12-v2 -->
 # Blodsukkerregulering ved Type 1 Diabetes -- En Komplet Vidensoversigt
 
 *Denne guide gennemgår alle kendte faktorer der påvirker blodsukkeret hos personer med type 1 diabetes. Den er skrevet til patienter, pårørende og sundhedspersonale -- med videnskabelig dybde for dem der ønsker det.*

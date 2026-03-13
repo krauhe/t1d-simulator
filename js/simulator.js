@@ -680,7 +680,7 @@ class Simulator {
         // Basis-variation: mean 0.15, std 0.03 (CV ~20%)
         // NOTE: Reduceret fra 0.30 til 0.15 fordi dawn-effekten nu er DELT
         // mellem HGP-stigning (denne kurve) og cirkadisk ISF-reduktion
-        // (circadianISF getter). Se PHYSIOLOGY.md section 8 for begrundelse.
+        // (circadianISF getter). Se MODEL-IMPLEMENTATION.md section 8 for begrundelse.
         let amplitude = Math.max(0.05, Math.min(0.35, this.gaussRand(0.15, 0.03)));
 
         // Dårlig søvn forstærker dawn (+12% per mistet time søvn)
@@ -820,7 +820,7 @@ class Simulator {
     //
     // VIGTIGT: Denne model er bygget på mangelfuld evidens og klinisk
     // erfaring. Bør opdateres hvis bedre kvantitative data bliver
-    // tilgængelige. Se PHYSIOLOGY.md section 8 og SCIENCE.md section 14.
+    // tilgængelige. Se MODEL-IMPLEMENTATION.md section 8 og BG-SCIENCE.md section 14.
     // =========================================================================
     get circadianISF() {
         const t = this.timeInMinutes;
