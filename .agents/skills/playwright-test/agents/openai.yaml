@@ -1,0 +1,7 @@
+interface:
+  display_name: "Playwright Test"
+  short_description: "Test simulatoren i browseren"
+  default_prompt: "Use $playwright-test to test the T1D simulator in the browser and report issues."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dietary fat → FFA-induced insulin resistance (Wolpert 2013) — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Dietary fat &#x2192; FFA-induced insulin resistance (Wolpert 2013)</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="Dietary fat → FFA-induced insulin resistance (Wolpert 2013)">
+    </object>
+  </div>
+  <p class="scope">Dietary fat absorption and the resulting delayed-phase FFA-mediated insulin resistance, based on Wolpert et al. (Wolpert 2013: 60 g fat meal &#x2192; +42 % insulin requirement at 5 h post-meal). Intestinal fat simultaneously drives two outputs: (1) incremental &#x03C4;G via fatDelay, slowing concurrent carbohydrate absorption as fat displaces gut motility; (2) entry into plasma as free fatty acids (ffaBlood, t&#x00BD; &#x2248; 180 min via muscle oxidation and hepatic re-esterification), which activates a Hill-saturation resistance function that divides the effective ISF by up to 1.42. The reduced ISF rescales kb1/kb2/kb3 every simulation tick, so x1/x2/x3 (transport, peripheral disposal, and EGP suppression) all weaken proportionally &#x2014; a single ISF modifier feeds back into all three Hovorka effect channels.</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">fatStomach</td><td class="def">fat mass in stomach compartment (g)</td></tr>
+        <tr><td class="symbol">fatIntestine</td><td class="def">fat mass in small intestine compartment (g)</td></tr>
+        <tr><td class="symbol">ffaBlood</td><td class="def">dietary free-fatty-acid plasma pool (g-equivalent); separate from the lipolysis FFA pool used in ketogenesis</td></tr>
+        <tr><td class="symbol">FFA&#x207F;/(EC50&#x207F;+FFA&#x207F;)</td><td class="def">Hill saturation function for FFA resistance (n = 2, EC50 = 8 g); output range 0&#x2013;1</td></tr>
+        <tr><td class="symbol">ISF/ffaResist</td><td class="def">effective insulin sensitivity factor after FFA attenuation; denominator ffaResist = 1 + FFA_RESIST_MAX&#x00B7;H ranges 1.0&#x2013;1.42</td></tr>
+        <tr><td class="symbol">x1, x2, x3</td><td class="def">Hovorka effect compartments: x1 = transport (Q1&#x2192;Q2), x2 = peripheral disposal, x3 = EGP suppression &#x2014; all attenuated when ISF is reduced</td></tr>
+        <tr><td class="symbol">+ fatDelay</td><td class="def">additive increment to &#x03C4;G (carbohydrate absorption time constant); formula: 18&#x00B7;ln(1 + fatIntestine/10) min</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">F</td><td class="def">fat content of the ingested meal (g); external input</td></tr>
+        <tr><td class="symbol">&#x03C4;FatAbs</td><td class="def">intestinal fat absorption time constant (&#x2248; 150 min)</td></tr>
+        <tr><td class="symbol">fatDelay</td><td class="def">intestinal-fat-driven delay added to &#x03C4;G = 18&#x00B7;ln(1 + fatIntestine/10); proportional to current intestinal fat load</td></tr>
+        <tr><td class="symbol">kb1, kb2, kb3</td><td class="def">Hovorka build-up rate constants for x1/x2/x3 &#x2014; rescaled every tick by the effective ISF modifier</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

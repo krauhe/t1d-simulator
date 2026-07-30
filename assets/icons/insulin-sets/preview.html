@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insulin-ikoner — 8 sæt at vælge mellem</title>
+<style>
+  :root {
+    --bg: #0a1120;
+    --panel: rgba(18, 28, 46, 0.94);
+    --panel-2: rgba(29, 42, 66, 0.9);
+    --line: rgba(141, 177, 230, 0.16);
+    --text: #eef5ff;
+    --muted: #8ea4c7;
+    --blue: #3B82F6;
+    --teal: #14B8A6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top left, rgba(48, 100, 180, 0.18), transparent 28%),
+      radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 24%),
+      linear-gradient(180deg, #0a1120, #070d18 58%, #08101d);
+    padding: 28px;
+    min-height: 100vh;
+  }
+  .page { max-width: 1400px; margin: 0 auto; }
+  h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.02em; }
+  .intro {
+    color: var(--muted);
+    max-width: 820px;
+    line-height: 1.6;
+    margin: 0 0 28px;
+    font-size: 14px;
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin: 0 0 24px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+  .legend i.basal { background: var(--blue); }
+  .legend i.rapid { background: var(--teal); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+  .set {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .set-header h3 { margin: 0 0 6px; font-size: 16px; }
+  .set-header p {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .icon-blocks {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .block {
+    flex: 1;
+    min-width: 240px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+  }
+  .block.dark { background: #0f172a; }
+  .block.light { background: #f1f5f9; }
+  .block-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .block.light .block-label { color: #64748b; }
+  .size-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .size-row:last-child { margin-bottom: 0; }
+  .size-label {
+    font-size: 10px;
+    color: var(--muted);
+    width: 28px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .block.light .size-label { color: #64748b; }
+  .icon-pair {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+  .icon-pair img {
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
+  }
+  .pair-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--line);
+  }
+  .block.light .pair-divider { background: #cbd5e1; }
+  /* Realistisk kontekst-eksempel: viser ikonet sådan som det optræder
+     ved siden af tekst i en knap eller listerække. */
+  .context {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .context-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .context img { width: 16px; height: 16px; }
+  .footer {
+    margin-top: 28px;
+    padding: 16px 20px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .footer strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Insulin-ikoner — 8 sæt at vælge mellem</h1>
+  <p class="intro">
+    Hvert sæt har et basal-ikon (langtidsvirkende, blå) og et rapid-ikon (hurtigvirkende, teal).
+    Forskellen er nu både i farve OG i form, så de kan adskilles på et splitsekund.
+    Ikonerne er vist på både mørk og lys baggrund i tre størrelser: 16px (canvas-marker på grafen),
+    24px (settings-dropdown og kampagne-beskrivelser) og 48px (til inspektion af detaljer).
+  </p>
+  <div class="legend">
+    <span><i class="basal"></i> Basal — langtidsvirkende</span>
+    <span><i class="rapid"></i> Rapid — hurtigvirkende</span>
+  </div>
+
+  <div class="grid">
+    <!-- SÆT 1 -->
+    <div class="set">
+      <div class="set-header">
+        <h3>Sæt 1 — Drop med ur / Drop med lyn</h3>
+        <p>Tæt på din oprindelige idé. Begge er dråbe-formede så insulin-betydningen er klar; basal har et lille ur indlagt (24h-virkning), rapid har et lyn (instant). Højest insulin-genkendelse.</p>
+      </div>
+      <div class="icon-blocks">
+        <div class="block dark">
+          <div class="block-label">Mørk baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set1-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set1-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set1-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set1-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set1-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set1-rapid.svg" width="48" height="48"></div></div>
+        </div>
+        <div class="block light">
+          <div class="block-label">Lys baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set1-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set1-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set1-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set1-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set1-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set1-rapid.svg" width="48" height="48"></div></div>
+        </div>
+      </div>
+      <div class="context">
+        <span class="context-row"><img src="set1-basal.svg"> Basal 12 IE</span>
+        <span class="context-row"><img src="set1-rapid.svg"> Rapid 4 IE</span>
+      </div>
+    </div>
+
+    <!-- SÆT 2 -->
+    <div class="set">
+      <div class="set-header">
+        <h3>Sæt 2 — Timeglas / Flamme</h3>
+        <p>Sand der løber langsomt vs flamme der brænder hurtigt. Stærkest temporal kontrast — to vidt forskellige silhuetter der ikke kan forveksles. Kræver lidt mere kontekst for insulin-betydningen.</p>
+      </div>
+      <div class="icon-blocks">
+        <div class="block dark">
+          <div class="block-label">Mørk baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set2-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set2-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set2-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set2-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set2-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set2-rapid.svg" width="48" height="48"></div></div>
+        </div>
+        <div class="block light">
+          <div class="block-label">Lys baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set2-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set2-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set2-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set2-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set2-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set2-rapid.svg" width="48" height="48"></div></div>
+        </div>
+      </div>
+      <div class="context">
+        <span class="context-row"><img src="set2-basal.svg"> Basal 12 IE</span>
+        <span class="context-row"><img src="set2-rapid.svg"> Rapid 4 IE</span>
+      </div>
+    </div>
+
+    <!-- SÆT 3 -->
+    <div class="set">
+      <div class="set-header">
+        <h3>Sæt 3 — Plateau-kurve / Spike-kurve (PK)</h3>
+        <p>Den faktiske farmakokinetik tegnet i ikonet. Basal har en flad plateau-kurve over tid, rapid har en skarp peak. Mest "lærerigt" — viser hvad insulinet rent faktisk gør i kroppen.</p>
+      </div>
+      <div class="icon-blocks">
+        <div class="block dark">
+          <div class="block-label">Mørk baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set3-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set3-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set3-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set3-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set3-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set3-rapid.svg" width="48" height="48"></div></div>
+        </div>
+        <div class="block light">
+          <div class="block-label">Lys baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set3-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set3-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set3-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set3-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set3-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set3-rapid.svg" width="48" height="48"></div></div>
+        </div>
+      </div>
+      <div class="context">
+        <span class="context-row"><img src="set3-basal.svg"> Basal 12 IE</span>
+        <span class="context-row"><img src="set3-rapid.svg"> Rapid 4 IE</span>
+      </div>
+    </div>
+
+    <!-- SÆT 4 -->
+    <div class="set">
+      <div class="set-header">
+        <h3>Sæt 4 — Måne / Sol</h3>
+        <p>Måne = nat-dækning og lang virkning. Sol med stråler = øjeblikkelig effekt. Stærke kulturelle symboler men mister insulin-tilhørighed uden kontekst.</p>
+      </div>
+      <div class="icon-blocks">
+        <div class="block dark">
+          <div class="block-label">Mørk baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set4-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set4-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set4-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set4-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set4-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set4-rapid.svg" width="48" height="48"></div></div>
+        </div>
+        <div class="block light">
+          <div class="block-label">Lys baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set4-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set4-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set4-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set4-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set4-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set4-rapid.svg" width="48" height="48"></div></div>
+        </div>
+      </div>
+      <div class="context">
+        <span class="context-row"><img src="set4-basal.svg"> Basal 12 IE</span>
+        <span class="context-row"><img src="set4-rapid.svg"> Rapid 4 IE</span>
+      </div>
+    </div>
+
+    <!-- SÆT 5 -->
+    <div class="set">
+      <div class="set-header">
+        <h3>Sæt 5 — Skildpadde / Hare</h3>
+        <p>Aesops fabel — universal symbol for langsom vs hurtig. Mest charmerende og børnevenlig, men kompleks geometri kan blive sløret ved 16px. Bedst ved 24px+.</p>
+      </div>
+      <div class="icon-blocks">
+        <div class="block dark">
+          <div class="block-label">Mørk baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set5-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set5-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set5-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set5-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set5-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set5-rapid.svg" width="48" height="48"></div></div>
+        </div>
+        <div class="block light">
+          <div class="block-label">Lys baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set5-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set5-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set5-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set5-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set5-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set5-rapid.svg" width="48" height="48"></div></div>
+        </div>
+      </div>
+      <div class="context">
+        <span class="context-row"><img src="set5-basal.svg"> Basal 12 IE</span>
+        <span class="context-row"><img src="set5-rapid.svg"> Rapid 4 IE</span>
+      </div>
+    </div>
+
+    <!-- SÆT 6 -->
+    <div class="set">
+      <div class="set-header">
+        <h3>Sæt 6 — Batteri / Lyn</h3>
+        <p>Energi-metafor: fuldt batteri = vedvarende reserve, lyn = øjeblikkelig udladning. Modernt og rent. Batteri-formen er bredere end kvadratisk og kan virke "ikke-medicinsk".</p>
+      </div>
+      <div class="icon-blocks">
+        <div class="block dark">
+          <div class="block-label">Mørk baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set6-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set6-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set6-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set6-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set6-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set6-rapid.svg" width="48" height="48"></div></div>
+        </div>
+        <div class="block light">
+          <div class="block-label">Lys baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set6-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set6-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set6-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set6-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set6-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set6-rapid.svg" width="48" height="48"></div></div>
+        </div>
+      </div>
+      <div class="context">
+        <span class="context-row"><img src="set6-basal.svg"> Basal 12 IE</span>
+        <span class="context-row"><img src="set6-rapid.svg"> Rapid 4 IE</span>
+      </div>
+    </div>
+
+    <!-- SÆT 7 -->
+    <div class="set">
+      <div class="set-header">
+        <h3>Sæt 7 — Drop-kæde / Splash-stænk</h3>
+        <p>Visualiserer release-mønstret: tre drops der falder langsomt vs ét stort drop med stænk i alle retninger. Begge er klart "væske" så insulin-tilhørighed bevares.</p>
+      </div>
+      <div class="icon-blocks">
+        <div class="block dark">
+          <div class="block-label">Mørk baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set7-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set7-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set7-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set7-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set7-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set7-rapid.svg" width="48" height="48"></div></div>
+        </div>
+        <div class="block light">
+          <div class="block-label">Lys baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set7-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set7-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set7-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set7-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set7-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set7-rapid.svg" width="48" height="48"></div></div>
+        </div>
+      </div>
+      <div class="context">
+        <span class="context-row"><img src="set7-basal.svg"> Basal 12 IE</span>
+        <span class="context-row"><img src="set7-rapid.svg"> Rapid 4 IE</span>
+      </div>
+    </div>
+
+    <!-- SÆT 8 -->
+    <div class="set">
+      <div class="set-header">
+        <h3>Sæt 8 — Lang pen / Kompakt sprøjte med fart-pil</h3>
+        <p>Forskellige injektions-former: en lang horisontal pen (langtidsvirkende dosering) vs en kort sprøjte med en bevægelses-pil under (hurtig injektion). Mest "klinisk" og virkelighedsnær.</p>
+      </div>
+      <div class="icon-blocks">
+        <div class="block dark">
+          <div class="block-label">Mørk baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set8-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set8-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set8-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set8-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set8-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set8-rapid.svg" width="48" height="48"></div></div>
+        </div>
+        <div class="block light">
+          <div class="block-label">Lys baggrund</div>
+          <div class="size-row"><span class="size-label">16</span><div class="icon-pair"><img src="set8-basal.svg" width="16" height="16"><div class="pair-divider"></div><img src="set8-rapid.svg" width="16" height="16"></div></div>
+          <div class="size-row"><span class="size-label">24</span><div class="icon-pair"><img src="set8-basal.svg" width="24" height="24"><div class="pair-divider"></div><img src="set8-rapid.svg" width="24" height="24"></div></div>
+          <div class="size-row"><span class="size-label">48</span><div class="icon-pair"><img src="set8-basal.svg" width="48" height="48"><div class="pair-divider"></div><img src="set8-rapid.svg" width="48" height="48"></div></div>
+        </div>
+      </div>
+      <div class="context">
+        <span class="context-row"><img src="set8-basal.svg"> Basal 12 IE</span>
+        <span class="context-row"><img src="set8-rapid.svg"> Rapid 4 IE</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <p><strong>Brug:</strong> Når du har valgt et sæt, sig nummeret ("Jeg vil have sæt 3") så indsætter jeg det i simulatoren ved at erstatte <code>syringe-blue.svg</code> og <code>syringe-teal.svg</code>. De andre sæt kan jeg slette eller beholde i denne mappe som arkiv.</p>
+    <p><strong>Kontekster ikonet bruges i:</strong></p>
+    <ul style="margin: 4px 0; padding-left: 20px; line-height: 1.8;">
+      <li>Canvas-grafen — markører ved injektions-tidspunkter (typisk 16-20px)</li>
+      <li>Settings-dropdown — ved siden af "Insulinlinje"-toggle (16px)</li>
+      <li>Kampagne-level beskrivelser — som inline-ikon med tekst (~20px)</li>
+      <li>Insulin-popup når man klikker injektion — kunne også bruge 24-32px versioner</li>
+    </ul>
+    <p><strong>Glukagon</strong> (det røde sæt) tager vi senere — samme designprincip vil gælde der: form skal adskille sig fra både basal og rapid.</p>
+  </div>
+</div>
+</body>
+</html>

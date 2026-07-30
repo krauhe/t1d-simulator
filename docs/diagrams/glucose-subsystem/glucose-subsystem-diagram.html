@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Glucose subsystem — Hovorka 2004 two-compartment model — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Glucose subsystem — Hovorka 2004 two-compartment model</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="Glucose subsystem — Hovorka 2004 two-compartment model">
+    </object>
+  </div>
+  <p class="scope">Two-compartment glucose distribution model from Hovorka et al. (<em>Physiol Meas</em> 25:905-920, 2004), extended with one contraction-mediated uptake flux. Plasma glucose Q1 receives gut absorption U_G and hepatic glucose production EGP, exchanges with peripheral Q2 through x1-driven transport and passive k12 backflow, and is cleared by F01c and renal excretion F_R. Q2 loses glucose through x2-driven disposal and the adapted Resalat flux β·E1; delayed exercise sensitivity changes the upstream EC50 of x1 and x2 rather than adding another multiplier here.</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">Q1</td><td class="def">plasma glucose (mmol); blood glucose BG = Q1 / V_G</td></tr>
+        <tr><td class="symbol">Q2</td><td class="def">peripheral (intracellular) glucose (mmol) — muscle and adipose tissue</td></tr>
+        <tr><td class="symbol">x1</td><td class="def">insulin effect on Q1→Q2 transport (dimensionless, driven by plasma insulin I)</td></tr>
+        <tr><td class="symbol">x2</td><td class="def">insulin effect on Q2 disposal (dimensionless, driven by plasma insulin I)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">U_G</td><td class="def">glucose appearance from gut absorption (mmol/min); sourced from gut two-compartment D1→D2 cascade</td></tr>
+        <tr><td class="symbol">EGP</td><td class="def">endogenous (hepatic) glucose production (mmol/min) = EGP₀ · max(0, stressMultiplier − x3)</td></tr>
+        <tr><td class="symbol">F01c</td><td class="def">insulin-independent glucose uptake (mmol/min) — obligate brain use plus RBC; approximately 0.0097 × weight</td></tr>
+        <tr><td class="symbol">F_R</td><td class="def">renal glucose excretion (mmol/min); active only when BG exceeds the renal threshold (~9 mmol/L)</td></tr>
+        <tr><td class="symbol">k12</td><td class="def">rate constant for Q2→Q1 backflow (min⁻¹)</td></tr>
+        <tr><td class="symbol">β·E1</td><td class="def">contraction-mediated uptake (mmol/min); E1 already contains normalized heart-rate and activity-type input</td></tr>
+        <tr><td class="symbol">V_G</td><td class="def">glucose distribution volume (L) ≈ 0.16 × weight; converts Q1 from mmol to mmol/L for BG display</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

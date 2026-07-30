@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>Exercise-timing test — BG=9, 1U insulin, 10 min hård cardio</title>
+<style>
+  :root { --bg:#0f1117; --card:#1a1d27; --border:#2a2d3a; --text:#e4e4e7; --muted:#8b8d97; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 24px; line-height: 1.5; }
+  h1 { font-size: 20px; margin-bottom: 6px; }
+  p.desc { color: var(--muted); margin-bottom: 16px; max-width: 900px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  canvas { width: 100%; height: 460px; display: block; border-radius: 8px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 13px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-color { width: 24px; height: 3px; border-radius: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+  th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; }
+  #status { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<h1>Exercise-timing test</h1>
+<p class="desc">
+  Start kl. 14:00 med BG = 9,0 mmol/L og 1 E hurtigvirkende insulin.
+  Derefter 10 minutter hård cardio motion (cardio, "Høj" intensitet) ved forskellige tidspunkter.
+  BG følges i 6 timer efter den sidste motion slutter.
+</p>
+<div id="status">Initialiserer model…</div>
+<div class="card">
+  <canvas id="chart"></canvas>
+  <div class="legend" id="legend"></div>
+  <div id="results"></div>
+</div>
+
+<script>
+// =========================================================================
+// MOCK GLOBALS + DOM — minimalt miljø så simulator.js kan loades i testen
+// =========================================================================
+function mockElement() {
+  return {
+    textContent: '', innerHTML: '', value: '60', disabled: false,
+    style: { display: 'none', setProperty: () => {}, removeProperty: () => {} },
+    classList: { add: () => {}, remove: () => {}, toggle: () => {}, contains: () => false },
+    addEventListener: () => {}, removeEventListener: () => {},
+    getBoundingClientRect: () => ({ width: 800, height: 400 }),
+    querySelector: () => mockElement(), querySelectorAll: () => [],
+    closest: () => null, appendChild: () => {}, removeChild: () => {},
+    remove: () => {}, setAttribute: () => {}, getAttribute: () => null,
+    children: [], parentElement: null
+  };
+}
+const domNames = [
+  'startButton','resetButton','helpButton','pauseButton','speedSelector',
+  'dayDisplay','timeDisplay','cgmValueDisplayGraph','normoPointsDisplay',
+  'normoPointsWeighting','muteButton','carbsSlider','carbsValue',
+  'proteinSlider','proteinValue','fatSlider','fatValue','giveFoodButton',
+  'foodInfoDisplay','foodKcalDisplay','dextroButton',
+  'pizzaButton','pastaButton','cakeButton','iceButton','chocolateButton',
+  'breadButton','cerealButton','meatButton','cheeseButton','avocadoButton',
+  'candyButton','juiceButton','saladButton','fastInsulinSlider','fastInsulinValue',
+  'giveFastInsulinButton','longInsulinSlider','longInsulinValue',
+  'giveLongInsulinButton','motionIntensitySelect','motionDurationSelect',
+  'startMotionButton','motionKcalDisplay','fingerprickButton','ketoneTestButton',
+  'glucagonButton','debugTrueBgCheckbox','iobDisplay','cobDisplay',
+  'bgGraphCanvas','graphCtx','weightChangeSlider','weightChangeValue',
+  'steepDropWarningDiv','weightDisplay','icrDisplay','isfDisplay',
+  'carbEffectDisplay','basalDoseDisplay','restingKcalDisplay',
+  'tir24hDisplay','titr24hDisplay','stdBg24hDisplay','avgCgm24hDisplay',
+  'tir14dDisplay','titr14dDisplay','stdBg14dDisplay','avgCgm14dDisplay',
+  'fastInsulin24hDisplay','fastInsulin7dDisplay',
+  'basalInsulin24hDisplay','basalInsulin7dDisplay',
+  'kcal24hDisplay','kcal7dDisplay',
+  'kcalBalance24hDisplay','kcalBalance7dDisplay',
+  'pointsBadge','lastBolusTimerDisplay',
+  'statsTirValue','statsAvgBgValue','statsWeightValue'
+];
+domNames.forEach(n => { window[n] = mockElement(); });
+window.isPaused = false;
+window.cgmDataPoints = [];
+window.trueBgPoints = [];
+window.physiologyDataPoints = [];
+window.MAX_GRAPH_POINTS_PER_DAY = 288;
+window.KCAL_PER_KG_WEIGHT = 7700;
+window.RESTING_KCAL_PER_DAY = 2200;
+window.RESTING_KCAL_PER_MINUTE = 2200 / (24*60);
+window.logEvent = () => {};
+window.showPopup = () => {};
+window.showGameOverPopup = () => {};
+window.playSound = () => {};
+window.updateUI = () => {};
+window.drawGraph = () => {};
+window.updateSpeedStepperUI = () => {};
+window.appSettings = { language: 'da' };
+window.I18N = { da: {}, en: {} };
+window.t = (key, vars) => { let s=key; if(vars) Object.entries(vars).forEach(([k,v])=>{ s=s.replaceAll(`{${k}}`,v); }); return s; };
+window.tInsulinUnit = () => 'E';
+</script>
+<script src="../js/hovorka.js"></script>
+<script src="../js/foods.js"></script>
+<script src="../js/simulator.js"></script>
+<script>
+// Deaktivér game-over (ellers stopper update() hvis BG ryger lavt)
+Simulator.prototype.gameOver = function() {};
+
+function createSim(profile = {}) {
+  window.cgmDataPoints = []; window.trueBgPoints = []; window.physiologyDataPoints = [];
+  const origGauss = Simulator.prototype.gaussRand;
+  Simulator.prototype.gaussRand = function(mean){ return mean; };
+  const sim = new Simulator(profile);
+  Simulator.prototype.gaussRand = origGauss;
+  sim._dawnAmplitude = 0.15;
+  sim.cgmSystemicPeriod = 6*60;
+  sim.cgmSystemicAmplitude = 0.5;
+  sim.cgmNoiseScale = 0.0325;
+  sim.gaussRand = function(mean){ return mean; };
+  return sim;
+}
+
+function advanceMin(sim, minutes) {
+  // Kør i 1-min steps for præcis timing af motion-start
+  const target = sim.totalSimMinutes + minutes;
+  while (sim.totalSimMinutes < target - 0.01) {
+    const step = Math.min(1.0, target - sim.totalSimMinutes);
+    sim.update(step);
+  }
+}
+
+function clampBG(sim, targetBG) {
+  const currentBG = sim.hovorka.glucoseConcentration;
+  if (Math.abs(currentBG - targetBG) < 0.1) return;
+  const ratio = targetBG / currentBG;
+  sim.hovorka.state[4] *= ratio;
+  sim.hovorka.state[5] *= ratio;
+  for (let i = 0; i < 15; i++) sim.update(1.0);
+}
+
+// Start-tid for insulin-interventionen: 14:00
+const START_MIN = 14 * 60;
+// Scenarier: motion-offset fra insulin (minutter). null = ingen motion.
+const SCENARIOS = [
+  { name: 'Ingen motion (kontrol)',           offset: null, color: '#6b7280', dash: [6,4] },
+  { name: 'Motion 10 min hård efter 1 time',   offset: 60,   color: '#3b82f6' },
+  { name: 'Motion 10 min hård efter 1½ time',  offset: 90,   color: '#f59e0b' },
+  { name: 'Motion 10 min hård efter 2 timer',  offset: 120,  color: '#ef4444' }
+];
+// Mål 6 timer efter sidste motion slutter (2h offset + 5 min motion + 6h måling)
+const MAX_OFFSET = 120;
+const EXERCISE_MIN = 10;
+const MEASURE_AFTER_LAST = 6 * 60;
+const TOTAL_MIN = MAX_OFFSET + EXERCISE_MIN + MEASURE_AFTER_LAST; // fra insulin-tidspunkt
+
+const yieldToUI = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+
+async function runScenario(scn) {
+  const sim = createSim({ weight: 70, isf: 3.0, icr: 10 });
+  let lastYield = performance.now();
+  const maybeYield = async () => {
+    if (performance.now() - lastYield > 150) { await yieldToUI(); lastYield = performance.now(); }
+  };
+
+  // Deaktivér døgnrytme (dawn-effekt + circadian ISF-variation) — vi vil
+  // have ren steady-state uden døgn-drift.
+  sim._campaignDisableDawn = true;
+  sim._dawnAmplitude = 0;
+
+  // Etabler ægte steady-state ved BG=9.0: binær-søgning på basal-rate
+  // så dBG/dt ≈ 0 UDEN drift. Bruger Hovorka-modellens indbyggede funktion.
+  const initialRate = sim.hovorka.basalToRate(sim.basalDose);
+  sim.hovorka.initializeSteadyState(initialRate, 9.0);
+  const ssBasalRate = sim.hovorka.steadyStateBasalRate;
+  // Ryd simulator-lagets insulin/mad-depoter (konstruktøren har lagt 16 t
+  // gammel basal-puls ind som ellers ville overlejre vores kalibrerede rate).
+  sim.activeLongInsulin = [];
+  sim.activeFastInsulin = [];
+  sim.activeFood = [];
+  sim.iob = 0; sim.cob = 0;
+  sim.totalSimMinutes = START_MIN;
+
+  // Patch hovorka.step så basalInsRate låses til steady-state-værdien FØR
+  // hver integration. simulator.update() overskriver basalInsRate fra
+  // activeLongInsulin (tom liste → 0) LIGE FØR hovorka.step kaldes — så den
+  // eneste måde at garantere korrekt basal er at clampe inde i step selv.
+  const origStep = sim.hovorka.step.bind(sim.hovorka);
+  sim.hovorka.step = function(dt) {
+    sim.hovorka.basalInsRate = ssBasalRate;
+    return origStep(dt);
+  };
+
+  // Kør 6 t observations-baseline INDEN insulin for at bekræfte stabilitet
+  const BASELINE_MIN = 6 * 60;
+  const baselineEnd = sim.totalSimMinutes + BASELINE_MIN;
+  const baseISF = sim.ISF;
+  const sensMult = () => sim.currentISF / baseISF;
+  const glutActive = () => (sim.activeAktivitet && sim.activeAktivitet.typeDef &&
+    sim.activeAktivitet.typeDef.contractionUptakeScaling) || 0;
+  const data = [{ t: -BASELINE_MIN, bg: sim.trueBG, sens: sensMult(), glut: glutActive() }];
+  let lastSample = -BASELINE_MIN;
+  while (sim.totalSimMinutes < baselineEnd - 0.01) {
+    sim.update(5.0);
+    const rel = sim.totalSimMinutes - baselineEnd; // negativ før insulin
+    if (rel - lastSample >= 5 - 0.01) {
+      data.push({ t: rel, bg: sim.trueBG, sens: sensMult(), glut: glutActive() });
+      lastSample = rel;
+    }
+    await maybeYield();
+  }
+
+  sim.addFastInsulin(1);
+  const t0 = sim.totalSimMinutes;
+
+  data.push({ t: 0, bg: sim.trueBG });
+  let exerciseStarted = false;
+  const sampleEvery = 5;
+  lastSample = 0;
+
+  while (sim.totalSimMinutes - t0 < TOTAL_MIN - 0.01) {
+    const rel = sim.totalSimMinutes - t0;
+    // Brug 1-min step fra 1 min før motion-start til 5 min efter motion-slut,
+    // ellers 5-min steps for at holde simulationen hurtig.
+    let step;
+    if (scn.offset !== null) {
+      const motionEnd = scn.offset + EXERCISE_MIN;
+      const nearMotion = rel >= scn.offset - 1.01 && rel < motionEnd + 5.01;
+      step = nearMotion ? 1.0 : 5.0;
+    } else {
+      step = 5.0;
+    }
+    step = Math.min(step, TOTAL_MIN - rel);
+    // Trigger motion ved offset (tjek FØR vi tager skridtet)
+    if (!exerciseStarted && scn.offset !== null && rel >= scn.offset - 0.01) {
+      sim.startMotion('Høj', String(EXERCISE_MIN));
+      exerciseStarted = true;
+    }
+    sim.update(step);
+    const relNow = sim.totalSimMinutes - t0;
+    if (relNow - lastSample >= sampleEvery - 0.01) {
+      data.push({ t: relNow, bg: sim.trueBG, sens: sensMult(), glut: glutActive() });
+      lastSample = relNow;
+    }
+    await maybeYield();
+  }
+  return data;
+}
+
+// ====== Chart ======
+function drawChart(canvas, series) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+  const pad = { top: 16, right: 20, bottom: 40, left: 52 };
+  const plotW = W - pad.left - pad.right, plotH = H - pad.top - pad.bottom;
+
+  const yMin = 0;
+  let yMax = 12;
+  series.forEach(s => s.data.forEach(d => { if (d.bg > yMax - 1) yMax = Math.ceil(d.bg) + 1; }));
+  const xMin = -6 * 60, xMax = TOTAL_MIN;
+  const toX = t => pad.left + (t - xMin) / (xMax - xMin) * plotW;
+  const toY = bg => pad.top + (1 - (bg - yMin) / (yMax - yMin)) * plotH;
+
+  ctx.fillStyle = '#12141c'; ctx.fillRect(0, 0, W, H);
+  // mål-zone 4-10
+  ctx.fillStyle = 'rgba(34,197,94,0.08)';
+  ctx.fillRect(pad.left, toY(10), plotW, toY(4) - toY(10));
+  // hypo-zone < 4
+  ctx.fillStyle = 'rgba(239,68,68,0.08)';
+  ctx.fillRect(pad.left, toY(4), plotW, toY(0) - toY(4));
+
+  // grid
+  ctx.strokeStyle = 'rgba(148,163,184,0.3)'; ctx.lineWidth = 0.8; ctx.setLineDash([4,4]);
+  for (let y = 0; y <= yMax; y += 2) { ctx.beginPath(); ctx.moveTo(pad.left, toY(y)); ctx.lineTo(W-pad.right, toY(y)); ctx.stroke(); }
+  for (let t = xMin; t <= xMax; t += 60) { ctx.beginPath(); ctx.moveTo(toX(t), pad.top); ctx.lineTo(toX(t), pad.top+plotH); ctx.stroke(); }
+  ctx.setLineDash([]);
+
+  // akser
+  ctx.strokeStyle = 'rgba(148,163,184,0.35)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top+plotH); ctx.lineTo(pad.left+plotW, pad.top+plotH); ctx.stroke();
+
+  // labels
+  ctx.fillStyle = '#a1a1aa'; ctx.font = '11px Inter, sans-serif';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let y = 0; y <= yMax; y += 2) ctx.fillText(y.toString(), pad.left-8, toY(y));
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let t = xMin; t <= xMax; t += 60) ctx.fillText(`${t/60>0?'+':''}${t/60}t`, toX(t), pad.top+plotH+6);
+  // Markér insulin-tidspunktet (t=0) med en tydeligere linje
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(toX(0), pad.top); ctx.lineTo(toX(0), pad.top+plotH); ctx.stroke();
+
+  // motion-markører
+  [60, 90, 120].forEach((off, i) => {
+    const color = ['#3b82f6','#f59e0b','#ef4444'][i];
+    ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.setLineDash([2,3]);
+    ctx.beginPath(); ctx.moveTo(toX(off), pad.top); ctx.lineTo(toX(off), pad.top+plotH); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // akse-titel
+  ctx.fillStyle = '#a1a1aa'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('Timer efter 1 E insulin (BG start = 9,0)', pad.left+plotW/2, H-18);
+
+  // kurver (BG, venstre akse)
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  series.forEach(s => {
+    ctx.strokeStyle = s.color; ctx.lineWidth = 2.2;
+    ctx.setLineDash(s.dash || []);
+    ctx.beginPath();
+    s.data.forEach((d, j) => { const x = toX(d.t), y = toY(d.bg); j===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+
+  // HØJRE Y-AKSE: insulinfølsomheds-multiplikator (sens) — auto-skaleret fra data
+  let sensMaxObs = 1.0;
+  series.forEach(s => s.data.forEach(d => {
+    if (d.sens !== undefined && d.sens > sensMaxObs) sensMaxObs = d.sens;
+  }));
+  // Pænt afrundet top: nærmeste 0.5 over observeret max, min 1.5
+  const r2Min = 1.0;
+  const r2Max = Math.max(1.5, Math.ceil((sensMaxObs + 0.05) * 2) / 2);
+  const r2Step = r2Max - r2Min <= 1.0 ? 0.2 : (r2Max - r2Min <= 2.0 ? 0.5 : 1.0);
+  const toY2 = v => pad.top + (1 - (v - r2Min) / (r2Max - r2Min)) * plotH;
+  // højre akse-linje
+  ctx.strokeStyle = 'rgba(148,163,184,0.35)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left+plotW, pad.top); ctx.lineTo(pad.left+plotW, pad.top+plotH); ctx.stroke();
+  // labels
+  ctx.fillStyle = '#a1a1aa'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '11px Inter, sans-serif';
+  for (let v = r2Min; v <= r2Max + 0.001; v += r2Step) {
+    ctx.fillText(v.toFixed(1)+'×', pad.left+plotW+6, toY2(v));
+  }
+  // højre akse-titel
+  ctx.save(); ctx.translate(W-6, pad.top+plotH/2); ctx.rotate(Math.PI/2);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('Insulinfølsomhed × baseline', 0, 0);
+  ctx.restore();
+  // sens-kurver (stiplet, samme farve som BG-kurven)
+  series.forEach(s => {
+    if (!s.data[0] || s.data[0].sens === undefined) return;
+    ctx.strokeStyle = s.color; ctx.lineWidth = 1.2; ctx.setLineDash([3,3]); ctx.globalAlpha = 0.8;
+    ctx.beginPath();
+    s.data.forEach((d, j) => { const x = toX(d.t), y = toY2(d.sens); j===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1.0;
+  });
+  // GLUT4-aktivitet: vis som små bars under motion-vinduet
+  series.forEach(s => {
+    if (!s.data[0] || s.data[0].glut === undefined) return;
+    ctx.fillStyle = s.color; ctx.globalAlpha = 0.25;
+    s.data.forEach(d => {
+      if (d.glut > 0) {
+        const x = toX(d.t);
+        ctx.fillRect(x-2, pad.top+plotH-8, 4, 6);
+      }
+    });
+    ctx.globalAlpha = 1.0;
+  });
+}
+
+function bgStats(data) {
+  const bgs = data.map(d => d.bg);
+  const nadir = Math.min(...bgs);
+  const end = bgs[bgs.length-1];
+  const nadirTime = data[bgs.indexOf(nadir)].t;
+  return { nadir, nadirTime, end };
+}
+
+window.addEventListener('error', e => {
+  const s = document.getElementById('status');
+  if (s) s.innerHTML = `<span style="color:#ef4444">Fejl: ${e.message} (${e.filename?.split('/').pop()}:${e.lineno})</span>`;
+});
+(async function main() {
+  const status = document.getElementById('status');
+  const results = [];
+  try {
+  for (const scn of SCENARIOS) {
+    status.textContent = `Kører: ${scn.name}…`;
+    await new Promise(r => requestAnimationFrame(r));
+    const data = await runScenario(scn);
+    results.push({ ...scn, data });
+  }
+  status.textContent = `Færdig — ${results.length} scenarier kørt.`;
+  const canvas = document.getElementById('chart');
+  drawChart(canvas, results.map(r => ({ label: r.name, data: r.data, color: r.color, dash: r.dash })));
+  document.getElementById('legend').innerHTML = results.map(r =>
+    `<div class="legend-item"><div class="legend-color" style="background:${r.color}"></div>${r.name}</div>`
+  ).join('');
+  const rows = results.map(r => {
+    const s = bgStats(r.data);
+    return `<tr><td>${r.name}</td><td>${s.nadir.toFixed(1)}</td><td>${(s.nadirTime/60).toFixed(2)} t</td><td>${s.end.toFixed(1)}</td></tr>`;
+  }).join('');
+  document.getElementById('results').innerHTML =
+    `<table><tr><th>Scenarie</th><th>Laveste BG</th><th>Tid til laveste</th><th>BG ved slut (6t)</th></tr>${rows}</table>`;
+  } catch (err) {
+    status.innerHTML = `<span style="color:#ef4444">Fejl under kørsel: ${err.message}<br><pre style="font-size:11px;white-space:pre-wrap">${err.stack}</pre></span>`;
+  }
+})();
+</script>
+</body>
+</html>

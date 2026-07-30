@@ -1,0 +1,696 @@
+﻿LEVEL-SKABELONER - CAMPAIGN MODE
+Genereret: 2026-04-18
+
+STATUS: Historisk planmateriale - ikke kilde til aktuel spillertekst.
+De aktive kilder er js/levels.js, js/i18n.js og js/guide-data.js.
+Ny tekst skal følge docs/INTENDED-PURPOSE.md og handle om faste, fiktive karakterer.
+
+Formål:   skitsér de første 8 kampagne-baner. Bane 1-3 findes allerede i
+          js/levels.js (skabelonen viser deres nuværende indhold som reference).
+          Bane 4-8 er nye ideer der skal fyldes ud over tid - foreslåede temaer
+          er sat i toppen af hver bane som udgangspunkt, men kan ændres.
+
+Workflow: fyld felter ud her efterhånden som ideer kommer. Når en bane
+          er klar, oversættes den til js/levels.js i det rigtige format.
+
+Format-regler (samme som TODO.txt og tips-templates.txt):
+  - UTF-8 med BOM
+  - dansk tegnsætning (æ, ø, å) - ALDRIG ae/oe/aa
+  - ASCII-alternativer: '-' for tankestreg, 'x' for gange
+  - ingen emoji, em-dash, eller unicode-specialtegn
+
+
+===============================================================================
+SEKTIONER PER BANE
+===============================================================================
+
+Hver bane har 4 sektioner, plus de tekniske attributter:
+
+1. LÆRINGSMÅL  (INTERN INFO - ikke i kode)
+   1-3 korte punkter: "Hvad skal spilleren forstå efter banen?"
+   Bruges som rettesnor for level-design, intro-tekst og tips.
+   Kommer ALDRIG i UI - kun design-dokumentation.
+
+2. INTRO-POPUP  (vises ved bane-start, pauser spillet)
+   Tekniske felter i koden:
+     titleKey         : i18n-nøgle (campaign.levelN.title)
+     descriptionKey   : i18n-nøgle (campaign.levelN.desc) - kort introduktion
+     intro.whatHappensKey  : i18n-nøgle (campaign.levelN.whatHappens)
+                             prosa: "Hvad sker der i banen?"
+     intro.preStartTipsKey : i18n-nøgle (campaign.levelN.preStartTips)
+                             prosa: "Tips inden du starter"
+   I template'en udfyldes:
+     Beskrivelse       : (= descriptionKey indhold)
+     Hvad sker der?    : (= whatHappensKey indhold)
+     Tips inden start  : (= preStartTipsKey indhold)
+
+3. ATTRIBUTTER  (alle tekniske felter fra js/levels.js)
+   Se ATTRIBUT-REFERENCE nedenfor.
+
+4. TIPS  (samlet liste - vises under spil)
+   Per tip:
+     id              : unik streng
+     oneShot         : true  = vises KUN første gang (sætter permanent flag)
+                       false = vises gentaget med cooldown
+     triggerType     : levelStart | afterAction | bgAbove | bgBelow | time |
+                       panelOpen | iobAbove | actionCount | eventTriggered
+     triggerValue    : tærskel (fx 4.0 for bgBelow, 480 for time-minutter)
+     cooldownMinutes : kun for oneShot=false (default 60)
+     condition       : noRecentBolus | noBasalGiven | noFoodGiven | iobStacking
+     timeWindow      : { startHour, endHour } - filter ovenpå trigger
+     afterAction     : food | fastInsulin | basalInsulin | exercise (for trigger)
+     highlightElement: CSS-selector (typisk for oneShot=true)
+     textKey         : i18n-nøgle
+
+
+===============================================================================
+ATTRIBUT-REFERENCE (alle felter fra js/levels.js)
+===============================================================================
+
+  id                  : unik streng, fx 'dag4_icr' (bruges til localStorage)
+  number              : bane-nummer, vises i UI
+  titleKey            : i18n-nøgle (campaign.levelN.title)
+  descriptionKey      : i18n-nøgle (campaign.levelN.desc)
+
+  startTimeMinutes    : sim-starttid i minutter (0-1440), fx 420 = kl. 07:00
+  durationMinutes     : varighed (1440 = 1 døgn, 4320 = 3 døgn)
+  startBG             : start-blodsukker i mmol/L
+
+  intro:
+    whatHappensKey    : i18n-nøgle (campaign.levelN.whatHappens)
+    preStartTipsKey   : i18n-nøgle (campaign.levelN.preStartTips)
+
+  physics:
+    disableWeightTracking : true = ingen game over ved kalorieunderskud
+    disableDawnEffect     : true = ingen cirkadisk kortisol (flad morgen)
+    disableKetones        : true = ingen keton-produktion (slukker DKA)
+    basalPreInjected      : true = basal allerede givet ved start
+
+  enabledActions:
+    food          : true/false  - mad-panel tilgængeligt
+    fastInsulin   : true/false  - bolus-panel tilgængeligt
+    basalInsulin  : true/false  - basal-panel tilgængeligt
+    exercise      : true/false  - motion-panel tilgængeligt
+    kit           : true/false  - nødhjælps-kit (sukker, glukagon)
+
+  scheduledEvents     : array af automatiske hændelser
+    type: 'autoFood'
+    timeMinutes: sim-tidspunkt
+    + makro-felter (carbs, protein, fat, weight, carbType, icon)
+
+  markers             : visuelle markører på grafen
+    type: 'action'    - noget spilleren skal gøre
+    type: 'info'      - observation/info
+    type: 'interval'  - interval med start- og slut-tid
+    timeMinutes ELLER startMinutes/endMinutes
+    icon, labelKey, syringeColor (blue=basal, teal=bolus)
+
+  objectives          : mål der skal opfyldes
+    type: 'actionRequired' - spilleren skal udføre EN handling
+    type: 'actionCount'    - spilleren skal udføre N handlinger
+    type: 'survive'        - spilleren skal overleve hele banen
+    actionType: 'food', 'fastInsulin', 'basalInsulin', 'exercise'
+
+  stars               : stjerne-rating baseret på TIR% (Time In Range, 4-10 mmol/L)
+    one:   { minTIR: X }
+    two:   { minTIR: Y }
+    three: { minTIR: Z }
+
+  tips                : SAMLET liste af bane-tips (gammel tutorialTips + tips)
+    Hvert tip har oneShot: true/false som styrer om det er engangs eller
+    gentages med cooldown. Se "SEKTIONER PER BANE" ovenfor for fulde felter.
+
+
+===============================================================================
+BANE 1 - BASAL INSULIN  [findes allerede i js/levels.js]
+===============================================================================
+
+Tema       : Lær UI'et at kende, giv basal insulin
+Status     : Implementeret
+
+LÆRINGSMÅL (intern info): lær at give basal insulin og bruge menuerne i bunden, mht. basal insulin og evt. jursterings mad. Brug af hastigheds kontrol.
+  -
+  -
+  -
+
+INTRO-POPUP:
+  Beskrivelse        : Basal insulin:
+
+			Du starter ved midnat. Du tog sidst en hel dosis basal insulin igår kl 8, denne dosis holder          		  dig stabil igennem formiddagen.
+                       Hvis BG falder for lavt, kan du op jurstere med med fra mad-panelet eller T1D-kittet. For at gøre det let i starten, skal du ikke tænke på mad generelt, men kun bruge snaks til evt. at jurster dit BG op.
+                       Brug "<" ">" knapperne (tastatur: pil-venstre/-højre)
+                       til at ændre simulations hastighed.
+
+  Hvad sker der?     : Uden insulin begynder leveren at frigive glucose og ketoner.  Dette hæver BG og keton 			niveauet. Keton niveauet kan måles med en keto-stik.  
+
+
+  Tips inden start   : På insulin menuen står din anbefalede basal dosis (baseret på ... ? isf / vægt? )
+Forsøg dig med at tage mere eller mindre basal insulin. Forsøg dig med at tage det om morgenen, om aftenen, eller ½ dosis på hver tidspunkt. Hvordan kan du få flest points. 
+
+
+
+ATTRIBUTTER:
+  id                  : dag1_basal
+  number              : 1
+  startTime           : 00:00 
+  varighed            : 3 døgn (4320 min)
+  startBG             : 6.0 mmol/L
+
+  physics             : disableDawnEffect=true, disableWeightTracking=true
+                        ketoner ER aktive (viser hvorfor basal er vigtigt)
+
+  enabledActions      : basalInsulin, food (juster linje kun), kit
+                        IKKE: fastInsulin, exercise
+
+  scheduledEvents     : ingen
+
+  markers             : interval kl. 07:00-14:00 "Giv basal insulin"
+
+  objectives          : actionRequired - giv basal insulin
+
+  stars               : 1*=70% (anbefalses ofte som et mål, lad os kvitere med en stjerne for det) TIR, 2*=85%, 3*=95%
+
+TIPS:
+  - id: tut_dag1_dock           [oneShot: true]
+    triggerType: levelStart
+    tekst: "Tryk på sprøjte-ikonet i bunden for at åbne insulin-panelet"
+    highlightElement: insulin dock-item
+
+  - id: tut_dag1_speed          [oneShot: true]
+    triggerType: afterAction (basalInsulin)
+    tekst: "Du har givet basal! Brug < > knapperne til at ændre hastighed"
+    highlightElement: #speedStepper
+
+  - id: tip_dag1_no_basal       [oneShot: false, cooldown 60 min]
+    triggerType: time (kl. 08:00)
+    condition: noBasalGiven
+    tekst: "Du har ikke givet basal insulin endnu - uden basal stiger BG
+            langsomt hele dagen"
+
+  - id: tip_dag1_bg_rising      [oneShot: false, cooldown 60 min]
+    triggerType: bgAbove (14.0)
+    condition: noBasalGiven
+    tekst: "BG stiger! Basal insulin holder blodsukkeret stabilt i baggrunden"
+
+Egne noter          :
+  -tip_dag1_bg_rising - istedet for at kikke på blodsukker, burde der kikkes på basal niveau basal IOB eller plasma basal. BG stigning kan være pgf. for meget juice.
+
+tut_dag1_speed : har skrvetet at man starter midnat, så her kan vi allerede prøve at speede op indtil kl 7, når der igen sker noget..  
+
+
+
+
+===============================================================================
+BANE 2 - DAWN-EFFEKTEN  [findes allerede i js/levels.js]
+===============================================================================
+
+Tema       : Forstå morgen-stigning, brug bolus til korrektion
+Status     : Implementeret
+
+LÆRINGSMÅL (intern info):
+  -
+  -
+  -
+
+INTRO-POPUP:
+  Beskrivelse        : (= descriptionKey - kortere intro-tekst)
+
+  Hvad sker der?     : forklar at ISF (definer) ikke er helt fast igennem dagen, og at f.eks dawn fænomen er en af 			de mest markante ændringer. Samt at at onset og amplitude variere. 
+
+
+  Tips inden start   : 	Tag rapid insulin når du står op om morgenen for at neutralisere effekten af dawn effekten. 
+			Så vidt muligt, tag ikke insulin om natten, idet natlig aktivitet reducere din søvn, hvilket 			øger dit behov for insulin dagen after.
+			Husk stadig din basal insulin
+
+
+ATTRIBUTTER:
+  id                  : dag2_dawn
+  number              : 2
+  startTime           : 00:00 
+  varighed            : 3 døgn (4320 min)
+  startBG             : 6.0 mmol/L
+
+  physics             : disableDawnEffect=false (DAWN ER AKTIV)
+                        disableWeightTracking=true
+
+  enabledActions      : basalInsulin, fastInsulin, food(juster linje kun), kit
+                        IKKE: exercise
+
+  scheduledEvents     : ingen
+
+  markers             : interval kl. 07:00-14:00 "Giv basal insulin"
+
+  objectives          : actionRequired - giv basal insulin
+
+  stars               : 1*=70% TIR, 2*=85%, 3*=90%
+                        (lidt lavere end bane 1 fordi dawn gør det sværere)
+
+TIPS:
+  - id: tut_dag2_dawn           [oneShot: true]
+    triggerType: levelStart
+    tekst: "Dawn-effekten er nu aktiv! Observer hvordan BG stiger om
+            morgenen - det er kroppens naturlige kortisol"
+
+  - id: tip_dag2_dawn           [oneShot: false, cooldown 60 min]
+    triggerType: bgAbove (8.0)
+    timeWindow: kl. 05-09
+    tekst: "BG stiger om morgenen pga. kortisol"
+
+Egne noter          :
+  -
+
+
+===============================================================================
+BANE 3 - BOLUS OG MAD  [findes allerede i js/levels.js]
+===============================================================================
+
+Tema       : Bolus FØR mad, ICR-konceptet
+Status     : Implementeret
+
+LÆRINGSMÅL (intern info):
+  -
+  -
+  -
+
+INTRO-POPUP:
+  Beskrivelse        : (= descriptionKey - kortere intro-tekst)
+
+  Hvad sker der?     :
+
+
+  Tips inden start   :
+
+
+ATTRIBUTTER:
+  id                  : dag3_bolus
+  number              : 3
+  startTime           : 00:00
+  varighed            : 1 døgn (1440 min)
+  startBG             : 6.0 mmol/L
+
+  physics             : basalPreInjected=true (fokus på bolus, ikke basal)
+                        disableDawnEffect=false
+                        disableWeightTracking=true
+
+  enabledActions      : food, fastInsulin, basalInsulin
+                        IKKE: exercise, kit
+
+  scheduledEvents     : ingen
+
+  markers             : 6 markører - bolus + mad ved morgenmad/frokost/aftensmad
+                        kl. 07:45 bolus -> 08:00 morgenmad (havregryn)
+                        kl. 11:45 bolus -> 12:00 frokost (rugbrød)
+                        kl. 17:45 bolus -> 18:00 aftensmad
+
+  objectives          : actionCount fastInsulin >= 1
+                        actionCount food >= 2
+
+  stars               : 1*=25% TIR, 2*=45%, 3*=65%
+                        (sværere bane - lavere stjernekrav)
+
+TIPS:
+  - id: tut_dag3_bolus          [oneShot: true]
+    triggerType: levelStart
+    tekst: "Nu kan du give hurtiginsulin! Aabn insulin-panelet og vaelg en
+            bolus-dosis"
+    highlightElement: insulin dock-item
+
+  - id: tip_dag3_bolus_timing   [oneShot: false, cooldown 60 min]
+    triggerType: afterAction (food)
+    condition: noRecentBolus
+    tekst: "Husk at give bolus FØR maden"
+
+  - id: tip_dag3_icr            [oneShot: false, cooldown 60 min]
+    triggerType: bgAbove (14.0)
+    tekst: "Hvis BG bliver højt - juster din ICR"
+
+Egne noter          :
+  -
+
+
+===============================================================================
+BANE 4 - ICR-FINJUSTERING  [TODO - foreslået tema]
+===============================================================================
+
+Tema       : Lær at justere ICR baseret på hvor godt din bolus dækker måltidet
+             - Forskellige måltids-størrelser kræver forskellig dosering
+             - Spilleren observerer post-prandial peak og lærer at finjustere
+
+LÆRINGSMÅL (intern info):
+  -
+  -
+  -
+
+INTRO-POPUP:
+  Beskrivelse        :
+
+  Hvad sker der?     :
+
+
+  Tips inden start   :
+
+
+ATTRIBUTTER:
+  id                  : dag4_icr
+  number              : 4
+  titleKey            : campaign.level4.title
+  descriptionKey      : campaign.level4.desc
+
+  startTime           : 00:00
+  varighed            :
+  startBG             : 6.0 mmol/L
+
+  physics             :
+    disableWeightTracking :
+    disableDawnEffect     :
+    disableKetones        :
+    basalPreInjected      :
+
+  enabledActions      :
+    food          :
+    fastInsulin   :
+    basalInsulin  :
+    exercise      :
+    kit           :
+
+  scheduledEvents     :
+
+  markers             :
+
+  objectives          :
+
+  stars               : 1*=    2*=    3*=
+
+TIPS:
+  -
+
+
+Egne noter          :
+  - Forskellige måltids-størrelser? Lille/medium/stor for at vise dosis-skala
+  - Post-prandial peak feedback - vise TIR efter hvert måltid?
+
+
+===============================================================================
+BANE 5 - KORREKTUR-BOLUS (ISF)  [TODO - foreslået tema]
+===============================================================================
+
+Tema       : Lær at korrigere højt BG med bolus uden mad
+             - ISF-konceptet: hvor meget sænker 1E?
+             - Hvornår må man ikke korrigere (active IOB stacking)?
+
+LÆRINGSMÅL (intern info):
+  -
+  -
+  -
+
+INTRO-POPUP:
+  Beskrivelse        :
+
+  Hvad sker der?     :
+
+
+  Tips inden start   :
+
+
+ATTRIBUTTER:
+  id                  : dag5_isf
+  number              : 5
+  titleKey            : campaign.level5.title
+  descriptionKey      : campaign.level5.desc
+
+  startTime           : 00:00
+  varighed            :
+  startBG             : 6.0 mmol/L
+
+  physics             :
+    disableWeightTracking :
+    disableDawnEffect     :
+    disableKetones        :
+    basalPreInjected      :
+
+  enabledActions      :
+    food          :
+    fastInsulin   :
+    basalInsulin  :
+    exercise      :
+    kit           :
+
+  scheduledEvents     :
+
+  markers             :
+
+  objectives          :
+
+  stars               : 1*=    2*=    3*=
+
+TIPS:
+  -
+
+
+Egne noter          :
+  - Start højt (fx BG 14) så korrektur er nødvendig fra start
+  - Vis IOB-stack-advarsel hvis spilleren stacker bolus
+  - Auto-mad event der trigger BG-stigning halvvejs?
+
+
+===============================================================================
+BANE 6 - MOTION SÆNKER BG  [TODO - foreslået tema]
+===============================================================================
+
+Tema       : Hvordan motion sænker BG via insulin-uafhængig glukoseoptag
+             - Første bane med exercise enabled
+             - Lær at planlægge mad/insulin omkring træning
+
+LÆRINGSMÅL (intern info):
+  -
+  -
+  -
+
+INTRO-POPUP:
+  Beskrivelse        :
+
+  Hvad sker der?     :
+
+
+  Tips inden start   :
+
+
+ATTRIBUTTER:
+  id                  : dag6_motion
+  number              : 6
+  titleKey            : campaign.level6.title
+  descriptionKey      : campaign.level6.desc
+
+  startTime           : 00:00
+  varighed            :
+  startBG             : 6.0 mmol/L
+
+  physics             :
+    disableWeightTracking :
+    disableDawnEffect     :
+    disableKetones        :
+    basalPreInjected      :
+
+  enabledActions      :
+    food          :
+    fastInsulin   :
+    basalInsulin  :
+    exercise      : true
+    kit           :
+
+  scheduledEvents     :
+
+  markers             :
+
+  objectives          :
+
+  stars               : 1*=    2*=    3*=
+
+TIPS:
+  - (forklar exercise-knappen ved levelStart, oneShot=true)
+  - (forklar at motion sænker BG i flere timer efter, oneShot=true)
+
+
+Egne noter          :
+  - Skal man spise FØR motion eller reducere bolus?
+  - Risiko for sen hypo - lille tip om dette
+  - Auto-event "tid til træning" som markør?
+
+
+===============================================================================
+BANE 7 - PIZZA OG FEDT-EFFEKTEN  [TODO - foreslået tema]
+===============================================================================
+
+Tema       : Hvorfor pizza giver forsinket og langvarig BG-stigning
+             - Fedt forsinker mavetømning og giver insulinresistens
+             - Lær at bruge "split bolus" eller forlænget dosering
+
+LÆRINGSMÅL (intern info):
+  -
+  -
+  -
+
+INTRO-POPUP:
+  Beskrivelse        :
+
+  Hvad sker der?     :
+
+
+  Tips inden start   :
+
+
+ATTRIBUTTER:
+  id                  : dag7_pizza
+  number              : 7
+  titleKey            : campaign.level7.title
+  descriptionKey      : campaign.level7.desc
+
+  startTime           : 00:00
+  varighed            :
+  startBG             : 6.0 mmol/L
+
+  physics             :
+    disableWeightTracking :
+    disableDawnEffect     :
+    disableKetones        :
+    basalPreInjected      : true (fokus på måltids-bolus)
+
+  enabledActions      :
+    food          :
+    fastInsulin   :
+    basalInsulin  :
+    exercise      :
+    kit           :
+
+  scheduledEvents     : auto-pizza hændelse?
+
+  markers             :
+
+  objectives          :
+
+  stars               : 1*=    2*=    3*=
+
+TIPS:
+  -
+
+
+Egne noter          :
+  - Pizza-spike kommer 2-4 timer efter, ikke umiddelbart
+  - Skal split-bolus mekanik tilføjes til UI? Eller bruge to bolus-doser?
+  - Sammenlign med rugbrød/havre for kontrast
+
+
+===============================================================================
+BANE 8 - HEL DAG (FINAL CHALLENGE)  [TODO - foreslået tema]
+===============================================================================
+
+Tema       : Komplet realistisk dag med alle elementer
+             - Morgenmad, frokost, aftensmad, snack
+             - Motion eller stress-event
+             - Dawn + dusk effekter aktive
+             - Spilleren skal kombinere ALT lært i bane 1-7
+
+LÆRINGSMÅL (intern info):
+  -
+  -
+  -
+
+INTRO-POPUP:
+  Beskrivelse        :
+
+  Hvad sker der?     :
+
+
+  Tips inden start   :
+
+
+ATTRIBUTTER:
+  id                  : dag8_helDag
+  number              : 8
+  titleKey            : campaign.level8.title
+  descriptionKey      : campaign.level8.desc
+
+  startTime           : 00:00
+  varighed            : 1440 min (1 døgn) eller 2 døgn?
+  startBG             : 6.0
+
+  physics             :
+    disableWeightTracking : false (kalorier tæller!)
+    disableDawnEffect     : false
+    disableKetones        : false
+    basalPreInjected      : false (giv selv basal som første handling)
+
+  enabledActions      :
+    food          : true
+    fastInsulin   : true
+    basalInsulin  : true
+    exercise      : true
+    kit           : true
+
+  scheduledEvents     : auto-mad ved 3 måltider + evt. motion-event
+
+  markers             :
+
+  objectives          :
+    - actionRequired basal
+    - actionCount food >= 3
+    - actionCount fastInsulin >= 3
+    - survive 24 timer
+
+  stars               : 1*=    2*=    3*=
+                        (sidste bane - højere stjernekrav for at presse spilleren)
+
+TIPS:
+  - (ingen oneShot-tips - alt skulle være lært nu)
+  - (kun GLOBAL_TIPS aktiveres)
+
+
+Egne noter          :
+  - Skal være udfordrende men retfærdig
+  - Belønning: unlock sandbox med fuld realistisk fysik?
+  - Mulighed for at unlock Box Challenge?
+
+
+===============================================================================
+TIPS-IDEER (til GLOBAL_TIPS eller bane-specifikke tips)
+===============================================================================
+
+Eksisterende GLOBAL_TIPS:
+  - global_food_no_bolus : "Husk bolus til maden"
+  - global_hypo_eat      : "BG under 4 - spis hurtigt sukker"
+  - global_dawn          : "Morgen-stigning pga. kortisol"
+
+Ideer der mangler at blive skrevet:
+  - IOB-stacking advarsel (ny bolus mens IOB > 2E)
+  - Højt fedt-indhold giver sen stigning (efter pizza)
+  - Motion sænker BG i op til 24 timer efter
+  - Stress giver kortisol-spike
+  - Hypo-symptomer fra hjernen
+  - DKA-advarsel (ketoner stigende, glem ikke basal)
+  - Overstyr med korrektur kun hvis IOB tillader
+  - Drik vand ved højt BG (renal threshold > 10)
+
+Egne tips-ideer          :
+
+
+===============================================================================
+GENERELLE NOTER
+===============================================================================
+
+  Banens progression skal følges som "RTS-tutorial":
+  - Bane 1: kun basal
+  - Bane 2: + dawn
+  - Bane 3: + bolus + mad
+  - Bane 4: + ICR-justering
+  - Bane 5: + korrektur (ISF)
+  - Bane 6: + motion
+  - Bane 7: + pizza/fedt
+  - Bane 8: + alle elementer i en hel dag
+
+  Vigtigt: hver bane skal kunne klares på < 5 min realtid (med speed-up).
+  Stjerne-systemet driver replay - krævende for 3 stjerner men opnåelig.
+
+  Spilleren skal aldrig føle sig "fanget" - mulighed for at give op og
+  gå tilbage til bane-vælger.
+
+  Egne generelle noter      :

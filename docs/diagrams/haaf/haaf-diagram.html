@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HAAF — area-based hypo memory and counterregulation gate — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>HAAF — area-based hypo memory and counterregulation gate (Cryer / Dagogo-Jack)</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="HAAF — area-based hypo memory and counterregulation gate">
+    </object>
+  </div>
+  <p class="scope">Hypoglycemia-Associated Autonomic Failure (HAAF; Cryer 1992, Cryer et al. 2003) is modelled as an area-based memory rather than a discrete episode count. When BG falls below 3.0 mmol/L, hypoArea accumulates proportionally to depth &times; duration; when BG stays above 4.0 mmol/L it decays with t&frac12; &asymp; 3 simulated days (calibrated to Dagogo-Jack et al., <em>J Clin Invest</em> 91:819-828, 1993 and Cranston et al., <em>Lancet</em> 344:283-287, 1994). The accumulated burden passes through a sigmoid that produces counterRegFactor between 0.3 and 1.0. This factor multiplies the acute stress amplitude &mdash; modelled here as the gate factor multiplying acute stress amplitude in the stress multiplier &mdash; so repeated hypoglycemia progressively blunts the catecholamine/glucagon rescue response. Acute stress in T1D is already capped at 0.4 (vs ~5.0 healthy) due to absent glucagon secretion; HAAF further reduces what little counter-regulatory reserve remains.</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">hypoArea</td><td class="def">cumulative hypo burden (mmol&middot;min equivalent); accumulates at rate max(0, 3.0 &minus; BG) while BG &lt; 3.0 mmol/L</td></tr>
+        <tr><td class="symbol">counterRegFactor</td><td class="def">counter-regulatory gate output: 0.3 + 0.7 &middot; exp(&minus;hypoArea / 30); range [0.3, 1.0]; floor at 0.3 (blunting is never complete)</td></tr>
+        <tr><td class="symbol">BG &lt; 3.0 mmol/L</td><td class="def">triggering condition for hypo memory accumulation (hypo threshold)</td></tr>
+        <tr><td class="symbol">BG &gt; 4.0 mmol/L</td><td class="def">triggering condition for hypo memory decay (recovery threshold)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">+= max(0, 3.0 &minus; BG) &middot; dt</td><td class="def">incremental hypoArea accumulation rate &mdash; proportional to hypoglycemia depth and proportional to simulated time step dt</td></tr>
+        <tr><td class="symbol">exponential decay</td><td class="def">hypoArea decay toward zero with half-life &asymp; 3 simulated days when BG &gt; 4.0 mmol/L; parameterised as ln(2)/4320 per sim-minute</td></tr>
+        <tr><td class="symbol">0.3 + 0.7 &middot; exp(&minus;hypoArea / 30)</td><td class="def">sigmoid mapping hypoArea to counterRegFactor; scale constant 30 calibrated so BG 2.5 for 20 min yields ~20 % reduction (Dagogo-Jack 1993)</td></tr>
+        <tr><td class="symbol">&times; factor</td><td class="def">counterRegFactor applied as multiplicative scalar to acute stress amplitude in the stress multiplier sum</td></tr>
+        <tr><td class="symbol">drives glucagon/adrenaline</td><td class="def">acute stress amplitude modulated by counterRegFactor; feeds directly into the stressMultiplier term used in EGP = EGP&sub0; &middot; max(0, stressMultiplier &minus; x3)</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

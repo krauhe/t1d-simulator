@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>T1D Simulator - Nonlinear Insulin Curve Lab</title>
+<style>
+/* =================================================================
+   NONLINEAR-INSULIN-CURVE-LAB.HTML
+
+   Eksperimentelt analyse-lab til at lege med muskel-Hill-kurven uden
+   at ændre den officielle simulator eller model-validation siden.
+   Filen bruger kun Hovorka-kernen og kører N5-lignende plasma-insulin
+   staircase clamps for flere alternative EC50/n-parametre.
+   ================================================================= */
+
+:root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e4e4e7;
+    --muted: #9ca3af;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --orange: #f59e0b;
+    --red: #ef4444;
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0 auto;
+    max-width: 1180px;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.45;
+}
+h1 { font-size: 24px; margin: 0 0 8px; }
+h2 { font-size: 18px; margin: 24px 0 10px; color: var(--blue); }
+p, li { font-size: 13px; color: #d1d5db; }
+code { color: #bfdbfe; }
+.meta { color: var(--muted); margin-bottom: 18px; }
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+    gap: 16px;
+}
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+}
+canvas {
+    width: 100%;
+    height: 320px;
+    display: block;
+    background: #111827;
+    border-radius: 8px;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 10px;
+    font-size: 12px;
+}
+th, td {
+    border-bottom: 1px solid var(--border);
+    padding: 5px 7px;
+    text-align: right;
+    white-space: nowrap;
+}
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 600; }
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    margin-top: 10px;
+    font-size: 12px;
+}
+.legend-item { display: inline-flex; align-items: center; gap: 6px; color: #d1d5db; }
+.swatch { width: 22px; height: 3px; border-radius: 2px; display: inline-block; }
+.note {
+    border-left: 3px solid var(--orange);
+    padding-left: 12px;
+    color: #fef3c7;
+}
+textarea {
+    width: 100%;
+    min-height: 190px;
+    margin-top: 10px;
+    background: #0b1020;
+    color: #d1d5db;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+    font-family: Consolas, "Courier New", monospace;
+}
+</style>
+</head>
+<body>
+<h1>Nonlinear insulin curve lab</h1>
+<p class="meta">
+    Experimental N5-style plasma-insulin staircase clamps. This page is for analysis only:
+    it does not change the simulator model.
+</p>
+
+<div class="card note">
+    <p>
+        Question: what parameter changes would be needed before the model shows a small but
+        visible functional nonlinearity in BG during inactive plasma-insulin clamps?
+        The current model uses <code>EC50_muscle = 55 mU/L</code> and
+        <code>hillN_muscle = 1.5</code>. Here we compare steeper/right-shifted muscle curves
+        against the current curve. The final two experimental variants also reduce early liver
+        EGP suppression; that is not a proposal, just a diagnostic test of what would be required.
+    </p>
+</div>
+
+<div class="grid">
+    <section class="card">
+        <h2>1. N5-type BG staircase</h2>
+        <canvas id="bgChart"></canvas>
+        <div id="bgLegend" class="legend"></div>
+    </section>
+
+    <section class="card">
+        <h2>2. End-point BG after each 12 h clamp</h2>
+        <canvas id="endpointChart"></canvas>
+        <div id="endpointLegend" class="legend"></div>
+    </section>
+
+    <section class="card">
+        <h2>3. Marginal BG drop per plasma-insulin step</h2>
+        <canvas id="marginalChart"></canvas>
+        <div id="marginalLegend" class="legend"></div>
+    </section>
+
+    <section class="card">
+        <h2>4. Wide independent 12 h endpoint sweep</h2>
+        <canvas id="wideEndpointChart"></canvas>
+        <div id="wideEndpointLegend" class="legend"></div>
+    </section>
+
+    <section class="card">
+        <h2>5. Muscle recruitment curve</h2>
+        <canvas id="hillChart"></canvas>
+        <div id="hillLegend" class="legend"></div>
+    </section>
+
+    <section class="card">
+        <h2>6. Flux clamp - sources, sinks and net BG pressure</h2>
+        <canvas id="fluxChart"></canvas>
+        <div id="fluxLegend" class="legend"></div>
+    </section>
+
+    <section class="card">
+        <h2>7. Analysis summary</h2>
+        <div id="analysisText"></div>
+        <table id="summaryTable"></table>
+    </section>
+</div>
+
+<section class="card">
+    <h2>Raw data</h2>
+    <p>JSON output for later comparison or plotting elsewhere.</p>
+    <textarea id="rawData" readonly></textarea>
+</section>
+
+<script src="../js/hovorka.js"></script>
+<script>
+const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#06b6d4'];
+
+const variants = [
+    {
+        id: 'current',
+        label: 'Current: EC50 55, n 1.5',
+        ec50: 55,
+        n: 1.5,
+        color: COLORS[0],
+        note: 'Current implemented curve'
+    },
+    {
+        id: 'steeper',
+        label: 'Steeper: EC50 55, n 3.0',
+        ec50: 55,
+        n: 3.0,
+        color: COLORS[1],
+        note: 'Same threshold, sharper transition'
+    },
+    {
+        id: 'inactive_muscle_only',
+        label: 'Muscle-only inactive: EC50 110, n 4.0',
+        ec50: 110,
+        n: 4.0,
+        color: COLORS[2],
+        note: 'Muscle curve changed, liver unchanged'
+    },
+    {
+        id: 'reduced_liver',
+        label: 'Reduced liver effect + steep muscle',
+        ec50: 110,
+        n: 4.0,
+        liverScale: 0.55,
+        color: COLORS[3],
+        note: 'Diagnostic: lower early EGP suppression'
+    },
+    {
+        id: 'deadzone_candidate',
+        label: 'Deadzone candidate: low liver + stronger muscle',
+        ec50: 110,
+        n: 4.0,
+        liverScale: 0.55,
+        muscleMaxScale: 1.6,
+        color: COLORS[5],
+        note: 'Diagnostic: low liver response, stronger high-insulin muscle response'
+    },
+    {
+        id: 'post_motion',
+        label: 'Post-motion: EC50 35, n 1.5',
+        ec50: 35,
+        n: 1.5,
+        color: COLORS[4],
+        note: 'Left-shifted sensitivity'
+    }
+];
+
+const clampLevels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const wideClampLevels = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+const stepMinutes = 12 * 60;
+const dt = 1;
+
+function makeModel(variant) {
+    const h = new HovorkaModel(70, {
+        insulinSensitivityScale: 3.0 / 3.75,
+        EC50_muscle: variant.ec50,
+        hillN_muscle: variant.n
+    });
+    h.S_IE *= variant.liverScale ?? 1;
+    h.x1max *= variant.muscleMaxScale ?? 1;
+    h.x2max *= variant.muscleMaxScale ?? 1;
+    h.initializeSteadyState(8, 5.5);
+    h.setInsulinModifiers(1, 1);
+    h.stressMultiplier = 1;
+    h.carbRate = 0;
+    h.rapidU_I = 0;
+    h.basalInsRate = 0;
+    h.insulinRate = 0;
+    h.heartRate = h.HR_base;
+    h.exerciseInput = 0;
+    h.splanchnicAbsorbMod = 1;
+
+    // Inaktiv start: fjern depoter, tarm og motion, men behold glukose-state
+    // fra steady-state. Plasma-insulin bliver derefter clamped direkte.
+    [0, 1, 2, 3, 11, 12, 13, 14, 15].forEach(i => { h.state[i] = 0; });
+    return h;
+}
+
+function runStaircase(variant) {
+    const h = makeModel(variant);
+    const bgSeries = [];
+    const endpointSeries = [];
+    const finalRows = [];
+    let totalMinutes = 0;
+    let previousFinal = null;
+
+    h.state[6] = clampLevels[0];
+    const ss = h.steadyStateActions(clampLevels[0]);
+    h.state[7] = ss.x1;
+    h.state[8] = ss.x2;
+    h.state[9] = ss.x3;
+    bgSeries.push({ x: 0, y: Math.max(0.1, h.glucoseConcentration) });
+
+    for (const insulin of clampLevels) {
+        const start = totalMinutes;
+        const end = start + stepMinutes;
+        while (totalMinutes < end - 0.01) {
+            h.state[6] = insulin;
+            h.rapidU_I = 0;
+            h.basalInsRate = 0;
+            h.insulinRate = 0;
+            h.carbRate = 0;
+            h.stressMultiplier = 1;
+            h.heartRate = h.HR_base;
+            h.step(dt);
+            h.state[6] = insulin;
+
+            totalMinutes += dt;
+            if ((totalMinutes - start) % 15 === 0) {
+                bgSeries.push({ x: totalMinutes / 60, y: Math.max(0.1, h.glucoseConcentration) });
+            }
+        }
+
+        const finalBG = Math.max(0.1, h.glucoseConcentration);
+        finalRows.push({
+            insulin,
+            finalBG,
+            endHour: totalMinutes / 60,
+            marginalDrop: previousFinal === null ? null : previousFinal - finalBG,
+            x1: h.state[7],
+            x2: h.state[8],
+            x3: h.state[9]
+        });
+        endpointSeries.push({ x: insulin, y: finalBG });
+        previousFinal = finalBG;
+    }
+
+    return { bgSeries, endpointSeries, finalRows };
+}
+
+function runIndependentEndpointSweep(variant) {
+    return wideClampLevels.map(insulin => {
+        const h = makeModel(variant);
+        h.state[6] = insulin;
+        const ss = h.steadyStateActions(insulin);
+        h.state[7] = ss.x1;
+        h.state[8] = ss.x2;
+        h.state[9] = ss.x3;
+
+        for (let t = 0; t < stepMinutes; t += dt) {
+            h.state[6] = insulin;
+            h.rapidU_I = 0;
+            h.basalInsRate = 0;
+            h.insulinRate = 0;
+            h.carbRate = 0;
+            h.stressMultiplier = 1;
+            h.heartRate = h.HR_base;
+            h.step(dt);
+            h.state[6] = insulin;
+        }
+        return { x: insulin, y: Math.max(0.1, h.glucoseConcentration) };
+    });
+}
+
+function hillCurve(variant) {
+    const h = makeModel(variant);
+    const points = [];
+    const q1 = 5.5 * h.V_G;
+    let maxMuscle = 0;
+    const rows = [];
+    for (let insulin = 0; insulin <= 120; insulin += 1) {
+        const a = h.steadyStateActions(insulin);
+        const muscle = a.x2 * a.x1 * q1 / (h.k_12 + a.x2);
+        rows.push({ insulin, muscle });
+        maxMuscle = Math.max(maxMuscle, muscle);
+    }
+    rows.forEach(r => points.push({ x: r.insulin, y: maxMuscle ? r.muscle / maxMuscle * 100 : 0 }));
+    return points;
+}
+
+function fluxCurve(variant) {
+    const h = makeModel(variant);
+    const q1 = 5.5 * h.V_G;
+    const f01 = (h.F_01 / 0.85) * 5.5 / (5.5 + 1);
+    const fR = 0;
+    const rows = [];
+
+    for (let insulin = 0; insulin <= 120; insulin += 1) {
+        const a = h.steadyStateActions(insulin);
+        // Steady-state Q2 for the current insulin level, from:
+        // dQ2 = x1*Q1 - k12*Q2 - x2*Q2 = 0.
+        const q2 = a.x1 > 0 ? (a.x1 * q1) / (h.k_12 + a.x2) : 0;
+        const egp = h.EGP_0 * Math.max(0, 1 - a.x3);
+        const transport = a.x1 * q1;
+        const returnFlux = h.k_12 * q2;
+        const muscleDisposal = a.x2 * q2;
+        const netQ1 = egp + returnFlux - f01 - fR - transport;
+        const wholeBodyNet = egp - f01 - muscleDisposal;
+        rows.push({
+            x: insulin,
+            egp,
+            f01,
+            transport,
+            returnFlux,
+            muscleDisposal,
+            netQ1,
+            wholeBodyNet
+        });
+    }
+    return rows;
+}
+
+function summarize(variant, run) {
+    const rows = run.finalRows;
+    const marginals = rows.filter(r => r.marginalDrop !== null).map(r => r.marginalDrop);
+    const positive = marginals.filter(v => v > 0);
+    const low = rows.filter(r => r.insulin >= 2 && r.insulin <= 4).map(r => r.marginalDrop).filter(v => v != null);
+    const peak = Math.max(...positive);
+    const lowAvg = low.reduce((a, b) => a + b, 0) / low.length;
+    const peakInsulin = rows.find(r => r.marginalDrop === peak)?.insulin ?? null;
+    const ratio = lowAvg > 0 ? peak / lowAvg : Infinity;
+    const firstHypo = rows.find(r => r.finalBG < 4)?.insulin ?? null;
+    const bgAt11 = rows.find(r => r.insulin === 11)?.finalBG ?? null;
+    const bgAt4 = rows.find(r => r.insulin === 4)?.finalBG ?? null;
+    const visibleSmallNonlinearity = ratio >= 1.8 && firstHypo === null;
+    return {
+        id: variant.id,
+        label: variant.label,
+        ec50: variant.ec50,
+        n: variant.n,
+        liverScale: variant.liverScale ?? 1,
+        muscleMaxScale: variant.muscleMaxScale ?? 1,
+        lowAvg,
+        peak,
+        peakInsulin,
+        ratio,
+        firstHypo,
+        bgAt4,
+        bgAt11,
+        visibleSmallNonlinearity,
+        note: variant.note
+    };
+}
+
+function drawChart(canvas, series, opts) {
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const W = rect.width;
+    const H = rect.height;
+    const pad = { left: 54, right: 16, top: 18, bottom: 42 };
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+    const allX = series.flatMap(s => s.data.map(p => p.x));
+    const allY = series.flatMap(s => s.data.map(p => p.y));
+    const xMin = opts.xMin ?? Math.min(...allX);
+    const xMax = opts.xMax ?? Math.max(...allX);
+    const yMin = opts.yMin ?? Math.min(...allY);
+    const yMax = opts.yMax ?? Math.max(...allY);
+    const toX = x => pad.left + (x - xMin) / (xMax - xMin || 1) * plotW;
+    const toY = y => pad.top + (1 - (y - yMin) / (yMax - yMin || 1)) * plotH;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.strokeStyle = 'rgba(148,163,184,.18)';
+    ctx.lineWidth = 1;
+    for (let x = Math.ceil(xMin / opts.xStep) * opts.xStep; x <= xMax + 0.001; x += opts.xStep) {
+        ctx.beginPath();
+        ctx.moveTo(toX(x), pad.top);
+        ctx.lineTo(toX(x), pad.top + plotH);
+        ctx.stroke();
+    }
+    for (let y = Math.ceil(yMin / opts.yStep) * opts.yStep; y <= yMax + 0.001; y += opts.yStep) {
+        ctx.beginPath();
+        ctx.moveTo(pad.left, toY(y));
+        ctx.lineTo(pad.left + plotW, toY(y));
+        ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(203,213,225,.7)';
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top);
+    ctx.lineTo(pad.left, pad.top + plotH);
+    ctx.lineTo(pad.left + plotW, pad.top + plotH);
+    ctx.stroke();
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let y = Math.ceil(yMin / opts.yStep) * opts.yStep; y <= yMax + 0.001; y += opts.yStep) {
+        ctx.fillText(String(Math.round(y * 10) / 10), pad.left - 8, toY(y));
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let x = Math.ceil(xMin / opts.xStep) * opts.xStep; x <= xMax + 0.001; x += opts.xStep) {
+        ctx.fillText(String(x), toX(x), pad.top + plotH + 7);
+    }
+
+    ctx.save();
+    ctx.translate(14, pad.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(opts.yLabel, 0, 0);
+    ctx.restore();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(opts.xLabel, pad.left + plotW / 2, H - 6);
+
+    series.forEach((s, idx) => {
+        ctx.strokeStyle = s.color || COLORS[idx % COLORS.length];
+        ctx.lineWidth = s.width || 2.2;
+        ctx.setLineDash(s.dash || []);
+        ctx.beginPath();
+        s.data.forEach((p, i) => {
+            const x = toX(p.x);
+            const y = toY(p.y);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (s.points) {
+            ctx.fillStyle = s.color || COLORS[idx % COLORS.length];
+            s.data.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(toX(p.x), toY(p.y), s.pointRadius || 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+    });
+}
+
+function renderLegend(el, series) {
+    el.innerHTML = series.map(s =>
+        `<span class="legend-item"><span class="swatch" style="background:${s.color}"></span>${s.label}</span>`
+    ).join('');
+}
+
+const runs = variants.map(v => ({
+    variant: v,
+    run: runStaircase(v),
+    wideEndpoint: runIndependentEndpointSweep(v),
+    hill: hillCurve(v)
+}));
+const summaries = runs.map(x => summarize(x.variant, x.run));
+const totalHours = clampLevels.length * stepMinutes / 60;
+
+const bgSeries = runs.map(x => ({ label: x.variant.label, color: x.variant.color, data: x.run.bgSeries }));
+drawChart(document.getElementById('bgChart'), bgSeries, {
+    xMin: 0, xMax: totalHours, yMin: 0, yMax: 24, xStep: 24, yStep: 4,
+    xLabel: 'hours from inactive baseline', yLabel: 'BG (mmol/L)'
+});
+renderLegend(document.getElementById('bgLegend'), bgSeries);
+
+const endpointSeries = runs.map(x => ({
+    label: x.variant.label,
+    color: x.variant.color,
+    data: x.run.endpointSeries,
+    points: true,
+    pointRadius: 4,
+    width: 1.6
+}));
+drawChart(document.getElementById('endpointChart'), endpointSeries, {
+    xMin: 0, xMax: 11, yMin: 0, yMax: 24, xStep: 1, yStep: 4,
+    xLabel: 'plasma insulin clamp (mU/L)', yLabel: 'end-point BG after 12 h (mmol/L)'
+});
+renderLegend(document.getElementById('endpointLegend'), endpointSeries);
+
+const marginalSeries = runs.map(x => ({
+    label: x.variant.label,
+    color: x.variant.color,
+    data: x.run.finalRows.filter(r => r.marginalDrop !== null).map(r => ({ x: r.insulin, y: r.marginalDrop }))
+}));
+drawChart(document.getElementById('marginalChart'), marginalSeries, {
+    xMin: 1, xMax: 11, yMin: -2, yMax: 5, xStep: 1, yStep: 1,
+    xLabel: 'plasma insulin clamp step (mU/L)', yLabel: 'marginal BG drop (mmol/L)'
+});
+renderLegend(document.getElementById('marginalLegend'), marginalSeries);
+
+const wideEndpointSeries = runs.map(x => ({
+    label: x.variant.label,
+    color: x.variant.color,
+    data: x.wideEndpoint,
+    points: true,
+    pointRadius: 4,
+    width: 1.6
+}));
+drawChart(document.getElementById('wideEndpointChart'), wideEndpointSeries, {
+    xMin: 0, xMax: 60, yMin: 0, yMax: 24, xStep: 10, yStep: 4,
+    xLabel: 'plasma insulin clamp (mU/L)', yLabel: 'end-point BG after independent 12 h clamp'
+});
+renderLegend(document.getElementById('wideEndpointLegend'), wideEndpointSeries);
+
+const hillSeries = runs.map(x => ({ label: x.variant.label, color: x.variant.color, data: x.hill }));
+drawChart(document.getElementById('hillChart'), hillSeries, {
+    xMin: 0, xMax: 120, yMin: 0, yMax: 100, xStep: 20, yStep: 20,
+    xLabel: 'plasma insulin (mU/L)', yLabel: 'muscle response (% of shown max)'
+});
+renderLegend(document.getElementById('hillLegend'), hillSeries);
+
+const currentFlux = fluxCurve(variants[0]);
+const candidateFlux = fluxCurve(variants.find(v => v.id === 'deadzone_candidate'));
+const fluxSeries = [
+    { label: 'Current EGP source', color: '#D85A30', data: currentFlux.map(r => ({ x: r.x, y: r.egp })) },
+    { label: 'Current muscle sink', color: '#1D9E75', data: currentFlux.map(r => ({ x: r.x, y: -r.muscleDisposal })) },
+    { label: 'Current net whole-body flux', color: '#3b82f6', width: 2.8, data: currentFlux.map(r => ({ x: r.x, y: r.wholeBodyNet })) },
+    { label: 'Candidate net whole-body flux', color: '#06b6d4', dash: [6, 4], width: 2.8, data: candidateFlux.map(r => ({ x: r.x, y: r.wholeBodyNet })) },
+    { label: 'Brain/F01 sink', color: '#94a3b8', dash: [3, 4], data: currentFlux.map(r => ({ x: r.x, y: -r.f01 })) },
+    { label: 'Zero net', color: '#e5e7eb', dash: [2, 4], width: 1.4, data: [{ x: 0, y: 0 }, { x: 120, y: 0 }] }
+];
+drawChart(document.getElementById('fluxChart'), fluxSeries, {
+    xMin: 0, xMax: 120, yMin: -2.5, yMax: 1.5, xStep: 20, yStep: 0.5,
+    xLabel: 'plasma insulin (mU/L)', yLabel: 'flux (mmol/min), sources + / sinks -'
+});
+renderLegend(document.getElementById('fluxLegend'), fluxSeries);
+
+function fluxDiagnostics(fluxRows) {
+    const zeroCross = fluxRows.find(r => r.wholeBodyNet < 0)?.x ?? null;
+    const netAt = insulin => fluxRows.find(r => r.x === insulin)?.wholeBodyNet ?? null;
+    const egpAt = insulin => fluxRows.find(r => r.x === insulin)?.egp ?? null;
+    const muscleAt = insulin => fluxRows.find(r => r.x === insulin)?.muscleDisposal ?? null;
+    return {
+        zeroCross,
+        net10: netAt(10),
+        net20: netAt(20),
+        net40: netAt(40),
+        egp20: egpAt(20),
+        muscle20: muscleAt(20),
+        muscle55: muscleAt(55)
+    };
+}
+const currentFluxDx = fluxDiagnostics(currentFlux);
+const candidateFluxDx = fluxDiagnostics(candidateFlux);
+
+const best = summaries
+    .filter(s => Number.isFinite(s.ratio))
+    .sort((a, b) => b.ratio - a.ratio)[0];
+const bestUsable = summaries
+    .filter(s => s.visibleSmallNonlinearity)
+    .sort((a, b) => b.ratio - a.ratio)[0];
+
+document.getElementById('analysisText').innerHTML = `
+    <p><strong>Readout:</strong> the current curve still gives a fairly smooth BG response in this
+    inactive clamp. The endpoint plot is the important one: if the dots form an almost straight line,
+    there is little functional BG dead zone. To make a visible small nonlinearity, the muscle response
+    has to move rightward and become steeper. If changing muscle alone barely moves the endpoint line,
+    then early liver EGP suppression is dominating the BG output.</p>
+    <p><strong>Best pure nonlinearity score:</strong> ${best.label}, peak/low ratio ${best.ratio.toFixed(2)}.</p>
+    <p><strong>Most usable candidate before immediate hypo-floor:</strong>
+    ${bestUsable ? `${bestUsable.label}, peak/low ratio ${bestUsable.ratio.toFixed(2)}.` : 'none in this small sweep.'}</p>
+    <p><strong>Flux check:</strong> in the current curve, whole-body net flux crosses below zero around
+    ${currentFluxDx.zeroCross} mU/L. At 20 mU/L, current net flux is ${currentFluxDx.net20.toFixed(2)}
+    mmol/min, EGP is ${currentFluxDx.egp20.toFixed(2)}, and muscle disposal is ${currentFluxDx.muscle20.toFixed(2)}.
+    This explains why the endpoint curve is smooth: liver/F01 balance already produces net glucose removal
+    before the muscle threshold becomes visually dramatic.</p>
+`;
+
+document.getElementById('summaryTable').innerHTML =
+    '<tr><th>Variant</th><th>EC50</th><th>n</th><th>Liver</th><th>Muscle max</th><th>BG @4</th><th>BG @11</th><th>Low avg drop</th><th>Peak drop</th><th>Peak/low</th><th>First hypo</th></tr>' +
+    summaries.map(s => `<tr>
+        <td>${s.label}</td>
+        <td>${s.ec50}</td>
+        <td>${s.n.toFixed(1)}</td>
+        <td>${s.liverScale.toFixed(2)}</td>
+        <td>${s.muscleMaxScale.toFixed(2)}</td>
+        <td>${s.bgAt4.toFixed(1)}</td>
+        <td>${s.bgAt11.toFixed(1)}</td>
+        <td>${s.lowAvg.toFixed(2)}</td>
+        <td>${s.peak.toFixed(2)} @ ${s.peakInsulin}</td>
+        <td>${s.ratio.toFixed(2)}</td>
+        <td>${s.firstHypo === null ? '-' : s.firstHypo}</td>
+    </tr>`).join('');
+
+document.getElementById('rawData').value = JSON.stringify({
+    clampLevels,
+    stepMinutes,
+    summaries,
+    finalRows: runs.map(x => ({
+        id: x.variant.id,
+        label: x.variant.label,
+        rows: x.run.finalRows,
+        wideEndpoint: x.wideEndpoint
+    })),
+    fluxDiagnostics: { current: currentFluxDx, candidate: candidateFluxDx },
+    fluxRows: { current: currentFlux, candidate: candidateFlux }
+}, null, 2);
+</script>
+</body>
+</html>

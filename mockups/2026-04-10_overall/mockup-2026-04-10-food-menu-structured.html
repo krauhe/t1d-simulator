@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Structured Food Menu</title>
+<style>
+  :root {
+    --bg: #08111d;
+    --panel: rgba(17, 28, 46, 0.94);
+    --line: rgba(146, 180, 231, 0.18);
+    --text: #eef5ff;
+    --muted: #92a9cb;
+    --green: #59e0a0;
+    --amber: #ffcc6a;
+    --red: #ff7575;
+    --blue: #78cfff;
+    --purple: #c5a8ff;
+    --shadow: 0 24px 60px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 24%),
+      radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 18%),
+      linear-gradient(180deg, #09111e, #070d18 62%, #08111d);
+    padding: 28px;
+  }
+  .page { max-width: 1320px; margin: 0 auto; display: grid; gap: 22px; }
+  .intro, .variant { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
+  .intro { padding: 22px 24px; }
+  h1, h2, h3, p { margin: 0; }
+  h1 { font-size: 28px; margin-bottom: 10px; letter-spacing: -0.02em; }
+  .intro p { color: var(--muted); max-width: 980px; line-height: 1.55; }
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+  .summary-card { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: rgba(255,255,255,0.03); }
+  .summary-card h3 { margin: 0 0 6px; font-size: 13px; color: var(--amber); text-transform: uppercase; letter-spacing: 0.08em; }
+  .summary-card p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .variant { overflow: hidden; }
+  .variant-head { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; padding: 20px 22px 0; }
+  .variant h2 { font-size: 21px; margin-bottom: 8px; }
+  .variant p { color: var(--muted); line-height: 1.55; font-size: 14px; }
+  .why { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,0.03); height: max-content; }
+  .why div { display: grid; grid-template-columns: 82px 1fr; gap: 10px; color: var(--muted); font-size: 13px; }
+  .why b { color: var(--text); }
+  .stage { margin: 18px; border: 1px solid var(--line); border-radius: 22px; background: rgba(10, 16, 29, 0.8); overflow: hidden; }
+  .menu { padding: 18px; }
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .bar h3 { font-size: 18px; letter-spacing: -0.01em; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .meta span { border: 1px solid var(--line); background: rgba(255,255,255,0.03); border-radius: 999px; padding: 6px 10px; font-size: 12px; color: var(--muted); }
+  .group { border: 1px solid var(--line); border-radius: 18px; padding: 14px; background: rgba(255,255,255,0.03); }
+  .group + .group { margin-top: 12px; }
+  .group-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+  .group-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .group-tip { font-size: 12px; color: var(--muted); }
+  .grid { display: grid; gap: 10px; }
+  .grid.five { grid-template-columns: repeat(5, 1fr); }
+  .grid.four { grid-template-columns: repeat(4, 1fr); }
+  .grid.three { grid-template-columns: repeat(3, 1fr); }
+  .food {
+    border: 1px solid var(--line); border-radius: 16px; padding: 12px 10px 10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    display: grid; gap: 6px; position: relative; min-height: 132px;
+  }
+  .food .k { position: absolute; top: 10px; right: 10px; color: #7088ab; font-size: 11px; font-weight: 700; }
+  .emoji { font-size: 28px; line-height: 1; }
+  .name { font-size: 14px; font-weight: 700; }
+  .desc { font-size: 12px; color: var(--muted); line-height: 1.35; min-height: 32px; }
+  .macro { display: flex; height: 8px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,0.05); }
+  .carb { background: var(--green); } .prot { background: var(--blue); } .fat { background: var(--amber); }
+  .mini { display: flex; gap: 8px; flex-wrap: wrap; color: var(--muted); font-size: 12px; } .mini b { color: var(--text); }
+  .accent-red { box-shadow: inset 0 0 0 1px rgba(255, 117, 117, 0.35); }
+  .accent-amber { box-shadow: inset 0 0 0 1px rgba(255, 204, 106, 0.28); }
+  .accent-blue { box-shadow: inset 0 0 0 1px rgba(120, 207, 255, 0.28); }
+  .accent-purple { box-shadow: inset 0 0 0 1px rgba(197, 168, 255, 0.28); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .tab { padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--muted); font-size: 13px; }
+  .tab.active { color: var(--text); background: rgba(255, 204, 106, 0.1); border-color: rgba(255, 204, 106, 0.25); }
+  .footer-note { margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  @media (max-width: 1100px) {
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    .variant-head { grid-template-columns: 1fr; }
+    .grid.five, .grid.four, .grid.three { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 700px) {
+    body { padding: 16px; }
+    .summary { grid-template-columns: 1fr; }
+    .grid.five, .grid.four, .grid.three { grid-template-columns: 1fr; }
+    .bar { flex-direction: column; align-items: start; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="intro">
+      <h1>Madmenu med bedre struktur</h1>
+      <p>Problemet i den nuvaerende menu er ikke kun, at der er mange valg. Problemet er, at strukturen ikke laerer brugeren, hvordan maden opfoerer sig. Herunder er tre retninger, som organiserer maden efter <strong>maal</strong>, <strong>tidsprofil</strong> eller <strong>kategori med tabs</strong>. Min klare anbefaling er Variant A, fordi den er den mest paedagogiske i selve handlingsojeblikket.</p>
+      <div class="summary">
+        <div class="summary-card"><h3>1. Rescue skal springe frem</h3><p>Dextrose, juice og aeble skal vaere nemmest at finde, fordi de bruges under tidspres.</p></div>
+        <div class="summary-card"><h3>2. Maaltider skal vaere laerbare</h3><p>Brugeren skal kunne se forskel paa hurtige maaltider og dem med sen/forsinket effekt.</p></div>
+        <div class="summary-card"><h3>3. Protein/fedt skal forklares</h3><p>De skal ikke bare ligge som flere presets, men som en tydelig anden type problem.</p></div>
+        <div class="summary-card"><h3>4. Custom skal vaere sekundar</h3><p>Lav selv er vigtigt, men skal ikke konkurrere med presets som et femtende lige vigtigt kort.</p></div>
+      </div>
+    </section>
+
+    <section class="variant">
+      <div class="variant-head">
+        <div><h2>Variant A: Goal First</h2><p>Mad organiseres efter hvad spilleren vil opnaa lige nu: redde et lavt blodsukker, spise et almindeligt maaltid eller haandtere mad med sen effekt. Det er den mest direkte og mest paedagogiske struktur.</p></div>
+        <div class="why"><div><b>Styrke</b><span>Meget nem at forstaa under spil.</span></div><div><b>Laering</b><span>Gor fysiologien synlig gennem kategorierne.</span></div><div><b>Anbefaling</b><span>Min favorit som hovedretning.</span></div></div>
+      </div>
+      <div class="stage">
+        <div class="menu">
+          <div class="bar"><h3>Food</h3><div class="meta"><span>Rescue first</span><span>Meal second</span><span>Slow effect explicit</span></div></div>
+          <div class="group accent-red">
+            <div class="group-head"><div class="group-title">Fast rescue</div><div class="group-tip">Use when BG is low or dropping fast</div></div>
+            <div class="grid three">
+              <div class="food"><span class="k">Z</span><div class="emoji">⬜</div><div class="name">Dextrose</div><div class="desc">Pure glucose. Fastest correction.</div><div class="macro"><span class="carb" style="width:100%"></span></div><div class="mini"><span><b>3g</b> carb</span><span><b>12</b> kcal</span></div></div>
+              <div class="food"><span class="k">X</span><div class="emoji">🧃</div><div class="name">Juice</div><div class="desc">Rapid sugar, still easy to understand.</div><div class="macro"><span class="carb" style="width:100%"></span></div><div class="mini"><span><b>25g</b> carb</span><span><b>250ml</b></span></div></div>
+              <div class="food"><span class="k">C</span><div class="emoji">🍎</div><div class="name">Apple</div><div class="desc">Milder correction than juice.</div><div class="macro"><span class="carb" style="width:100%"></span></div><div class="mini"><span><b>20g</b> carb</span><span><b>180g</b></span></div></div>
+            </div>
+          </div>
+          <div class="group accent-amber">
+            <div class="group-head"><div class="group-title">Everyday meals</div><div class="group-tip">Typical food where carbs drive the first wave</div></div>
+            <div class="grid five">
+              <div class="food"><span class="k">Q</span><div class="emoji">🍞</div><div class="name">Bread</div><div class="desc">Simple daily carb food.</div><div class="macro"><span class="carb" style="width:68%"></span><span class="prot" style="width:22%"></span><span class="fat" style="width:10%"></span></div><div class="mini"><span><b>25</b>C</span><span><b>8</b>P</span><span><b>3</b>F</span></div></div>
+              <div class="food"><span class="k">W</span><div class="emoji">🥣</div><div class="name">Oatmeal</div><div class="desc">Steadier than juice, still carb-led.</div><div class="macro"><span class="carb" style="width:75%"></span><span class="prot" style="width:20%"></span><span class="fat" style="width:5%"></span></div><div class="mini"><span><b>30</b>C</span><span><b>8</b>P</span><span><b>2</b>F</span></div></div>
+              <div class="food"><span class="k">E</span><div class="emoji">🍝</div><div class="name">Pasta</div><div class="desc">Large carb portion, medium complexity.</div><div class="macro"><span class="carb" style="width:76%"></span><span class="prot" style="width:16%"></span><span class="fat" style="width:8%"></span></div><div class="mini"><span><b>50</b>C</span><span><b>10</b>P</span><span><b>5</b>F</span></div></div>
+              <div class="food"><span class="k">R</span><div class="emoji">🍨</div><div class="name">Ice cream</div><div class="desc">Looks sugary, but fat slows the curve.</div><div class="macro"><span class="carb" style="width:62%"></span><span class="prot" style="width:8%"></span><span class="fat" style="width:30%"></span></div><div class="mini"><span><b>25</b>C</span><span><b>3</b>P</span><span><b>12</b>F</span></div></div>
+              <div class="food"><span class="k">T</span><div class="emoji">🥗</div><div class="name">Salad</div><div class="desc">Low impact, low stress choice.</div><div class="macro"><span class="carb" style="width:60%"></span><span class="prot" style="width:25%"></span><span class="fat" style="width:15%"></span></div><div class="mini"><span><b>5</b>C</span><span><b>2</b>P</span><span><b>1</b>F</span></div></div>
+            </div>
+          </div>
+          <div class="group accent-blue">
+            <div class="group-head"><div class="group-title">Slow / delayed effect</div><div class="group-tip">High fat or mixed meals that can create a second rise later</div></div>
+            <div class="grid four">
+              <div class="food"><span class="k">A</span><div class="emoji">🍕</div><div class="name">Pizza</div><div class="desc">Classic delayed effect meal.</div><div class="macro"><span class="carb" style="width:55%"></span><span class="prot" style="width:20%"></span><span class="fat" style="width:25%"></span></div><div class="mini"><span><b>55</b>C</span><span><b>20</b>P</span><span><b>25</b>F</span></div></div>
+              <div class="food"><span class="k">S</span><div class="emoji">🍰</div><div class="name">Cake</div><div class="desc">Sugar first, fat later.</div><div class="macro"><span class="carb" style="width:67%"></span><span class="prot" style="width:6%"></span><span class="fat" style="width:27%"></span></div><div class="mini"><span><b>60</b>C</span><span><b>5</b>P</span><span><b>25</b>F</span></div></div>
+              <div class="food"><span class="k">D</span><div class="emoji">🍫</div><div class="name">Chocolate</div><div class="desc">Easy to underestimate.</div><div class="macro"><span class="carb" style="width:62%"></span><span class="prot" style="width:6%"></span><span class="fat" style="width:32%"></span></div><div class="mini"><span><b>30</b>C</span><span><b>3</b>P</span><span><b>15</b>F</span></div></div>
+              <div class="food"><span class="k">F</span><div class="emoji">🥑</div><div class="name">Avocado / cheese / chicken</div><div class="desc">Protein and fat group with little immediate carb.</div><div class="macro"><span class="carb" style="width:10%"></span><span class="prot" style="width:35%"></span><span class="fat" style="width:55%"></span></div><div class="mini"><span><b>Low</b> carbs</span><span><b>Late</b> effect</span></div></div>
+            </div>
+          </div>
+          <div class="footer-note">Custom food should sit below all presets as a secondary action: "Build your own meal". It should not compete visually with rescue foods.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="variant">
+      <div class="variant-head">
+        <div><h2>Variant B: Time Profile</h2><p>Her organiseres maden efter hvordan blodsukkeret typisk reagerer over tid: fast rise, medium curve, and delayed second wave. Det er mere scientific UI og lidt mindre umiddelbart end Variant A.</p></div>
+        <div class="why"><div><b>Styrke</b><span>Forklarer kinetik meget direkte.</span></div><div><b>Laering</b><span>God for brugere der vil forstaa kurver.</span></div><div><b>Tradeoff</b><span>Ikke lige saa handlingsnaer som Goal First.</span></div></div>
+      </div>
+      <div class="stage">
+        <div class="menu">
+          <div class="bar"><h3>Food by glucose curve</h3><div class="meta"><span>Fast rise</span><span>Medium meal</span><span>Second wave risk</span></div></div>
+          <div class="group accent-red">
+            <div class="group-head"><div class="group-title">Fast rise</div><div class="group-tip">Hits early, useful for rescue</div></div>
+            <div class="grid four">
+              <div class="food"><span class="k">Z</span><div class="emoji">⬜</div><div class="name">Dextrose</div><div class="desc">Very fast correction.</div><div class="macro"><span class="carb" style="width:100%"></span></div><div class="mini"><span><b>3g</b> carb</span></div></div>
+              <div class="food"><span class="k">X</span><div class="emoji">🧃</div><div class="name">Juice</div><div class="desc">Fast sugar, easy rescue.</div><div class="macro"><span class="carb" style="width:100%"></span></div><div class="mini"><span><b>25g</b> carb</span></div></div>
+              <div class="food"><span class="k">C</span><div class="emoji">🍎</div><div class="name">Apple</div><div class="desc">Fast enough, softer than juice.</div><div class="macro"><span class="carb" style="width:100%"></span></div><div class="mini"><span><b>20g</b> carb</span></div></div>
+              <div class="food"><span class="k">V</span><div class="emoji">🍞</div><div class="name">Bread</div><div class="desc">Moderately fast.</div><div class="macro"><span class="carb" style="width:68%"></span><span class="prot" style="width:22%"></span><span class="fat" style="width:10%"></span></div><div class="mini"><span><b>25</b>C</span><span><b>8</b>P</span></div></div>
+            </div>
+          </div>
+          <div class="group accent-amber">
+            <div class="group-head"><div class="group-title">Medium curve</div><div class="group-tip">Typical meal responses</div></div>
+            <div class="grid four">
+              <div class="food"><span class="k">Q</span><div class="emoji">🥣</div><div class="name">Oatmeal</div><div class="desc">Steadier breakfast type.</div><div class="macro"><span class="carb" style="width:75%"></span><span class="prot" style="width:20%"></span><span class="fat" style="width:5%"></span></div><div class="mini"><span><b>30</b>C</span><span><b>8</b>P</span></div></div>
+              <div class="food"><span class="k">W</span><div class="emoji">🍝</div><div class="name">Pasta</div><div class="desc">Classic meal with clear carb load.</div><div class="macro"><span class="carb" style="width:76%"></span><span class="prot" style="width:16%"></span><span class="fat" style="width:8%"></span></div><div class="mini"><span><b>50</b>C</span><span><b>10</b>P</span></div></div>
+              <div class="food"><span class="k">E</span><div class="emoji">🥗</div><div class="name">Salad</div><div class="desc">Low impact daily option.</div><div class="macro"><span class="carb" style="width:60%"></span><span class="prot" style="width:25%"></span><span class="fat" style="width:15%"></span></div><div class="mini"><span><b>5</b>C</span><span><b>2</b>P</span></div></div>
+              <div class="food"><span class="k">R</span><div class="emoji">🍨</div><div class="name">Ice cream</div><div class="desc">Medium first wave, some delay.</div><div class="macro"><span class="carb" style="width:62%"></span><span class="prot" style="width:8%"></span><span class="fat" style="width:30%"></span></div><div class="mini"><span><b>25</b>C</span><span><b>12</b>F</span></div></div>
+            </div>
+          </div>
+          <div class="group accent-blue">
+            <div class="group-head"><div class="group-title">Delayed / second wave</div><div class="group-tip">Fat and protein raise complexity</div></div>
+            <div class="grid four">
+              <div class="food"><span class="k">A</span><div class="emoji">🍕</div><div class="name">Pizza</div><div class="desc">High delayed-risk meal.</div><div class="macro"><span class="carb" style="width:55%"></span><span class="prot" style="width:20%"></span><span class="fat" style="width:25%"></span></div><div class="mini"><span><b>55</b>C</span><span><b>25</b>F</span></div></div>
+              <div class="food"><span class="k">S</span><div class="emoji">🍰</div><div class="name">Cake</div><div class="desc">Sugar now, fat later.</div><div class="macro"><span class="carb" style="width:67%"></span><span class="prot" style="width:6%"></span><span class="fat" style="width:27%"></span></div><div class="mini"><span><b>60</b>C</span><span><b>25</b>F</span></div></div>
+              <div class="food"><span class="k">D</span><div class="emoji">🍫</div><div class="name">Chocolate</div><div class="desc">Sneaky delayed effect.</div><div class="macro"><span class="carb" style="width:62%"></span><span class="prot" style="width:6%"></span><span class="fat" style="width:32%"></span></div><div class="mini"><span><b>30</b>C</span><span><b>15</b>F</span></div></div>
+              <div class="food"><span class="k">F</span><div class="emoji">🍗</div><div class="name">Protein / fat plate</div><div class="desc">Low carb but can still matter later.</div><div class="macro"><span class="carb" style="width:8%"></span><span class="prot" style="width:46%"></span><span class="fat" style="width:46%"></span></div><div class="mini"><span><b>Late</b> effect</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="variant">
+      <div class="variant-head">
+        <div><h2>Variant C: Tabbed Categories</h2><p>Her fastholdes en mere klassisk app-struktur med tabs. Rescue holdes stadig synligt i toppen, men resten af maden ligger bag faner som Meals, Slow effect og Protein/Fat. Det er mere kompakt, men mindre didaktisk i foerste omgang.</p></div>
+        <div class="why"><div><b>Styrke</b><span>Meget kompakt og ryddelig.</span></div><div><b>Laering</b><span>Bedre end nu, men mindre tydelig end A.</span></div><div><b>Tradeoff</b><span>Kraver ekstra klik for at opdage alle typer mad.</span></div></div>
+      </div>
+      <div class="stage">
+        <div class="menu">
+          <div class="bar"><h3>Food</h3><div class="meta"><span>Compact pattern</span><span>Better for smaller panels</span></div></div>
+          <div class="group accent-red">
+            <div class="group-head"><div class="group-title">Always visible rescue row</div><div class="group-tip">Never hidden behind tabs</div></div>
+            <div class="grid three">
+              <div class="food"><span class="k">Z</span><div class="emoji">⬜</div><div class="name">Dextrose</div><div class="desc">Fastest correction.</div><div class="macro"><span class="carb" style="width:100%"></span></div><div class="mini"><span><b>3g</b> carb</span></div></div>
+              <div class="food"><span class="k">X</span><div class="emoji">🧃</div><div class="name">Juice</div><div class="desc">Rapid sugar.</div><div class="macro"><span class="carb" style="width:100%"></span></div><div class="mini"><span><b>25g</b> carb</span></div></div>
+              <div class="food"><span class="k">C</span><div class="emoji">🍎</div><div class="name">Apple</div><div class="desc">Mild correction.</div><div class="macro"><span class="carb" style="width:100%"></span></div><div class="mini"><span><b>20g</b> carb</span></div></div>
+            </div>
+          </div>
+          <div class="tabs"><div class="tab active">Meals</div><div class="tab">Slow effect</div><div class="tab">Protein / fat</div><div class="tab">Custom</div></div>
+          <div class="group accent-purple">
+            <div class="group-head"><div class="group-title">Current tab: Meals</div><div class="group-tip">The current page should still teach through labels</div></div>
+            <div class="grid five">
+              <div class="food"><span class="k">Q</span><div class="emoji">🍞</div><div class="name">Bread</div><div class="desc">Simple carb meal.</div><div class="macro"><span class="carb" style="width:68%"></span><span class="prot" style="width:22%"></span><span class="fat" style="width:10%"></span></div><div class="mini"><span><b>25</b>C</span><span><b>8</b>P</span></div></div>
+              <div class="food"><span class="k">W</span><div class="emoji">🥣</div><div class="name">Oatmeal</div><div class="desc">Steady breakfast.</div><div class="macro"><span class="carb" style="width:75%"></span><span class="prot" style="width:20%"></span><span class="fat" style="width:5%"></span></div><div class="mini"><span><b>30</b>C</span><span><b>8</b>P</span></div></div>
+              <div class="food"><span class="k">E</span><div class="emoji">🍝</div><div class="name">Pasta</div><div class="desc">Large carb load.</div><div class="macro"><span class="carb" style="width:76%"></span><span class="prot" style="width:16%"></span><span class="fat" style="width:8%"></span></div><div class="mini"><span><b>50</b>C</span><span><b>10</b>P</span></div></div>
+              <div class="food"><span class="k">R</span><div class="emoji">🍨</div><div class="name">Ice cream</div><div class="desc">Mixed meal profile.</div><div class="macro"><span class="carb" style="width:62%"></span><span class="prot" style="width:8%"></span><span class="fat" style="width:30%"></span></div><div class="mini"><span><b>25</b>C</span><span><b>12</b>F</span></div></div>
+              <div class="food"><span class="k">T</span><div class="emoji">🥗</div><div class="name">Salad</div><div class="desc">Low-impact side meal.</div><div class="macro"><span class="carb" style="width:60%"></span><span class="prot" style="width:25%"></span><span class="fat" style="width:15%"></span></div><div class="mini"><span><b>5</b>C</span><span><b>2</b>P</span></div></div>
+            </div>
+          </div>
+          <div class="footer-note">Hvis tabs bruges, skal rescue altid forblive synligt. Ellers bliver de mest presserende mad-vaerktojer svaerere at finde netop naar spilleren er stresset.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

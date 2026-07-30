@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Pad Mockups — 6 variationer</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Archivo:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════════════════
+     FÆLLES VARIABLER — matcher spillet
+     ═══════════════════════════════════════════════════════ */
+  :root {
+    --bg: #0d1526;
+    --bg-card: rgba(20, 29, 47, 0.97);
+    --bg-card-glass: rgba(20, 29, 47, 0.5);
+    --bg-elevated: rgba(255, 255, 255, 0.07);
+    --bg-hover: rgba(255, 255, 255, 0.14);
+    --text-1: #f5f8fc;
+    --text-2: #c4d5e8;
+    --text-3: #8fa8c8;
+    --text-4: #5e7a99;
+    --green: #4ade80;
+    --green-dim: rgba(74, 222, 128, 0.15);
+    --green-glow: rgba(74, 222, 128, 0.35);
+    --red: #ef4444;
+    --orange: #fb923c;
+    --blue: #7dd3fc;
+    --teal: #2dd4bf;
+    --purple: #c4b5fd;
+    --yellow: #fde047;
+    --border-s: rgba(147, 197, 253, 0.12);
+    --border-m: rgba(147, 197, 253, 0.20);
+    --shadow-glow: 0 0 30px rgba(147, 197, 253, 0.08);
+    /* Dock icon gradients */
+    --insulin-bg: linear-gradient(135deg, #0e7490, #155e75);
+    --food-bg: linear-gradient(135deg, #92400e, #78350f);
+    --exercise-bg: linear-gradient(135deg, #065f46, #064e3b);
+    --kit-bg: linear-gradient(135deg, #134e4a, #0f3d3a);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    min-height: 100vh;
+  }
+
+  /* Mockup wrapper */
+  .mockup {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .mockup-label {
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    max-width: 600px;
+  }
+  .mockup-label h1 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .mockup-label p {
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--text-2);
+  }
+  .label-a { background: linear-gradient(135deg, #1a2744, #0d1526); border: 1px solid var(--teal); }
+  .label-a h1 { color: var(--teal); }
+  .label-b { background: linear-gradient(135deg, #1e1a2e, #0d1526); border: 1px solid var(--purple); }
+  .label-b h1 { color: var(--purple); }
+  .label-c { background: linear-gradient(135deg, #2a1a0e, #0d1526); border: 1px solid var(--orange); }
+  .label-c h1 { color: var(--orange); }
+  .label-d { background: linear-gradient(135deg, #0e2a1a, #0d1526); border: 1px solid var(--green); }
+  .label-d h1 { color: var(--green); }
+  .label-e { background: linear-gradient(135deg, #1a1e2e, #0d1526); border: 1px solid var(--blue); }
+  .label-e h1 { color: var(--blue); }
+  .label-f { background: linear-gradient(135deg, #2a0e1a, #0d1526); border: 1px solid #f472b6; }
+  .label-f h1 { color: #f472b6; }
+
+  /* Simuleret graf-baggrund */
+  .stage {
+    background:
+      linear-gradient(180deg,
+        rgba(74, 222, 128, 0.03) 0%,
+        rgba(74, 222, 128, 0.06) 40%,
+        rgba(251, 146, 60, 0.04) 60%,
+        rgba(239, 68, 68, 0.03) 100%);
+    border: 1px solid var(--border-s);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    min-height: 200px;
+    position: relative;
+    overflow: visible;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     FÆLLES SUB-KOMPONENTER
+     ═══════════════════════════════════════════════════════ */
+
+  /* BG-tal (genbruges i alle mockups) */
+  .bg-value { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--green); line-height: 1; }
+  .bg-unit { font-size: 10px; color: var(--text-3); font-weight: 500; }
+  .bg-trend { font-size: 22px; font-weight: 900; color: var(--green); text-shadow: 0 0 6px var(--green-glow); }
+
+  /* IOB/COB pills */
+  .pill { background: var(--bg-elevated); border: 1px solid var(--border-s); border-radius: 6px; padding: 2px 8px; font-size: 10px; color: var(--text-3); white-space: nowrap; }
+  .pill strong { color: var(--text-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* Dock ikon */
+  .di { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid transparent; position: relative; }
+  .di:hover { transform: translateY(-8px) scale(1.15); }
+  .di .dk { position: absolute; bottom: 1px; right: 3px; font-size: 7px; font-weight: 700; color: var(--text-3); opacity: 0.4; }
+  .di-insulin { background: var(--insulin-bg); border-color: rgba(14, 165, 210, 0.4); }
+  .di-insulin:hover { box-shadow: 0 6px 20px rgba(14, 116, 144, 0.5); border-color: rgba(14, 165, 210, 0.7); }
+  .di-food { background: var(--food-bg); border-color: rgba(250, 204, 21, 0.3); }
+  .di-food:hover { box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4); border-color: rgba(250, 204, 21, 0.6); }
+  .di-exercise { background: var(--exercise-bg); border-color: rgba(52, 211, 153, 0.3); }
+  .di-exercise:hover { box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); border-color: rgba(52, 211, 153, 0.6); }
+  .di-kit { background: var(--kit-bg); border-color: rgba(94, 234, 212, 0.3); }
+  .di-kit:hover { box-shadow: 0 6px 20px rgba(94, 234, 212, 0.4); border-color: rgba(94, 234, 212, 0.6); }
+
+  /* Speed stepper knapper */
+  .sp-btn { background: transparent; border: none; color: var(--text-3); font-size: 11px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; }
+  .sp-btn:hover { color: var(--text-1); background: var(--bg-hover); }
+  .sp-center { background: var(--bg-elevated); border: none; color: var(--text-2); font-size: 11px; font-weight: 600; padding: 4px 8px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; font-family: inherit; }
+  .sp-center:hover { color: var(--text-1); }
+  .sp-icon { color: var(--blue); font-size: 10px; }
+
+  /* Points */
+  .pts-star { font-size: 14px; }
+  .pts-num { font-size: 16px; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; }
+  .pts-weight { font-size: 9px; color: var(--text-3); }
+  .pts-mode { font-size: 9px; color: var(--text-4); text-transform: uppercase; letter-spacing: 0.5px; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     A — COCKPIT CONSOLE
+     Industrielt sci-fi cockpit. Bezel-rammer, LED-displays,
+     statuslys. Alt er inset i en metalagtig konsol.
+     ═══════════════════════════════════════════════════════════════ */
+  .cockpit {
+    font-family: 'Chakra Petch', monospace;
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+  }
+  .cockpit .wing {
+    background: linear-gradient(180deg, rgba(20, 30, 50, 0.95), rgba(12, 18, 32, 0.98));
+    border: 1px solid rgba(100, 140, 180, 0.2);
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 140px;
+  }
+  .cockpit .wing-left {
+    border-radius: 14px 4px 4px 14px;
+    border-right: none;
+  }
+  .cockpit .wing-right {
+    border-radius: 4px 14px 14px 4px;
+    border-left: none;
+    align-items: flex-end;
+    text-align: right;
+  }
+  .cockpit .core {
+    background: linear-gradient(180deg, rgba(16, 24, 42, 0.98), rgba(10, 16, 30, 0.99));
+    border: 1px solid rgba(100, 140, 180, 0.25);
+    border-radius: 6px;
+    padding: 10px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  .cockpit .core::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 20%; right: 20%; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.4), transparent);
+  }
+  .cockpit .dock-row {
+    display: flex;
+    gap: 6px;
+  }
+  .cockpit .speed-row {
+    display: flex;
+    align-items: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(100, 140, 180, 0.12);
+  }
+  .cockpit .wing-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-4);
+    font-weight: 600;
+  }
+  .cockpit .bg-value { font-size: 28px; font-family: 'Chakra Petch', monospace; }
+  .cockpit .pill-row { display: flex; gap: 4px; }
+  .cockpit .led {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 4px var(--green);
+    display: inline-block;
+    margin-right: 4px;
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     B — ORGANIC PEBBLE
+     Biomorfe bløde former. Ingen skarpe hjørner. Alt flyder
+     sammen som polerede flodsten. Blid, beroligende.
+     ═══════════════════════════════════════════════════════════════ */
+  .pebble {
+    font-family: 'Outfit', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pebble .stone {
+    background: radial-gradient(ellipse at 30% 20%, rgba(40, 55, 80, 0.9), rgba(16, 24, 40, 0.95));
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(147, 197, 253, 0.1);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pebble .stone-left {
+    border-radius: 28px 18px 22px 32px;
+    min-width: 130px;
+  }
+  .pebble .stone-right {
+    border-radius: 18px 28px 32px 22px;
+    align-items: flex-end;
+    min-width: 110px;
+  }
+  .pebble .stone-center {
+    border-radius: 24px;
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .pebble .dock-flow {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .pebble .di { border-radius: 50%; width: 48px; height: 48px; }
+  .pebble .di:hover { transform: translateY(-6px) scale(1.12); }
+  .pebble .speed-pill {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.04);
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border-s);
+  }
+  .pebble .speed-pill .sp-btn { border-radius: 20px; padding: 5px 12px; }
+  .pebble .speed-pill .sp-center { border-radius: 0; border-left: 1px solid var(--border-s); border-right: 1px solid var(--border-s); }
+  .pebble .bg-value { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .pebble .bg-trend { font-size: 20px; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     C — RACING HUD
+     Inspireret af racing-spil telemetri. Vinklede, aggressive
+     former. Skråsnit og speed-lines. Dynamisk og energisk.
+     ═══════════════════════════════════════════════════════════════ */
+  .racing {
+    font-family: 'Archivo', sans-serif;
+    display: flex;
+    align-items: stretch;
+    position: relative;
+  }
+  .racing .r-wing {
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-width: 140px;
+    position: relative;
+    background: linear-gradient(135deg, rgba(20, 30, 48, 0.95), rgba(14, 22, 38, 0.98));
+  }
+  .racing .r-wing-left {
+    border-radius: 4px 0 0 14px;
+    clip-path: polygon(0 0, 100% 8%, 100% 92%, 0 100%);
+    padding-right: 24px;
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-right: none;
+  }
+  .racing .r-wing-right {
+    border-radius: 0 4px 14px 0;
+    clip-path: polygon(0 8%, 100% 0, 100% 100%, 0 92%);
+    padding-left: 24px;
+    text-align: right;
+    align-items: flex-end;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-left: none;
+  }
+  .racing .r-core {
+    background: linear-gradient(180deg, rgba(18, 28, 46, 0.98), rgba(12, 20, 36, 0.99));
+    border: 1px solid var(--border-m);
+    border-radius: 4px;
+    padding: 8px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+    position: relative;
+  }
+  .racing .r-core::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 10%; right: 10%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--orange), transparent);
+    opacity: 0.5;
+  }
+  .racing .dock-strip {
+    display: flex;
+    gap: 5px;
+  }
+  .racing .di { border-radius: 6px; width: 42px; height: 42px; }
+  .racing .speed-bar {
+    display: flex;
+    align-items: center;
+    background: rgba(0,0,0,0.4);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .racing .bg-value { font-size: 24px; font-weight: 900; font-family: 'Archivo', sans-serif; letter-spacing: -1px; }
+  .racing .r-accent {
+    width: 3px; height: 18px; border-radius: 1px;
+    margin-right: 8px;
+  }
+  .racing .r-accent-green { background: var(--green); box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }
+  .racing .r-accent-yellow { background: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.4); }
+  .racing .r-row { display: flex; align-items: center; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     D — FLOATING ARCHIPELAGO
+     Øer forbundet af tynde broer. Eterisk, luftigt. Hvert
+     element er sin egen lille ø der svæver i mørket.
+     ═══════════════════════════════════════════════════════════════ */
+  .archipelago {
+    font-family: 'Syne', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+  .archipelago .island {
+    background: var(--bg-card-glass);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-s);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    z-index: 2;
+  }
+  .archipelago .island-bg {
+    border-radius: 20px 10px 10px 20px;
+    min-width: 125px;
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.06), 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .archipelago .island-pts {
+    border-radius: 10px 20px 20px 10px;
+    align-items: flex-end;
+    text-align: right;
+    min-width: 100px;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.06), 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .archipelago .island-dock {
+    border-radius: 20px;
+    padding: 10px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 0 30px rgba(147, 197, 253, 0.06), 0 8px 30px rgba(0,0,0,0.4);
+  }
+  .archipelago .bridge {
+    width: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border-m), var(--border-s));
+    position: relative;
+    z-index: 1;
+  }
+  .archipelago .bridge::before {
+    content: ''; position: absolute; top: -2px; left: 50%; width: 5px; height: 5px;
+    border-radius: 50%; background: var(--text-4); transform: translateX(-50%);
+  }
+  .archipelago .dock-arc { display: flex; gap: 8px; }
+  .archipelago .speed-line {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-s);
+  }
+  .archipelago .bg-value { font-size: 24px; font-weight: 800; font-family: 'Syne', sans-serif; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     E — CONTROLLER
+     Bogstavelig spilcontroller-form. D-pad til speed,
+     action-knapper til dock. Skærme til BG og points.
+     Legesyg og taktil.
+     ═══════════════════════════════════════════════════════════════ */
+  .controller {
+    font-family: 'Outfit', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .controller .grip {
+    background: linear-gradient(180deg, rgba(28, 38, 58, 0.97), rgba(18, 26, 44, 0.98));
+    border: 1px solid var(--border-m);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 130px;
+  }
+  .controller .grip-left {
+    border-radius: 24px 6px 6px 28px;
+    border-right: none;
+  }
+  .controller .grip-right {
+    border-radius: 6px 24px 28px 6px;
+    border-left: none;
+    align-items: flex-end;
+    text-align: right;
+  }
+  .controller .body {
+    background: linear-gradient(180deg, rgba(22, 32, 52, 0.98), rgba(14, 22, 38, 0.99));
+    border: 1px solid var(--border-m);
+    border-radius: 8px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+  }
+  /* D-pad for speed */
+  .controller .dpad {
+    display: grid;
+    grid-template: 24px 24px 24px / 24px 24px 24px;
+    gap: 2px;
+  }
+  .controller .dpad-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border-s);
+    border-radius: 4px;
+    color: var(--text-3);
+    font-size: 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .controller .dpad-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-1);
+  }
+  .controller .dpad-center {
+    background: rgba(125, 211, 252, 0.1);
+    border-color: rgba(125, 211, 252, 0.2);
+    color: var(--blue);
+    font-size: 7px;
+    font-weight: 700;
+  }
+  .controller .dpad-blank { background: transparent; border: none; }
+  /* Action buttons (dock) */
+  .controller .action-btns {
+    display: grid;
+    grid-template: 42px 42px / 42px 42px;
+    gap: 6px;
+  }
+  .controller .action-btns .di { width: 42px; height: 42px; border-radius: 50%; }
+  /* Screen */
+  .controller .screen {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border-s);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 8px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .controller .bg-value { font-size: 26px; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     F — MINIMAL HORIZON
+     Ultra-ren enkelt-linje. Subtile zoneopdelinger via
+     lysforskelle. Typografi gør alt arbejdet. Ingen unødvendige
+     rammer, ikoner eller dekorationer.
+     ═══════════════════════════════════════════════════════════════ */
+  .horizon {
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    background: rgba(16, 24, 40, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-s);
+    border-radius: 22px;
+    padding: 8px 6px;
+    gap: 2px;
+  }
+  .horizon .hz-zone {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 16px;
+    transition: background 0.2s;
+  }
+  .horizon .hz-zone:hover {
+    background: rgba(255,255,255,0.03);
+  }
+  .horizon .hz-bg {
+    gap: 10px;
+  }
+  .horizon .hz-sep {
+    width: 1px;
+    height: 28px;
+    background: var(--border-s);
+    flex-shrink: 0;
+  }
+  .horizon .hz-dock {
+    display: flex;
+    gap: 4px;
+  }
+  .horizon .hz-dock .di {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 17px;
+  }
+  .horizon .hz-speed {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .horizon .hz-speed .sp-btn { font-size: 10px; padding: 4px 8px; }
+  .horizon .hz-speed .sp-center { font-size: 10px; padding: 4px 6px; }
+  .horizon .hz-pts {
+    gap: 6px;
+  }
+  .horizon .bg-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: -1px; }
+  .horizon .bg-trend { font-size: 16px; }
+  .horizon .pill { font-size: 9px; padding: 1px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+
+<!-- ═══════════════════ A: COCKPIT CONSOLE ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label label-a">
+    <h1>A: Cockpit Console</h1>
+    <p>Industrielt sci-fi cockpit. Metal-bezel rammer, LED-statuslys, instrument-panel æstetik. Alt føles inset i en fysisk konsol. Teknisk og autoritativt.</p>
+  </div>
+  <div class="stage">
+    <div class="cockpit">
+      <div class="wing wing-left">
+        <div class="wing-label"><span class="led"></span>GLUKOSE MONITOR</div>
+        <div style="display:flex; align-items:baseline; gap:6px;">
+          <span class="bg-value">7.2</span>
+          <span class="bg-trend">→</span>
+        </div>
+        <div class="bg-unit">mmol/L</div>
+        <div class="pill-row">
+          <span class="pill">IOB <strong>2.4</strong> E</span>
+          <span class="pill">COB <strong>18</strong> g</span>
+        </div>
+      </div>
+      <div class="core">
+        <div class="dock-row">
+          <div class="di di-insulin">💉<span class="dk">Z</span></div>
+          <div class="di di-food">🍽️<span class="dk">X</span></div>
+          <div class="di di-exercise">🏃<span class="dk">C</span></div>
+          <div class="di di-kit">🩹<span class="dk">V</span></div>
+        </div>
+        <div class="speed-row">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="wing wing-right">
+        <div class="wing-label">SCORE <span class="led" style="background:var(--yellow); box-shadow: 0 0 4px var(--yellow);"></span></div>
+        <div class="pts-mode">🏖️ Sandbox</div>
+        <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+          <span class="pts-star">⭐</span>
+          <span class="pts-num">142.5</span>
+        </div>
+        <span class="pts-weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ B: ORGANIC PEBBLE ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label label-b">
+    <h1>B: Organic Pebble</h1>
+    <p>Biomorfe bløde former som polerede flodsten. Alle hjørner er asymmetrisk afrundede. Blid, rolig og naturlig. Ingen skarpe kanter — alt flyder.</p>
+  </div>
+  <div class="stage">
+    <div class="pebble">
+      <div class="stone stone-left">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="bg-value">7.2</span>
+          <div style="display:flex; flex-direction:column; gap:1px;">
+            <span class="bg-unit">mmol/L</span>
+            <span class="bg-trend">→</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <span class="pill">IOB <strong>2.4</strong> E</span>
+          <span class="pill">COB <strong>18</strong> g</span>
+        </div>
+      </div>
+      <div class="stone stone-center">
+        <div class="dock-flow">
+          <div class="di di-insulin">💉<span class="dk">Z</span></div>
+          <div class="di di-food">🍽️<span class="dk">X</span></div>
+          <div class="di di-exercise">🏃<span class="dk">C</span></div>
+          <div class="di di-kit">🩹<span class="dk">V</span></div>
+        </div>
+        <div class="speed-pill">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="stone stone-right">
+        <div class="pts-mode">🏖️ Sandbox</div>
+        <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+          <span class="pts-star">⭐</span>
+          <span class="pts-num">142.5</span>
+        </div>
+        <span class="pts-weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ C: RACING HUD ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label label-c">
+    <h1>C: Racing HUD</h1>
+    <p>Racing-spil telemetri. Vinklede, aggressive former med diagonale snit og speed-lines. Farvede accent-streger markerer zoner. Dynamisk og energisk.</p>
+  </div>
+  <div class="stage">
+    <div class="racing">
+      <div class="r-wing r-wing-left">
+        <div class="r-row">
+          <span class="r-accent r-accent-green"></span>
+          <div>
+            <div style="display:flex; align-items:baseline; gap:6px;">
+              <span class="bg-value">7.2</span>
+              <span class="bg-trend" style="font-size:18px;">→</span>
+            </div>
+            <div class="bg-unit" style="font-weight:700; letter-spacing:0.1em;">MMOL/L</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:4px; margin-left: 11px;">
+          <span class="pill">IOB <strong>2.4</strong></span>
+          <span class="pill">COB <strong>18</strong></span>
+        </div>
+      </div>
+      <div class="r-core">
+        <div class="dock-strip">
+          <div class="di di-insulin">💉<span class="dk">Z</span></div>
+          <div class="di di-food">🍽️<span class="dk">X</span></div>
+          <div class="di di-exercise">🏃<span class="dk">C</span></div>
+          <div class="di di-kit">🩹<span class="dk">V</span></div>
+        </div>
+        <div class="speed-bar">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="r-wing r-wing-right">
+        <div class="r-row" style="justify-content: flex-end;">
+          <div>
+            <div class="pts-mode">🏖️ Sandbox</div>
+            <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+              <span class="pts-star">⭐</span>
+              <span class="pts-num">142.5</span>
+            </div>
+          </div>
+          <span class="r-accent r-accent-yellow"></span>
+        </div>
+        <span class="pts-weight" style="margin-right: 11px;">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ D: FLOATING ARCHIPELAGO ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label label-d">
+    <h1>D: Floating Archipelago</h1>
+    <p>Øer forbundet af tynde broer med dots. Eterisk og luftigt — hvert element svæver som sin egen lille ø i mørket. Glasmorfisk og drømmende.</p>
+  </div>
+  <div class="stage">
+    <div class="archipelago">
+      <div class="island island-bg">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="bg-value">7.2</span>
+          <div style="display:flex; flex-direction:column; gap:1px;">
+            <span class="bg-unit">mmol/L</span>
+            <span class="bg-trend" style="font-size:18px;">→</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <span class="pill">IOB <strong>2.4</strong> E</span>
+          <span class="pill">COB <strong>18</strong> g</span>
+        </div>
+      </div>
+      <div class="bridge"></div>
+      <div class="island island-dock">
+        <div class="dock-arc">
+          <div class="di di-insulin">💉<span class="dk">Z</span></div>
+          <div class="di di-food">🍽️<span class="dk">X</span></div>
+          <div class="di di-exercise">🏃<span class="dk">C</span></div>
+          <div class="di di-kit">🩹<span class="dk">V</span></div>
+        </div>
+        <div class="speed-line">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="bridge"></div>
+      <div class="island island-pts">
+        <div class="pts-mode">🏖️ Sandbox</div>
+        <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+          <span class="pts-star">⭐</span>
+          <span class="pts-num">142.5</span>
+        </div>
+        <span class="pts-weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ E: CONTROLLER ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label label-e">
+    <h1>E: Controller</h1>
+    <p>Bogstavelig spilcontroller. D-pad til hastighed (◀▶ + ▶⏸), action-knapper i 2×2 grid til dock-ikoner. "Skærm"-displays i grebene viser BG og points. Legesyg og taktil.</p>
+  </div>
+  <div class="stage">
+    <div class="controller">
+      <div class="grip grip-left">
+        <div class="screen">Glukose</div>
+        <div style="display:flex; align-items:baseline; gap:6px;">
+          <span class="bg-value">7.2</span>
+          <span class="bg-trend">→</span>
+        </div>
+        <div class="bg-unit">mmol/L</div>
+        <div style="display:flex; gap:4px;">
+          <span class="pill">IOB <strong>2.4</strong></span>
+          <span class="pill">COB <strong>18</strong></span>
+        </div>
+      </div>
+      <div class="body">
+        <!-- D-pad for speed -->
+        <div class="dpad">
+          <div></div>
+          <button class="dpad-btn" title="Hurtigere">▲</button>
+          <div></div>
+          <button class="dpad-btn" title="Langsommere">◀</button>
+          <button class="dpad-btn dpad-center">4t<br>min</button>
+          <button class="dpad-btn" title="Hurtigere">▶</button>
+          <div></div>
+          <button class="dpad-btn" title="Pause">⏸</button>
+          <div></div>
+        </div>
+        <!-- Action buttons -->
+        <div class="action-btns">
+          <div class="di di-insulin">💉<span class="dk">Z</span></div>
+          <div class="di di-food">🍽️<span class="dk">X</span></div>
+          <div class="di di-exercise">🏃<span class="dk">C</span></div>
+          <div class="di di-kit">🩹<span class="dk">V</span></div>
+        </div>
+      </div>
+      <div class="grip grip-right">
+        <div class="screen">Score</div>
+        <div class="pts-mode">🏖️ Sandbox</div>
+        <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+          <span class="pts-star">⭐</span>
+          <span class="pts-num">142.5</span>
+        </div>
+        <span class="pts-weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ F: MINIMAL HORIZON ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label label-f">
+    <h1>F: Minimal Horizon</h1>
+    <p>Ultra-ren enkelt-linje pille. Alt i én ubrudt horisont med subtile zone-separatorer. Monospace-typografi gør alt arbejdet. Ingen dekoration — kun data og kontroller.</p>
+  </div>
+  <div class="stage">
+    <div class="horizon">
+      <!-- BG zone -->
+      <div class="hz-zone hz-bg">
+        <span class="bg-value">7.2</span>
+        <span class="bg-trend">→</span>
+        <div style="display:flex; flex-direction: column; gap: 2px;">
+          <span class="pill">IOB <strong>2.4</strong></span>
+          <span class="pill">COB <strong>18</strong></span>
+        </div>
+      </div>
+      <div class="hz-sep"></div>
+      <!-- Dock zone -->
+      <div class="hz-zone">
+        <div class="hz-dock">
+          <div class="di di-insulin">💉<span class="dk">Z</span></div>
+          <div class="di di-food">🍽️<span class="dk">X</span></div>
+          <div class="di di-exercise">🏃<span class="dk">C</span></div>
+          <div class="di di-kit">🩹<span class="dk">V</span></div>
+        </div>
+      </div>
+      <div class="hz-sep"></div>
+      <!-- Speed zone -->
+      <div class="hz-zone">
+        <div class="hz-speed">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span>4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="hz-sep"></div>
+      <!-- Points zone -->
+      <div class="hz-zone hz-pts">
+        <span class="pts-star">⭐</span>
+        <span class="pts-num" style="font-family: 'JetBrains Mono', monospace; font-size: 14px;">142.5</span>
+        <span class="pts-weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

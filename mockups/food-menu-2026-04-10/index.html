@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mad-menu mockups · 2026-04-10</title>
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="page-wrapper">
+    <header class="page-header">
+        <h1 class="page-title">Mad-menu redesign · mockups</h1>
+        <p class="page-subtitle">
+            Detaljerede funktionelle mockups af de tre forslag plus en showcase af cross-cutting features.
+            <br>
+            <strong>Touch-first:</strong> 44px+ tap-targets, ingen hover-afhængige interaktioner, klar til telefon senere.
+        </p>
+    </header>
+
+    <div class="callout">
+        <strong>Sådan navigerer du:</strong> Klik på et kort for at åbne mockuppen. Alle mockups er selvstændige HTML-filer
+        der kan åbnes direkte i browser — ingen server eller build-trin. De bruger projektets eksisterende CSS-variable
+        og mørke tema.
+    </div>
+
+    <section class="section">
+        <h2 class="section-title">📋 De tre madpakker</h2>
+        <p class="section-subtitle">
+            Tre forslag til hvordan vi kan rearrangere mad-menuen i rækker med forskelligt formål.
+        </p>
+        <nav class="variant-nav">
+            <a href="variant-a.html" class="variant-card">
+                <div class="variant-emoji">🔄</div>
+                <h3 class="variant-title">A · Konservativ</h3>
+                <p class="variant-desc">
+                    Behold det kendte. Mindre swaps: Chokolade → Æg, Is → Nødder. Spillerne genkender næsten alt.
+                </p>
+            </a>
+            <a href="variant-b.html" class="variant-card recommended">
+                <div class="variant-emoji">🎓</div>
+                <h3 class="variant-title">B · Pædagogisk</h3>
+                <p class="variant-desc">
+                    Tre rækker der hver lærer noget: Lav-kulhydrat, Almindelige måltider, Justerings-kulhydrat.
+                    <strong>Anbefalet.</strong>
+                </p>
+            </a>
+            <a href="variant-c.html" class="variant-card">
+                <div class="variant-emoji">🆕</div>
+                <h3 class="variant-title">C · Radikal</h3>
+                <p class="variant-desc">
+                    Frisk udvalg: Æg, Laks, Nødder, Ris, Burger, Cola, Honning. Mere mangfoldigt men bryder vane.
+                </p>
+            </a>
+        </nav>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">✨ Features showcase</h2>
+        <p class="section-subtitle">
+            Cross-cutting features der kan bruges i alle tre varianter — interaktive demoer.
+        </p>
+        <nav class="variant-nav">
+            <a href="features.html" class="variant-card">
+                <div class="variant-emoji">🎨</div>
+                <h3 class="variant-title">Alle features</h3>
+                <p class="variant-desc">
+                    Row headers, accent stripes, makro-bar, hero carb-badge, hypo-pulse, liquid-indicator,
+                    info-tap, portion stepper, units-badge, recently eaten, mobile view.
+                </p>
+            </a>
+            <a href="portion-popup.html" class="variant-card">
+                <div class="variant-emoji">➕</div>
+                <h3 class="variant-title">Portion stepper</h3>
+                <p class="variant-desc">
+                    Touch-venlig popup der erstatter hover-tooltip: stepper +/−, expected BG preview,
+                    macro-breakdown.
+                </p>
+            </a>
+            <a href="mobile.html" class="variant-card">
+                <div class="variant-emoji">📱</div>
+                <h3 class="variant-title">Mobile view</h3>
+                <p class="variant-desc">
+                    Samme menu rendered i en telefon-frame. 3 kolonner i stedet for 5, scroll-venligt.
+                </p>
+            </a>
+        </nav>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">🏗️ Cross-cutting feature liste</h2>
+        <p class="section-subtitle">Alle 15 features der er indarbejdet i mockuppene.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 16px;">
+            <div class="callout"><strong>1. Row header med ikon+label</strong><br>Hver række har titel: "Lav-kulhydrat", "Måltider", "Justering".</div>
+            <div class="callout"><strong>2. Row accent stripe</strong><br>4px farvet venstre-kant — blå/gul/grøn per række.</div>
+            <div class="callout"><strong>3. Macro-bar skaleret til kcal</strong><br>Tre-farvet linje under hver chip der viser C/P/F-fordeling.</div>
+            <div class="callout"><strong>4. Hero carb-badge</strong><br>Kulhydrat som stort tal i chip-hjørne — gør mængden synlig.</div>
+            <div class="callout good"><strong>5. Hypo-highlight (pulserende)</strong><br>Justerings-rækken pulserer grønt når BG &lt; 4.5 mmol/L.</div>
+            <div class="callout"><strong>6. Dim irrelevante rækker</strong><br>Ved akut hypo dæmpes Lav-kulhydrat-rækken ned.</div>
+            <div class="callout"><strong>7. Liquid-indicator</strong><br>💧 ikon på flydende mad (juice, cola, mælk) — hurtig absorption.</div>
+            <div class="callout"><strong>8. Ny druesukker-ikon</strong><br>Erstat emoji ◻️ med dedikeret SVG-pille.</div>
+            <div class="callout"><strong>9. Expected-BG preview</strong><br>Tap (ikke hover) på info-knap viser forventet BG-kurve.</div>
+            <div class="callout"><strong>10. Units-badge på chips</strong><br>Vis "~2.3 U" under navn — direkte insulin-estimat fra ICR.</div>
+            <div class="callout"><strong>11. Portion stepper popup</strong><br>Touch-venlige +/− knapper i stedet for hover-slider.</div>
+            <div class="callout"><strong>12. Smart repeat</strong><br>Dobbelt-tap på chip = dobbelt portion (hurtig handling).</div>
+            <div class="callout"><strong>13. Data-driven arkitektur</strong><br>Alle mad-data i <code>js/foods.js</code> — ét sted at redigere.</div>
+            <div class="callout"><strong>14. Campaign-gating</strong><br>Nye fødevarer låses op i passende baner — ikke alt tilgængeligt fra start.</div>
+            <div class="callout"><strong>15. Recently eaten mini-row</strong><br>Nederste strip: de 3-5 seneste madvarer man spiste.</div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">📱 Touch-design principper</h2>
+        <p class="section-subtitle">Retningslinjer alle mockups følger.</p>
+        <ul style="line-height: 1.8; color: var(--text-secondary); padding-left: 20px; margin: 0;">
+            <li><strong>Minimum 44×44px tap-targets</strong> (Apple HIG) — vores chips er 110px høje og &gt;80px brede.</li>
+            <li><strong>Ingen hover-only interaktioner</strong> — al information vises som default eller efter tap.</li>
+            <li><strong>Tap for info</strong> erstatter hover-tooltip (dedikeret "ⓘ" knap i chip-hjørne).</li>
+            <li><strong>Dedikerede +/− knapper</strong> i portion-popup i stedet for drag-slider.</li>
+            <li><strong>Dobbelt-tap genvej</strong> (smart repeat) for avancerede brugere.</li>
+            <li><strong>Altid-synlig nøgleinfo</strong>: Carbs, insulin-estimat og makro-fordeling vises uden tap.</li>
+            <li><strong>Klare visuelle tilstande</strong> (aktiv/dim/hypo) så spilleren kan overskue menuen på ét blik.</li>
+        </ul>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">🔬 Fysiologisk validering</h2>
+        <p class="section-subtitle">Hvorfor 3-rækkers systemet giver mening i Hovorka-modellen.</p>
+        <div class="callout good">
+            <strong>Codex-reviewen bekræftede (2026-04-07):</strong> Alle 5 fysik-issues er lukket — glycogen-gating,
+            per-bolus tau, Q1/Q2 init, acidose-gate, dead ketone code. <strong>109/109 tests består.</strong>
+            <br><br>
+            Modellen understøtter det 3-rækkers mentale model: lav-kulhydrat mad har minimal BG-impact,
+            almindelige måltider har reel insulin-effekt, og justerings-kulhydrat virker hurtigt nok til at
+            rette hypoer uden bolus.
+        </div>
+    </section>
+</div>
+</body>
+</html>

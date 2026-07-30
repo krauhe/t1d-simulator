@@ -1,0 +1,14 @@
+{
+  "name": "T1D Simulator",
+  "short_name": "T1D Sim",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1526",
+  "theme_color": "#0d1526",
+  "icons": [
+    { "src": "../assets/icons/app/t1d-game-icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../assets/icons/app/t1d-game-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

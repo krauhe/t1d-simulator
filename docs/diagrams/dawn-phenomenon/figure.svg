@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 792.5660714285715 828.002" width="792.5660714285715" height="828.002" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>Dawn phenomenon — hybrid HGP + circadian ISF model (Bolli &amp; Gerich 1984 / simulator extension)</title>
+  <defs>
+    <marker id="arrow-f472b6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f472b6"/></marker>
+    <marker id="arrow-7dd3fc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/></marker>
+    <marker id="arrow-b45309" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 566.2660714285714 253.00099999999998 L 566.2660714285714 271.001" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e0" data-from="__ext_in_0" data-to="clock"/>
+    <path d="M 89.40178571428578 136.001 L 89.40178571428578 154.001" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e1" data-from="__ext_in_1" data-to="sleep"/>
+    <path d="M 273.59821428571433 136.001 L 273.59821428571433 154.001" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e2" data-from="__ext_in_2" data-to="chronic"/>
+    <path d="M 89.40178571428578 206.001 L 89.40178571428578 271.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e3" data-from="sleep" data-to="amp"/>
+    <path d="M 270.8080357142858 206.001 L 270.8080357142858 271.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e4" data-from="chronic" data-to="amp"/>
+    <path d="M 256.9232142857143 323.001 L 256.9232142857143 388.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e5" data-from="amp" data-to="circCort"/>
+    <path d="M 506.36 320.40 L 416.49 355.50 L 334.50 388.00" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e6" data-from="clock" data-to="circCort"/>
+    <path d="M 602.2142857142858 323.001 L 602.2142857142858 388.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e7" data-from="clock" data-to="circISF"/>
+    <path d="M 268.9000000000001 440.001 L 268.9000000000001 505.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e8" data-from="circCort" data-to="stress"/>
+    <path d="M 655.4660714285715 440.001 L 655.4660714285715 505.001" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e9" data-from="circISF" data-to="isf"/>
+    <path d="M 268.9000000000001 557.001 L 268.9000000000001 622.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e10" data-from="stress" data-to="egp"/>
+    <path d="M 655.4660714285715 557.001 L 655.4660714285715 622.001" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e11" data-from="isf" data-to="kb"/>
+    <path d="M 379.87 674.00 L 518.59 706.50 L 518.59 795.00" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)" data-edge-id="e12" data-from="egp" data-to="__ext_out_3"/>
+    <path d="M 714.3660714285714 674.001 L 714.3660714285714 791.002" fill="none" stroke="#7dd3fc" stroke-width="2" marker-end="url(#arrow-7dd3fc)" data-edge-id="e13" data-from="kb" data-to="__ext_out_4"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="clock">
+      <rect x="506.36" y="271.00" width="119.82142857142856" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="566.27" y="291.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Time of day</text>
+      <text x="566.27" y="309.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">t (00–24)</text>
+    </g>
+    <g class="node" data-node-id="sleep">
+      <rect x="12.19" y="154.00" width="154.42857142857142" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="89.40" y="174.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Sleep deficit</text>
+      <text x="89.40" y="192.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">h_lost (0–4)</text>
+    </g>
+    <g class="node" data-node-id="chronic">
+      <rect x="190.62" y="154.00" width="165.9642857142857" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="273.60" y="174.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Chronic stress</text>
+      <text x="273.60" y="192.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">chronicStress</text>
+    </g>
+    <g class="node" data-node-id="amp">
+      <rect x="12.00" y="271.00" width="339" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="181.50" y="291.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Dawn amplitude</text>
+      <text x="181.50" y="309.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">baseAmp · f(h_lost, chronic)</text>
+    </g>
+    <g class="node" data-node-id="circCort">
+      <rect x="162.85" y="388.00" width="212.10714285714283" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="268.90" y="408.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Circadian cortisol</text>
+      <text x="268.90" y="426.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">circadianCortisol</text>
+    </g>
+    <g class="node" data-node-id="circISF">
+      <rect x="578.25" y="388.00" width="154.42857142857142" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="655.47" y="408.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Circadian ISF</text>
+      <text x="655.47" y="426.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">circadianISF</text>
+    </g>
+    <g class="node" data-node-id="stress">
+      <rect x="168.61" y="505.00" width="200.57142857142856" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="268.90" y="525.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Stress multiplier</text>
+      <text x="268.90" y="543.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">stressMultiplier</text>
+    </g>
+    <g class="node" data-node-id="isf">
+      <rect x="589.79" y="505.00" width="131.35714285714283" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="655.47" y="525.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">ISF modifier</text>
+      <text x="655.47" y="543.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">currentISF</text>
+    </g>
+    <g class="node" data-node-id="egp">
+      <rect x="76.33" y="622.00" width="385.1428571428571" height="52" rx="10" ry="10" fill="rgba(180, 83, 9, 0.2)" stroke="#b45309" stroke-width="2"/>
+      <text x="268.90" y="642.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Liver EGP</text>
+      <text x="268.90" y="660.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">EGP = EGP₀ · max(0, stress − x3)</text>
+    </g>
+    <g class="node" data-node-id="kb">
+      <rect x="572.48" y="622.00" width="165.9642857142857" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="655.47" y="642.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Effect rates</text>
+      <text x="655.47" y="660.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">kb1, kb2, kb3</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0-ext">
+      <rect x="503.67" y="231.00" width="125.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="566.27" y="244.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">simulation clock</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1-ext">
+      <rect x="19.60" y="114.00" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="89.40" y="127.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">night game action</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2-ext">
+      <rect x="175.00" y="114.00" width="197.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="273.60" y="127.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">prior-day cortisol t½≈12 h</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3">
+      <rect x="34.00" y="229.50" width="110.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="89.40" y="243.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+12 % / h_lost</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4">
+      <rect x="190.21" y="229.50" width="161.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="270.81" y="243.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+30 % / chronicStress</text>
+    </g>
+    <g class="edge-label" data-edge-id="e5">
+      <rect x="176.32" y="346.50" width="161.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="256.92" y="360.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">scales peak amplitude</text>
+    </g>
+    <g class="edge-label" data-edge-id="e6">
+      <rect x="336.14" y="345.00" width="168.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="420.34" y="358.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">phase (04→12 sine arc)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e7">
+      <rect x="518.01" y="346.50" width="168.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="602.21" y="360.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">phase (cosine interp.)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e8">
+      <rect x="199.10" y="463.50" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="268.90" y="477.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+circadianCortisol</text>
+    </g>
+    <g class="edge-label" data-edge-id="e9">
+      <rect x="600.07" y="463.50" width="110.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="655.47" y="477.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">× circadianISF</text>
+    </g>
+    <g class="edge-label" data-edge-id="e10">
+      <rect x="152.30" y="580.50" width="233.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="268.90" y="594.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">drives EGP via stressMultiplier</text>
+    </g>
+    <g class="edge-label" data-edge-id="e11">
+      <rect x="542.47" y="580.50" width="226.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="655.47" y="594.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">scales kb1, kb2, kb3 each tick</text>
+    </g>
+    <g class="edge-label" data-edge-id="e12">
+      <rect x="476.51" y="691.35" width="31.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="492.31" y="705.25" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">EGP</text>
+    </g>
+    <g class="edge-label" data-edge-id="e12-ext">
+      <rect x="437.99" y="799.00" width="161.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="518.59" y="812.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">→ plasma glucose (Q1)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e13">
+      <rect x="648.17" y="723.50" width="132.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="714.37" y="737.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">kb_i (ISF-scaled)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e13-ext">
+      <rect x="637.37" y="795.00" width="154.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="714.37" y="808.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">→ x1, x2, x3 actions</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organic Pebble — 6 fusionerede variationer</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1220;
+    --text-1: #f5f8fc;
+    --text-2: #c4d5e8;
+    --text-3: #8fa8c8;
+    --text-4: #5e7a99;
+    --green: #4ade80;
+    --green-glow: rgba(74, 222, 128, 0.3);
+    --red: #ef4444;
+    --orange: #fb923c;
+    --blue: #7dd3fc;
+    --teal: #2dd4bf;
+    --yellow: #fbbf24;
+    --border-s: rgba(147, 197, 253, 0.10);
+    --border-m: rgba(147, 197, 253, 0.16);
+    --insulin-bg: linear-gradient(135deg, #0e7490, #155e75);
+    --food-bg: linear-gradient(135deg, #92400e, #78350f);
+    --exercise-bg: linear-gradient(135deg, #065f46, #064e3b);
+    --kit-bg: linear-gradient(135deg, #134e4a, #0f3d3a);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: 'Outfit', system-ui, sans-serif;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 70px;
+    min-height: 100vh;
+  }
+
+  .mockup { width: 100%; max-width: 1000px; margin: 0 auto; }
+  .mockup-label {
+    background: linear-gradient(135deg, #1e1a2e, #0b1220);
+    border: 1px solid rgba(196, 181, 253, 0.3);
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 24px;
+    max-width: 560px;
+  }
+  .mockup-label h1 { font-size: 14px; font-weight: 700; color: #c4b5fd; margin-bottom: 5px; letter-spacing: 0.02em; }
+  .mockup-label p { font-size: 11px; line-height: 1.6; color: var(--text-2); }
+  .mockup-label .tag { display: inline-block; background: rgba(196, 181, 253, 0.12); color: #c4b5fd; font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-right: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .stage {
+    background:
+      linear-gradient(180deg,
+        rgba(74, 222, 128, 0.02) 0%,
+        rgba(74, 222, 128, 0.05) 40%,
+        rgba(251, 146, 60, 0.03) 70%,
+        rgba(239, 68, 68, 0.02) 100%);
+    border: 1px solid var(--border-s);
+    border-radius: 18px;
+    padding: 30px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    min-height: 190px;
+  }
+
+  /* ═══════════════════════════════════════════
+     FÆLLES KOMPONENTER
+     ═══════════════════════════════════════════ */
+  .bg-val { font-size: 26px; font-weight: 800; color: var(--green); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+  .bg-unit { font-size: 9px; color: var(--text-4); font-weight: 500; letter-spacing: 0.04em; }
+  .bg-arrow { font-size: 20px; font-weight: 900; color: var(--green); text-shadow: 0 0 8px var(--green-glow); line-height: 1; }
+
+  .pill { background: rgba(255,255,255,0.05); border: 1px solid var(--border-s); border-radius: 6px; padding: 2px 7px; font-size: 9px; color: var(--text-3); white-space: nowrap; }
+  .pill b { color: var(--text-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .di {
+    width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid transparent; position: relative;
+  }
+  .di:hover { transform: translateY(-8px) scale(1.18); z-index: 5; }
+  .di .k { position: absolute; bottom: 0; right: 2px; font-size: 7px; font-weight: 700; color: var(--text-4); opacity: 0.5; }
+  .di-ins { background: var(--insulin-bg); border-color: rgba(14, 165, 210, 0.35); }
+  .di-ins:hover { box-shadow: 0 8px 24px rgba(14, 116, 144, 0.5); border-color: rgba(14, 165, 210, 0.7); }
+  .di-food { background: var(--food-bg); border-color: rgba(250, 204, 21, 0.25); }
+  .di-food:hover { box-shadow: 0 8px 24px rgba(234, 179, 8, 0.4); border-color: rgba(250, 204, 21, 0.6); }
+  .di-ex { background: var(--exercise-bg); border-color: rgba(52, 211, 153, 0.25); }
+  .di-ex:hover { box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4); border-color: rgba(52, 211, 153, 0.6); }
+  .di-kit { background: var(--kit-bg); border-color: rgba(94, 234, 212, 0.25); }
+  .di-kit:hover { box-shadow: 0 8px 24px rgba(94, 234, 212, 0.35); border-color: rgba(94, 234, 212, 0.6); }
+
+  .sp { display: flex; align-items: center; background: rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; border: 1px solid var(--border-s); }
+  .sp button { background: transparent; border: none; color: var(--text-3); cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.15s; }
+  .sp button:hover { color: var(--text-1); background: rgba(255,255,255,0.06); }
+  .sp-arr { font-size: 10px; padding: 5px 10px; }
+  .sp-mid { font-size: 10px; font-weight: 600; padding: 5px 8px; display: flex; align-items: center; gap: 3px; white-space: nowrap; color: var(--text-2); border-left: 1px solid var(--border-s); border-right: 1px solid var(--border-s); }
+  .sp-ic { color: var(--blue); font-size: 9px; }
+
+  .mode { font-size: 8px; color: var(--text-4); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .star { font-size: 13px; }
+  .score { font-size: 16px; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; }
+  .weight { font-size: 9px; color: var(--text-4); }
+
+
+  /* ═══════════════════════════════════════════════════════════
+     1 — WIDE CAPSULE
+     Maksimal fusion. Én glat kapsel med subtile gradient-
+     separatorer. Mest sammensmeltede variant.
+     ═══════════════════════════════════════════════════════════ */
+  .v1 {
+    display: flex;
+    align-items: center;
+    background:
+      radial-gradient(ellipse at 15% 40%, rgba(74, 222, 128, 0.04), transparent 50%),
+      radial-gradient(ellipse at 85% 40%, rgba(251, 191, 36, 0.03), transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(20, 32, 56, 0.95), rgba(14, 22, 40, 0.97));
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-m);
+    border-radius: 60px;
+    padding: 12px 8px;
+    gap: 0;
+    box-shadow:
+      0 4px 30px rgba(0, 0, 0, 0.4),
+      0 0 60px rgba(147, 197, 253, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  .v1 .zone {
+    display: flex;
+    align-items: center;
+    padding: 6px 18px;
+  }
+  .v1 .z-bg { gap: 10px; }
+  .v1 .z-dock { gap: 8px; flex-direction: column; padding: 4px 16px; }
+  .v1 .z-pts { gap: 6px; flex-direction: column; align-items: flex-end; }
+  .v1 .sep {
+    width: 1px;
+    height: 36px;
+    background: linear-gradient(180deg, transparent, var(--border-m), transparent);
+    flex-shrink: 0;
+  }
+  .v1 .dock-row { display: flex; gap: 6px; }
+  .v1 .pills { display: flex; gap: 3px; }
+  .v1 .bg-meta { display: flex; flex-direction: column; gap: 1px; align-items: flex-start; }
+
+
+  /* ═══════════════════════════════════════════════════════════
+     2 — WAISTED POD
+     Timeglasform. Buler ud ved BG og points, smal i midten
+     hvor docken sidder. Som en organisk bro.
+     ═══════════════════════════════════════════════════════════ */
+  .v2 {
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+  .v2 .lobe {
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(28, 40, 64, 0.97), rgba(16, 24, 42, 0.98));
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-m);
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 135px;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .v2 .lobe-l {
+    border-radius: 32px 12px 12px 32px;
+    border-right: none;
+  }
+  .v2 .lobe-r {
+    border-radius: 12px 32px 32px 12px;
+    border-left: none;
+    align-items: flex-end;
+    text-align: right;
+  }
+  .v2 .waist {
+    background:
+      radial-gradient(ellipse at 50% 50%, rgba(22, 34, 56, 0.96), rgba(14, 22, 40, 0.98));
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-m);
+    border-left: none;
+    border-right: none;
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 220px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    /* Smal midte — krymper vertikalt */
+    margin: 6px 0;
+    border-radius: 4px;
+  }
+  .v2 .waist::before, .v2 .waist::after {
+    content: '';
+    position: absolute;
+    top: -7px; bottom: -7px;
+    width: 14px;
+    background: linear-gradient(180deg, transparent 10%, var(--border-s) 50%, transparent 90%);
+  }
+  .v2 .waist::before { left: -1px; width: 1px; }
+  .v2 .waist::after { right: -1px; width: 1px; }
+  .v2 .dock-row { display: flex; gap: 6px; }
+  .v2 .bg-row { display: flex; align-items: center; gap: 8px; }
+  .v2 .pill-row { display: flex; gap: 3px; }
+  .v2 .pts-row { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+
+
+  /* ═══════════════════════════════════════════════════════════
+     3 — SEED POD
+     Mandelformet — spidser ud mod enderne, svulmer i midten.
+     Én sammenhængende frøkapsel med indre kammer.
+     ═══════════════════════════════════════════════════════════ */
+  .v3 {
+    display: flex;
+    align-items: center;
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(24, 36, 58, 0.96), rgba(12, 20, 36, 0.98));
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-m);
+    /* Mandelform: stor radius i top/bund, mere spids i siderne */
+    border-radius: 40% 40% 40% 40% / 50% 50% 50% 50%;
+    padding: 14px 10px;
+    box-shadow:
+      0 6px 36px rgba(0, 0, 0, 0.4),
+      0 0 50px rgba(147, 197, 253, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .v3::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 15% 50%, rgba(74, 222, 128, 0.04), transparent 40%),
+      radial-gradient(ellipse at 85% 50%, rgba(251, 191, 36, 0.03), transparent 40%);
+    pointer-events: none;
+  }
+  .v3 .zone {
+    display: flex;
+    align-items: center;
+    padding: 4px 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .v3 .z-bg { gap: 8px; padding-left: 22px; }
+  .v3 .z-dock { flex-direction: column; gap: 8px; padding: 4px 14px; }
+  .v3 .z-pts { gap: 6px; flex-direction: column; align-items: flex-end; padding-right: 22px; }
+  .v3 .sep {
+    width: 1px; height: 44px; flex-shrink: 0;
+    background: linear-gradient(180deg, transparent, var(--border-m), transparent);
+  }
+  .v3 .dock-row { display: flex; gap: 7px; }
+  .v3 .pills { display: flex; gap: 3px; }
+  .v3 .bg-meta { display: flex; flex-direction: column; gap: 1px; }
+
+
+  /* ═══════════════════════════════════════════════════════════
+     4 — CLOUD SHELF
+     Flad bund, bulet top-kant. En sky der svæver under grafen.
+     Interne zoner markeret af lys-intensitet, ikke linjer.
+     ═══════════════════════════════════════════════════════════ */
+  .v4 {
+    display: flex;
+    align-items: stretch;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(30, 42, 66, 0.95), rgba(14, 22, 40, 0.97) 70%);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-m);
+    /* Bulet top, flad bund */
+    border-radius: 40px 40px 20px 20px;
+    padding: 0;
+    box-shadow:
+      0 8px 40px rgba(0, 0, 0, 0.45),
+      0 0 60px rgba(147, 197, 253, 0.03),
+      inset 0 2px 0 rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    position: relative;
+  }
+  .v4 .glow-l, .v4 .glow-r {
+    position: absolute;
+    width: 120px; height: 60px;
+    border-radius: 50%;
+    filter: blur(30px);
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .v4 .glow-l { left: 20px; top: 5px; background: rgba(74, 222, 128, 0.06); }
+  .v4 .glow-r { right: 20px; top: 5px; background: rgba(251, 191, 36, 0.05); }
+
+  .v4 .zone {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 14px 20px;
+    gap: 6px;
+    position: relative;
+  }
+  .v4 .z-bg { min-width: 130px; }
+  .v4 .z-dock { align-items: center; padding: 10px 16px; gap: 8px; }
+  .v4 .z-pts { align-items: flex-end; text-align: right; min-width: 110px; }
+  .v4 .z-fade {
+    width: 1px;
+    align-self: stretch;
+    background: linear-gradient(180deg, transparent, var(--border-s), transparent);
+    flex-shrink: 0;
+    margin: 8px 0;
+  }
+  .v4 .dock-row { display: flex; gap: 6px; }
+  .v4 .bg-row { display: flex; align-items: center; gap: 8px; }
+  .v4 .pill-row { display: flex; gap: 3px; }
+  .v4 .pts-row { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+
+
+  /* ═══════════════════════════════════════════════════════════
+     5 — LENS / LINSE
+     Konveks top og bund — en linseform der buler ud. Tykkest
+     i midten, tyndere mod enderne. Glat og poleret.
+     ═══════════════════════════════════════════════════════════ */
+  .v5 {
+    display: flex;
+    align-items: center;
+    position: relative;
+    background:
+      radial-gradient(ellipse at 50% 50%, rgba(26, 38, 62, 0.96), rgba(12, 20, 36, 0.98));
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-m);
+    /* Linseform: stor elliptisk radius */
+    border-radius: 50% / 46px;
+    padding: 14px 12px;
+    box-shadow:
+      0 6px 36px rgba(0, 0, 0, 0.4),
+      0 0 40px rgba(147, 197, 253, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+  }
+  /* Subtil lysrefleks over linsen */
+  .v5::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%; height: 50%;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.03), transparent 70%);
+    pointer-events: none;
+  }
+  .v5 .zone {
+    display: flex;
+    align-items: center;
+    padding: 4px 18px;
+    position: relative;
+    z-index: 1;
+  }
+  .v5 .z-bg { gap: 8px; padding-left: 26px; }
+  .v5 .z-dock { flex-direction: column; gap: 8px; padding: 2px 14px; }
+  .v5 .z-pts { gap: 6px; flex-direction: column; align-items: flex-end; padding-right: 26px; }
+  .v5 .sep {
+    width: 1px; height: 40px; flex-shrink: 0;
+    background: linear-gradient(180deg, transparent 10%, var(--border-s) 50%, transparent 90%);
+  }
+  .v5 .dock-row { display: flex; gap: 7px; }
+  .v5 .pills { display: flex; gap: 3px; }
+  .v5 .bg-meta { display: flex; flex-direction: column; gap: 1px; }
+
+
+  /* ═══════════════════════════════════════════════════════════
+     6 — RIVER STONE
+     Asymmetrisk afrundet rektangel — som en poleret flodsten
+     set ovenfra. Hver rand har sin egen radius. Tung, solid,
+     forankret. Indre zoner via subtile lysskift.
+     ═══════════════════════════════════════════════════════════ */
+  .v6 {
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    background:
+      radial-gradient(ellipse at 30% 30%, rgba(28, 42, 66, 0.95), transparent 50%),
+      radial-gradient(ellipse at 70% 70%, rgba(24, 36, 58, 0.95), transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(18, 28, 48, 0.97), rgba(12, 20, 36, 0.98));
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-m);
+    border-radius: 36px 28px 32px 24px / 28px 36px 24px 32px;
+    padding: 0;
+    box-shadow:
+      0 8px 40px rgba(0, 0, 0, 0.5),
+      0 0 50px rgba(147, 197, 253, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+  }
+  .v6 .zone {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16px 20px;
+    gap: 6px;
+    position: relative;
+  }
+  .v6 .z-bg { min-width: 130px; padding-left: 24px; }
+  .v6 .z-dock { align-items: center; padding: 12px 16px; gap: 8px; }
+  .v6 .z-pts { align-items: flex-end; text-align: right; min-width: 110px; padding-right: 24px; }
+  /* Indre zone-grænser: blot en subtil farve-overgang, ingen hård linje */
+  .v6 .z-glow {
+    width: 2px;
+    align-self: stretch;
+    background: linear-gradient(180deg, transparent, rgba(147, 197, 253, 0.08), transparent);
+    flex-shrink: 0;
+    margin: 10px 0;
+  }
+  .v6 .dock-row { display: flex; gap: 7px; }
+  .v6 .bg-row { display: flex; align-items: center; gap: 8px; }
+  .v6 .pill-row { display: flex; gap: 3px; }
+  .v6 .pts-row { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+
+<!-- ═══════════════════ 1: WIDE CAPSULE ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h1>1 — Wide Capsule</h1>
+    <p><span class="tag">Maksimal fusion</span> Én glat, aflang kapsel. Zoner adskilt kun af tynde gradient-separatorer der fader ud i top og bund. Den mest sammensmeltede variant — alt er ét element.</p>
+  </div>
+  <div class="stage">
+    <div class="v1">
+      <div class="zone z-bg">
+        <div>
+          <div style="display:flex; align-items:baseline; gap:6px;">
+            <span class="bg-val">7.2</span>
+            <span class="bg-arrow">→</span>
+          </div>
+          <div class="bg-meta">
+            <span class="bg-unit">mmol/L</span>
+            <div class="pills"><span class="pill">IOB <b>2.4</b> E</span> <span class="pill">COB <b>18</b> g</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="zone z-dock">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="sp">
+          <button class="sp-arr">◀</button>
+          <button class="sp-mid"><span class="sp-ic">▶▶</span> 4t/min</button>
+          <button class="sp-arr">▶</button>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="zone z-pts">
+        <div class="mode">🏖️ Sandbox</div>
+        <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+          <span class="star">⭐</span>
+          <span class="score">142.5</span>
+        </div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ 2: WAISTED POD ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h1>2 — Waisted Pod</h1>
+    <p><span class="tag">Timeglasform</span> Buler ud ved BG og points, smal midte hvor docken sidder. De to lober er forbundet af en organisk bro. Kroppen snævrer ind — som et bælte.</p>
+  </div>
+  <div class="stage">
+    <div class="v2">
+      <div class="lobe lobe-l">
+        <div class="bg-row">
+          <span class="bg-val">7.2</span>
+          <div>
+            <span class="bg-unit">mmol/L</span>
+            <span class="bg-arrow" style="font-size:18px;">→</span>
+          </div>
+        </div>
+        <div class="pill-row">
+          <span class="pill">IOB <b>2.4</b> E</span>
+          <span class="pill">COB <b>18</b> g</span>
+        </div>
+      </div>
+      <div class="waist">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="sp">
+          <button class="sp-arr">◀</button>
+          <button class="sp-mid"><span class="sp-ic">▶▶</span> 4t/min</button>
+          <button class="sp-arr">▶</button>
+        </div>
+      </div>
+      <div class="lobe lobe-r">
+        <div class="mode">🏖️ Sandbox</div>
+        <div class="pts-row">
+          <span class="star">⭐</span>
+          <span class="score">142.5</span>
+        </div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ 3: SEED POD ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h1>3 — Seed Pod</h1>
+    <p><span class="tag">Mandelform</span> Spidser til mod enderne, svulmer i midten. En organisk frøkapsel med indre kammer adskilt af hårrette gradient-membraner.</p>
+  </div>
+  <div class="stage">
+    <div class="v3">
+      <div class="zone z-bg">
+        <div>
+          <div style="display:flex; align-items:baseline; gap:6px;">
+            <span class="bg-val">7.2</span>
+            <span class="bg-arrow">→</span>
+          </div>
+          <div class="bg-meta">
+            <span class="bg-unit">mmol/L</span>
+            <div class="pills"><span class="pill">IOB <b>2.4</b> E</span> <span class="pill">COB <b>18</b> g</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="zone z-dock">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="sp">
+          <button class="sp-arr">◀</button>
+          <button class="sp-mid"><span class="sp-ic">▶▶</span> 4t/min</button>
+          <button class="sp-arr">▶</button>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="zone z-pts">
+        <div class="mode">🏖️ Sandbox</div>
+        <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+          <span class="star">⭐</span>
+          <span class="score">142.5</span>
+        </div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ 4: CLOUD SHELF ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h1>4 — Cloud Shelf</h1>
+    <p><span class="tag">Sky-hylde</span> Bulet top-kant, flad bund. En sky der svæver under grafen. Zonerne markeres af subtile lysglødninger i overfladen, ikke af linjer.</p>
+  </div>
+  <div class="stage">
+    <div class="v4">
+      <div class="glow-l"></div>
+      <div class="glow-r"></div>
+      <div class="zone z-bg">
+        <div class="bg-row">
+          <span class="bg-val">7.2</span>
+          <div>
+            <span class="bg-unit">mmol/L</span>
+            <span class="bg-arrow" style="font-size:18px;">→</span>
+          </div>
+        </div>
+        <div class="pill-row">
+          <span class="pill">IOB <b>2.4</b> E</span>
+          <span class="pill">COB <b>18</b> g</span>
+        </div>
+      </div>
+      <div class="z-fade"></div>
+      <div class="zone z-dock">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="sp">
+          <button class="sp-arr">◀</button>
+          <button class="sp-mid"><span class="sp-ic">▶▶</span> 4t/min</button>
+          <button class="sp-arr">▶</button>
+        </div>
+      </div>
+      <div class="z-fade"></div>
+      <div class="zone z-pts">
+        <div class="mode">🏖️ Sandbox</div>
+        <div class="pts-row">
+          <span class="star">⭐</span>
+          <span class="score">142.5</span>
+        </div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ 5: LENS ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h1>5 — Lens / Linse</h1>
+    <p><span class="tag">Konveks form</span> En optisk linse — buler ud i top og bund, tykkest i midten, tynder mod enderne. Glat lysrefleks over overfladen. Poleret og præcis.</p>
+  </div>
+  <div class="stage">
+    <div class="v5">
+      <div class="zone z-bg">
+        <div>
+          <div style="display:flex; align-items:baseline; gap:6px;">
+            <span class="bg-val">7.2</span>
+            <span class="bg-arrow">→</span>
+          </div>
+          <div class="bg-meta">
+            <span class="bg-unit">mmol/L</span>
+            <div class="pills"><span class="pill">IOB <b>2.4</b> E</span> <span class="pill">COB <b>18</b> g</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="zone z-dock">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="sp">
+          <button class="sp-arr">◀</button>
+          <button class="sp-mid"><span class="sp-ic">▶▶</span> 4t/min</button>
+          <button class="sp-arr">▶</button>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="zone z-pts">
+        <div class="mode">🏖️ Sandbox</div>
+        <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+          <span class="star">⭐</span>
+          <span class="score">142.5</span>
+        </div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ 6: RIVER STONE ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h1>6 — River Stone</h1>
+    <p><span class="tag">Poleret flodsten</span> Tungt, solidt, forankret. Hver hjørne-radius er unik — som en ægte sten slebet af vand. Ingen hårde zonegrænser, kun subtile lysforskydninger i overfladen.</p>
+  </div>
+  <div class="stage">
+    <div class="v6">
+      <div class="zone z-bg">
+        <div class="bg-row">
+          <span class="bg-val">7.2</span>
+          <div>
+            <span class="bg-unit">mmol/L</span>
+            <span class="bg-arrow" style="font-size:18px;">→</span>
+          </div>
+        </div>
+        <div class="pill-row">
+          <span class="pill">IOB <b>2.4</b> E</span>
+          <span class="pill">COB <b>18</b> g</span>
+        </div>
+      </div>
+      <div class="z-glow"></div>
+      <div class="zone z-dock">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="sp">
+          <button class="sp-arr">◀</button>
+          <button class="sp-mid"><span class="sp-ic">▶▶</span> 4t/min</button>
+          <button class="sp-arr">▶</button>
+        </div>
+      </div>
+      <div class="z-glow"></div>
+      <div class="zone z-pts">
+        <div class="mode">🏖️ Sandbox</div>
+        <div class="pts-row">
+          <span class="star">⭐</span>
+          <span class="score">142.5</span>
+        </div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,70 @@
+{
+  "type": "compartment-diagram",
+  "title": "T1D Simulator — overall model architecture (simplified)",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "food",     "label": "Food",              "var": "C/F/P",            "color": "carb",         "type": "external" },
+    { "id": "insulin",  "label": "Insulin",           "var": "U/Ub",             "color": "insulin-fast", "type": "external" },
+    { "id": "activity", "label": "Activity",          "var": "HR, type",         "color": "muscle",       "type": "external" },
+
+    { "id": "gut",      "label": "Gut absorption",    "var": "D1, D2",           "color": "carb",         "type": "depot" },
+    { "id": "sc",       "label": "SC insulin depots", "var": "S1/S2 + S1b/S2b", "color": "insulin-fast", "type": "depot" },
+    { "id": "exercise", "label": "Exercise effects",  "var": "E1, E2",           "color": "muscle",       "type": "effect" },
+    { "id": "stress",   "label": "Stress hormones",   "var": "acute + chronic",  "color": "stress",       "type": "effect" },
+
+    { "id": "I",        "label": "Plasma insulin",    "var": "I",                "unit": "mU/L", "color": "insulin-fast", "type": "plasma" },
+    { "id": "action",   "label": "Insulin action",    "var": "x1, x2, x3",      "color": "insulin-fast", "type": "effect" },
+    { "id": "liver",    "label": "Liver (EGP)",       "var": "EGP",              "color": "liver",        "type": "tissue" },
+
+    { "id": "glucose",  "label": "Glucose pools",     "var": "Q1, Q2",           "unit": "BG = Q1/V_G",   "color": "glucose", "type": "plasma" },
+
+    { "id": "ketones",  "label": "Ketones / DKA",     "var": "BHB",              "color": "ketone",       "type": "tissue" },
+    { "id": "cgm",      "label": "CGM sensor",        "var": "C_int",            "unit": "mmol/L",        "color": "plasma",  "type": "plasma", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "food",     "to": "gut",      "label": "ingest",        "kind": "input" },
+    { "from": "insulin",  "to": "sc",       "label": "inject",        "kind": "input" },
+    { "from": "activity", "to": "exercise", "label": "",              "kind": "input" },
+    { "from": "activity", "to": "stress",   "label": "catechol.",     "kind": "signal" },
+
+    { "from": "gut",      "to": "glucose",  "label": "U_G",           "kind": "mass" },
+    { "from": "sc",       "to": "I",        "label": "U_I + U_Ib",   "kind": "mass" },
+    { "from": "I",        "to": "action",   "label": "kb·I",          "kind": "signal" },
+    { "from": "I",        "to": "ketones",  "label": "-lipolysis",    "kind": "signal" },
+
+    { "from": "stress",   "to": "liver",    "label": "+",             "kind": "signal" },
+    { "from": "action",   "to": "liver",    "label": "-x3",           "kind": "signal" },
+    { "from": "liver",    "to": "glucose",  "label": "EGP",           "kind": "mass" },
+
+    { "from": "action",   "to": "glucose",  "label": "-x1, -x2",     "kind": "signal" },
+    { "from": "exercise", "to": "glucose",  "label": "",  "kind": "signal" },
+
+    { "from": "glucose",  "to": "external", "label": "elim",   "externalLabel": "F01c (brain/RBC) + F_R (renal)", "kind": "elimination" },
+    { "from": "glucose",  "to": "cgm",      "label": "ka_int",        "kind": "mass" }
+  ],
+  "caption": {
+    "scope": "Simplified architecture of the T1D simulator, showing the three player-controlled input pathways (food, insulin, activity) and how they connect to the Hovorka 2004 glucose-insulin core and simulator-specific extensions. Plasma insulin I acts on glucose pools Q1/Q2 via three effect compartments (x1: transport, x2: peripheral disposal, x3: EGP suppression). Stress hormones and exercise modulate hepatic glucose production and peripheral disposal, respectively. Ketogenesis is determined by plasma insulin level. The CGM sensor reads interstitial glucose with a diffusion delay. Compartments gut (D1, D2) and sc (S1/S2 + S1b/S2b) each roll up two ODE states into a single block — this is a deliberate overview-level simplification; each subsystem is detailed in its own sub-model figure.",
+    "variables": [
+      { "symbol": "C/F/P",      "category": "compartment", "definition": "carbohydrate / fat / protein content of a meal (player input)" },
+      { "symbol": "U/Ub",       "category": "compartment", "definition": "rapid (bolus) and basal insulin doses (player input, mU)" },
+      { "symbol": "HR, type",   "category": "compartment", "definition": "heart rate and exercise type driving the exercise dynamics (player input)" },
+      { "symbol": "D1, D2",     "category": "compartment", "definition": "gut absorption cascade: stomach (D1) and intestine (D2) compartments — see gut sub-model figure" },
+      { "symbol": "S1/S2 + S1b/S2b", "category": "compartment", "definition": "subcutaneous insulin depots: two-stage rapid cascade (S1, S2) and parallel basal shadow cascade (S1b, S2b) — see insulin PK sub-model figure" },
+      { "symbol": "E1, E2",     "category": "compartment", "definition": "exercise effect compartments: fast GLUT4-mediated uptake (E1) and slow post-exercise insulin sensitivity (E2)" },
+      { "symbol": "acute + chronic", "category": "compartment", "definition": "stress hormone state: acute catecholamine surge and chronic hypercortisol contribution to EGP elevation" },
+      { "symbol": "I",          "category": "compartment", "definition": "plasma insulin concentration (mU/L)" },
+      { "symbol": "x1, x2, x3","category": "compartment", "definition": "insulin effect compartments: x1 = glucose transport (Q1 to Q2), x2 = peripheral disposal, x3 = EGP suppression" },
+      { "symbol": "EGP",        "category": "compartment", "definition": "endogenous (hepatic) glucose production = EGP0 * max(0, stress - x3)" },
+      { "symbol": "Q1, Q2",     "category": "compartment", "definition": "glucose pools: Q1 = plasma glucose (BG = Q1 / V_G), Q2 = peripheral (intracellular) glucose" },
+      { "symbol": "BHB",        "category": "compartment", "definition": "beta-hydroxybutyrate — dominant ketone body; rate of production gated by plasma insulin level" },
+      { "symbol": "C_int",      "category": "compartment", "definition": "interstitial glucose concentration read by the CGM sensor (mmol/L)" },
+      { "symbol": "U_G",        "category": "flow",        "definition": "glucose appearance rate from gut into plasma (mmol/min)" },
+      { "symbol": "U_I",        "category": "flow",        "definition": "rapid insulin appearance rate from SC depot into plasma (mU/min)" },
+      { "symbol": "U_Ib",       "category": "flow",        "definition": "basal insulin appearance rate from SC shadow cascade into plasma (mU/min)" },
+      { "symbol": "kb",         "category": "flow",        "definition": "build-up rate constant driving I into effect compartments (kb1, kb2, kb3 for x1, x2, x3)" },
+      { "symbol": "F01c",       "category": "flow",        "definition": "insulin-independent glucose uptake (brain, red blood cells, etc.) — fixed ~0.0097 * weight mmol/min" },
+      { "symbol": "F_R",        "category": "flow",        "definition": "renal glucose excretion: occurs when plasma glucose exceeds ~9 mmol/L (renal threshold)" },
+      { "symbol": "ka_int",     "category": "flow",        "definition": "interstitial diffusion rate constant (~0.073 /min, giving ~14 min CGM lag)" }
+    ]
+  }
+}

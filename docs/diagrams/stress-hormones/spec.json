@@ -1,0 +1,62 @@
+{
+  "type": "compartment-diagram",
+  "title": "Stress hormone system — two-layer counterregulation (Cryer 2013)",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "hypo",     "label": "Hypoglycemia trigger", "var": "BG < 4.0",          "color": "stress",  "type": "external" },
+    { "id": "exercise", "label": "Strength / HIIT exercise", "var": "catecholamines","color": "muscle",  "type": "external" },
+    { "id": "sleep",    "label": "Sleep loss / illness", "var": "sleep deficit",      "color": "stress",  "type": "external" },
+    { "id": "protein",  "label": "Protein meal",         "var": "AA",                 "color": "protein", "type": "external" },
+    { "id": "dawn",     "label": "Circadian cortisol",   "var": "04:00-12:00",        "color": "stress",  "type": "external" },
+
+    { "id": "acute",    "label": "Acute stress",         "var": "acuteStress",  "unit": "t½ 60 min, cap 0.4", "color": "stress", "type": "effect" },
+    { "id": "chronic",  "label": "Chronic stress",       "var": "chronicStress", "unit": "t½ 12 h",            "color": "stress", "type": "effect" },
+
+    { "id": "haaf",     "label": "HAAF gate",            "var": "counterRegFactor", "unit": "0.3-1.0",          "color": "stress", "type": "effect" },
+    { "id": "glycogen", "label": "Liver glycogen",       "var": "glycogenReserve",  "unit": "0-1 (90 g pool)",  "color": "liver",  "type": "tissue" },
+
+    { "id": "stress",   "label": "Stress multiplier",    "var": "stressMultiplier", "unit": ">= 1",             "color": "stress", "type": "effect" },
+    { "id": "liver",    "label": "Liver EGP",            "var": "EGP = EGP0 * max(0, s - x3)", "color": "liver", "type": "tissue", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "external", "to": "hypo",     "label": "", "externalLabel": "stressor / BG drop", "kind": "input" },
+    { "from": "external", "to": "exercise", "label": "", "externalLabel": "stressor / activity", "kind": "input" },
+    { "from": "external", "to": "sleep",    "label": "", "externalLabel": "stressor / illness",  "kind": "input" },
+    { "from": "external", "to": "protein",  "label": "", "externalLabel": "meal / amino acids",  "kind": "input" },
+    { "from": "external", "to": "dawn",     "label": "", "externalLabel": "circadian clock",     "kind": "input" },
+
+    { "from": "hypo",     "to": "acute",   "label": "+",                   "kind": "signal" },
+    { "from": "exercise", "to": "acute",   "label": "+",                   "kind": "signal" },
+    { "from": "haaf",     "to": "acute",   "label": "× counterRegFactor",  "kind": "signal" },
+    { "from": "sleep",    "to": "chronic", "label": "+ 0.06 · h_lost",     "kind": "signal" },
+
+    { "from": "glycogen", "to": "stress",  "label": "0.5·R + (0.5 + 0.25·(1-R))", "kind": "signal" },
+    { "from": "glycogen", "to": "acute",   "label": "0.6·R + 0.4",                 "kind": "signal" },
+    { "from": "acute",    "to": "stress",  "label": "+ effectiveAcuteStress",       "kind": "signal" },
+    { "from": "chronic",  "to": "stress",  "label": "+",                            "kind": "signal" },
+    { "from": "dawn",     "to": "stress",  "label": "+ circadianCortisol",          "kind": "signal" },
+    { "from": "protein",  "to": "stress",  "label": "+ proteinGlucagon",            "kind": "signal" },
+
+    { "from": "stress",  "to": "liver",    "label": "drives EGP",                  "kind": "signal" },
+    { "from": "liver",   "to": "external", "label": "EGP",   "externalLabel": "glucose output to Q1", "kind": "elimination" },
+    { "from": "acute",   "to": "glycogen", "label": "depletes",                    "kind": "signal" }
+  ],
+  "caption": {
+    "scope": "Simulator implementation of two-tier glucose counterregulation as described in Cryer 2013 (Cryer PE, J Clin Invest 123:1403-1405, 2013). Layer 1 — acute: catecholamine- and glucagon-driven glycogenolysis (t½ ≈ 60 min, T1D cap 0.4 vs ~5.0 in healthy individuals due to absent glucagon response; Cryer 2013 Table 1). Layer 2 — chronic: cortisol-mediated gluconeogenesis upregulation from sleep loss and illness (t½ ≈ 12 h). A HAAF gate (Hypoglycemia-Associated Autonomic Failure) attenuates acuteStress when repeated hypoglycemia accumulates, modeled after the Cryer 2013 hierarchy. Both layers converge with circadian cortisol, protein-glucagon, and the glycogen-dependent baseline onto a unified stressMultiplier; the liver then computes EGP = EGP0 · max(0, stressMultiplier − x3). Acute stress simultaneously depletes the hepatic glycogen pool, so prolonged counterregulation raises GNG compensation while glycogenolysis capacity falls.",
+    "variables": [
+      { "symbol": "acuteStress",        "category": "compartment", "definition": "rapid catecholamine + glucagon response — driven by hypoglycemia (Somogyi) and anaerobic exercise; t½ ≈ 60 min, capped at 0.4 in T1D" },
+      { "symbol": "chronicStress",      "category": "compartment", "definition": "sustained cortisol elevation — driven by sleep loss (+0.06 per lost hour) and illness; t½ ≈ 12 h" },
+      { "symbol": "counterRegFactor",   "category": "compartment", "definition": "HAAF gate: 0.3 + 0.7 · exp(-hypoArea / 30) — scales acuteStress down when repeated hypoglycemia accumulates" },
+      { "symbol": "glycogenReserve",    "category": "compartment", "definition": "hepatic glycogen reserve as fraction 0–1 of the nominal 90 g pool; depleted by acuteStress, replenished at rest" },
+      { "symbol": "stressMultiplier",   "category": "compartment", "definition": "unified hepatic drive >= 1; sum of glycogenBaseline, gngBaseline, effectiveAcuteStress, chronicStress, circadianCortisol, proteinGlucagon" },
+      { "symbol": "EGP = EGP0 * max(0, s - x3)", "category": "compartment", "definition": "hepatic glucose production rate; EGP0 = basal rate (~0.0161 × weight mmol/min for T1D); s = stressMultiplier; x3 = insulin EGP-suppression effect" },
+      { "symbol": "0.5·R + (0.5 + 0.25·(1-R))", "category": "flow", "definition": "glycogen-dependent EGP baseline: glycogenBaseline = 0.5·R + gngBaseline; gngBaseline = 0.5 + 0.25·(1-R) compensates falling glycogen via gluconeogenesis (Petersen 2004)" },
+      { "symbol": "effectiveAcuteStress", "category": "flow",      "definition": "acuteStress · (0.6·R + 0.4) — glycogen-permissive weighting: 60 % from glycogenolysis, 40 % floor from sympathetic activation" },
+      { "symbol": "counterRegFactor",   "category": "flow",        "definition": "HAAF-attenuated scale factor applied to acuteStress before summation into stressMultiplier" },
+      { "symbol": "+ 0.06 · h_lost",    "category": "flow",        "definition": "chronicStress accumulation rate: +0.06 per hour of sleep below target" },
+      { "symbol": "circadianCortisol",  "category": "flow",        "definition": "dawn-phenomenon cortisol component: sine wave, peak 08:00, amplitude ≈ 0.15" },
+      { "symbol": "proteinGlucagon",    "category": "flow",        "definition": "amino-acid Hill-function glucagon response from the protein-glucagon pathway" },
+      { "symbol": "EGP",               "category": "flow",        "definition": "computed hepatic glucose output — flows into plasma glucose pool Q1" }
+    ]
+  }
+}

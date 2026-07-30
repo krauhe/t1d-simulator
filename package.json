@@ -1,0 +1,14 @@
+{
+  "name": "t1d-simulator",
+  "private": true,
+  "description": "Browser tests for the T1D Simulator static app.",
+  "scripts": {
+    "test:model": "node tests/simulation.test.js",
+    "test:browser": "playwright test",
+    "test:browser:headed": "playwright test --headed",
+    "test:browser:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}

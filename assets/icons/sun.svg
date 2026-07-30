@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <!-- Sol-ikon: solid fyldt skive + 8 triangulære stråler.
+       Bruges i status-display ved siden af klokkeslæt om dagen (07:00-22:00).
+       Tidligere version brugte stroke-baserede streger som var for tynde
+       til at rendere pålideligt på Android-tablets med drop-shadow-filter. -->
+
+  <!-- Stråler (8 trekanter rundt om midten) -->
+  <g fill="#fbbf24">
+    <polygon points="12,1 11,4 13,4"/>
+    <polygon points="12,23 11,20 13,20"/>
+    <polygon points="1,12 4,11 4,13"/>
+    <polygon points="23,12 20,11 20,13"/>
+    <polygon points="3.5,3.5 5.7,5 5,5.7"/>
+    <polygon points="20.5,3.5 19,5 18.3,5.7" transform="translate(0.7 0)"/>
+    <polygon points="3.5,20.5 5,19 5.7,18.3"/>
+    <polygon points="20.5,20.5 18.3,18.3 19,19" transform="translate(0.7 0)"/>
+  </g>
+
+  <!-- Central sol-skive (solid fyldt) -->
+  <circle cx="12" cy="12" r="5" fill="#fbbf24"/>
+  <!-- Inner highlight for dybde -->
+  <circle cx="10.5" cy="10.5" r="1.5" fill="#fde68a" opacity="0.7"/>
+</svg>

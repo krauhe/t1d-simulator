@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <title>Box Challenge — Bane-review</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: Inter, 'Segoe UI', sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 22px;
+            color: #94a3b8;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+        .day-section {
+            margin-bottom: 32px;
+        }
+        .day-header {
+            font-size: 16px;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+        .day-stats {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 400;
+        }
+        .variants-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        .variant-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .variant-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            padding: 4px 8px;
+            background: #0f172a;
+            display: flex;
+            justify-content: space-between;
+        }
+        .variant-label .box-count {
+            color: #64748b;
+            font-weight: 400;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+        }
+        .legend {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .legend-swatch {
+            width: 16px;
+            height: 12px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .summary-table {
+            margin: 0 auto 24px;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .summary-table th, .summary-table td {
+            padding: 4px 12px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+        .summary-table th {
+            background: #1e293b;
+            color: #60a5fa;
+            font-weight: 600;
+        }
+        .summary-table td {
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Box Challenge — Bane-review</h1>
+<p class="subtitle">10 tilfældige variationer per dag. Grøn = target zone (4-10), gul = bonus zone (5-6), rød = bokse/forhindringer.</p>
+
+<div class="legend">
+    <div class="legend-item"><span class="legend-swatch" style="background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3);"></span> Grøn zone (4-10)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background: rgba(250,204,21,0.12); border: 1px solid rgba(250,204,21,0.25);"></span> Bonus zone (5-6)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background: rgba(239,68,68,0.35); border: 1px solid rgba(239,68,68,0.6);"></span> Boks (rektangel)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background: rgba(168,85,247,0.35); border: 1px solid rgba(168,85,247,0.6);"></span> Boks (skrå/parallelogram)</div>
+</div>
+
+<table class="summary-table">
+    <thead>
+        <tr>
+            <th>Dag</th>
+            <th>Bokse</th>
+            <th>Coverage</th>
+            <th>Boks-tid</th>
+            <th>Max højde</th>
+            <th>Min gap</th>
+            <th>Skew %</th>
+        </tr>
+    </thead>
+    <tbody id="summaryBody"></tbody>
+</table>
+
+<div id="container"></div>
+
+<script>
+// ============================================================
+// PRNG — kopi fra simulator.js (mulberry32)
+// ============================================================
+class BoxGenerator {
+    constructor(seed) {
+        this._boxSeed = seed;
+    }
+
+    _boxPRNG() {
+        let s = this._boxSeed;
+        s |= 0; s = s + 0x6D2B79F5 | 0;
+        let t = Math.imul(s ^ s >>> 15, 1 | s);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        this._boxSeed = s;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+
+    // Kopi af generateBoxesForDay fra simulator.js
+    generateBoxesForDay(dayNumber) {
+        const d = dayNumber - 1;
+        const targetCoverage = Math.min(0.65, 0.08 + d * 0.02);
+        const boxCount = Math.min(6, 1 + Math.floor(d / 4));
+        const dayStart = 120;
+        const dayEnd   = 1380;
+        const totalWindow = dayEnd - dayStart;
+        const totalBoxTime = Math.round(targetCoverage * totalWindow);
+        const bgLow  = 3.0;
+        const bgHigh = 11.0;
+        const minHeight = 0.8;
+        const maxHeight = Math.min(4.0, 1.5 + d * 0.1);
+        const minTimeGap = Math.max(60, 180 - d * 2.5);
+        const skewChance = Math.min(0.5, d * 0.04);
+        const maxSkew    = Math.min(2.0, 0.5 + d * 0.1);
+
+        const rawW = [];
+        for (let i = 0; i < boxCount; i++) rawW.push(0.5 + this._boxPRNG());
+        const sumW = rawW.reduce((a, b) => a + b, 0);
+        const durations = rawW.map(w => Math.max(30, Math.round((w / sumW) * totalBoxTime)));
+
+        const actualBoxTime = durations.reduce((a, b) => a + b, 0);
+        const totalFreeTime = Math.max(0, totalWindow - actualBoxTime);
+        const innerMinGaps = Math.max(0, boxCount - 1) * minTimeGap;
+        const extraFreeTime = Math.max(0, totalFreeTime - innerMinGaps);
+
+        const gapSlots = boxCount + 1;
+        const gapW = [];
+        for (let i = 0; i < gapSlots; i++) gapW.push(0.3 + this._boxPRNG());
+        const sumGW = gapW.reduce((a, b) => a + b, 0);
+
+        const boxes = [];
+        let currentTime = dayStart;
+
+        for (let i = 0; i < boxCount; i++) {
+            const innerMin = (i > 0) ? minTimeGap : 0;
+            const extraGap = (gapW[i] / sumGW) * extraFreeTime;
+            currentTime += innerMin + extraGap;
+
+            const startMinute = Math.round(Math.max(dayStart, currentTime));
+            const endMinute = Math.min(dayEnd, Math.round(currentTime + durations[i]));
+            currentTime = endMinute;
+
+            const height = minHeight + this._boxPRNG() * (maxHeight - minHeight);
+            const bgMin = bgLow + this._boxPRNG() * Math.max(0, bgHigh - height - bgLow);
+            const bgMax = bgMin + height;
+
+            let skewBG = 0;
+            if (this._boxPRNG() < skewChance) {
+                skewBG = (this._boxPRNG() * 2 - 1) * maxSkew;
+                const eBgMin = bgMin + skewBG;
+                const eBgMax = bgMax + skewBG;
+                if (eBgMin < bgLow - 0.5 || eBgMax > bgHigh + 0.5) {
+                    skewBG = -skewBG;
+                    if (bgMin + skewBG < bgLow - 0.5 || bgMax + skewBG > bgHigh + 0.5) {
+                        skewBG = 0;
+                    }
+                }
+            }
+
+            boxes.push({
+                dayNumber, startMinute, endMinute,
+                bgMin: Math.round(bgMin * 10) / 10,
+                bgMax: Math.round(bgMax * 10) / 10,
+                skewBG: Math.round(skewBG * 10) / 10,
+            });
+        }
+
+        return { boxes, targetCoverage, boxCount, totalBoxTime, maxHeight, minTimeGap, skewChance };
+    }
+}
+
+// ============================================================
+// Tegn én variant på et canvas
+// ============================================================
+function drawVariant(canvas, boxes, dayNumber) {
+    const W = canvas.width;
+    const H = canvas.height;
+    const ctx = canvas.getContext('2d');
+
+    // Padding
+    const pad = { left: 30, right: 8, top: 8, bottom: 18 };
+    const gW = W - pad.left - pad.right;
+    const gH = H - pad.top - pad.bottom;
+
+    // BG-range
+    const bgMin = 0;
+    const bgMax = 14;
+
+    // Hjælpefunktioner
+    const timeToX = (min) => pad.left + ((min - 0) / 1440) * gW;
+    const bgToY = (bg) => pad.top + gH - ((bg - bgMin) / (bgMax - bgMin)) * gH;
+
+    // Baggrund
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, W, H);
+
+    // Grøn zone (4-10)
+    ctx.fillStyle = 'rgba(34, 197, 94, 0.08)';
+    ctx.fillRect(pad.left, bgToY(10), gW, bgToY(4) - bgToY(10));
+    // Grøn zone kant
+    ctx.strokeStyle = 'rgba(34, 197, 94, 0.25)';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, bgToY(10)); ctx.lineTo(pad.left + gW, bgToY(10));
+    ctx.moveTo(pad.left, bgToY(4)); ctx.lineTo(pad.left + gW, bgToY(4));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Bonus zone (5-6)
+    ctx.fillStyle = 'rgba(250, 204, 21, 0.08)';
+    ctx.fillRect(pad.left, bgToY(6), gW, bgToY(5) - bgToY(6));
+
+    // Y-akse labels
+    ctx.fillStyle = '#475569';
+    ctx.font = '9px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (const bg of [2, 4, 6, 8, 10, 12]) {
+        ctx.fillText(bg, pad.left - 3, bgToY(bg));
+        // Gridlinje
+        ctx.strokeStyle = 'rgba(71, 85, 105, 0.2)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, bgToY(bg));
+        ctx.lineTo(pad.left + gW, bgToY(bg));
+        ctx.stroke();
+    }
+
+    // X-akse labels (timer)
+    ctx.fillStyle = '#475569';
+    ctx.font = '8px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let h = 0; h <= 24; h += 4) {
+        const x = timeToX(h * 60);
+        ctx.fillText(`${h.toString().padStart(2, '0')}`, x, pad.top + gH + 4);
+        ctx.strokeStyle = 'rgba(71, 85, 105, 0.15)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x, pad.top);
+        ctx.lineTo(x, pad.top + gH);
+        ctx.stroke();
+    }
+
+    // Tegn bokse
+    for (const box of boxes) {
+        const x1 = timeToX(box.startMinute);
+        const x2 = timeToX(box.endMinute);
+        const skew = box.skewBG || 0;
+        const isSkewed = Math.abs(skew) > 0.05;
+
+        // Farve: rød for rektangel, lilla for parallelogram
+        const color = isSkewed ? [168, 85, 247] : [239, 68, 68];
+
+        const yTopL = bgToY(box.bgMax);
+        const yBotL = bgToY(box.bgMin);
+        const yTopR = bgToY(box.bgMax + skew);
+        const yBotR = bgToY(box.bgMin + skew);
+
+        // Fyld
+        ctx.beginPath();
+        ctx.moveTo(x1, yTopL);
+        ctx.lineTo(x2, yTopR);
+        ctx.lineTo(x2, yBotR);
+        ctx.lineTo(x1, yBotL);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.30)`;
+        ctx.fill();
+
+        // Kant
+        ctx.strokeStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.65)`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // BG-range label inde i boksen
+        ctx.save();
+        ctx.fillStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.7)`;
+        ctx.font = 'bold 8px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const cx = (x1 + x2) / 2;
+        const cy = (yTopL + yBotL) / 2;
+        const label = `${box.bgMin.toFixed(1)}-${box.bgMax.toFixed(1)}`;
+        // Kun vis label hvis boksen er bred nok
+        if (x2 - x1 > 30) {
+            ctx.fillText(label, cx, cy);
+        }
+        ctx.restore();
+    }
+
+    // Ramme
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pad.left, pad.top, gW, gH);
+}
+
+// ============================================================
+// Generer alt
+// ============================================================
+const daysToShow = [1, 2, 3, 4, 5, 7, 10, 12, 15];
+const variantsPerDay = 10;
+const canvasW = 280;
+const canvasH = 120;
+const dpr = window.devicePixelRatio || 1;
+
+const container = document.getElementById('container');
+const summaryBody = document.getElementById('summaryBody');
+
+// Labels: a, b, c, d, e, f, g, h, i, j
+const letters = 'abcdefghij';
+
+for (const day of daysToShow) {
+    // Generer stats for summary-tabellen (brug dummy generator)
+    const dummy = new BoxGenerator(1);
+    const stats = dummy.generateBoxesForDay(day);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><strong>${day}</strong></td>
+        <td>${stats.boxCount}</td>
+        <td>${(stats.targetCoverage * 100).toFixed(0)}%</td>
+        <td>${Math.round(stats.totalBoxTime)} min (${(stats.totalBoxTime / 60).toFixed(1)}t)</td>
+        <td>${stats.maxHeight.toFixed(1)} mmol/L</td>
+        <td>${stats.minTimeGap} min</td>
+        <td>${(stats.skewChance * 100).toFixed(0)}%</td>
+    `;
+    summaryBody.appendChild(tr);
+
+    // Dag-sektion
+    const section = document.createElement('div');
+    section.className = 'day-section';
+    section.innerHTML = `
+        <div class="day-header">
+            Dag ${day}
+            <span class="day-stats">${stats.boxCount} bokse · ${(stats.targetCoverage * 100).toFixed(0)}% coverage · max højde ${stats.maxHeight.toFixed(1)} · gap ≥${stats.minTimeGap}min · skew ${(stats.skewChance * 100).toFixed(0)}%</span>
+        </div>
+    `;
+
+    const grid = document.createElement('div');
+    grid.className = 'variants-grid';
+
+    for (let v = 0; v < variantsPerDay; v++) {
+        const seed = day * 10000 + v * 7919 + 42; // Unik seed per variant
+        const gen = new BoxGenerator(seed);
+        const result = gen.generateBoxesForDay(day);
+
+        const card = document.createElement('div');
+        card.className = 'variant-card';
+
+        const label = document.createElement('div');
+        label.className = 'variant-label';
+        label.innerHTML = `<span>${day}${letters[v]}</span><span class="box-count">${result.boxes.length} bokse</span>`;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasW * dpr;
+        canvas.height = canvasH * dpr;
+        canvas.style.width = canvasW + 'px';
+        canvas.style.height = canvasH + 'px';
+        canvas.getContext('2d').scale(dpr, dpr);
+        // Tegn med CSS-pixel dimensioner
+        canvas.getContext('2d').save();
+        drawVariant(canvas, result.boxes, day);
+        canvas.getContext('2d').restore();
+
+        card.appendChild(label);
+        card.appendChild(canvas);
+        grid.appendChild(card);
+    }
+
+    section.appendChild(grid);
+    container.appendChild(section);
+}
+</script>
+</body>
+</html>

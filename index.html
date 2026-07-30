@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Platform routing: send phones to the mobile shell BEFORE the desktop bundle loads.
+         This runs first in <head> so a touch device never downloads the heavy desktop app.
+         A stored preference (set via the "switch version" buttons) always wins, so a user
+         who explicitly picked desktop on a phone is never redirected. Tablets stay on the
+         desktop layout — only phone-sized screens (shortest side <= 600 CSS px) are routed.
+         Paths are relative, so this works under the GitHub Pages /t1d-simulator/ subpath. -->
+    <script>
+    (function () {
+        var pref;
+        try { pref = localStorage.getItem('t1d_platform'); } catch (e) { pref = null; }
+        if (pref === 'desktop') return;                                  // user chose desktop: stay
+        if (pref === 'mobile') { location.replace('mobile/'); return; }  // user chose mobile: go
+        // No stored choice -> auto-detect. Touch pointer + phone-sized screen => mobile.
+        // min(innerWidth, innerHeight) is orientation-independent; the width=device-width
+        // meta above makes these real CSS pixels. 600 keeps tablets (>=768) on desktop.
+        var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        var phoneSized = Math.min(window.innerWidth, window.innerHeight) <= 600;
+        if (coarse && phoneSized) location.replace('mobile/');
+    })();
+    </script>
+    <title>T1D Simulator – Try. Learn. Repeat.</title>
+    <!-- Open Graph / social link preview (Facebook, Messenger, LinkedIn, ...).
+         og:image is an absolute URL so scrapers can fetch it; ~1.9:1 at 1717x916. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="T1D Simulator">
+    <meta property="og:title" content="T1D Simulator">
+    <meta property="og:description" content="Prøv. Lær. Gentag. Udforsk insulin, mad, aktivitet og fysiologiske fænomener gennem fiktive karakterer.">
+    <meta property="og:url" content="https://krauhe.github.io/t1d-simulator/">
+    <meta property="og:image" content="https://krauhe.github.io/t1d-simulator/assets/social-card.png">
+    <meta property="og:image:width" content="1717">
+    <meta property="og:image:height" content="916">
+    <meta property="og:image:alt" content="T1D Simulator — fiktive karakterer, blodsukkerkurve og spillets elementer">
+    <meta property="og:locale" content="da_DK">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="T1D Simulator">
+    <meta name="twitter:description" content="Prøv. Lær. Gentag.">
+    <meta name="twitter:image" content="https://krauhe.github.io/t1d-simulator/assets/social-card.png">
+    <!-- Favicon: simpel BG-kurve i teal -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23181c24'/><polyline points='4,22 10,18 14,10 18,20 22,14 28,16' fill='none' stroke='%2300e5a0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <!-- Stylesheet med CSS-variabler for tema-skifte -->
+    <link rel="stylesheet" href="style.css?v=0.9.114">
+    <!-- Fonts: Inter til generel UI, Orbitron til CGM hero-tal (sci-fi look) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
+    <!-- Tone.js: Web Audio framework for lydeffekter (CDN, pinned version) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <!-- GoatCounter: privatlivs-venlig analytics (ingen cookies, GDPR-OK uden samtykke) -->
+    <script>
+        // GoatCounter page-load normalisering:
+        // Delte links kan få query-parametre som ?brid=... eller ?fbclid=...
+        // tilføjet af browser/Facebook. Uden normalisering tælles samme side
+        // som flere forskellige "Pages" i GoatCounter-dashboardet.
+        window.goatcounter = window.goatcounter || {};
+        window.goatcounter.path = function(location) {
+            const currentLocation = location || window.location;
+            let path = currentLocation.pathname || '/';
+            path = path.replace(/\/+$/, '') || '/';
+            return path;
+        };
+
+        // Analytics skal kun tælle rigtige besøg på den publicerede side.
+        // Lokale tests fra file://, localhost eller 127.0.0.1 skal ikke blandes
+        // ind i GoatCounter-statistikken.
+        const isLocalAnalyticsContext =
+            window.location.protocol === 'file:' ||
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.hostname === '::1';
+
+        if (!isLocalAnalyticsContext) {
+            const goatCounterScript = document.createElement('script');
+            goatCounterScript.dataset.goatcounter = 'https://t1dsimulator.goatcounter.com/count';
+            goatCounterScript.async = true;
+            goatCounterScript.src = '//gc.zgo.at/count.js';
+            document.head.appendChild(goatCounterScript);
+        }
+    </script>
+</head>
+<body>
+
+    <!-- ===================================================================
+         GAME CONTAINER — Hele applikationen lever her.
+         Layout: top-bar → main-area (graf + side-drawers) → dock-paneler → dock-bar
+         =================================================================== -->
+    <div id="game-container">
+
+        <!-- Visuelle symptomeffekter: overlays der simulerer fysiologiske symptomer -->
+        <!-- Vignette: radial gradient der indsnævrer synsfeltet ved svær hypo/DKA -->
+        <div id="symptom-vignette"></div>
+        <!-- Blackout: sort overlay der blinker ved nær-synkope (fase 3, forberedt) -->
+        <div id="symptom-blackout"></div>
+
+        <!-- ===============================================================
+             TOP BAR — Kompakt header med status-badges og handlingsknapper.
+             Inspireret af spil-HUD: informationsdense badges der viser
+             dag, tid, points og hastighed i et roligt, mørkt design.
+             =============================================================== -->
+        <div id="top-bar">
+            <!-- Venstre: logo + knapper -->
+            <div class="top-left">
+                <div class="brand-group" id="brandGroup" title="T1D Simulator">
+                    <div class="brand-line">
+                        <div class="brand">T1D SIMULATOR</div>
+                    </div>
+                    <div class="brand-slogan" data-i18n="ui.slogan">Prøv. Lær. Gentag.</div>
+                </div>
+                <div class="top-actions">
+                    <button class="top-btn start-btn-prominent" id="startButton" data-i18n="ui.btn.start" data-i18n-title="ui.title.start" title="Start en ny simulation">Start</button>
+                    <div class="secondary-actions">
+                        <!-- Character is chosen in the mode-selection start flow and viewed/changed
+                             via the clickable character in the BG panel (#cgmCharacter), so no
+                             separate top-bar Karakter button is needed (A4). -->
+                        <button class="top-btn" id="helpButton" data-i18n="ui.btn.help" data-i18n-title="ui.title.help" title="Hjælp og information">Hjælp</button>
+                        <button class="top-btn" id="highscoreButton" data-i18n="ui.btn.highscore" data-i18n-title="ui.title.highscore" title="Vis highscore-listen">Highscore</button>
+                    </div>
+                    <!-- Hamburger: erstatter sekundære knapper på ≤1400px, placeret ved siden af Start -->
+                    <button class="top-btn hamburger-btn" id="hamburgerBtn" title="Menu" aria-label="Menu">&#x2630;</button>
+                </div>
+            </div>
+
+            <!-- Center: dag/tid (centreret over dock) -->
+            <div class="top-status">
+                <div class="status-display" data-i18n-title="ui.title.datetime" title="Dag og klokkeslæt">
+                    <span class="td-label" data-i18n="ui.badge.day">DAG</span>
+                    <span class="td-day-num" id="dayDisplay">1</span>
+                    <span class="td-day-total" id="dayTotalDisplay" style="display:none;"></span>
+                    <span class="td-sep"></span>
+                    <span class="td-time" id="timeDisplay">00:00</span>
+                    <!-- Sol/måne med pulserende baggrunds-glow.
+                         Wrapper-span er nødvendig så ::before kan tegne pulse-glowet
+                         (et <img>-element understøtter ikke pseudo-elementer). -->
+                    <span class="daynight-wrap is-night" id="dayNightWrap" data-i18n-title="ui.title.daynight" title="Tidspunkt på døgnet">
+                        <img class="daynight-icon" id="dayNightIcon" src="assets/icons/moon.svg" alt="">
+                    </span>
+                </div>
+            </div>
+
+            <!-- Højre: settings + fullscreen + hamburger -->
+            <div class="top-right">
+                <button class="top-btn physiology-btn" id="physiologyToggle" data-i18n-title="ui.title.physiology" title="Vis fysiologiske kræfter bag blodsukkeret (score gemmes ikke)">
+                    <span data-i18n="ui.btn.physiology">Fysiologi</span>
+                </button>
+                <div class="top-settings-wrapper" id="topSettingsWrapper">
+                    <button class="top-btn settings-btn" id="topSettingsButton" data-i18n-title="settings.title" title="Indstillinger">
+                        <span data-i18n="settings.label">Settings</span>
+                    </button>
+                    <!-- Settings dropdown — minimal dividers (mockup D) -->
+                    <div class="settings-dropdown" id="settingsDropdown">
+                        <!-- ── VISNING (øverst — vigtigt for mobile enheder) ── -->
+                        <div class="sd-divider sd-divider-display">
+                            <span class="sd-divider-text" data-i18n="settings.sect.display">Visning</span>
+                            <span class="sd-divider-line"></span>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-fullscreen.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.fullscreen">Fuld skærm</span>
+                                <span class="sd-row-help" data-i18n="settings.fullscreen.help">Vis simulatoren i fuld skærm.</span>
+                            </div>
+                            <button class="sound-toggle" id="fullscreenSettingsToggle" aria-label="Toggle fullscreen">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-life-bars.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.lifeBars">Life bars</span>
+                                <span class="sd-row-help" data-i18n="settings.lifeBars.help">Hjerne, acidose og vægt som progress bars.</span>
+                            </div>
+                            <button class="sound-toggle" id="lifeBarsToggle" aria-label="Toggle life bars">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-statistics.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.stats">Statistik</span>
+                                <span class="sd-row-help" data-i18n="settings.stats.help">TIR, gns blodsukker og vægt nederst på skærmen.</span>
+                            </div>
+                            <button class="sound-toggle" id="statsFragmentToggle" aria-label="Toggle statistik">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <!-- ── GAMEPLAY ── -->
+                        <div class="sd-divider sd-divider-gameplay">
+                            <span class="sd-divider-text" data-i18n="settings.sect.gameplay">Gameplay</span>
+                            <span class="sd-divider-line"></span>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-language.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label">Sprog / Language</span>
+                            </div>
+                            <div class="sd-lang-cards">
+                                <button class="sd-lang-card selected" id="langOptionDA">&#x1F1E9;&#x1F1F0; DA</button>
+                                <button class="sd-lang-card" id="langOptionEN">&#x1F1EC;&#x1F1E7; EN</button>
+                            </div>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-bg-unit.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.bgUnit">Blodsukkerenhed</span>
+                                <span class="sd-row-help" data-i18n="settings.bgUnit.help">Skift mellem mmol/L og mg/dL.</span>
+                            </div>
+                            <div class="sd-lang-cards">
+                                <button class="sd-lang-card" id="bgUnitMmol">mmol/L</button>
+                                <button class="sd-lang-card" id="bgUnitMg">mg/dL</button>
+                            </div>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-vfx.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.vfx">Visuelle effekter</span>
+                                <span class="sd-row-help" data-i18n="settings.vfx.help2">Slør, afmætning og tunnelsyn ved lavt blodsukker, langvarigt højt blodsukker og syrebelastning.</span>
+                            </div>
+                            <button class="sound-toggle" id="vfxToggle" aria-label="Toggle VFX">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-general-tips.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.tips">Tips</span>
+                                <span class="sd-row-help" data-i18n="settings.tips.help">Tips og hints om kontrol, baner og fysiologi.</span>
+                            </div>
+                            <button class="sound-toggle" id="tipsToggle" aria-label="Toggle tips">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <!-- ── LYD ── -->
+                        <div class="sd-divider sd-divider-sound">
+                            <span class="sd-divider-text" data-i18n="settings.sound">Lyd</span>
+                            <span class="sd-divider-line"></span>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-sfx.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.sfx">Lydeffekter</span>
+                                <span class="sd-row-help" data-i18n="settings.sfx.help">Knap-lyde og spil-events.</span>
+                            </div>
+                            <button class="sound-toggle" id="sfxToggle" aria-label="Toggle lydeffekter">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-cgm-sounds.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.cgm">CGM-lyde</span>
+                                <span class="sd-row-help" data-i18n="settings.cgm.help">Lyd ved hver ny CGM-måling.</span>
+                            </div>
+                            <button class="sound-toggle" id="cgmToggle" aria-label="Toggle CGM-lyde">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-music.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.music">Musik</span>
+                                <div class="sd-slider">
+                                    <input type="range" id="musicVolumeSlider" class="music-volume-slider"
+                                           min="0" max="100" value="25" aria-label="Musikvolumen">
+                                    <span class="volume-label" id="musicVolumeLabel">25%</span>
+                                </div>
+                            </div>
+                            <button class="sound-toggle" id="musicToggle" aria-label="Toggle musik">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <!-- ── UDVIKLER ── -->
+                        <div class="sd-divider sd-divider-developer">
+                            <span class="sd-divider-text" data-i18n="settings.sect.developer">Udvikler</span>
+                            <span class="sd-divider-line"></span>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-debug.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="settings.debug">Debug</span>
+                                <span class="sd-row-help" data-i18n="settings.debug.help">Interne værdier, sandt blodsukker og CSV-logning.</span>
+                            </div>
+                            <button class="sound-toggle" id="debugToggle" aria-label="Toggle debug">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-statistics.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="physiology.dashboard">Fysiologivindue</span>
+                                <span class="sd-row-help" data-i18n="settings.dashboard.help">Detaljeret realtidsvisning i separat vindue.</span>
+                            </div>
+                            <button class="sound-toggle" id="dashboardToggle" aria-label="Toggle fysiologivindue">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                        <div class="sd-row">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-debug.png" alt=""></span>
+                            <div class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="debug.unlockAllLevels">Lås alle baner op</span>
+                                <span class="sd-row-help" data-i18n="debug.unlockAllLevels.help">Giver adgang til alle kampagnebaner uanset fremskridt.</span>
+                            </div>
+                            <button class="sound-toggle" id="debugUnlockAllLevelsToggle" aria-label="Toggle unlock all levels">
+                                <span class="sound-toggle-knob"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobil-menu overlay (slide-in panel til sekundære knapper) -->
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
+            <div class="mobile-menu-panel" id="mobileMenuPanel">
+                <!-- Fyldes dynamisk med profil/hjælp/highscore via JS -->
+            </div>
+        </div>
+
+        <!-- ===============================================================
+             MAIN AREA — To-kolonne layout: graf (dominerer) + stats sidebar
+             Grafen er "spillefeltet" — den fylder det meste af skærmen.
+             Stats-sidebar viser TIR, forbrug og spiller-data.
+             =============================================================== -->
+        <div id="main-area">
+
+            <!-- GRAPH SECTION — Hovedvisningen med CGM-tal, info-pills og graf -->
+            <div id="graph-section">
+
+                <!-- Graf-canvas: Alt BG-data renderes her via drawGraph() i ui.js.
+                     Canvasset er responsivt og håndterer høj-DPI skærme.
+                     CGM hero overlay er placeret i øverste venstre hjørne af grafen. -->
+                <div id="graph-area-container">
+                    <canvas id="bg-graph"></canvas>
+
+                    <!-- CGM Hero: flyttet til #capsule-bar i bunden (Wide Split Capsule layout) -->
+
+                    <!-- Kampagne info-knap: top-højre hjørne af grafen. Klik åbner level-intro popup igen. -->
+                    <button class="campaign-info-btn" id="campaignInfoBtn" style="display:none;" data-i18n-title="campaign.info.title" title="Vis bane-info">
+                        <span class="campaign-info-icon"><img class="campaign-info-icon-img" src="assets/icons/app/level-info.png" alt=""></span>
+                    </button>
+
+                    <!-- Højre overlay-kolonne: points + effektpanel stakket vertikalt.
+                         Flex-container sikrer at effektpanelet altid ligger UNDER points-panelet,
+                         uanset points-panelets højde (varierer i Box Challenge pga. hearts + dagpoints). -->
+                    <!-- Points overlay: flyttet til #capsule-bar i bunden (Wide Split Capsule layout) -->
+
+                    <!-- Fysiologi-effektpanel: flyttet til #bottom-bar (th. for pille-menuen) -->
+
+                    <!-- Advarsel: vises ved hurtigt faldende BG (skjult som standard) -->
+                    <div id="steep-drop-warning" data-i18n="ui.steepDrop">&#x26A0; ADVARSEL: Hurtigt faldende blodsukker!</div>
+
+                    <!-- Aktivitets-overlay: vises under aktiv aktivitet (nederst til højre) -->
+                    <div id="activity-overlay" style="display:none;">
+                        <div class="activity-overlay-header">
+                        <span id="activityOverlayIcon" class="activity-inline-icon"></span>
+                            <span id="activityOverlayName">Cardio</span>
+                            <span class="activity-active-sep">·</span>
+                            <span id="activityOverlayIntensity">Medium</span>
+                        </div>
+                        <div class="activity-active-progress">
+                            <div class="activity-progress-bar">
+                                <div class="activity-progress-fill" id="activityOverlayProgressFill"></div>
+                            </div>
+                            <span class="activity-timer" id="activityOverlayTimer">0:00</span>
+                        </div>
+                        <button id="stopActivityOverlayButton" class="dp-btn btn-red btn-small" data-i18n="ui.activity.stop">⏹ Stop</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ===============================================================
+                 SIDE DRAWERS — Pull-out paneler th. der skubber grafen tv.
+                 Stats og Debug er flex-elementer med tab + body.
+                 Klik på tab-fane ekspanderer/kollapser indholdet.
+                 =============================================================== -->
+
+        <!-- DEBUG SIDEBAR — Pull-out drawer med udviklerværktøjer.
+             Synlighed styres af settings-toggle (debugEnabled).
+             Når slukket: klassen debug-hidden skjuler hele draweren.
+             Når tændt: vises som lukket tab der kan åbnes ved klik. -->
+        <div id="debug-sidebar" class="side-drawer">
+            <button class="side-drawer-tab" id="debugDrawerTab"><span class="sdt-icon">🔧</span><span class="sdt-label" data-i18n="drawer.debug">Debug</span></button>
+            <div class="side-drawer-body">
+                <!-- Sticky top: screenshot + kontroller (altid synlige) -->
+                <div id="debug-sticky-top">
+                    <h5>Debug</h5>
+                    <label class="dp-checkbox">
+                        <input type="checkbox" id="debugTrueBgCheckbox">
+                        <span>Sandt BS</span>
+                    </label>
+                    <label class="dp-checkbox">
+                        <input type="checkbox" id="debugLogCheckbox">
+                        <span>CSV log</span>
+                    </label>
+                    <div class="dp-log-controls" id="debugLogControls" style="display:none;">
+                        <div class="dp-log-status">
+                            <span id="debugLogStatus">Klar</span>
+                            <span id="debugLogCount">0 rækker</span>
+                        </div>
+                        <div style="display:flex; gap:4px;">
+                            <button class="dp-btn" id="debugLogDownload" title="Download logfil som CSV" style="flex:1;">&#x1F4BE; CSV</button>
+                            <button class="dp-btn dp-btn-clear" id="debugLogClear" title="Ryd logdata" style="flex:1;">&#x1F5D1; Ryd</button>
+                        </div>
+                    </div>
+                    <button class="dp-btn" id="debugScreenshot" title="Download screenshot som PNG" style="margin-top:4px;width:100%;">&#x1F4F7; Screenshot</button>
+                    <button class="dp-btn dp-btn-clear" id="debugClearAll" data-i18n="debug.clearAll" data-i18n-title="debug.clearAll.title" title="Ryd alle gemte data (profil, highscores, indstillinger og infobekræftelse)" style="margin-top:8px;width:100%;">&#x1F5D1; Ryd al lokal data</button>
+                </div>
+
+                <!-- Scrollbar live-værdier opdelt i grupper -->
+                <div class="dp-live" id="debugLiveValues">
+
+                    <!-- ═══ GLUKOSE ═══ -->
+                    <div class="dbg-group-label">Glukose</div>
+                    <div class="dp-row" title="Sandt blodsukker — den reelle værdi i modellen, uden CGM-forsinkelse eller støj">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#glucose" target="_blank">True BS</a></span>
+                        <span class="dp-val" id="dbgTrueBG">--</span><span class="dp-unit">mmol/L</span></div>
+                    <div class="dp-row" title="CGM blodsukker — hvad sensoren viser, med ~10 min forsinkelse og tilfældig støj">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#cgm" target="_blank">CGM BS</a></span>
+                        <span class="dp-val" id="dbgCgmBG">--</span><span class="dp-unit">mmol/L</span></div>
+                    <div class="dp-row" title="Carbs On Board — resterende kulhydrater der endnu ikke er optaget fra tarmen">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#food" target="_blank">COB</a></span>
+                        <span class="dp-val" id="dbgCOB">--</span><span class="dp-unit">g</span></div>
+                    <div class="dp-row" title="Fedt i tarmen — udløser CCK/GLP-1 der bremser mavetømning (pizza-effekten). Højere = langsommere KH-absorption">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#food" target="_blank">Tarm-fedt</a></span>
+                        <span class="dp-val" id="dbgFatInt">--</span><span class="dp-unit">g</span></div>
+                    <div class="dp-row" title="Dynamisk τG — mavetømningshastighed. Baseline=40 min, stiger med fedt i tarmen. Højere τG = langsommere absorption">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#food" target="_blank">τG</a></span>
+                        <span class="dp-val" id="dbgTauG">40</span><span class="dp-unit">min</span></div>
+                    <div class="dp-row" title="Aminosyrer i blodet — fra protein-fordøjelse. Driver glukagon-sekretion → øget leverproduktion (HGP). EC50=8g, Hill n=2">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#food" target="_blank">AminoAcid</a></span>
+                        <span class="dp-val" id="dbgAA">--</span><span class="dp-unit">g</span></div>
+                    <div class="dp-row" title="Protein-glukagon — aminosyre-drevet glukagon-stimulering. Adderes til stressMultiplier → øger EGP. Max 0.25 (=25% øget HGP)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#food" target="_blank">ProtGluc</a></span>
+                        <span class="dp-val" id="dbgProtGluc">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Ketonniveau (BHB) — stiger ved insulinmangel. Faste-ketose (med insulin) er normalt, DKA (uden insulin) er farligt">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#ketones" target="_blank">Ketoner</a></span>
+                        <span class="dp-val" id="dbgKetone">--</span><span class="dp-unit">mmol/L</span></div>
+                    <div class="dp-row" title="FFA fra lipolyse — fedtsyrer frigivet pga. lav insulin. Driver ketonproduktion via CPT-1">
+                        <span class="dp-label">FFA (lipo)</span>
+                        <span class="dp-val" id="dbgFfaLipo">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Lipolyse-rate — hastighed af fedtnedbrydning. Styres af plasma-insulin via Hill-funktion (EC50=5 mU/L)">
+                        <span class="dp-label">LipoRate</span>
+                        <span class="dp-val" id="dbgLipoRate">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="CPT-1 aktivitet — 1.0=åben (ketoner produceres), 0.05=lukket (insulin blokerer). Gating-funktion for ketonproduktion">
+                        <span class="dp-label">CPT-1</span>
+                        <span class="dp-val" id="dbgCpt1">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Acidose-belastning / tærskel — akkumulerer ved DKA (BHB>3 + lav insulin). Game over ved 100%. Faste-ketose (insulin OK) akkumulerer IKKE">
+                        <span class="dp-label">Acidose</span>
+                        <span class="dp-val" id="dbgAcidosis">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Estimeret HbA1c (GMI) — beregnet fra 7-dages gennemsnitlig CGM. Kun meningsfuld efter lang spilletid.">
+                        <span class="dp-label">eHbA1c</span>
+                        <span class="dp-val" id="dbgEHbA1c">--</span><span class="dp-unit">%</span></div>
+
+                    <!-- ═══ INSULIN ═══ -->
+                    <div class="dbg-group-label">Insulin</div>
+                    <div class="dp-row" title="Bolus Insulin On Board — resterende aktivt hurtigvirkende insulin fra injektioner">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">Bolus IOB</a></span>
+                        <span class="dp-val" id="dbgIOB">--</span><span class="dp-unit">U</span></div>
+                    <div class="dp-row" title="Basal Insulin On Board — resterende injiceret dosis (uden bioavailability-korrektion)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">Basal IOB</a></span>
+                        <span class="dp-val" id="dbgBasalIOB">--</span><span class="dp-unit">U</span></div>
+                    <div class="dp-row" title="Basal flow → plasma: hvor hurtigt basalinsulin leveres til blodet lige nu">
+                        <span class="dp-label">Basal flow</span>
+                        <span class="dp-val" id="dbgBasalRate">--</span><span class="dp-unit">U/h</span></div>
+                    <div class="dp-row" title="Bolus flow → plasma: absorptionshastighed fra subkutant depot (S2/τ_I)">
+                        <span class="dp-label">Bolus flow</span>
+                        <span class="dp-val" id="dbgBolusFlow">--</span><span class="dp-unit">U/h</span></div>
+                    <div class="dp-row" title="Subkutant depot — insulin under huden der venter på at blive optaget (Hovorka S1+S2)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">SubQ depot</a></span>
+                        <span class="dp-val" id="dbgSubQ">--</span><span class="dp-unit">U</span></div>
+                    <div class="dp-row" title="Plasma-insulin — insulin i blodbanen der aktivt virker på cellerne (Hovorka state[6])">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">Plasma I</a></span>
+                        <span class="dp-val" id="dbgPlasmaI">--</span><span class="dp-unit">mU/L</span></div>
+
+                    <!-- ═══ HOVORKA-MODEL ═══ -->
+                    <div class="dbg-group-label">Hovorka-model</div>
+                    <div class="dp-row" title="x1: Insulineffekt på glukosetransport — driver glukose fra plasma ind i perifere væv">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#core-model" target="_blank">x1 (transport)</a></span>
+                        <span class="dp-val" id="dbgX1">--</span><span class="dp-unit">min⁻¹</span></div>
+                    <div class="dp-row" title="x2: Insulineffekt på glukoseforbrug — øger cellernes forbrænding af glukose">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#core-model" target="_blank">x2 (disposal)</a></span>
+                        <span class="dp-val" id="dbgX2">--</span><span class="dp-unit">min⁻¹</span></div>
+                    <div class="dp-row" title="x3: Insulineffekt på leverens glukoseproduktion — undertrykker EGP">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#core-model" target="_blank">x3 (EGP-sup)</a></span>
+                        <span class="dp-val" id="dbgX3">--</span><span class="dp-unit">min⁻¹</span></div>
+                    <div class="dp-row" title="Exercise Factor — multiplikator på insulineffekten under motion = 1 + alpha * E2^2">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#activity" target="_blank">ExerciseFac</a></span>
+                        <span class="dp-val" id="dbgExFac">--</span><span class="dp-unit">x</span></div>
+                    <div class="dp-row" title="Effektiv ISF — hvor meget 1U insulin sænker blodsukker lige nu = profilISF × ExerciseFac">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#insulin" target="_blank">ISF (eff.)</a></span>
+                        <span class="dp-val" id="dbgISFeff">--</span><span class="dp-unit">(mmol/L)/U</span></div>
+                    <div class="dp-row" title="Simuleret puls — stiger ved motion, falder gradvist efter. Pavirker insulinabsorption">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#activity" target="_blank">Puls</a></span>
+                        <span class="dp-val" id="dbgHR">--</span><span class="dp-unit">BPM</span></div>
+
+                    <!-- ═══ LEVER & EGP ═══ -->
+                    <div class="dbg-group-label">Lever & EGP</div>
+                    <div class="dp-row" title="Endogen Glukose Produktion — leverens frigivelse af glukose = EGP_0 * max(0, StressMult - x3)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stress-hormones" target="_blank">EGP</a></span>
+                        <span class="dp-val" id="dbgEGP">--</span><span class="dp-unit">mmol/min</span></div>
+                    <div class="dp-row" title="Lever-glykogen — endelig glycogenpool (0-120g). Forbruges af stress-drevet glykogenolyse og motion. Genopfyldes efter mad.">
+                        <span class="dp-label">Glykogen</span>
+                        <span class="dp-val" id="dbgGlycogen">--</span><span class="dp-unit">g</span></div>
+                    <div class="dp-row" title="Glycogen Reserve — afledt skalering (0-100%). Under 100% svækkes stress-drevet EGP proportionelt.">
+                        <span class="dp-label">GlyReserve</span>
+                        <span class="dp-val" id="dbgGlyReserve">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Stress-multiplikator — effektiv driver for EGP. Inkl. glycogen-skaleret akut stress + kronisk + dawn.">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stress-hormones" target="_blank">StressMult</a></span>
+                        <span class="dp-val" id="dbgStressMult">--</span><span class="dp-unit">x</span></div>
+
+                    <!-- ═══ MUSKEL-GLYKOGEN ═══ -->
+                    <div class="dbg-group-label">Muskel-glykogen</div>
+                    <div class="dp-row" title="Muskel-glykogen pool — vægt-skaleret (~5.5 g/kg). Tømmes under motion, genopfyldes post-exercise via glukose-uptake fra plasma. Styrer også slowBoost i post-exercise insulinfølsomhed.">
+                        <span class="dp-label">Depot</span>
+                        <span class="dp-val" id="dbgMuscleGly">--</span><span class="dp-unit">g</span></div>
+                    <div class="dp-row" title="Muskel-glykogen resynthesis rate — g/min der trækkes fra plasma og lagres som glykogen post-exercise. Drevet af AMPK (fase 1) og insulin×CHO (fase 2).">
+                        <span class="dp-label">Resynthesis</span>
+                        <span class="dp-val" id="dbgMuscleGlyRate">--</span><span class="dp-unit">g/min</span></div>
+
+                    <!-- ═══ STRESSHORMONER ═══ -->
+                    <div class="dbg-group-label">Stresshormoner</div>
+                    <div class="dp-row" title="Akut stressniveau (adrenalin/glukagon) — stiger ved hypo og hard motion. t1/2 ~60 sim-min">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stress-hormones" target="_blank">Stress (akut)</a></span>
+                        <span class="dp-val" id="dbgAcute">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Kronisk stressniveau (kortisol) — stiger ved sygdom og sovnmangel. t1/2 ~12 sim-timer">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stress-hormones" target="_blank">Stress (kron.)</a></span>
+                        <span class="dp-val" id="dbgChronic">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Cirkadisk kortisol — dawn-fænomenet: kortisol-peak om morgenen (04:00-12:00) der hæver EGP">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#dawn" target="_blank">Dawn (HGP)</a></span>
+                        <span class="dp-val" id="dbgDawn">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Cirkadisk ISF-faktor — døgnvariation i insulinfølsomhed. 0.70 om morgenen (insulin virker 30% dårligere), 1.20 om aftenen (20% bedre)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#dawn" target="_blank">Dawn (ISF)</a></span>
+                        <span class="dp-val" id="dbgCircadianISF">--</span><span class="dp-unit">×</span></div>
+                    <div class="dp-row" title="Insulinresistens-faktor — stiger ved kronisk stress (1.0 + chronicStress × 0.5). Højere = insulin virker dårligere">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#stress-hormones" target="_blank">InsResistans</a></span>
+                        <span class="dp-val" id="dbgInsResistance">--</span><span class="dp-unit">×</span></div>
+
+                    <!-- ═══ KONTRAREGULERING ═══ -->
+                    <div class="dbg-group-label">Kontraregulering</div>
+                    <div class="dp-row" title="Hypo-belastning — akkumuleret hypo-eksponering (tid × dybde under 3.0). Højere = mere tilvænning">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#haaf" target="_blank">Hypo-bel.</a></span>
+                        <span class="dp-val" id="dbgHypoArea">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Kontraregulering — kroppens evne til at modvirke lavt blodsukker. Falder ved gentagen hypo (hypo-tilvænning)">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#haaf" target="_blank">KontraReg</a></span>
+                        <span class="dp-val" id="dbgCounterReg">--</span><span class="dp-unit"></span></div>
+                    <div class="dp-row" title="Mistet søvn denne nat — natlige interventioner forstyrrer søvnen og øger insulinresistens">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#sleep" target="_blank">Sovntab</a></span>
+                        <span class="dp-val" id="dbgSleep">--</span><span class="dp-unit">timer</span></div>
+
+                    <!-- ═══ SCORING ═══ -->
+                    <div class="dbg-group-label">Scoring</div>
+                    <div class="dp-row" title="Normoglykæmi-points - optjenes når blodsukker er i målzonen">
+                        <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#scoring" target="_blank">Points</a></span>
+                        <span class="dp-val" id="dbgPoints">--</span><span class="dp-unit"></span></div>
+                </div>
+            </div><!-- /.side-drawer-body -->
+        </div>
+
+        </div><!-- /#main-area -->
+
+        <!-- ===============================================================
+             DOCK PANELS — Fold-op paneler der vises når man klikker på
+             et dock-item. Positioneret absolut over dock'en.
+             Hvert panel indeholder de samme kontroller som før,
+             men i et kompakt, mørkt design med slide-animationer.
+             =============================================================== -->
+
+        <!-- INSULIN PANEL — Kompakt layout: basal øverst, hurtig nederst -->
+        <!-- Hver sektion: label + presets + slider på én kompakt linje -->
+        <div id="dock-panel-insulin" class="dock-panel">
+            <!-- BASAL INSULIN — øverste række -->
+            <label class="dp-section-label"><img class="dp-section-icon" src="assets/icons/app/basal-syringe-clock.png" alt=""> <span data-i18n="insulin.basal">Basal</span></label>
+            <div class="dp-section dp-insulin-basal dp-insulin-row">
+                <div class="dp-insulin-presets">
+                    <div class="preset-chip insulin-preset-chip" id="basalPreset1" title="A">
+                        <span class="pc-name"><span id="basalPreset1Dose">--</span> <span data-i18n="insulin.unit">E</span></span><span class="pc-key">A</span>
+                    </div>
+                    <div class="preset-chip insulin-preset-chip" id="basalPreset2" title="S">
+                        <span class="pc-name"><span id="basalPreset2Dose">--</span> <span data-i18n="insulin.unit">E</span></span><span class="pc-key">S</span>
+                    </div>
+                    <div class="preset-chip insulin-preset-chip" id="basalPreset3" title="D">
+                        <span class="pc-name"><span id="basalPreset3Dose">--</span> <span data-i18n="insulin.unit">E</span></span><span class="pc-key">D</span>
+                    </div>
+                    <div class="preset-chip insulin-preset-chip" id="basalPreset4" title="F">
+                        <span class="pc-name"><span id="basalPreset4Dose">--</span> <span data-i18n="insulin.unit">E</span></span><span class="pc-key">F</span>
+                    </div>
+                    <div class="preset-chip insulin-preset-chip" id="basalPreset5" title="G">
+                        <span class="pc-name"><span id="basalPreset5Dose">--</span> <span data-i18n="insulin.unit">E</span></span><span class="pc-key">G</span>
+                    </div>
+                </div>
+                <div class="dp-custom-dose">
+                    <input type="range" id="longInsulinSlider" min="1" max="30" value="10" step="1">
+                    <button id="giveLongInsulinButton" class="dp-btn dp-btn-compact btn-blue" title="H">
+                        <span id="longInsulinValue">10</span> <span data-i18n="insulin.unit">E</span><span class="pc-key">H</span>
+                    </button>
+                </div>
+            </div>
+            <div class="dp-divider"></div>
+            <!-- HURTIG INSULIN — nederste række -->
+            <label class="dp-section-label"><img class="dp-section-icon" src="assets/icons/app/rapid-syringe.png" alt=""> <span data-i18n="insulin.fast">Hurtig</span></label>
+            <div class="dp-section dp-insulin-fast dp-insulin-row">
+                <div class="dp-insulin-presets">
+                    <div class="preset-chip insulin-preset-chip insulin-preset-fast" id="fastPreset05" title="Z">
+                        <span class="pc-name">½ <span data-i18n="insulin.unit">E</span></span><span class="pc-key">Z</span>
+                    </div>
+                    <div class="preset-chip insulin-preset-chip insulin-preset-fast" id="fastPreset1" title="X">
+                        <span class="pc-name">1 <span data-i18n="insulin.unit">E</span></span><span class="pc-key">X</span>
+                    </div>
+                    <div class="preset-chip insulin-preset-chip insulin-preset-fast" id="fastPreset2" title="C">
+                        <span class="pc-name">2 <span data-i18n="insulin.unit">E</span></span><span class="pc-key">C</span>
+                    </div>
+                    <div class="preset-chip insulin-preset-chip insulin-preset-fast" id="fastPreset4" title="V">
+                        <span class="pc-name">4 <span data-i18n="insulin.unit">E</span></span><span class="pc-key">V</span>
+                    </div>
+                    <div class="preset-chip insulin-preset-chip insulin-preset-fast" id="fastPreset8" title="B">
+                        <span class="pc-name">8 <span data-i18n="insulin.unit">E</span></span><span class="pc-key">B</span>
+                    </div>
+                </div>
+                <div class="dp-custom-dose">
+                    <input type="range" id="fastInsulinSlider" min="0.5" max="10" value="4" step="0.5">
+                    <button id="giveFastInsulinButton" class="dp-btn dp-btn-compact btn-teal" title="N">
+                        <span id="fastInsulinValue">4.0</span> <span data-i18n="insulin.unit">E</span><span class="pc-key">N</span>
+                    </button>
+                </div>
+            </div>
+            <div class="dp-fast-hint" data-i18n="insulin.fastHint">Tast 1–9 = hurtig insulin 1–9 E</div>
+        </div>
+
+        <!-- FOOD PANEL — Presets organiseret som 3 rækker efter kulhydrat-profil -->
+        <div id="dock-panel-food" class="dock-panel">
+            <!-- Mad-presets: 2-kolonne grid hvor venstre kolonne har 3 navngivne rækker
+                 og højre kolonne har en lodret "Lav selv"-knap der spænder hele højden.
+                 Række 1 (Q-Y): Lav-kulhydrat — protein/fedt-rige madvarer der knapt rykker BG.
+                 Række 2 (A-H): Måltider — sammensatte måltider hvor carb-typen styrer τG.
+                 Række 3 (Z-N): Hurtige kulhydrater — hurtige sukre, frugt og let mad.
+                 Lav selv (P): Lodret knap til højre — åbner custom popup med fri sammensætning.
+                 Hver præsentation slår op i FOODS-tabellen i js/foods.js, så kulhydrat-typen
+                 (sukker_fast, sukker_flydende, fuldkorn, hvidt_mel, frugt, grøntsag, mixed)
+                 sendes med til Simulator.addFood() og bestemmer den dynamiske mavetømning. -->
+            <div class="dp-food-presets">
+              <div class="preset-rows-main">
+
+                <!-- ─── Række 1: Lav-kulhydrat ─── -->
+                <div class="preset-row-title" data-row-id="lowCarb" data-i18n="food.row.lowCarb">Lav-kulhydrat</div>
+                <div class="preset-row preset-row-6" data-row-id="lowCarb">
+                    <div class="preset-chip" id="eggButton" data-food="æg">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/egg.png" alt=""></span><span class="pc-name" data-i18n="food.egg">Æg</span><span class="pc-weight">50g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:1"></span><span class="pc-mb-protein" style="flex:7"></span><span class="pc-mb-fat" style="flex:5"></span></div><span class="pc-key">Q</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 1g</span><br><span class="tt-protein">Protein: 7g</span><br><span class="tt-fat">Fedt: 5g</span><br><span class="tt-kcal">77 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="nutsButton" data-food="nødder">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/nuts.png" alt=""></span><span class="pc-name" data-i18n="food.nuts">Nødder</span><span class="pc-weight">40g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:6"></span><span class="pc-mb-protein" style="flex:8"></span><span class="pc-mb-fat" style="flex:25"></span></div><span class="pc-key">W</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 6g</span><br><span class="tt-protein">Protein: 8g</span><br><span class="tt-fat">Fedt: 25g</span><br><span class="tt-kcal">281 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="saladButton" data-food="salat">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/salad.png" alt=""></span><span class="pc-name" data-i18n="food.salad">Salat</span><span class="pc-weight">200g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:5"></span><span class="pc-mb-protein" style="flex:2"></span><span class="pc-mb-fat" style="flex:1"></span></div><span class="pc-key">E</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 5g</span><br><span class="tt-protein">Protein: 2g</span><br><span class="tt-fat">Fedt: 1g</span><br><span class="tt-kcal">37 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="salmonAvocadoButton" data-food="laksAvocado">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/lowcarb-salmon-avocado.png" alt=""></span><span class="pc-name" data-i18n="food.salmonAvocado">Laks &amp; avocado</span><span class="pc-weight">300g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:5"></span><span class="pc-mb-protein" style="flex:30"></span><span class="pc-mb-fat" style="flex:28"></span></div><span class="pc-key">R</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 5g</span><br><span class="tt-protein">Protein: 30g</span><br><span class="tt-fat">Fedt: 28g</span><br><span class="tt-kcal">392 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="eggsBaconButton" data-food="ægBacon">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/lowcarb-eggs-bacon.png" alt=""></span><span class="pc-name" data-i18n="food.eggsBacon">Æg &amp; bacon</span><span class="pc-weight">180g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:2"></span><span class="pc-mb-protein" style="flex:25"></span><span class="pc-mb-fat" style="flex:32"></span></div><span class="pc-key">T</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 2g</span><br><span class="tt-protein">Protein: 25g</span><br><span class="tt-fat">Fedt: 32g</span><br><span class="tt-kcal">396 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="steakBearnaiseButton" data-food="bøfBearnaise">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/lowcarb-steak-bearnaise.png" alt=""></span><span class="pc-name" data-i18n="food.steakBearnaise">Bøf &amp; béarnaise</span><span class="pc-weight">320g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:4"></span><span class="pc-mb-protein" style="flex:35"></span><span class="pc-mb-fat" style="flex:38"></span></div><span class="pc-key">Y</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 4g</span><br><span class="tt-protein">Protein: 35g</span><br><span class="tt-fat">Fedt: 38g</span><br><span class="tt-kcal">498 kcal</span></div>
+                    </div>
+                </div>
+
+                <!-- ─── Række 2: Måltider ─── -->
+                <div class="preset-row-title" data-row-id="meals" data-i18n="food.row.meals">Måltider</div>
+                <div class="preset-row preset-row-6" data-row-id="meals">
+                    <div class="preset-chip" id="curryButton" data-food="bollerIKarry">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/curry-rice.png" alt=""></span><span class="pc-name" data-i18n="food.curry">Karry &amp; ris</span><span class="pc-weight">350g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:50"></span><span class="pc-mb-protein" style="flex:25"></span><span class="pc-mb-fat" style="flex:15"></span></div><span class="pc-key">A</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 50g</span><br><span class="tt-protein">Protein: 25g</span><br><span class="tt-fat">Fedt: 15g</span><br><span class="tt-kcal">435 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="cerealButton" data-food="havregryn">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/oatmeal.png" alt=""></span><span class="pc-name" data-i18n="food.cereal">Havregryn</span><span class="pc-weight">250g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:30"></span><span class="pc-mb-protein" style="flex:8"></span><span class="pc-mb-fat" style="flex:2"></span></div><span class="pc-key">S</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 30g</span><br><span class="tt-protein">Protein: 8g</span><br><span class="tt-fat">Fedt: 2g</span><br><span class="tt-kcal">170 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="burgerButton" data-food="burger">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/burger.png" alt=""></span><span class="pc-name" data-i18n="food.burger">Burger</span><span class="pc-weight">300g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:40"></span><span class="pc-mb-protein" style="flex:40"></span><span class="pc-mb-fat" style="flex:40"></span></div><span class="pc-key">D</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 40g</span><br><span class="tt-protein">Protein: 40g</span><br><span class="tt-fat">Fedt: 40g</span><br><span class="tt-kcal">680 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="pastaButton" data-food="pasta">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/pasta.png" alt=""></span><span class="pc-name" data-i18n="food.pasta">Pasta</span><span class="pc-weight">300g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:50"></span><span class="pc-mb-protein" style="flex:10"></span><span class="pc-mb-fat" style="flex:5"></span></div><span class="pc-key">F</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 50g</span><br><span class="tt-protein">Protein: 10g</span><br><span class="tt-fat">Fedt: 5g</span><br><span class="tt-kcal">285 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="pizzaButton" data-food="pizza">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/pizza.png" alt=""></span><span class="pc-name" data-i18n="food.pizza">Pizza</span><span class="pc-weight">150g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:55"></span><span class="pc-mb-protein" style="flex:20"></span><span class="pc-mb-fat" style="flex:25"></span></div><span class="pc-key">G</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 55g</span><br><span class="tt-protein">Protein: 20g</span><br><span class="tt-fat">Fedt: 25g</span><br><span class="tt-kcal">525 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="cakeButton" data-food="lagkage">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/cake.png" alt=""></span><span class="pc-name" data-i18n="food.cake">Lagkage</span><span class="pc-weight">150g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:60"></span><span class="pc-mb-protein" style="flex:5"></span><span class="pc-mb-fat" style="flex:25"></span></div><span class="pc-key">H</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 60g</span><br><span class="tt-protein">Protein: 5g</span><br><span class="tt-fat">Fedt: 25g</span><br><span class="tt-kcal">485 kcal</span></div>
+                    </div>
+                </div>
+
+                <!-- ─── Række 3: Hurtige kulhydrater ─── -->
+                <div class="preset-row-title" data-row-id="adjustments" data-i18n="food.row.adjustments">Hurtige kulhydrater</div>
+                <div class="preset-row preset-row-6" data-row-id="adjustments">
+                    <div class="preset-chip" id="dextroButton" data-food="druesukker">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/glucose-tablets.png" alt=""></span><span class="pc-name" data-i18n="food.dextro">Druesukker</span><span class="pc-weight">3g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:1"></span></div><span class="pc-key">Z</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 3g</span><br><span class="tt-kcal">12 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="candyButton" data-food="slik">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/candy.png" alt=""></span><span class="pc-name" data-i18n="food.candy">Slik</span><span class="pc-weight">25g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:20"></span></div><span class="pc-key">X</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 20g</span><br><span class="tt-kcal">80 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="juiceButton" data-food="juice">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/juice.png" alt=""></span><span class="pc-name" data-i18n="food.juice">Juice</span><span class="pc-weight">250 ml</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:25"></span></div><span class="pc-key">C</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 25g</span><br><span class="tt-kcal">100 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="colaButton" data-food="cola">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/cola.png" alt=""></span><span class="pc-name" data-i18n="food.cola">Cola</span><span class="pc-weight">250 ml</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:27"></span></div><span class="pc-key">V</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 27g</span><br><span class="tt-kcal">108 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="bananaButton" data-food="banan">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/banana.png" alt=""></span><span class="pc-name" data-i18n="food.banana">Banan</span><span class="pc-weight">120g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:25"></span><span class="pc-mb-protein" style="flex:1"></span></div><span class="pc-key">B</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 25g</span><br><span class="tt-protein">Protein: 1g</span><br><span class="tt-kcal">104 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="chocolateButton" data-food="chokolade">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/chocolate.png" alt=""></span><span class="pc-name" data-i18n="food.chocolate">Chokolade</span><span class="pc-weight">40g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:22"></span><span class="pc-mb-protein" style="flex:3"></span><span class="pc-mb-fat" style="flex:12"></span></div><span class="pc-key">N</span>
+                        <div class="pc-tooltip"><span class="tt-carb">Kulhydrat: 22g</span><br><span class="tt-protein">Protein: 3g</span><br><span class="tt-fat">Fedt: 12g</span><br><span class="tt-kcal">208 kcal</span></div>
+                    </div>
+                </div>
+
+              </div>
+
+              <!-- ─── Lodret "Lav selv"-kolonne ─── -->
+              <!-- Tall vertical button der spænder alle 3 rækker. Klik åbner
+                   custom popup hvor man frit kan sammensætte makroer + carbType. -->
+              <div class="preset-custom-column" data-row-id="custom">
+                  <div class="preset-chip preset-chip-custom" id="customFoodToggle" title="Sammensæt dit eget måltid med sliders — tast P">
+                      <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/meal-plate.png" alt=""></span>
+                      <span class="pc-name" data-i18n="food.custom">Lav selv</span>
+                      <span class="pc-key">P</span>
+                  </div>
+              </div>
+            </div>
+            <!-- Skjulte elementer til updateFoodDisplay() kompatibilitet -->
+            <div style="display:none;">
+                <input type="range" id="carbsSlider" min="0" max="100" value="50" step="5">
+                <span id="carbsValue">50</span>
+                <input type="range" id="proteinSlider" min="0" max="100" value="10" step="5">
+                <span id="proteinValue">10</span>
+                <input type="range" id="fatSlider" min="0" max="50" value="5" step="5">
+                <span id="fatValue">5</span>
+                <span id="foodKcalDisplay"></span>
+                <span id="foodInfoDisplay"></span>
+                <button id="giveFoodButton"></button>
+            </div>
+        </div>
+
+        <!-- CUSTOM FOOD PANEL — "Byg din egen" som forgrening fra mad-panelet -->
+        <!-- Carb-type vælges ØVERST (styrer τG via simulator.js), derefter sættes
+             makroerne (kulhydrat/protein/fedt) på sliderne. Rækkefølgen afspejler
+             den naturlige beslutningsorden: først hvilken slags kulhydrat, så hvor meget. -->
+        <div id="dock-panel-custom-food" class="dock-panel">
+            <!-- Carb-type selector — placeret ØVERST så valget af kulhydrat-type
+                 træffes FØR brugeren sætter gram-mængden på Kulhydrat-slideren.
+                 Pædagogisk vigtigt: typen styrer absorptionshastigheden (τG) og
+                 hører tankemæssigt sammen med carbs-værdien. -->
+            <div class="dp-carb-type-section">
+                <div class="dp-carb-type-label" data-i18n="food.custom.carbType.label">Type kulhydrat</div>
+                <div class="dp-carb-type-chips" id="customCarbTypeChips">
+                    <div class="carb-type-chip selected" data-carb-type="mixed" data-i18n-title="food.custom.carbType.mixedTitle" title="Blandet måltid (default)">
+                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-mixed.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.mixed">Blandet</span>
+                    </div>
+                    <div class="carb-type-chip" data-carb-type="sukker_fast" data-i18n-title="food.custom.carbType.sugarSolidTitle" title="Rent sukker (fast form)">
+                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-sugar.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.sugarSolid">Sukker</span>
+                    </div>
+                    <div class="carb-type-chip" data-carb-type="sukker_flydende" data-i18n-title="food.custom.carbType.sugarLiquidTitle" title="Sukker i flydende form (cola, juice)">
+                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-drink.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.sugarLiquid">Drik</span>
+                    </div>
+                    <div class="carb-type-chip" data-carb-type="frugt" data-i18n-title="food.custom.carbType.fruitTitle" title="Frugt: simple sukre + skal-fiber">
+                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-fruit.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.fruit">Frugt</span>
+                    </div>
+                    <div class="carb-type-chip" data-carb-type="hvidt_mel" data-i18n-title="food.custom.carbType.whiteFlourTitle" title="Hvidt mel: stivelse, lav fiber">
+                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-white-bread.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.whiteFlour">Hvidt mel</span>
+                    </div>
+                    <div class="carb-type-chip" data-carb-type="fuldkorn" data-i18n-title="food.custom.carbType.wholeGrainTitle" title="Fuldkorn: stivelse + meget fiber">
+                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-wholegrain.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.wholeGrain">Fuldkorn</span>
+                    </div>
+                    <div class="carb-type-chip" data-carb-type="grøntsag" data-i18n-title="food.custom.carbType.veggieTitle" title="Grøntsager: lavt carb-indhold, høj fiber">
+                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-vegetables.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.veggie">Grønt</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dp-section">
+                <div class="dp-row">
+                    <label data-i18n="food.label.carbs" data-i18n-title="food.tooltip.carbs" title="Kulhydrater hæver blodsukkeret hurtigst.">Kulhydrat</label>
+                    <input type="range" id="customCarbsSlider" min="0" max="100" value="50" step="5">
+                    <span class="dp-val"><span id="customCarbsVal">50</span> g</span>
+                </div>
+                <div class="dp-row">
+                    <label data-i18n="food.label.protein" data-i18n-title="food.tooltip.protein" title="Protein kan hæve blodsukkeret langsomt, især i store måltider.">Protein</label>
+                    <input type="range" id="customProteinSlider" min="0" max="100" value="10" step="5">
+                    <span class="dp-val"><span id="customProteinVal">10</span> g</span>
+                </div>
+                <div class="dp-row">
+                    <label data-i18n="food.label.fat" data-i18n-title="food.tooltip.fat" title="Fedt forsinker absorption af kulhydrater og protein.">Fedt</label>
+                    <input type="range" id="customFatSlider" min="0" max="50" value="5" step="5">
+                    <span class="dp-val"><span id="customFatVal">5</span> g</span>
+                </div>
+            </div>
+
+            <div class="dp-food-info" id="customFoodInfo">
+                <span id="customKcalDisplay">250</span> kcal
+            </div>
+            <button id="customFoodEat" class="dp-btn btn-yellow" data-i18n="food.eat">&#x1F372; Spis</button>
+        </div>
+
+        <!-- AKTIVITETSPANEL — vælg type, intensitet, varighed -->
+        <!-- Setup-tilstand: type-chips, intensitet-chips, varighed-chips, start-knap -->
+        <!-- Aktiv-tilstand: type+intensitet, progress, timer, stop-knap -->
+        <div id="dock-panel-motion" class="dock-panel">
+            <!-- === SETUP-TILSTAND (vises når ingen aktivitet kører) === -->
+            <div id="activity-setup">
+                <!-- Aktivitetstype: 3 chips med ikon og tastatur-genvej -->
+                <div class="activity-section-title" data-i18n="activity.section.type">Aktivitetstype</div>
+                <div class="dp-chip-row dp-type-chips">
+                    <div class="activity-type-chip selected" data-type="cardio" data-i18n-title="activity.title.cardio" title="Cardio: løb, cykling, svømning — sænker blodsukker (Q)">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/activity-shoe.png" alt=""></span><span class="pc-name" data-i18n="activity.cardio">Cardio</span><span class="pc-key">Q</span>
+                    </div>
+                    <div class="activity-type-chip" data-type="styrke" data-i18n-title="activity.title.styrke" title="Styrketræning: vægttræning, crossfit — hæver blodsukker akut (W)">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/activity-strength.png" alt=""></span><span class="pc-name" data-i18n="activity.strength">Styrke</span><span class="pc-key">W</span>
+                    </div>
+                    <div class="activity-type-chip" data-type="blandet" data-i18n-title="activity.title.blandet" title="Blandet sport: fodbold, badminton — relativt stabilt blodsukker (E)">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/activity-ball.png" alt=""></span><span class="pc-name" data-i18n="activity.mixed">Blandet</span><span class="pc-key">E</span>
+                    </div>
+                </div>
+
+                <!-- Eksempler for valgt type (opdateres dynamisk) -->
+                <div class="dp-type-examples" id="activityTypeExamples" data-i18n="activity.examples.cardio">Løb, cykling, svømning</div>
+
+                <!-- Intensitet: 3 chips med tastatur-genveje -->
+                <div class="activity-section-title" data-i18n="activity.section.intensity">Intensitet</div>
+                <div class="dp-chip-row">
+                    <div class="intensity-chip selected" data-intensity="Lav" data-i18n-title="activity.title.low" title="Lav intensitet (A)">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/intensity-low.png" alt=""></span><span class="pc-name" data-i18n="activity.intensity.low">Lav</span><span class="pc-key">A</span>
+                    </div>
+                    <div class="intensity-chip" data-intensity="Medium" data-i18n-title="activity.title.medium" title="Medium intensitet (S)">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/intensity-medium.png" alt=""></span><span class="pc-name" data-i18n="activity.intensity.medium">Medium</span><span class="pc-key">S</span>
+                    </div>
+                    <div class="intensity-chip" data-intensity="Høj" data-i18n-title="activity.title.high" title="Høj intensitet (D)">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/intensity-high.png" alt=""></span><span class="pc-name" data-i18n="activity.intensity.high">Høj</span><span class="pc-key">D</span>
+                    </div>
+                </div>
+
+                <!-- Varighed = START: tryk starter aktiviteten med valgt type+intensitet -->
+                <div class="activity-section-title" data-i18n="activity.section.time">Tid</div>
+                <div class="dp-chip-row dp-duration-chips">
+                    <div class="duration-chip duration-start" data-duration="15" data-i18n-title="activity.duration.15" title="Start 15 min aktivitet (Z)">
+                        <span class="duration-play">▶</span><span class="pc-name" data-i18n="activity.duration.label.15">15 min</span><span class="pc-key">Z</span>
+                    </div>
+                    <div class="duration-chip duration-start" data-duration="30" data-i18n-title="activity.duration.30" title="Start 30 min aktivitet (X)">
+                        <span class="duration-play">▶</span><span class="pc-name" data-i18n="activity.duration.label.30">30 min</span><span class="pc-key">X</span>
+                    </div>
+                    <div class="duration-chip duration-start" data-duration="60" data-i18n-title="activity.duration.60" title="Start 60 min aktivitet (C)">
+                        <span class="duration-play">▶</span><span class="pc-name" data-i18n="activity.duration.label.60">60 min</span><span class="pc-key">C</span>
+                    </div>
+                    <div class="duration-chip duration-start" data-duration="open" data-i18n-title="activity.duration.open" title="Start åben aktivitet — kører til du trykker Stop (V)">
+                        <span class="duration-play">▶</span><span class="pc-name" data-i18n="activity.duration.label.open">Åben</span><span class="pc-key">V</span>
+                    </div>
+                </div>
+
+                <!-- Skjulte selects til programmatisk brug -->
+                <select id="motionIntensity" style="display:none;">
+                    <option value="Lav">Lav</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Høj">Høj</option>
+                </select>
+
+                <div class="dp-food-info"><span id="motionKcalDisplay"></span> kcal</div>
+                <!-- Start-knap fjernet — duration-chips starter aktiviteten direkte -->
+                <button id="startMotionButton" class="dp-btn btn-green" style="display:none;">▶ Start aktivitet</button>
+            </div>
+
+            <!-- === AKTIV-TILSTAND (vises når aktivitet kører) === -->
+            <div id="activity-active" style="display:none;">
+                <div class="activity-active-header">
+                    <span id="activityActiveIcon" class="activity-inline-icon"></span>
+                    <span id="activityActiveName">Cardio</span>
+                    <span class="activity-active-sep">·</span>
+                    <span id="activityActiveIntensity">Medium</span>
+                </div>
+                <div class="activity-active-progress">
+                    <div class="activity-progress-bar">
+                        <div class="activity-progress-fill" id="activityProgressFill"></div>
+                    </div>
+                    <span class="activity-timer" id="activityTimerPanel">0:00</span>
+                </div>
+                <div class="dp-food-info"><span id="activityKcalBurned">0</span> <span data-i18n="ui.activity.kcalBurned">kcal forbrændt</span></div>
+                <button id="stopActivityButton" class="dp-btn btn-red" style="position:relative;"><span data-i18n="ui.activity.stop">⏹ Stop</span><span class="pc-key">Z</span></button>
+            </div>
+        </div>
+
+        <!-- T1D KIT PANEL: druesukker, målinger og glukagon samlet -->
+        <div id="dock-panel-kit" class="dock-panel">
+            <div class="dp-kit-chips">
+                <div class="kit-chip kit-chip-medical" id="fingerprickButton"
+                    data-i18n-title="kit.fingerprick.title" title="Manuel blodsukkermåling. Mere præcis end CGM — brug til dobbelttjek. — tast Z">
+                    <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/blood-drop.png" alt=""></span>
+                    <span class="pc-name" data-i18n="kit.fingerprick">Fingerprik</span>
+                    <span class="pc-key">Z</span>
+                </div>
+                <div class="kit-chip kit-chip-medical" id="ketoneTestButton"
+                    data-i18n-title="kit.ketone.title" title="Mål blod-ketoner. Vigtigt ved højt blodsukker + mistanke om insulinmangel. Normal: < 0.6, Farligt: > 1.5 — tast X">
+                    <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/ketone-reagent.png" alt=""></span>
+                    <span class="pc-name" data-i18n="kit.ketone">Keton-stik</span>
+                    <span class="pc-key">X</span>
+                </div>
+                <div class="kit-chip kit-chip-sos" id="kitGlucagonButton"
+                    data-i18n-title="kit.glucagon.title" title="Glukagon-nødsprøjte. Bruges ved svær hypoglykæmi. 24t cooldown. — tast C">
+                    <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/app/glucagon-pen.png" alt=""></span>
+                    <span class="pc-name" data-i18n="kit.glucagon">Glukagon</span>
+                    <span class="pc-key">C</span>
+                </div>
+                <div class="kit-chip kit-chip-sugar" id="kitDextroButton"
+                    data-i18n-title="kit.dextro.title" title="3g ren glukose — hurtig hypo-korrektion (12 kcal) — tast V">
+                    <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/glucose-tablets.png" alt=""></span>
+                    <span class="pc-name" data-i18n="kit.dextro">Druesukker</span>
+                    <span class="pc-key">V</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEBUG PANEL er nu en side-drawer (pull-out tab th.) -->
+
+        <!-- ===============================================================
+             DOCK BAR — macOS Dock-inspireret interventions-bar i bunden.
+             Ikoner vokser ved hover (+ nabo-effekt som i macOS Dock).
+             Klik åbner fold-op paneler med kontroller.
+             Separatorer grupperer relaterede handlinger.
+             =============================================================== -->
+        <!-- ===============================================================
+             BOTTOM BAR — Wide Split Capsule layout.
+             Capsule-bar (BG | Dock+Speed | Points).
+             BG og Points er flyttet fra graf-overlays hertil.
+             =============================================================== -->
+        <div id="bottom-bar">
+            <!-- Wide Split Capsule: fire fragmenter med 14px gap -->
+            <div id="capsule-bar">
+
+                <!-- VENSTRE FRAGMENT: BG-display (tidligere #cgm-hero overlay på grafen) -->
+                <!-- Lagt vandret: blodsukker-stak til venstre, karakteren (større ikon
+                     + navn) til højre, så panelet tydeligt "tilhører" den valgte
+                     karakter. Karakteren er kun en visning; den vælges før spilstart. -->
+                <div class="capsule-frag capsule-left" id="cgm-hero">
+                    <div class="cgm-hero-main">
+                        <div class="cgm-hero-row">
+                            <span id="cgmValueDisplayGraph" class="cgm-number">-.-</span>
+                            <div class="cgm-meta">
+                                <span class="cgm-unit" id="cgmUnitLabel">mmol/L</span>
+                                <span id="cgm-trend" class="cgm-trend">&#x2192;</span>
+                            </div>
+                        </div>
+                        <div id="info-pills">
+                            <span class="info-pill" data-i18n-title="ui.iob.title" title="Insulin On Board — aktiv insulin i kroppen">
+                                IOB <strong id="iobDisplay">0.0</strong> <span id="iobUnit">E</span>
+                            </span>
+                            <span class="info-pill" data-i18n-title="ui.cob.title" title="Carbs On Board — kulhydrater der endnu ikke er optaget">
+                                COB <strong id="cobDisplay">0</strong> g
+                            </span>
+                        </div>
+                    </div>
+                    <div class="cgm-character" id="cgmCharacter">
+                        <span class="cgm-character-portrait" id="cgmCharacterPortrait" role="img" aria-label="">
+                            <img class="cgm-character-avatar is-visible" data-portrait-layer="a" alt="">
+                            <img class="cgm-character-avatar" data-portrait-layer="b" alt="" aria-hidden="true">
+                        </span>
+                        <span class="cgm-character-name" id="cgmCharacterName">—</span>
+                    </div>
+                </div>
+
+                <!-- LIFE BARS FRAGMENT: Tre game-over kriterier.
+                     Hjerne: hypoglykæmi-skade (brainEnergyDeficit).
+                     Ketoacidose: syrebelastning (acidosisLoad).
+                     Kalorier: netto kalorie-balance (spist minus forbrændt). -->
+                <div class="capsule-frag capsule-life" id="life-bars-panel">
+                    <div class="life-bar-row" id="life-bar-brain" title="Hjerne-energi — tømmes ved svær hypoglykæmi (blodsukker under 2.5). Genopbygges når blodsukker normaliseres.">
+                        <span class="life-bar-icon"><img class="life-bar-icon-img" src="assets/icons/app/status-brain.png" alt=""></span>
+                        <div class="life-bar-track"><div class="life-bar-fill" id="life-fill-brain"></div></div>
+                        <span class="life-bar-pct" id="life-pct-brain">100</span>
+                    </div>
+                    <div class="life-bar-row" id="life-bar-acid" title="Ketoacidose-modstand — tømmes når ketoner er høje (BHB over 3.0) og insulin mangler. Genopbygges når insulin genoprettes. Tom bar betyder ketoacidose (DKA).">
+                        <span class="life-bar-icon"><img class="life-bar-icon-img" src="assets/icons/app/status-ketone.png" alt=""></span>
+                        <div class="life-bar-track"><div class="life-bar-fill" id="life-fill-acid"></div></div>
+                        <span class="life-bar-pct" id="life-pct-acid">100</span>
+                    </div>
+                    <div class="life-bar-row" id="life-bar-weight" title="Vægtændring (kg) — game over ved ca. ±7% fra karakterens startvægt. Behold den tæt på nul.">
+                        <span class="life-bar-icon"><img class="life-bar-icon-img" src="assets/icons/app/status-calorie.png" alt=""></span>
+                        <div class="life-bar-track">
+                            <div class="life-bar-center-mark"></div>
+                            <div class="life-bar-fill-center" id="life-fill-weight"></div>
+                        </div>
+                        <span class="life-bar-pct" id="life-pct-weight">0</span>
+                    </div>
+                </div>
+
+                <!-- STATS FRAGMENT: Kompakte nøgletal (TIR, Gns BG, Vægtændring).
+                     Altid synligt i capsule-baren — erstatter det gamle stats side-drawer. -->
+                <div class="capsule-frag capsule-stats" id="stats-fragment">
+                    <div class="stats-frag-row" id="statsTirRow" title="Time in Range (4–10 mmol/L) — andel af tid med blodsukker i målområdet">
+                        <span class="stats-frag-label" data-i18n="stats.tir">TIR</span>
+                        <span class="stats-frag-value" id="statsTirValue">—</span>
+                    </div>
+                    <div class="stats-frag-row" title="Gennemsnitligt blodsukker (CGM-aflæsninger)">
+                        <span class="stats-frag-label"><span data-i18n="stats.bgShort">BS</span><sub class="stats-frag-sub" data-i18n="stats.avgBgSub">gns</sub></span>
+                        <span class="stats-frag-value" id="statsAvgBgValue">—</span>
+                    </div>
+                    <div class="stats-frag-row" id="statsWeightRow" title="Kalorie-balance — netto kcal (spist minus forbrændt). Behold tæt på nul.">
+                        <span class="stats-frag-label"><img class="stats-frag-icon-img" src="assets/icons/app/status-calorie-balance.png" alt=""></span>
+                        <span class="stats-frag-value" id="statsWeightValue">0 kcal</span>
+                    </div>
+                </div>
+
+                <!-- CENTER FRAGMENT: Dock + Speed stepper -->
+                <div class="capsule-frag capsule-center" id="dock-container">
+                    <div class="dock">
+                        <div class="dock-item d-insulin" data-panel="dock-panel-insulin" data-i18n-title="ui.dock.insulin.title" title="Giv insulin (Z)">
+                            <div class="dock-icon"><img class="dock-png-icon" src="assets/icons/app/rapid-syringe.png" alt=""><span class="dock-key">Z</span></div>
+                            <span class="dock-label" data-i18n="ui.dock.insulin">Insulin</span>
+                        </div>
+                        <div class="dock-item d-food" data-panel="dock-panel-food" data-i18n-title="ui.dock.food.title" title="Giv mad (X)">
+                            <div class="dock-icon"><img class="dock-png-icon" src="assets/icons/app/meal-plate.png" alt=""><span class="dock-key">X</span></div>
+                            <span class="dock-label" data-i18n="ui.dock.food">Mad</span>
+                        </div>
+                        <div class="dock-item d-exercise" data-panel="dock-panel-motion" data-i18n-title="ui.dock.activity.title" title="Aktivitet (C)">
+                            <div class="dock-icon"><img class="dock-png-icon" src="assets/icons/app/activity-shoe.png" alt=""><span class="dock-key">C</span></div>
+                            <span class="dock-label" data-i18n="ui.dock.activity">Aktivitet</span>
+                        </div>
+                        <div class="dock-item d-kit" data-panel="dock-panel-kit" data-i18n-title="ui.dock.kit.title" title="T1D Kit (V)">
+                            <div class="dock-icon"><img class="dock-png-icon" src="assets/icons/app/t1d-kit-pouch.png" alt=""><span class="dock-key">V</span></div>
+                            <span class="dock-label" data-i18n="ui.dock.kit">T1D Kit</span>
+                        </div>
+                    </div>
+                    <!-- Hastighed + pause — pill-form under dock-ikoner -->
+                    <div class="speed-stepper" id="speedStepper">
+                        <button class="speed-step-btn" id="speedDown" data-i18n-title="ui.title.slower" title="Langsommere (←)">&#x25C0;</button>
+                        <button class="speed-current" id="pauseButton" data-i18n-title="ui.title.pause" title="Pause / Resume (Space)">
+                            <span class="speed-state-icon" id="speedStateIcon">&#x25B6;</span>
+                            <span id="speedLabel">4t/min</span>
+                        </button>
+                        <button class="speed-step-btn" id="speedUp" data-i18n-title="ui.title.faster" title="Hurtigere (→)">&#x25B6;</button>
+                    </div>
+                </div>
+
+                <!-- BG-KRÆFTER FRAGMENT: Fysiologiske kræfter der påvirker BG.
+                     Vises kun når BG-kræfter er slået til i indstillinger.
+                     Når skjult, får points-fragmentet capsule-right hjørner direkte. -->
+                <div class="capsule-frag capsule-forces" id="physiology-effects" style="display: none;">
+                    <div class="effects-list" id="effectsList"></div>
+                </div>
+
+                <!-- HØJRE FRAGMENT: Points (tidligere #pointsOverlay overlay på grafen) -->
+                <div class="capsule-frag capsule-right status-badge points" id="pointsOverlay" data-i18n-title="ui.badge.points.title" title="Points: optjenes ved at holde blodsukker i målområdet">
+                    <div id="gameModeIndicator" class="game-mode-line">
+                        <!-- Box Challenge: simpelt mode-navn. Tomt i hvile; sættes ved
+                             spilstart (campaign bruger capsuleCampaignHeader i stedet).
+                             IKKE "Sandbox" som default — sandkassen er slået fra. -->
+                        <span id="gameModeName"></span>
+                        <!-- Campaign: 2-linjers header der genbruger popup-styling
+                             (campaign-day-number + campaign-day-title), begge i rød.
+                             Vises kun i campaign mode (toggles fra game.js + ui.js). -->
+                        <div id="capsuleCampaignHeader" class="capsule-campaign-header" style="display:none;">
+                            <div class="campaign-day-number" id="capsuleLevelLabel"></div>
+                            <div class="campaign-day-title" id="capsuleLevelTitle"></div>
+                        </div>
+                    </div>
+                    <div id="livesDisplay" style="display:none;">
+                        <span id="livesHearts">❤️❤️❤️</span>
+                    </div>
+                    <div class="points-line">
+                        <span class="badge-label points-line-label" id="normoPointsLabel" style="display:none;" data-i18n="ui.points.total">Total</span>
+                        <span class="badge-num" id="normoPointsDisplay">0.0</span>
+                        <small class="badge-weight" id="normoPointsWeighting" style="display:none;">(x1.0)</small>
+                        <!-- Valgfri "points"-tekst under tallet. -->
+                        <small class="points-caption" id="pointsCaption" style="display:none;" data-i18n="ui.points.caption">points</small>
+                    </div>
+                    <div id="dayPointsDisplay" class="points-line" style="display:none;">
+                        <span class="badge-label points-line-label" data-i18n="ui.points.today">I dag</span>
+                        <span class="badge-num" id="dayPointsValue">0.0</span>
+                    </div>
+                </div>
+
+            </div><!-- /capsule-bar -->
+        </div><!-- /bottom-bar -->
+
+    </div>
+
+    <!-- ===================================================================
+         HJÆLP-TEKST (DANSK — OVERSAT FRA ENGELSK)
+         Engelsk er primær. Når den engelske template ændres, skal denne
+         opdateres og translated-from versionen bumpes.
+         showHelpPopup() i ui.js henter indholdet herfra.
+         =================================================================== -->
+    <!-- help-version-da: translated-from-en 2026-07-30-v4 -->
+    <template id="help-content-da">
+        <div class="brand-group" style="align-self:center; margin-bottom:14px;">
+            <div class="brand">T1D SIMULATOR</div>
+            <div class="brand-slogan">Prøv. Lær. Gentag.</div>
+        </div>
+
+        <p style="margin: 0 0 14px;">
+          <strong><img class="help-inline-icon" src="assets/icons/app/event-note.png" alt=""> Om simulatoren:</strong>
+          T1D Simulator er et læringsspil om, hvad der påvirker blodsukkeret. Du hjælper
+          faste, fiktive karakterer. Spillet bruger ikke personlige behandlingsdata,
+          beregner ikke insulindoser til virkelige personer og er ikke beregnet som
+          grundlag for behandling.
+        </p>
+
+        <details class="help-section">
+          <summary>Om projektet</summary>
+          <p>
+            Jeg fik konstateret T1D i februar 2025. Mængden af ny viden og de mange
+            faktorer, der påvirker blodsukkeret, gav mig idéen til T1D Simulator.
+          </p>
+          <p>
+            Målet er at gøre blodsukkerfysiologi lettere at forstå. Du hjælper faste,
+            fiktive karakterer, får hurtig feedback og kan prøve forskellige valg igen.
+          </p>
+          <p>
+            Spillet viser generelle fænomener som mad, insulin, aktivitet, søvn og
+            stress. Det bruger ikke personlige behandlingsdata og forsøger ikke at
+            forudsige, hvordan en virkelig person reagerer.
+          </p>
+          <p>
+            Simulationen bygger på videnskabelig litteratur og en forenklet model.
+            Den er lavet til læring om sammenhænge og tidsforløb — ikke til at beregne
+            behandling for en bestemt person.
+          </p>
+          <p style="text-align: right; color: var(--text-muted); font-style: italic;">— Kristian Rauhe Harreby, apr. 2026</p>
+        </details>
+
+        <details class="help-section">
+          <summary>Kontakt</summary>
+          <p style="font-size: 13px;">
+            Har du spørgsmål, forslag, ris eller ros? Kom med i projektets Facebook-gruppe eller kontakt os direkte — al feedback er velkommen!
+          </p>
+          <ul>
+            <li><a href="https://www.facebook.com/groups/t1dsimulator" target="_blank" style="color: var(--blue);">Facebook-gruppen (dansk gruppe)</a> — følg med, del erfaringer og giv feedback</li>
+            <li><a href="https://forms.gle/9snv9saAYy64u2Ht9" target="_blank" style="color: var(--blue);">Dansk spørgeskema</a> — hvis du spiller spillet, hjælper det os meget, hvis du giver feedback</li>
+            <li><a href="mailto:t1d.simulator@gmail.com" style="color: var(--blue);">t1d.simulator@gmail.com</a></li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/issues" target="_blank" style="color: var(--blue);">GitHub Issues</a> — fejlrapporter og feature-forslag</li>
+          </ul>
+
+          <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color, rgba(255,255,255,0.1));">
+          <p><strong>Donation</strong></p>
+          <p style="font-size: 13px;">
+            Simulatoren er gratis og open source. Donationer går til projektets udgifter: AI-abonnementer, kaffe og mere tid til udvikling.
+          </p>
+          <p style="margin-top: 6px; text-align: center;">
+            <a href="https://buymeacoffee.com/krauhe" target="_blank" style="color: var(--yellow); font-weight: 600;">Buy Me a Coffee</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href="https://qr.mobilepay.dk/box/0946757d-b34b-4b1e-8302-f0a67fc49c69/pay-in" target="_blank" style="color: var(--blue); font-weight: 600;">MobilePay</a>
+          </p>
+        </details>
+
+        <details class="help-section">
+          <summary>Hvordan spilles spillet</summary>
+
+          <p>Intro-touren viser dig rundt på skærmen; spilguiden forklarer fysiologien og strategien i dybden.</p>
+
+          <div class="help-guide-link-row">
+            <button type="button" class="guide-link-btn" data-start-welcome-tour="intro">
+              <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
+              <span class="guide-link-label">T1D Intro Tour</span>
+            </button>
+            <button type="button" class="guide-link-btn" data-guide-section="overview">
+              <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
+              <span class="guide-link-label">Spilguiden</span>
+            </button>
+          </div>
+        </details>
+
+        <details class="help-section">
+          <summary>Fysiologisk modellering</summary>
+          <p>Simulatoren er bygget på publicerede fysiologiske modeller og videnskabelig litteratur; den samlede simulator er ikke undersøgt for klinisk ydeevne.</p>
+          <ul>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/BG-SCIENCE.md" target="_blank" style="color: var(--blue);">Videnskabelig oversigt</a> — Alle faktorer der påvirker blodsukker ved T1D.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md" target="_blank" style="color: var(--blue);">Modelimplementering</a> — Hovorka-modellen, insulin, motion, stresshormoner m.m.</li>
+            <li><a href="tests/model-validation.html" target="_blank" style="color: var(--blue);">Visuelle kontroller af modeladfærd</a> — 51 testsektioner med kurver og tydelige interventionsmarkører.</li>
+            <li><strong>Automatiserede tests</strong> — 190+ tests der tjekker individuelle fysiologiske mekanismer.</li>
+          </ul>
+        </details>
+
+        <!-- ============================================================= -->
+        <!-- UDVIKLING — Version history (separat fra Credits)              -->
+        <!-- ============================================================= -->
+        <details class="help-section">
+          <summary>Udvikling</summary>
+          <p style="background: rgba(255, 165, 0, 0.15); border: 1px solid rgba(255, 165, 0, 0.4); border-radius: var(--radius-md, 10px); padding: 10px 14px; font-size: 13px; margin-bottom: 12px;">
+            <img class="help-inline-icon" src="assets/icons/app/settings-debug.png" alt=""> <strong>Under udvikling</strong> — Simulatoren er i tidlig udvikling. Funktioner kan ændres eller forsvinde uden varsel. De fysiologiske modeller forbedres løbende, og den samlede simulator er ikke undersøgt for klinisk ydeevne.
+          </p>
+
+          <!-- ========== VERSION HISTORY ========== -->
+          <div id="version-history-da" data-version-history-lang="da"></div>
+          <!-- ========== END VERSION HISTORY ========== -->
+
+        </details>
+
+        <!-- ============================================================= -->
+        <!-- CREDITS — Separat sektion efter Udvikling                     -->
+        <!-- ============================================================= -->
+        <details class="help-section">
+          <summary>Credits</summary>
+
+          <p><strong>Idé, design &amp; fysiologisk modellering</strong></p>
+          <p>Kristian R. Harreby — med AI-assisteret research og implementering (Claude, Anthropic &amp; Gemini, Google).</p>
+          <p style="color: var(--text-muted); font-size: 12px;">Bemærk: Kildekode og tests er primært genereret via AI og har ikke gennemgået en fuldstændig manuel audit.</p>
+
+          <p><strong>Kernemodel</strong></p>
+          <ul>
+            <li><strong>Hovorka et al. (2004):</strong> Glukose-insulin ODE-kerne, udvidet i simulatoren til 16 tilstandsvariable — dækker insulin-farmakokinetik, kulhydrat-absorption, glukose-kinetik, CGM-forsinkelse, motions-state og basal/hurtiginsulin-adskillelse. <a href="https://doi.org/10.1109/TBME.2004.827938" target="_blank" style="color: var(--blue);">Kilde</a></li>
+            <li><strong>Open source-grundlag:</strong> Inspireret af <a href="https://github.com/JonasNM/svelte-flask-hovorka-simulator" target="_blank" style="color: var(--blue);">svelte-flask-hovorka-simulator</a> af Jonas Nordhassel Myhre.</li>
+          </ul>
+
+          <!-- LISTE-LÆNGDE-REGEL: hvert punkt = max én linje (kort sætning + kort kilde i parentes).
+               Kun de SIDSTE TO punkter må være flerlinje med formler/tal. Engelsk er primær — synk dansk. -->
+          <p><strong>Udvidelser af modellen</strong> (Kristian R. Harreby, AI-assisteret)</p>
+          <ul>
+            <li><strong>Motionsmodel:</strong> E1/E2-kompartmenter og fire aktivitetstyper (cardio, styrke, blandet, afslapning); høj intensitet bremser også mavetømning og tarm-absorption. (Resalat 2020, Riddell 2017)</li>
+            <li><strong>Stresshormonsystem:</strong> Akut (adrenalin/glukagon) og kronisk (kortisol) stress, med automatisk Somogyi-respons efter hypo.</li>
+            <li><strong>Dawn-fænomen:</strong> Cirkadisk kortisolpeak (04:00→08:00) der øger leverens glukoseproduktion om morgenen.</li>
+            <li><strong>Cirkadisk ISF:</strong> Døgnvariation i insulinfølsomhed — morgen-resistens vs. aftenfølsomhed. (Toffanin 2013)</li>
+            <li><strong>HAAF-model:</strong> Gentagne hypoer svækker gradvist kontraregulationen (hypo-unawareness). (Cryer 2013)</li>
+            <li><strong>Ketonmodel:</strong> Produktion ved insulinmangel, clearance ved tilstrækkeligt insulin, DKA-progression med advarsler.</li>
+            <li><strong>Lever-glykogenpool:</strong> Massebalanceret 0–100 g, tømt via glykogenolyse og genopfyldt via gluconeogenese + mad.</li>
+            <li><strong>Søvnforstyrrelse:</strong> Natlige interventioner koster søvn → mere kronisk stress og stærkere dawn-effekt.</li>
+            <li><strong>Vægt- og kaloriemodel:</strong> Energibalance med BMR-skalering og motionsforbrug → vægtændring over tid.</li>
+            <li><strong>Glukotoksicitet:</strong> Vedvarende højt BG (&gt;10) sænker insulinfølsomheden op til 40%, med recovery over ~24 t. (Vuorinen-Markkola)</li>
+            <li><strong>FFA-resistens:</strong> Kostfedt hæver frie fedtsyrer der sænker insulinfølsomheden i timer, op til 42% (anden bølge). (Wolpert 2013)</li>
+            <li><strong>Hjerne-energiunderskud:</strong> Svær hypoglykæmi (BG &lt;2.5) tømmer en hjerne-energireserve; vedvarende tømning giver game over.</li>
+            <li><strong>Fedt-kompartmentmodel:</strong> Fedt i tarmen udløser CCK/GLP-1-feedback der bremser kulhydratabsorption (pizza-effekten, første bølge). (Smart 2013)</li>
+            <li><strong>Kulhydrat-type model:</strong> Madvarer kategoriseres efter chemical complexity (simple sukre vs stivelse), fiber og flydende/fast (pylorisk si). Mavesækken er én blandet tank hvor τG = (25 + (1-simpleFrac)×25) × (1 + 0.05×fiber) × retentionMod + fedt-delay, yderligere skaleret med hyperMod (højt BG bremser tømningen) og exerciseGEMod (motion bremser den). Cola tømmes på ~18 min, druesukker ~25 min, hvidt brød ~47 min, rugbrød ~59 min. Baseret på Marathe 2013, Wolever 2008, Schvarcz, Halland, Leiper 2001.</li>
+            <li><strong>Protein-glukagonmodel:</strong> Tre-kompartment aminosyre-absorption (mave → tarm → blod) der driver glukagon-stimuleret leverproduktion via Hill-funktion; erstatter den gamle 25%-kulhydrat-regel. Baseret på Paterson 2016, Fromentin 2013, Gannon 2013.</li>
+          </ul>
+
+          <p><strong>Teknologier</strong></p>
+          <ul>
+            <li><strong>Lyd:</strong> <a href="https://tonejs.github.io/" target="_blank" style="color: var(--blue);">Tone.js</a></li>
+            <li><strong>Licens:</strong> <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" style="color: var(--blue);">GNU General Public License v3 (GPLv3)</a></li>
+          </ul>
+
+        </details>
+    </template>
+
+    <!-- ===================================================================
+         HJÆLP-TEKST (ENGELSK — PRIMÆR)
+         Engelsk er primær for hjælp-tekst. Når denne ændres, bump versionen
+         og opdatér den danske template til at matche.
+         =================================================================== -->
+    <!-- help-version-en: 2026-07-30-v4 -->
+    <template id="help-content-en">
+        <div class="brand-group" style="align-self:center; margin-bottom:14px;">
+            <div class="brand">T1D SIMULATOR</div>
+            <div class="brand-slogan">Try. Learn. Repeat.</div>
+        </div>
+
+        <p style="margin: 0 0 14px;">
+          <strong><img class="help-inline-icon" src="assets/icons/app/event-note.png" alt=""> About the simulator:</strong>
+          T1D Simulator is a learning game about factors that affect blood glucose. You
+          help fixed, fictional characters. The game does not use personal treatment
+          data, calculate insulin doses for real people, or provide a basis for treatment
+          decisions.
+        </p>
+
+        <details class="help-section">
+          <summary>About the Project</summary>
+          <p>
+            I was diagnosed with T1D in February 2025. The amount of new knowledge and
+            the many factors that affect blood glucose inspired T1D Simulator.
+          </p>
+          <p>
+            The goal is to make blood glucose physiology easier to understand. You help
+            fixed, fictional characters, receive immediate feedback, and can try different
+            choices again.
+          </p>
+          <p>
+            The game demonstrates general phenomena involving food, insulin, activity,
+            sleep, and stress. It does not use personal treatment data or attempt to
+            predict how a real person will respond.
+          </p>
+          <p>
+            The simulation is based on scientific literature and a simplified model.
+            It is designed for learning about relationships and timescales — not for
+            calculating treatment for a particular person.
+          </p>
+          <p style="text-align: right; color: var(--text-muted); font-style: italic;">— Kristian Rauhe Harreby, Apr 2026</p>
+        </details>
+
+        <details class="help-section">
+          <summary>Contact</summary>
+          <p style="font-size: 13px;">
+            Questions, suggestions, or feedback? Join the project's Facebook group or reach out directly — all input is welcome!
+          </p>
+          <ul>
+            <li><a href="https://www.facebook.com/groups/t1dsimulator" target="_blank" style="color: var(--blue);">Facebook group (Danish-language group)</a> — follow along, share experiences and give feedback</li>
+            <li><a href="https://forms.gle/Xm6X9wyMynFQ2rhk9" target="_blank" style="color: var(--blue);">Feedback questionnaire</a> — if you play the game, it helps us a lot if you share feedback</li>
+            <li><a href="mailto:t1d.simulator@gmail.com" style="color: var(--blue);">t1d.simulator@gmail.com</a></li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/issues" target="_blank" style="color: var(--blue);">GitHub Issues</a> — bug reports and feature requests</li>
+          </ul>
+
+          <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color, rgba(255,255,255,0.1));">
+          <p><strong>Donate</strong></p>
+          <p style="font-size: 13px;">
+            The simulator is free and open source. Donations go towards project expenses: AI subscriptions, coffee, and more time for development.
+          </p>
+          <p style="margin-top: 6px; text-align: center;">
+            <a href="https://buymeacoffee.com/krauhe" target="_blank" style="color: var(--yellow); font-weight: 600;">Buy Me a Coffee</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href="https://qr.mobilepay.dk/box/0946757d-b34b-4b1e-8302-f0a67fc49c69/pay-in" target="_blank" style="color: var(--blue); font-weight: 600;">MobilePay</a>
+          </p>
+        </details>
+
+        <details class="help-section">
+          <summary>How to Play</summary>
+
+          <p>The intro tour shows you around the screen; the game guide explains the physiology and strategy in depth.</p>
+
+          <div class="help-guide-link-row">
+            <button type="button" class="guide-link-btn" data-start-welcome-tour="intro">
+              <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
+              <span class="guide-link-label">T1D Intro Tour</span>
+            </button>
+            <button type="button" class="guide-link-btn" data-guide-section="overview">
+              <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
+              <span class="guide-link-label">Game guide</span>
+            </button>
+          </div>
+        </details>
+
+        <details class="help-section">
+          <summary>Physiological modelling</summary>
+          <p>The simulator is built on published physiological models and scientific literature; the complete simulator has not been evaluated for clinical performance.</p>
+          <ul>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/BG-SCIENCE.md" target="_blank" style="color: var(--blue);">Scientific overview</a> — All factors affecting blood sugar in T1D.</li>
+            <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md" target="_blank" style="color: var(--blue);">Model implementation</a> — The Hovorka model, insulin, exercise, stress hormones, etc.</li>
+            <li><a href="tests/model-validation.html" target="_blank" style="color: var(--blue);">Visual model-behaviour checks</a> — 51 test sections with plotted curves and explicit intervention markers.</li>
+            <li><strong>Automated tests</strong> — 190+ tests checking individual physiological mechanisms.</li>
+          </ul>
+        </details>
+
+        <!-- ============================================================= -->
+        <!-- DEVELOPMENT — Version history (separate from Credits)         -->
+        <!-- ============================================================= -->
+        <details class="help-section">
+          <summary>Development</summary>
+          <p style="background: rgba(255, 165, 0, 0.15); border: 1px solid rgba(255, 165, 0, 0.4); border-radius: var(--radius-md, 10px); padding: 10px 14px; font-size: 13px; margin-bottom: 12px;">
+            <img class="help-inline-icon" src="assets/icons/app/settings-debug.png" alt=""> <strong>Under Construction</strong> — This simulator is in early development. Features may change or disappear without notice. The physiological models are continuously being improved, and the complete simulator has not been evaluated for clinical performance.
+          </p>
+
+          <!-- ========== VERSION HISTORY ========== -->
+          <div id="version-history-en" data-version-history-lang="en"></div>
+          <!-- ========== END VERSION HISTORY ========== -->
+
+        </details>
+
+        <!-- ============================================================= -->
+        <!-- CREDITS — Separate section after Development                  -->
+        <!-- ============================================================= -->
+        <details class="help-section">
+          <summary>Credits</summary>
+
+          <p><strong>Idea, design &amp; physiological modelling</strong></p>
+          <p>Kristian R. Harreby — with AI-assisted research and implementation (Claude, Anthropic &amp; Gemini, Google).</p>
+          <p style="color: var(--text-muted); font-size: 12px;">Note: Source code and automated tests are primarily generated via AI and have not undergone a complete manual audit.</p>
+
+          <p><strong>Core model</strong></p>
+          <ul>
+            <li><strong>Hovorka et al. (2004):</strong> Glucose-insulin ODE core extended in this simulator to 16 state variables — covers insulin pharmacokinetics, carbohydrate absorption, glucose kinetics, CGM delay, exercise states, and basal/rapid insulin separation. <a href="https://doi.org/10.1109/TBME.2004.827938" target="_blank" style="color: var(--blue);">Source</a></li>
+            <li><strong>Open source foundation:</strong> Inspired by <a href="https://github.com/JonasNM/svelte-flask-hovorka-simulator" target="_blank" style="color: var(--blue);">svelte-flask-hovorka-simulator</a> by Jonas Nordhassel Myhre.</li>
+          </ul>
+
+          <!-- LIST-LENGTH RULE: each item = max one line (short sentence + brief source in parentheses).
+               Only the LAST TWO items may be multi-line with formulas/numbers. English is primary — sync Danish. -->
+          <p><strong>Model extensions</strong> (Kristian R. Harreby, AI-assisted)</p>
+          <ul>
+            <li><strong>Exercise model:</strong> E1/E2 compartments and four activity types (cardio, strength, mixed, relaxation); high intensity also slows gastric emptying and gut absorption. (Resalat 2020, Riddell 2017)</li>
+            <li><strong>Stress hormone system:</strong> Acute (adrenaline/glucagon) and chronic (cortisol) stress, with an automatic Somogyi response after hypos.</li>
+            <li><strong>Dawn phenomenon:</strong> Circadian cortisol peak (04:00→08:00) raising morning hepatic glucose output.</li>
+            <li><strong>Circadian ISF:</strong> Diurnal insulin-sensitivity swing — morning resistance vs. evening sensitivity. (Toffanin 2013)</li>
+            <li><strong>HAAF model:</strong> Repeated hypos progressively blunt counter-regulation (hypo unawareness). (Cryer 2013)</li>
+            <li><strong>Ketone model:</strong> Production during insulin deficiency, clearance with insulin, DKA progression with warnings.</li>
+            <li><strong>Liver glycogen pool:</strong> Mass-balanced 0–100 g, drained by glycogenolysis and refilled by gluconeogenesis + food.</li>
+            <li><strong>Sleep disruption:</strong> Night-time interventions cost sleep → more chronic stress and a stronger dawn effect.</li>
+            <li><strong>Weight &amp; calorie model:</strong> Energy balance with BMR scaling and exercise expenditure → weight change over time.</li>
+            <li><strong>Glucotoxicity:</strong> Sustained high BG (&gt;10) lowers insulin sensitivity up to 40%, recovering over ~24 h. (Vuorinen-Markkola)</li>
+            <li><strong>FFA insulin resistance:</strong> Dietary fat raises free fatty acids that cut insulin sensitivity for hours, up to 42% (second wave). (Wolpert 2013)</li>
+            <li><strong>Brain energy deficit:</strong> Severe hypoglycaemia (BG &lt;2.5) drains a brain energy reserve; sustained depletion ends the game.</li>
+            <li><strong>Fat compartment model:</strong> Intestinal fat triggers CCK/GLP-1 feedback that slows carb absorption (pizza effect, first wave). (Smart 2013)</li>
+            <li><strong>Carbohydrate type model:</strong> Foods are categorised by chemical complexity (simple sugars vs starch), fibre, and liquid/solid (pyloric sieve). The stomach is one mixed tank where τG = (25 + (1-simpleFrac)×25) × (1 + 0.05×fibre) × retentionMod + fat delay, further scaled by hyperMod (high BG slows emptying) and exerciseGEMod (exercise slows it). Cola empties in ~18 min, glucose tablets ~25 min, white bread ~47 min, rye bread ~59 min. Based on Marathe 2013, Wolever 2008, Schvarcz, Halland, Leiper 2001.</li>
+            <li><strong>Protein glucagon model:</strong> Three-compartment amino acid absorption (stomach → gut → blood) driving glucagon-stimulated hepatic glucose production via a Hill function; replaces the old 25% carb-equivalent rule. Based on Paterson 2016, Fromentin 2013, Gannon 2013.</li>
+          </ul>
+
+          <p><strong>Technologies</strong></p>
+          <ul>
+            <li><strong>Sound:</strong> <a href="https://tonejs.github.io/" target="_blank" style="color: var(--blue);">Tone.js</a></li>
+            <li><strong>License:</strong> <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" style="color: var(--blue);">GNU General Public License v3 (GPLv3)</a></li>
+          </ul>
+
+        </details>
+    </template>
+
+    <!-- ===================================================================
+         SCRIPT LOADING ORDER — Kritisk! Filerne deler globalt scope.
+         =================================================================== -->
+<script src="js/sounds.js?v=0.9.114"></script>
+<script src="js/i18n.js?v=0.9.114"></script>
+<script src="js/dose-controls.js?v=0.9.114"></script>
+<script src="js/guide-data.js?v=0.9.114"></script>
+<script src="js/version-data.js?v=0.9.114"></script>
+<script src="js/levels.js?v=0.9.114"></script>
+<script src="js/archetypes.js?v=0.9.114"></script>
+<script src="js/symptoms.js?v=0.9.114"></script>
+<script src="js/foods.js?v=0.9.114"></script>
+<script src="js/hovorka.js?v=0.9.114"></script>
+<script src="js/physiology-engine.js?v=0.9.114"></script>
+<script src="js/simulator.js?v=0.9.114"></script>
+<script src="js/graph-renderer.js?v=0.9.114"></script>
+<script src="js/ui.js?v=0.9.114"></script>
+<script src="js/game.js?v=0.9.114"></script>
+<script src="js/campaign-core.js?v=0.9.114"></script>
+<script src="js/campaign.js?v=0.9.114"></script>
+<script src="js/welcome-tour.js?v=0.9.114"></script>
+<script src="js/main.js?v=0.9.114"></script>
+</body>
+</html>

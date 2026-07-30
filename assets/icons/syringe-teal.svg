@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Sprøjte-ikon: HURTIG/BOLUS insulin (teal) — nål peger op-højre -->
+  <g transform="rotate(180, 12, 12)">
+    <!-- Nål -->
+    <line x1="8.5" y1="15.5" x2="3.5" y2="20.5" stroke="#94A3B8" stroke-width="1" stroke-linecap="round"/>
+    <!-- Cylinder (barrel) -->
+    <path d="M13.2 7.2 L16.8 10.8 L10.8 16.8 L7.2 13.2 Z"
+          stroke="#94A3B8" stroke-width="1.2" stroke-linejoin="round" fill="rgba(255,255,255,0.9)"/>
+    <!-- Væske (teal = hurtigvirkende) -->
+    <path d="M10.5 10.5 L13.8 13.8 L10.8 16.8 L7.2 13.2 Z" fill="#14B8A6" opacity="0.85"/>
+    <!-- Gradueringsstreger -->
+    <line x1="8.1" y1="12.3" x2="9.3" y2="11.1" stroke="#CBD5E1" stroke-width="0.6"/>
+    <line x1="9.5" y1="10.9" x2="10.7" y2="9.7" stroke="#CBD5E1" stroke-width="0.6"/>
+    <!-- Stempelstang -->
+    <line x1="15" y1="9" x2="18" y2="6" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+    <!-- Stempelhåndtag (T-greb) -->
+    <line x1="16.5" y1="4.5" x2="19.5" y2="7.5" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
+  </g>
+</svg>

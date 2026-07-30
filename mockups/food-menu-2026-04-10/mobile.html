@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile view · Mad-menu mockup</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+    .phone-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 32px;
+        align-items: start;
+    }
+    @media (max-width: 900px) {
+        .phone-row { grid-template-columns: 1fr; }
+    }
+    .phone-notch {
+        width: 140px;
+        height: 24px;
+        background: #000;
+        border-radius: 0 0 16px 16px;
+        margin: -10px auto 14px;
+        position: relative;
+    }
+    .phone-status-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 16px 12px;
+        font-size: 11px;
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+    .phone-bg-hero {
+        background: var(--bg-card-glass);
+        backdrop-filter: blur(24px);
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-lg);
+        padding: 12px 16px;
+        margin: 0 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .phone-bg-hero .bg-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--green);
+        line-height: 1;
+    }
+    .phone-bg-hero .bg-unit {
+        font-size: 10px;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+    .phone-bg-hero .bg-arrow {
+        font-size: 24px;
+        color: var(--text-secondary);
+    }
+
+    /* Mobile 3-col grid override */
+    .phone-frame .food-row-chips {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+    }
+    .phone-frame .food-chip {
+        min-height: 94px !important;
+        padding: 8px 6px 6px !important;
+    }
+    .phone-frame .chip-emoji {
+        font-size: 22px !important;
+        margin-top: 4px !important;
+        margin-bottom: 2px !important;
+    }
+    .phone-frame .chip-emoji svg { width: 24px; height: 24px; }
+    .phone-frame .chip-name { font-size: 10px !important; }
+    .phone-frame .chip-carb-badge {
+        font-size: 11px !important;
+        padding: 3px 5px !important;
+        min-width: 22px !important;
+    }
+    .phone-frame .chip-carb-badge .unit { font-size: 7px !important; }
+    .phone-frame .chip-key-hint { display: none; }
+    .phone-frame .chip-units-badge { font-size: 8px !important; }
+    .phone-frame .food-row { padding: 10px 8px 10px 16px !important; margin-bottom: 10px !important; }
+    .phone-frame .food-row::before { top: 10px; bottom: 10px; width: 3px; }
+    .phone-frame .food-row-label { font-size: 12px !important; }
+    .phone-frame .food-row-hint { font-size: 9px !important; }
+    .phone-frame .food-row-header { margin-bottom: 8px !important; }
+    .phone-frame .row-icon { width: 16px !important; height: 16px !important; font-size: 10px !important; }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+    <div class="breadcrumb">
+        <a href="index.html">← Tilbage til oversigt</a>
+        <span>Mobile view</span>
+    </div>
+
+    <header class="page-header">
+        <h1 class="page-title">Mobile view</h1>
+        <p class="page-subtitle">
+            Samme menu rendered i en telefon-frame. Desktop 5-kolonne layout bliver til 3 kolonner,
+            så to rækker scroller pænt på en telefonskærm. Alle tap-targets forbliver &gt; 44px.
+        </p>
+    </header>
+
+    <div class="callout">
+        <strong>Design notes:</strong>
+        <ul style="margin: 8px 0 0; padding-left: 18px; line-height: 1.6;">
+            <li>3 kolonner i stedet for 5 → 2 chips flyttes ned på anden linje per række</li>
+            <li>Chip-højde reduceret til 94px (stadig &gt; 44px tap target)</li>
+            <li>PC-genvejstaster skjult (ikke relevant på mobil)</li>
+            <li>Mindre font + kompakt macro-bar bevarer al info</li>
+            <li>BG hero-panel fra hoved-appen beholdes, så graf-kontekst bevares</li>
+        </ul>
+    </div>
+
+    <section class="section">
+        <h2 class="section-title">📱 Variant B — Normal state</h2>
+
+        <div class="phone-row">
+            <div class="phone-frame">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                    <div class="phone-status-bar">
+                        <span>10:42</span>
+                        <span>Dag 3 · 🔋 87%</span>
+                    </div>
+
+                    <div class="phone-bg-hero">
+                        <div>
+                            <div class="bg-value">5.8</div>
+                            <div class="bg-unit">mmol/L</div>
+                        </div>
+                        <div class="bg-arrow">→</div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-align: right;">
+                            IOB 1.2 U<br>COB 10 g
+                        </div>
+                    </div>
+
+                    <div class="food-menu-frame">
+                        <div class="food-row" data-row="lowcarb">
+                            <div class="food-row-header">
+                                <div class="food-row-label">
+                                    <span class="row-icon">🔵</span>
+                                    <span>Lav-kulhydrat</span>
+                                </div>
+                                <span class="food-row-hint">&lt; 5g</span>
+                            </div>
+                            <div class="food-row-chips">
+                                <div class="food-chip"><span class="chip-carb-badge">1<span class="unit">g</span></span><span class="chip-emoji">🥚</span><span class="chip-name">Æg</span><div class="chip-macro-bar"><div class="bar-c" style="width:3%;"></div><div class="bar-p" style="width:45%;"></div><div class="bar-f" style="width:52%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">2<span class="unit">g</span></span><span class="chip-emoji">🍗</span><span class="chip-name">Kylling</span><div class="chip-macro-bar"><div class="bar-c" style="width:4%;"></div><div class="bar-p" style="width:60%;"></div><div class="bar-f" style="width:36%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">0<span class="unit">g</span></span><span class="chip-emoji">🐟</span><span class="chip-name">Laks</span><div class="chip-macro-bar"><div class="bar-p" style="width:55%;"></div><div class="bar-f" style="width:45%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">5<span class="unit">g</span></span><span class="chip-emoji">🥑</span><span class="chip-name">Avocado</span><div class="chip-macro-bar"><div class="bar-c" style="width:14%;"></div><div class="bar-p" style="width:14%;"></div><div class="bar-f" style="width:72%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">5<span class="unit">g</span></span><span class="chip-emoji">🥗</span><span class="chip-name">Salat</span><div class="chip-macro-bar"><div class="bar-c" style="width:40%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:40%;"></div></div></div>
+                            </div>
+                        </div>
+                        <div class="food-row" data-row="normal">
+                            <div class="food-row-header">
+                                <div class="food-row-label">
+                                    <span class="row-icon">🟡</span>
+                                    <span>Måltider</span>
+                                </div>
+                                <span class="food-row-hint">bolus</span>
+                            </div>
+                            <div class="food-row-chips">
+                                <div class="food-chip"><span class="chip-carb-badge">25<span class="unit">g</span></span><span class="chip-emoji">🍞</span><span class="chip-name">Brød</span><div class="chip-macro-bar"><div class="bar-c" style="width:70%;"></div><div class="bar-p" style="width:22%;"></div><div class="bar-f" style="width:8%;"></div></div><span class="chip-units-badge">2.5U</span></div>
+                                <div class="food-chip"><span class="chip-carb-badge">30<span class="unit">g</span></span><span class="chip-emoji">🥣</span><span class="chip-name">Havregryn</span><div class="chip-macro-bar"><div class="bar-c" style="width:75%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:5%;"></div></div><span class="chip-units-badge">3.0U</span></div>
+                                <div class="food-chip"><span class="chip-carb-badge">50<span class="unit">g</span></span><span class="chip-emoji">🍝</span><span class="chip-name">Pasta</span><div class="chip-macro-bar"><div class="bar-c" style="width:76%;"></div><div class="bar-p" style="width:15%;"></div><div class="bar-f" style="width:9%;"></div></div><span class="chip-units-badge">5.0U</span></div>
+                                <div class="food-chip"><span class="chip-carb-badge">55<span class="unit">g</span></span><span class="chip-emoji">🍕</span><span class="chip-name">Pizza</span><div class="chip-macro-bar"><div class="bar-c" style="width:55%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:25%;"></div></div><span class="chip-units-badge">5.5U</span></div>
+                                <div class="food-chip"><span class="chip-carb-badge">60<span class="unit">g</span></span><span class="chip-emoji">🎂</span><span class="chip-name">Lagkage</span><div class="chip-macro-bar"><div class="bar-c" style="width:60%;"></div><div class="bar-p" style="width:8%;"></div><div class="bar-f" style="width:32%;"></div></div><span class="chip-units-badge">6.0U</span></div>
+                            </div>
+                        </div>
+                        <div class="food-row" data-row="adjust">
+                            <div class="food-row-header">
+                                <div class="food-row-label">
+                                    <span class="row-icon">🟢</span>
+                                    <span>Justering</span>
+                                </div>
+                                <span class="food-row-hint">hurtig</span>
+                            </div>
+                            <div class="food-row-chips">
+                                <div class="food-chip"><span class="chip-carb-badge">3<span class="unit">g</span></span><span class="chip-emoji svg-icon"><svg viewBox="0 0 32 32"><ellipse cx="16" cy="16" rx="11" ry="7" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.5"/><ellipse cx="13" cy="14" rx="2.5" ry="1.5" fill="#fff" opacity="0.7"/><text x="16" y="20" font-family="Inter" font-size="9" font-weight="700" text-anchor="middle" fill="#0d1526">DEX</text></svg></span><span class="chip-name">Druesukker</span><div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">15<span class="unit">g</span></span><span class="chip-emoji">🍌</span><span class="chip-name">Banan</span><div class="chip-macro-bar"><div class="bar-c" style="width:92%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">25<span class="unit">g</span></span><span class="chip-emoji">🧃</span><span class="chip-name">Juice</span><div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div><span class="chip-liquid-indicator">💧</span></div>
+                                <div class="food-chip"><span class="chip-carb-badge">20<span class="unit">g</span></span><span class="chip-emoji">🍎</span><span class="chip-name">Æble</span><div class="chip-macro-bar"><div class="bar-c" style="width:90%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">—</span><span class="chip-emoji">✏️</span><span class="chip-name">Lav selv</span><div class="chip-macro-bar"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 style="font-size: 14px; margin: 0 0 12px;">Hvad mobile view løser:</h3>
+                <ul style="font-size: 12px; line-height: 1.7; color: var(--text-secondary); padding-left: 18px; margin: 0 0 24px;">
+                    <li>Telefon-skærm (390px bred) passer præcist til 3 chips per linje med 6px gap</li>
+                    <li>Stadig 3 rækker synlige uden scroll — hele pædagogikken bevares</li>
+                    <li>BG hero-panel + IOB/COB pill fra hoved-appen beholdes som kontekst</li>
+                    <li>Row-headers forkortes (5-6 tegn) så de passer på smal skærm</li>
+                    <li>Units-badge forkortes fra "~5.5 U" til "5.5U"</li>
+                    <li>Tap-target stadig 94px × ~110px — velovre 44px-kravet</li>
+                </ul>
+
+                <h3 style="font-size: 14px; margin: 0 0 12px;">Touch interaktion på chip:</h3>
+                <ul style="font-size: 12px; line-height: 1.7; color: var(--text-secondary); padding-left: 18px; margin: 0;">
+                    <li><strong>Tap:</strong> Åbn portion-popup (overlay hele skærmen på mobil)</li>
+                    <li><strong>Long-press 500ms:</strong> Samme som tap + haptic vibration</li>
+                    <li><strong>Dobbelt-tap:</strong> Spis 1× straks (smart repeat)</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">📱 Variant B — Hypo state (pulserende)</h2>
+
+        <div class="phone-row">
+            <div class="phone-frame">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                    <div class="phone-status-bar">
+                        <span>10:45</span>
+                        <span>Dag 3 · 🔋 87%</span>
+                    </div>
+
+                    <div class="phone-bg-hero" style="border-color: var(--red); background: rgba(239, 68, 68, 0.1);">
+                        <div>
+                            <div class="bg-value" style="color: var(--red);">3.8</div>
+                            <div class="bg-unit" style="color: var(--red);">HYPO</div>
+                        </div>
+                        <div class="bg-arrow" style="color: var(--red);">↓</div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-align: right;">
+                            IOB 2.1 U<br>COB 0 g
+                        </div>
+                    </div>
+
+                    <div class="food-menu-frame">
+                        <div class="food-row dimmed" data-row="lowcarb">
+                            <div class="food-row-header">
+                                <div class="food-row-label">
+                                    <span class="row-icon">🔵</span>
+                                    <span>Lav-carb</span>
+                                </div>
+                                <span class="food-row-hint">irrel.</span>
+                            </div>
+                            <div class="food-row-chips">
+                                <div class="food-chip"><span class="chip-carb-badge">1<span class="unit">g</span></span><span class="chip-emoji">🥚</span><span class="chip-name">Æg</span><div class="chip-macro-bar"><div class="bar-c" style="width:3%;"></div><div class="bar-p" style="width:45%;"></div><div class="bar-f" style="width:52%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">2<span class="unit">g</span></span><span class="chip-emoji">🍗</span><span class="chip-name">Kylling</span><div class="chip-macro-bar"><div class="bar-c" style="width:4%;"></div><div class="bar-p" style="width:60%;"></div><div class="bar-f" style="width:36%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">0<span class="unit">g</span></span><span class="chip-emoji">🐟</span><span class="chip-name">Laks</span><div class="chip-macro-bar"><div class="bar-p" style="width:55%;"></div><div class="bar-f" style="width:45%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">5<span class="unit">g</span></span><span class="chip-emoji">🥑</span><span class="chip-name">Avocado</span><div class="chip-macro-bar"><div class="bar-c" style="width:14%;"></div><div class="bar-p" style="width:14%;"></div><div class="bar-f" style="width:72%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">5<span class="unit">g</span></span><span class="chip-emoji">🥗</span><span class="chip-name">Salat</span><div class="chip-macro-bar"><div class="bar-c" style="width:40%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:40%;"></div></div></div>
+                            </div>
+                        </div>
+                        <div class="food-row dimmed" data-row="normal">
+                            <div class="food-row-header">
+                                <div class="food-row-label">
+                                    <span class="row-icon">🟡</span>
+                                    <span>Måltider</span>
+                                </div>
+                                <span class="food-row-hint">langsom</span>
+                            </div>
+                            <div class="food-row-chips">
+                                <div class="food-chip"><span class="chip-carb-badge">25<span class="unit">g</span></span><span class="chip-emoji">🍞</span><span class="chip-name">Brød</span><div class="chip-macro-bar"><div class="bar-c" style="width:70%;"></div><div class="bar-p" style="width:22%;"></div><div class="bar-f" style="width:8%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">30<span class="unit">g</span></span><span class="chip-emoji">🥣</span><span class="chip-name">Havregryn</span><div class="chip-macro-bar"><div class="bar-c" style="width:75%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:5%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">50<span class="unit">g</span></span><span class="chip-emoji">🍝</span><span class="chip-name">Pasta</span><div class="chip-macro-bar"><div class="bar-c" style="width:76%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">55<span class="unit">g</span></span><span class="chip-emoji">🍕</span><span class="chip-name">Pizza</span><div class="chip-macro-bar"><div class="bar-c" style="width:55%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:25%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">60<span class="unit">g</span></span><span class="chip-emoji">🎂</span><span class="chip-name">Lagkage</span><div class="chip-macro-bar"><div class="bar-c" style="width:60%;"></div><div class="bar-p" style="width:8%;"></div><div class="bar-f" style="width:32%;"></div></div></div>
+                            </div>
+                        </div>
+                        <div class="food-row hypo-highlight" data-row="adjust">
+                            <div class="food-row-header">
+                                <div class="food-row-label">
+                                    <span class="row-icon">🟢</span>
+                                    <span>Justering</span>
+                                </div>
+                                <span class="food-row-hint" style="color: var(--green); font-weight: 700;">👉 VÆLG</span>
+                            </div>
+                            <div class="food-row-chips">
+                                <div class="food-chip"><span class="chip-carb-badge">3<span class="unit">g</span></span><span class="chip-emoji svg-icon"><svg viewBox="0 0 32 32"><ellipse cx="16" cy="16" rx="11" ry="7" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.5"/><ellipse cx="13" cy="14" rx="2.5" ry="1.5" fill="#fff" opacity="0.7"/><text x="16" y="20" font-family="Inter" font-size="9" font-weight="700" text-anchor="middle" fill="#0d1526">DEX</text></svg></span><span class="chip-name">Druesukker</span><div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">15<span class="unit">g</span></span><span class="chip-emoji">🍌</span><span class="chip-name">Banan</span><div class="chip-macro-bar"><div class="bar-c" style="width:92%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">25<span class="unit">g</span></span><span class="chip-emoji">🧃</span><span class="chip-name">Juice</span><div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div><span class="chip-liquid-indicator">💧</span></div>
+                                <div class="food-chip"><span class="chip-carb-badge">20<span class="unit">g</span></span><span class="chip-emoji">🍎</span><span class="chip-name">Æble</span><div class="chip-macro-bar"><div class="bar-c" style="width:90%;"></div></div></div>
+                                <div class="food-chip"><span class="chip-carb-badge">—</span><span class="chip-emoji">✏️</span><span class="chip-name">Lav selv</span><div class="chip-macro-bar"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 style="font-size: 14px; margin: 0 0 12px; color: var(--red);">Hypo i telefon-visning:</h3>
+                <ul style="font-size: 12px; line-height: 1.7; color: var(--text-secondary); padding-left: 18px; margin: 0;">
+                    <li>BG hero farves rød med pulserende pil</li>
+                    <li>To øverste rækker dæmpes markant (saturate 40% + opacity 35%)</li>
+                    <li>Justerings-rækken pulserer grøn border — stærkt visuelt signal</li>
+                    <li>Row-hint ændres til "👉 VÆLG" for at guide spilleren direkte</li>
+                    <li>På en 390px bred skærm er alle 5 justerings-chips stadig tappable</li>
+                    <li>Spilleren kan nå Druesukker øverst-venstre med tommel uden at strække sig</li>
+                </ul>
+
+                <div class="callout warning" style="margin-top: 20px;">
+                    <strong>UX-overvejelse:</strong> På mobil ved hypo kunne justerings-rækken
+                    automatisk scrolles til midten af viewport, eller flyttes til øverste position
+                    indtil BG er tilbage i range. Diskussions-punkt for senere implementering.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">🧭 Mobile navigation</h2>
+        <p class="section-subtitle">
+            På mobil bliver den eksisterende dock til en bottom-bar med samme ikoner.
+            Mad-menuen glider op fra bunden som en sheet når man tapper på mad-ikonet.
+        </p>
+        <div class="callout">
+            <strong>Sheet-pattern:</strong><br>
+            Overlay fra bund med swipe-down-to-close. 80% højde så BG-grafen stadig er synlig
+            i top-delen. Dette er standard iOS/Android pattern og bryder ikke familiær UX.
+        </div>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Icon Generator"
+  short_description: "Lav ensartede ikoner til T1D Simulator i samme stil som F001-F018."
+  default_prompt: "Lav eller revider ikoner til T1D Simulator som transparente PNG'er i samme stil som F001-F018."

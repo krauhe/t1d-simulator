@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Game Text Writer"
+  short_description: "Kvalitetssikr tips og spilguide-tekster."
+  default_prompt: "Brug $game-text-writer til at tjekke eller omskrive graf-tips og spilguide-afsnit, så de stemmer overens og har det rigtige spiller-vendte niveau."

@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "frozenOn": "2026-07-23",
+  "purpose": "Frozen literature targets for deterministic verification, calibration checks and external holdout validation of the T1D Simulator activity model.",
+  "units": {
+    "glucoseChange": "mmol/L",
+    "glucoseInfusionRate": "mg/kg/min",
+    "duration": "min"
+  },
+  "calibration": {
+    "romeres2021AerobicFlux": {
+      "protocol": "60 min continuous aerobic exercise at 65% VO2max under glucose/insulin clamp conditions.",
+      "population": "Six adults with type 1 diabetes.",
+      "insulinIndependentIncreasePercent": {
+        "min": 66,
+        "max": 82
+      },
+      "insulinDependentIncreasePercent": {
+        "min": 81,
+        "max": 155
+      },
+      "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8321821/",
+      "use": "Mechanistic calibration only; not an external holdout."
+    }
+  },
+  "holdouts": {
+    "shetty2021HyperinsulinemicClamp": {
+      "protocol": "40 min continuous aerobic exercise during a hyperinsulinemic-euglycemic clamp at 5-6 mmol/L.",
+      "population": "Nine recreationally active young adults with type 1 diabetes; only two completed 40 min at 80% VO2peak.",
+      "insulinInfusionRateMilliunitsPerSquareMeterPerMinute": 30,
+      "targetPlasmaInsulinPmolPerL": [300, 550],
+      "baselineGirMean": 4.4,
+      "baselineGirSem": 0.4,
+      "exerciseGirIncrement": [
+        {
+          "vo2PeakPercent": 35,
+          "mean": 1.8,
+          "sem": 0.4,
+          "gameIntensity": "Lav"
+        },
+        {
+          "vo2PeakPercent": 50,
+          "mean": 3.0,
+          "sem": 0.4,
+          "gameIntensity": "Medium"
+        },
+        {
+          "vo2PeakPercent": 65,
+          "mean": 4.2,
+          "sem": 0.7,
+          "gameIntensity": null
+        },
+        {
+          "vo2PeakPercent": 80,
+          "mean": 3.5,
+          "sem": 0.7,
+          "gameIntensity": "Høj"
+        }
+      ],
+      "source": "https://academic.oup.com/jcem/article/106/1/e83/5937229",
+      "interpretation": "The three game intensities can test 35%, 50% and 80%. The separate 65% maximum is not identifiable without a fourth aerobic intensity or a continuous workload input."
+    },
+    "t1dexi2023ExerciseTypes": {
+      "protocol": "Approximately 30 min structured at-home exercise using aerobic, interval or resistance videos.",
+      "population": "497 adults with type 1 diabetes; 2,756 sessions in a free-living setting.",
+      "outcomes": [
+        {
+          "activity": "cardio",
+          "label": "Aerobic",
+          "mean": -1.0,
+          "sd": 2.17
+        },
+        {
+          "activity": "blandet",
+          "label": "Interval",
+          "mean": -0.78,
+          "sd": 1.78
+        },
+        {
+          "activity": "styrke",
+          "label": "Resistance",
+          "mean": -0.5,
+          "sd": 2.0
+        }
+      ],
+      "requiredOrdering": [
+        "cardio",
+        "blandet",
+        "styrke"
+      ],
+      "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10090894/",
+      "interpretation": "Use as a broad population holdout. The three fictional body archetypes are not a representative virtual population."
+    },
+    "toghiEshghi2019ContextReversal": {
+      "protocol": "Resistance exercise compared between a fasted morning condition and a fed afternoon condition.",
+      "fastedMorningMean": 0.9,
+      "fedAfternoonMean": -0.8,
+      "source": "https://pubmed.ncbi.nlm.nih.gov/31211392/",
+      "interpretation": "The primary target is reversal of direction. Exact magnitude is secondary because meal, bolus, work and participant parameters are only approximated."
+    },
+    "rempel2018Intervals": {
+      "protocol": "45 min at 45-55% heart-rate reserve with six 60 s intervals every four minutes at 70%, 80% or 90% heart-rate reserve.",
+      "postExerciseWindowHours": 12,
+      "hypoglycemiaEventsControl": 3,
+      "hypoglycemiaEvents90Percent": 12,
+      "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6203731/",
+      "interpretation": "Not testable by the current continuous mixed-activity category because it lacks explicit work/recovery intervals."
+    }
+  }
+}

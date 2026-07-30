@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- VARIANT 8 — Vertikal sprøjte i fokus med subtil ur-halo bagved -->
+  <!-- Subtil ur-halo (svagt tonet, kun ring + markører) -->
+  <circle cx="12" cy="12" r="11" fill="none" stroke="#94A3B8" stroke-width="0.8" opacity="0.6"/>
+  <circle cx="12" cy="12" r="10" fill="none" stroke="#3B82F6" stroke-width="0.5" stroke-dasharray="1,1" opacity="0.5"/>
+  <!-- Ur-markører (12 styks, små prikker) -->
+  <circle cx="12" cy="1.5" r="0.4" fill="#3B82F6"/>
+  <circle cx="17.25" cy="2.91" r="0.3" fill="#94A3B8" opacity="0.7"/>
+  <circle cx="21.09" cy="6.75" r="0.3" fill="#94A3B8" opacity="0.7"/>
+  <circle cx="22.5" cy="12" r="0.4" fill="#3B82F6"/>
+  <circle cx="21.09" cy="17.25" r="0.3" fill="#94A3B8" opacity="0.7"/>
+  <circle cx="17.25" cy="21.09" r="0.3" fill="#94A3B8" opacity="0.7"/>
+  <circle cx="12" cy="22.5" r="0.4" fill="#3B82F6"/>
+  <circle cx="6.75" cy="21.09" r="0.3" fill="#94A3B8" opacity="0.7"/>
+  <circle cx="2.91" cy="17.25" r="0.3" fill="#94A3B8" opacity="0.7"/>
+  <circle cx="1.5" cy="12" r="0.4" fill="#3B82F6"/>
+  <circle cx="2.91" cy="6.75" r="0.3" fill="#94A3B8" opacity="0.7"/>
+  <circle cx="6.75" cy="2.91" r="0.3" fill="#94A3B8" opacity="0.7"/>
+  <!-- Vertikal sprøjte i fuld størrelse (i fokus) -->
+  <!-- Stempel-håndtag (T-greb) -->
+  <line x1="9.5" y1="4" x2="14.5" y2="4" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+  <!-- Stempel-stang -->
+  <line x1="12" y1="4" x2="12" y2="7" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Cylinder (bred og kraftig) -->
+  <rect x="9" y="7" width="6" height="10" rx="0.5" fill="rgba(255,255,255,0.95)" stroke="#94A3B8" stroke-width="1.4"/>
+  <!-- Insulin-væske (fylder næsten hele cylinderen = lang virkning) -->
+  <rect x="9.8" y="8.5" width="4.4" height="7.5" fill="#3B82F6"/>
+  <!-- Stempel-top inde i cylinderen (grå linje) -->
+  <line x1="9" y1="8.5" x2="15" y2="8.5" stroke="#94A3B8" stroke-width="0.8" opacity="0.6"/>
+  <!-- Nål -->
+  <line x1="12" y1="17" x2="12" y2="20.5" stroke="#94A3B8" stroke-width="1" stroke-linecap="round"/>
+</svg>

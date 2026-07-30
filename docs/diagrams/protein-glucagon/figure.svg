@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 464.4428571428571 1009.002" width="464.4428571428571" height="1009.002" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>Protein → glucagon → hepatic glucose production (Paterson 2016)</title>
+  <defs>
+    <marker id="arrow-60a5fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa"/></marker>
+    <marker id="arrow-b45309" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/></marker>
+    <marker id="arrow-f472b6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f472b6"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 74 136.001 L 74 154.001" fill="none" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-60a5fa)" data-edge-id="e0" data-from="__ext_in_0" data-to="pStomach"/>
+    <path d="M 74 206.001 L 74 271.001" fill="none" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-60a5fa)" data-edge-id="e1" data-from="pStomach" data-to="pGut"/>
+    <path d="M 74 323.001 L 74 388.001" fill="none" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-60a5fa)" data-edge-id="e2" data-from="pGut" data-to="AA"/>
+    <path d="M 50.30000000000001 460.001 L 50.30000000000001 972.002" fill="none" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-60a5fa)" data-edge-id="e3" data-from="AA" data-to="__ext_out_1"/>
+    <path d="M 129.07 460.00 L 178.79 492.50 L 223.83 525.00" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-60a5fa)" data-edge-id="e4" data-from="AA" data-to="hill"/>
+    <path d="M 281.07142857142856 460.001 L 281.07142857142856 525.001" fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-b45309)" data-edge-id="e5" data-from="glycogen" data-to="hill"/>
+    <path d="M 259.87142857142857 577.001 L 259.87142857142857 642.001" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-60a5fa)" data-edge-id="e6" data-from="hill" data-to="stress"/>
+    <path d="M 259.87142857142857 694.001 L 259.87142857142857 759.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e7" data-from="stress" data-to="liver"/>
+    <path d="M 259.87142857142857 811.001 L 259.87142857142857 876.001" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)" data-edge-id="e8" data-from="liver" data-to="Q1"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="pStomach">
+      <rect x="14.09" y="154.00" width="119.82142857142856" height="52" rx="10" ry="10" fill="rgba(96, 165, 250, 0.2)" stroke="#60a5fa" stroke-width="2"/>
+      <text x="74.00" y="174.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Stomach</text>
+      <text x="74.00" y="192.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">P_stomach</text>
+    </g>
+    <g class="node" data-node-id="pGut">
+      <rect x="29.00" y="271.00" width="90" height="52" rx="10" ry="10" fill="rgba(96, 165, 250, 0.2)" stroke="#60a5fa" stroke-width="2"/>
+      <text x="74.00" y="291.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Gut</text>
+      <text x="74.00" y="309.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">P_gut</text>
+    </g>
+    <g class="node" data-node-id="AA">
+      <rect x="12.00" y="388.00" width="124" height="72" rx="10" ry="10" fill="rgba(96, 165, 250, 0.2)" stroke="#60a5fa" stroke-width="2"/>
+      <text x="74.00" y="410.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Amino acid pool</text>
+      <text x="74.00" y="428.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">AA</text>
+      <text x="74.00" y="449.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">t½ ≈ 60 min</text>
+    </g>
+    <g class="node" data-node-id="hill">
+      <rect x="205.07" y="525.00" width="109.60000000000001" height="52" rx="10" ry="10" fill="rgba(96, 165, 250, 0.2)" stroke="#60a5fa" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="259.87" y="545.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Hill response</text>
+      <text x="259.87" y="563.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">f_hill</text>
+    </g>
+    <g class="node" data-node-id="glycogen">
+      <rect x="247.47" y="388.00" width="116.8" height="72" rx="10" ry="10" fill="rgba(180, 83, 9, 0.2)" stroke="#b45309" stroke-width="2"/>
+      <text x="305.87" y="410.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Liver glycogen</text>
+      <text x="305.87" y="428.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">R</text>
+      <text x="305.87" y="449.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">0–1</text>
+    </g>
+    <g class="node" data-node-id="stress">
+      <rect x="153.82" y="642.00" width="212.10714285714283" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="259.87" y="662.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Stress multiplier</text>
+      <text x="259.87" y="680.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">+protein-glucagon</text>
+    </g>
+    <g class="node" data-node-id="liver">
+      <rect x="67.30" y="759.00" width="385.1428571428571" height="52" rx="10" ry="10" fill="rgba(180, 83, 9, 0.2)" stroke="#b45309" stroke-width="2"/>
+      <text x="259.87" y="779.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Liver EGP</text>
+      <text x="259.87" y="797.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">EGP = EGP₀ · max(0, stress − x3)</text>
+    </g>
+    <g class="node" data-node-id="Q1">
+      <rect x="201.47" y="876.00" width="116.8" height="52" rx="10" ry="10" fill="rgba(74, 222, 128, 0.2)" stroke="#4ade80" stroke-width="2"/>
+      <text x="259.87" y="896.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Plasma glucose</text>
+      <text x="259.87" y="914.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">Q1</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0-ext">
+      <rect x="4.20" y="114.00" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="74.00" y="127.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">protein meal (P g)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1">
+      <rect x="54.60" y="229.50" width="38.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="74.00" y="243.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">1/τG</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2">
+      <rect x="33.00" y="346.50" width="82.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="74.00" y="360.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">1/τProtAbs</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3">
+      <rect x="16.50" y="707.00" width="67.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="50.30" y="720.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">AA_DECAY</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3-ext">
+      <rect x="2.10" y="976.00" width="96.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="50.30" y="989.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">AA clearance</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4">
+      <rect x="139.78" y="482.45" width="74.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="177.18" y="496.35" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">saturable</text>
+    </g>
+    <g class="edge-label" data-edge-id="e5">
+      <rect x="236.47" y="483.50" width="89.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="281.07" y="497.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">0.5 + 0.5·R</text>
+    </g>
+    <g class="edge-label" data-edge-id="e6">
+      <rect x="251.27" y="600.50" width="17.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="259.87" y="614.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+</text>
+    </g>
+    <g class="edge-label" data-edge-id="e7">
+      <rect x="251.27" y="717.50" width="17.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="259.87" y="731.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+</text>
+    </g>
+    <g class="edge-label" data-edge-id="e8">
+      <rect x="244.07" y="834.50" width="31.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="259.87" y="848.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">EGP</text>
+    </g>
+  </g>
+</svg>

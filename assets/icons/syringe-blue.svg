@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- BASAL insulin-ikon: stor diagonal sprøjte + lille ur-badge øverst th. -->
+  <!-- Sprøjten er hovedmotivet (tydeligt læselig som sprøjte). -->
+  <!-- Uret i øverste højre hjørne fylder ca. 1/4 af ikonet og symboliserer langtidsvirkning. -->
+
+  <!-- Stor diagonal sprøjte (rotation -45° om center: plunger øverst tv., nål nederst th.) -->
+  <g transform="rotate(-45, 12, 12)">
+    <!-- Stempel-håndtag (T-greb) -->
+    <line x1="9" y1="2.5" x2="15" y2="2.5" stroke="#94A3B8" stroke-width="2.2" stroke-linecap="round"/>
+    <!-- Stempel-stang -->
+    <line x1="12" y1="2.5" x2="12" y2="6.5" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- Cylinder (sprøjte-krop) -->
+    <rect x="8.5" y="6.5" width="7" height="11" rx="0.5" fill="rgba(255,255,255,0.95)" stroke="#94A3B8" stroke-width="1.4"/>
+    <!-- Stempel-top (svag linje øverst i cylinder, hvor stemplet sidder) -->
+    <line x1="8.5" y1="9" x2="15.5" y2="9" stroke="#94A3B8" stroke-width="0.8" opacity="0.55"/>
+    <!-- Insulin-væske (blå = basal) -->
+    <rect x="9.3" y="9" width="5.4" height="8" fill="#3B82F6"/>
+    <!-- Nål -->
+    <line x1="12" y1="17.5" x2="12" y2="22" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Lille ur-badge i øverste højre hjørne (ca. 1/4 af ikonet) -->
+  <!-- Tegnes EFTER sprøjten så den ligger ovenpå som et badge. -->
+  <circle cx="18" cy="6" r="5" fill="rgba(255,255,255,0.98)" stroke="#94A3B8" stroke-width="1.2"/>
+  <!-- Hoved-markører ved 12, 3, 6, 9 -->
+  <line x1="18" y1="2" x2="18" y2="3" stroke="#94A3B8" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="22" y1="6" x2="21" y2="6" stroke="#94A3B8" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="18" y1="10" x2="18" y2="9" stroke="#94A3B8" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="14" y1="6" x2="15" y2="6" stroke="#94A3B8" stroke-width="0.8" stroke-linecap="round"/>
+  <!-- Time-viser (peger op = 12 o'clock) -->
+  <line x1="18" y1="6" x2="18" y2="3.5" stroke="#3B82F6" stroke-width="1.1" stroke-linecap="round"/>
+  <!-- Minut-viser (peger på 3 position) -->
+  <line x1="18" y1="6" x2="20.3" y2="6" stroke="#3B82F6" stroke-width="0.9" stroke-linecap="round"/>
+  <!-- Centrum-prik -->
+  <circle cx="18" cy="6" r="0.6" fill="#3B82F6"/>
+</svg>

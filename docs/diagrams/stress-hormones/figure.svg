@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1061.4178571428572 908.002" width="1061.4178571428572" height="908.002" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>Stress hormone system — two-layer counterregulation (Cryer 2013)</title>
+  <defs>
+    <marker id="arrow-f472b6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f472b6"/></marker>
+    <marker id="arrow-84cc16" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#84cc16"/></marker>
+    <marker id="arrow-60a5fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa"/></marker>
+    <marker id="arrow-b45309" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 92 146.001 L 92 164.001" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e0" data-from="__ext_in_0" data-to="hypo"/>
+    <path d="M 290.4 146.001 L 290.4 164.001" fill="none" stroke="#84cc16" stroke-width="2" marker-end="url(#arrow-84cc16)" data-edge-id="e1" data-from="__ext_in_1" data-to="exercise"/>
+    <path d="M 653.8357142857142 283.001 L 653.8357142857142 301.001" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e2" data-from="__ext_in_2" data-to="sleep"/>
+    <path d="M 983.2178571428572 420.001 L 983.2178571428572 438.001" fill="none" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-60a5fa)" data-edge-id="e3" data-from="__ext_in_3" data-to="protein"/>
+    <path d="M 833.617857142857 420.001 L 833.617857142857 438.001" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e4" data-from="__ext_in_4" data-to="dawn"/>
+    <path d="M 92.00 216.00 L 92.00 258.50 L 202.49 300.10" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e5" data-from="hypo" data-to="acute"/>
+    <path d="M 273.93571428571425 216.001 L 273.93571428571425 291.001" fill="none" stroke="#84cc16" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-84cc16)" data-edge-id="e6" data-from="exercise" data-to="acute"/>
+    <path d="M 525.55 226.00 L 525.55 258.50 L 345.38 307.55" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e7" data-from="haaf" data-to="acute"/>
+    <path d="M 653.8357142857142 353.001 L 653.8357142857142 428.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e8" data-from="sleep" data-to="chronic"/>
+    <path d="M 192.54 500.00 L 192.54 532.50 L 553.55 586.11" fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-b45309)" data-edge-id="e9" data-from="glycogen" data-to="stress"/>
+    <path d="M 244.7741071428571 428.001 L 244.7741071428571 363.001" fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-b45309)" data-edge-id="e10" data-from="glycogen" data-to="acute"/>
+    <path d="M 345.38 352.01 L 469.65 395.50 L 469.65 464.00 L 469.65 532.50 L 557.04 565.00" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e11" data-from="acute" data-to="stress"/>
+    <path d="M 653.8357142857142 500.001 L 653.8357142857142 565.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e12" data-from="chronic" data-to="stress"/>
+    <path d="M 833.62 490.00 L 833.62 532.50 L 748.32 565.00" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e13" data-from="dawn" data-to="stress"/>
+    <path d="M 983.22 490.00 L 983.22 532.50 L 754.12 580.15" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-60a5fa)" data-edge-id="e14" data-from="protein" data-to="stress"/>
+    <path d="M 653.8357142857142 637.001 L 653.8357142857142 702.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e15" data-from="stress" data-to="liver"/>
+    <path d="M 666.7357142857143 754.001 L 666.7357142857143 871.002" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)" data-edge-id="e16" data-from="liver" data-to="__ext_out_5"/>
+    <path d="M 244.7741071428571 363.001 L 244.7741071428571 428.001" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e17" data-from="acute" data-to="glycogen"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="hypo">
+      <rect x="12.00" y="164.00" width="160" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="92.00" y="184.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Hypoglycemia trigger</text>
+      <text x="92.00" y="202.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">BG &lt; 4.0</text>
+    </g>
+    <g class="node" data-node-id="exercise">
+      <rect x="196.00" y="164.00" width="188.8" height="52" rx="10" ry="10" fill="rgba(132, 204, 22, 0.2)" stroke="#84cc16" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="290.40" y="184.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Strength / HIIT exercise</text>
+      <text x="290.40" y="202.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">catecholamines</text>
+    </g>
+    <g class="node" data-node-id="sleep">
+      <rect x="570.85" y="301.00" width="165.9642857142857" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="653.84" y="321.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Sleep loss / illness</text>
+      <text x="653.84" y="339.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">sleep deficit</text>
+    </g>
+    <g class="node" data-node-id="protein">
+      <rect x="932.02" y="438.00" width="102.4" height="52" rx="10" ry="10" fill="rgba(96, 165, 250, 0.2)" stroke="#60a5fa" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="983.22" y="458.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Protein meal</text>
+      <text x="983.22" y="476.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">AA</text>
+    </g>
+    <g class="node" data-node-id="dawn">
+      <rect x="760.82" y="438.00" width="145.6" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="833.62" y="458.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Circadian cortisol</text>
+      <text x="833.62" y="476.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">04:00-12:00</text>
+    </g>
+    <g class="node" data-node-id="acute">
+      <rect x="202.49" y="291.00" width="142.89285714285714" height="72" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="273.94" y="313.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Acute stress</text>
+      <text x="273.94" y="331.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">acuteStress</text>
+      <text x="273.94" y="352.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">t½ 60 min, cap 0.4</text>
+    </g>
+    <g class="node" data-node-id="chronic">
+      <rect x="570.85" y="428.00" width="165.9642857142857" height="72" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="653.84" y="450.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Chronic stress</text>
+      <text x="653.84" y="468.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">chronicStress</text>
+      <text x="653.84" y="489.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">t½ 12 h</text>
+    </g>
+    <g class="node" data-node-id="haaf">
+      <rect x="425.26" y="154.00" width="200.57142857142856" height="72" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="525.55" y="176.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">HAAF gate</text>
+      <text x="525.55" y="194.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">counterRegFactor</text>
+      <text x="525.55" y="215.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">0.3-1.0</text>
+    </g>
+    <g class="node" data-node-id="glycogen">
+      <rect x="98.02" y="428.00" width="189.03571428571428" height="72" rx="10" ry="10" fill="rgba(180, 83, 9, 0.2)" stroke="#b45309" stroke-width="2"/>
+      <text x="192.54" y="450.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Liver glycogen</text>
+      <text x="192.54" y="468.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">glycogenReserve</text>
+      <text x="192.54" y="489.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">0-1 (90 g pool)</text>
+    </g>
+    <g class="node" data-node-id="stress">
+      <rect x="553.55" y="565.00" width="200.57142857142856" height="72" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="653.84" y="587.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Stress multiplier</text>
+      <text x="653.84" y="605.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">stressMultiplier</text>
+      <text x="653.84" y="626.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">&gt;= 1</text>
+    </g>
+    <g class="node" data-node-id="liver">
+      <rect x="490.10" y="702.00" width="327.46428571428567" height="52" rx="10" ry="10" fill="rgba(180, 83, 9, 0.2)" stroke="#b45309" stroke-width="2"/>
+      <text x="653.84" y="722.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Liver EGP</text>
+      <text x="653.84" y="740.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">EGP = EGP0 * max(0, s - x3)</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0-ext">
+      <rect x="22.20" y="124.00" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="92.00" y="137.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">stressor / BG drop</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1-ext">
+      <rect x="217.00" y="124.00" width="146.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="290.40" y="137.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">stressor / activity</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2-ext">
+      <rect x="584.04" y="261.00" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="653.84" y="274.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">stressor / illness</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3-ext">
+      <rect x="913.42" y="398.00" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="983.22" y="411.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">meal / amino acids</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4-ext">
+      <rect x="774.62" y="398.00" width="118.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="833.62" y="411.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">circadian clock</text>
+    </g>
+    <g class="edge-label" data-edge-id="e5">
+      <rect x="118.76" y="262.81" width="17.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="127.36" y="276.71" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+</text>
+    </g>
+    <g class="edge-label" data-edge-id="e6">
+      <rect x="265.34" y="244.50" width="17.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="273.94" y="258.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+</text>
+    </g>
+    <g class="edge-label" data-edge-id="e7">
+      <rect x="381.35" y="269.76" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="451.15" y="283.66" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">× counterRegFactor</text>
+    </g>
+    <g class="edge-label" data-edge-id="e8">
+      <rect x="594.84" y="381.50" width="118.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="653.84" y="395.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+ 0.06 · h_lost</text>
+    </g>
+    <g class="edge-label" data-edge-id="e9">
+      <rect x="258.37" y="547.92" width="197.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="356.97" y="561.82" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">0.5·R + (0.5 + 0.25·(1-R))</text>
+    </g>
+    <g class="edge-label" data-edge-id="e10">
+      <rect x="200.17" y="386.50" width="89.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="244.77" y="400.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">0.6·R + 0.4</text>
+    </g>
+    <g class="edge-label" data-edge-id="e11">
+      <rect x="385.45" y="435.79" width="168.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="469.65" y="449.69" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+ effectiveAcuteStress</text>
+    </g>
+    <g class="edge-label" data-edge-id="e12">
+      <rect x="645.24" y="523.50" width="17.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="653.84" y="537.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+</text>
+    </g>
+    <g class="edge-label" data-edge-id="e13">
+      <rect x="737.43" y="532.18" width="146.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="810.83" y="546.08" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+ circadianCortisol</text>
+    </g>
+    <g class="edge-label" data-edge-id="e14">
+      <rect x="823.27" y="543.00" width="132.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="889.47" y="556.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+ proteinGlucagon</text>
+    </g>
+    <g class="edge-label" data-edge-id="e15">
+      <rect x="612.84" y="660.50" width="82.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="653.84" y="674.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">drives EGP</text>
+    </g>
+    <g class="edge-label" data-edge-id="e16">
+      <rect x="650.94" y="803.50" width="31.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="666.74" y="817.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">EGP</text>
+    </g>
+    <g class="edge-label" data-edge-id="e16-ext">
+      <rect x="589.74" y="875.00" width="154.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="666.74" y="888.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">glucose output to Q1</text>
+    </g>
+    <g class="edge-label" data-edge-id="e17">
+      <rect x="210.97" y="386.50" width="67.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="244.77" y="400.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">depletes</text>
+    </g>
+  </g>
+</svg>

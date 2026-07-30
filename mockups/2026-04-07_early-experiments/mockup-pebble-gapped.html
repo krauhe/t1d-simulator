@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wide Split Capsule — bottom bar mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1220;
+    --text-1: #f5f8fc;
+    --text-2: #c4d5e8;
+    --text-3: #8fa8c8;
+    --text-4: #5e7a99;
+    --green: #4ade80;
+    --green-glow: rgba(74, 222, 128, 0.3);
+    --red: #ef4444;
+    --orange: #fb923c;
+    --blue: #7dd3fc;
+    --teal: #2dd4bf;
+    --yellow: #fbbf24;
+    --border-s: rgba(147, 197, 253, 0.10);
+    --border-m: rgba(147, 197, 253, 0.16);
+    --insulin-bg: linear-gradient(135deg, #0e7490, #155e75);
+    --food-bg: linear-gradient(135deg, #92400e, #78350f);
+    --exercise-bg: linear-gradient(135deg, #065f46, #064e3b);
+    --kit-bg: linear-gradient(135deg, #134e4a, #0f3d3a);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: 'Outfit', system-ui, sans-serif;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 70px;
+    min-height: 100vh;
+  }
+
+  .mockup { width: 100%; max-width: 1000px; margin: 0 auto; }
+  .mockup-label {
+    background: linear-gradient(135deg, #1e1a2e, #0b1220);
+    border: 1px solid rgba(196, 181, 253, 0.3);
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 24px;
+    max-width: 560px;
+  }
+  .mockup-label h1 { font-size: 14px; font-weight: 700; color: #c4b5fd; margin-bottom: 5px; }
+  .mockup-label p { font-size: 11px; line-height: 1.6; color: var(--text-2); }
+  .mockup-label .tag { display: inline-block; background: rgba(196, 181, 253, 0.12); color: #c4b5fd; font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-right: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .stage {
+    background:
+      linear-gradient(180deg,
+        rgba(74, 222, 128, 0.02) 0%,
+        rgba(74, 222, 128, 0.05) 40%,
+        rgba(251, 146, 60, 0.03) 70%,
+        rgba(239, 68, 68, 0.02) 100%);
+    border: 1px solid var(--border-s);
+    border-radius: 18px;
+    padding: 30px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    min-height: 200px;
+  }
+
+
+  /* ═══ FÆLLES KOMPONENTER (identisk med Capsule-originalen) ═══ */
+  .bg-val { font-size: 26px; font-weight: 800; color: var(--green); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+  .bg-unit { font-size: 9px; color: var(--text-4); font-weight: 500; letter-spacing: 0.04em; }
+  .bg-arrow { font-size: 20px; font-weight: 900; color: var(--green); text-shadow: 0 0 8px var(--green-glow); line-height: 1; }
+
+  .pill { background: rgba(255,255,255,0.05); border: 1px solid var(--border-s); border-radius: 6px; padding: 2px 7px; font-size: 9px; color: var(--text-3); white-space: nowrap; }
+  .pill b { color: var(--text-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* Dock-ikoner — Mac-stil squircles */
+  .di {
+    width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid transparent; position: relative;
+  }
+  .di:hover { transform: translateY(-8px) scale(1.18); z-index: 5; }
+  .di .k { position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 600; color: var(--text-3); opacity: 0.7; }
+  .di-ins { background: var(--insulin-bg); border-color: rgba(14, 165, 210, 0.35); }
+  .di-ins:hover { box-shadow: 0 8px 24px rgba(14, 116, 144, 0.5); border-color: rgba(14, 165, 210, 0.7); }
+  .di-food { background: var(--food-bg); border-color: rgba(250, 204, 21, 0.25); }
+  .di-food:hover { box-shadow: 0 8px 24px rgba(234, 179, 8, 0.4); border-color: rgba(250, 204, 21, 0.6); }
+  .di-ex { background: var(--exercise-bg); border-color: rgba(52, 211, 153, 0.25); }
+  .di-ex:hover { box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4); border-color: rgba(52, 211, 153, 0.6); }
+  .di-kit { background: var(--kit-bg); border-color: rgba(94, 234, 212, 0.25); }
+  .di-kit:hover { box-shadow: 0 8px 24px rgba(94, 234, 212, 0.35); border-color: rgba(94, 234, 212, 0.6); }
+
+  /* Speed-pill — Version B (Organic Pebble) format */
+  .speed-pill {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.04);
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border-s);
+  }
+  .speed-pill .sp-btn {
+    background: transparent; border: none; color: var(--text-3);
+    font-size: 11px; padding: 5px 12px; cursor: pointer;
+    transition: all 0.15s; border-radius: 20px; font-family: 'Outfit', sans-serif;
+  }
+  .speed-pill .sp-btn:hover { color: var(--text-1); background: rgba(255,255,255,0.14); }
+  .speed-pill .sp-center {
+    background: rgba(255,255,255,0.07); border: none; color: var(--text-2);
+    font-size: 11px; font-weight: 600; padding: 5px 8px; cursor: pointer;
+    white-space: nowrap; display: inline-flex; align-items: center; gap: 3px;
+    font-variant-numeric: tabular-nums; font-family: 'Outfit', sans-serif;
+    border-left: 1px solid var(--border-s); border-right: 1px solid var(--border-s);
+    border-radius: 0; transition: all 0.15s;
+  }
+  .speed-pill .sp-center:hover { color: var(--text-1); }
+  .speed-pill .sp-icon { color: var(--blue); font-size: 10px; }
+
+  .mode { font-size: 12px; color: var(--text-3); letter-spacing: 0.04em; font-weight: 600; }
+  .star { font-size: 13px; }
+  .score { font-size: 22px; font-weight: 800; color: var(--yellow); font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+  .weight { font-size: 9px; color: var(--text-4); }
+
+
+  /* ═══ CAPSULE-FRAGMENT: hvert panel er et stykke af den originale capsule ═══ */
+
+  /* Fælles panel-stil — identisk baggrund/border/shadow som Capsule */
+  .frag {
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-m);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  /* Side-paneler */
+  .side {
+    display: flex; flex-direction: column; justify-content: center; gap: 5px;
+    width: 150px; flex-shrink: 0; padding: 12px 22px;
+  }
+  .side-l { align-items: center; }
+  .side-r { align-items: center; text-align: center; }
+  .side .val-row { display: flex; align-items: baseline; gap: 6px; }
+  .side .pill-row { display: flex; gap: 3px; }
+  .side .pts-row { display: flex; align-items: center; gap: 4px; }
+  .side-r .pts-row { justify-content: center; }
+
+  /* Center-panel */
+  .center {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 12px 20px;
+  }
+  .dock-row { display: flex; gap: 8px; align-items: flex-end; padding-bottom: 14px; }
+
+
+  /* ═══════════════════════════════════════════════════════
+     Capsule-baggrunden — samme radial gradient som originalen,
+     men splittet per fragment med lokale glødninger.
+     ═══════════════════════════════════════════════════════ */
+  .cap-bg {
+    background: radial-gradient(ellipse at 50% 50%, rgba(20, 32, 56, 0.95), rgba(14, 22, 40, 0.97));
+  }
+  .cap-bg-l {
+    background:
+      radial-gradient(ellipse at 30% 40%, rgba(74, 222, 128, 0.04), transparent 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(20, 32, 56, 0.95), rgba(14, 22, 40, 0.97));
+  }
+  .cap-bg-r {
+    background:
+      radial-gradient(ellipse at 70% 40%, rgba(251, 191, 36, 0.03), transparent 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(20, 32, 56, 0.95), rgba(14, 22, 40, 0.97));
+  }
+  .cap-bg-c {
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(147, 197, 253, 0.03), transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(20, 32, 56, 0.95), rgba(14, 22, 40, 0.97));
+  }
+
+
+  /* ═══════════════════════════════════════════════════════
+     WIDE SPLIT — Capsule trukket fra hinanden (14px gap)
+     Ydre hjørner bevarer capsulens 60px runding.
+     Indre hjørner: let afrundet (18px).
+     ═══════════════════════════════════════════════════════ */
+  .bar { display: flex; align-items: stretch; gap: 14px; }
+  .bar .side-l { border-radius: 60px 18px 18px 60px; }
+  .bar .side-r { border-radius: 18px 60px 60px 18px; }
+  .bar .center { border-radius: 18px; }
+
+</style>
+</head>
+<body>
+
+
+<!-- ═══════════════════ WIDE SPLIT ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h1>Wide Split Capsule</h1>
+    <p><span class="tag">14px gap</span> <span class="tag">18px indre radius</span> Capsule trukket fra hinanden i tre fragmenter. Ydre hjørner bevarer 60px runding. Laterale elementer centreret. Genveje synlige under dock-ikoner.</p>
+  </div>
+  <div class="stage">
+    <div class="bar">
+      <div class="frag cap-bg-l side side-l">
+        <div class="val-row">
+          <span class="bg-val">7.2</span>
+          <span class="bg-arrow">→</span>
+        </div>
+        <span class="bg-unit">mmol/L</span>
+        <div class="pill-row">
+          <span class="pill">IOB <b>2.4</b> E</span>
+          <span class="pill">COB <b>18</b> g</span>
+        </div>
+      </div>
+      <div class="frag cap-bg-c center">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="speed-pill">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="frag cap-bg-r side side-r">
+        <div class="mode">🏖️ Sandbox</div>
+        <div class="pts-row">
+          <span class="star">⭐</span>
+          <span class="score">142.5</span>
+        </div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

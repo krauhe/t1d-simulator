@@ -1,0 +1,7 @@
+interface:
+  display_name: "Phys Reviewer"
+  short_description: "Review af fysiologisk modelkode"
+  default_prompt: "Use $phys-reviewer to review the T1D simulator physiology model for correctness."
+
+policy:
+  allow_implicit_invocation: true

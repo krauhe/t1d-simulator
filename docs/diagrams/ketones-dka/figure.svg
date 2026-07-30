@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740.7857142857142 806.001" width="740.7857142857142" height="806.001" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>Ketone &amp; DKA model — FFA-driven, two-gate ketogenesis (Cahill / Kitabchi)</title>
+  <defs>
+    <marker id="arrow-7dd3fc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/></marker>
+    <marker id="arrow-c4b5fd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#c4b5fd"/></marker>
+    <marker id="arrow-f59e0b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b"/></marker>
+    <marker id="arrow-f472b6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f472b6"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 439.13 59.05 L 135.36 116.50 L 135.36 149.00" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e0" data-from="I" data-to="lipGate"/>
+    <path d="M 497.52857142857147 84 L 497.52857142857147 286" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e1" data-from="I" data-to="cpt1Gate"/>
+    <path d="M 135.35714285714286 221 L 135.35714285714286 286" fill="none" stroke="#c4b5fd" stroke-width="2" marker-end="url(#arrow-c4b5fd)" data-edge-id="e2" data-from="lipGate" data-to="ffa"/>
+    <path d="M 135.36 358.00 L 135.36 390.50 L 295.54 438.88" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-f59e0b)" data-edge-id="e3" data-from="ffa" data-to="bhb"/>
+    <path d="M 362.1714285714286 358 L 362.1714285714286 423" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-c4b5fd)" data-edge-id="e4" data-from="cpt1Gate" data-to="bhb"/>
+    <path d="M 295.54 479.12 L 135.36 527.50 L 135.36 560.00" fill="none" stroke="#c4b5fd" stroke-width="2" marker-end="url(#arrow-c4b5fd)" data-edge-id="e5" data-from="bhb" data-to="muscleBrain"/>
+    <path d="M 359.3571428571429 495 L 359.3571428571429 560" fill="none" stroke="#c4b5fd" stroke-width="2" marker-end="url(#arrow-c4b5fd)" data-edge-id="e6" data-from="bhb" data-to="renal"/>
+    <path d="M 428.80 484.76 L 539.37 527.50 L 592.61 560.00" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-c4b5fd)" data-edge-id="e7" data-from="bhb" data-to="load"/>
+    <path d="M 555.93 73.97 L 651.57 116.50 L 651.57 185.00 L 651.57 253.50 L 651.57 322.00 L 651.57 390.50 L 651.57 459.00 L 651.57 527.50 L 651.57 560.00" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e8" data-from="I" data-to="load"/>
+    <path d="M 651.5714285714287 632 L 651.5714285714287 697" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e9" data-from="load" data-to="gameover"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="I">
+      <rect x="439.13" y="12.00" width="116.8" height="72" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2"/>
+      <text x="497.53" y="34.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Plasma insulin</text>
+      <text x="497.53" y="52.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">I</text>
+      <text x="497.53" y="73.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">mU/L</text>
+    </g>
+    <g class="node" data-node-id="lipGate">
+      <rect x="12.00" y="149.00" width="246.7142857142857" height="72" rx="10" ry="10" fill="rgba(196, 181, 253, 0.2)" stroke="#c4b5fd" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="135.36" y="171.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Lipolysis gate (HSL)</text>
+      <text x="135.36" y="189.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">EC50ⁿ / (EC50ⁿ + Iⁿ)</text>
+      <text x="135.36" y="210.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">EC50 = 8 mU/L, n = 3</text>
+    </g>
+    <g class="node" data-node-id="cpt1Gate">
+      <rect x="236.57" y="286.00" width="339" height="72" rx="10" ry="10" fill="rgba(196, 181, 253, 0.2)" stroke="#c4b5fd" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="406.07" y="308.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">CPT-1 gate</text>
+      <text x="406.07" y="326.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">1 − supp · Iⁿ / (EC50ⁿ + Iⁿ)</text>
+      <text x="406.07" y="347.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">EC50 = 8 mU/L, n = 4</text>
+    </g>
+    <g class="node" data-node-id="ffa">
+      <rect x="58.14" y="286.00" width="154.42857142857142" height="72" rx="10" ry="10" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="2"/>
+      <text x="135.36" y="308.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">FFA (lipolysis)</text>
+      <text x="135.36" y="326.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">ffaLipolysis</text>
+      <text x="135.36" y="347.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">t½ ≈ 60 min</text>
+    </g>
+    <g class="node" data-node-id="bhb">
+      <rect x="295.54" y="423.00" width="133.25714285714284" height="72" rx="10" ry="10" fill="rgba(196, 181, 253, 0.2)" stroke="#c4b5fd" stroke-width="2"/>
+      <text x="362.17" y="445.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Plasma BHB</text>
+      <text x="362.17" y="463.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">BHB</text>
+      <text x="362.17" y="484.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">mmol/L (clamp 0–20)</text>
+    </g>
+    <g class="node" data-node-id="muscleBrain">
+      <rect x="40.96" y="560.00" width="188.8" height="72" rx="10" ry="10" fill="rgba(132, 204, 22, 0.2)" stroke="#84cc16" stroke-width="2"/>
+      <text x="135.36" y="582.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Muscle + brain oxidation</text>
+      <text x="135.36" y="600.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">MM clearance</text>
+      <text x="135.36" y="621.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">Vmax · BHB / (Km + BHB)</text>
+    </g>
+    <g class="node" data-node-id="renal">
+      <rect x="268.74" y="560.00" width="154.42857142857142" height="72" rx="10" ry="10" fill="rgba(156, 163, 175, 0.2)" stroke="#9ca3af" stroke-width="2"/>
+      <text x="345.96" y="582.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Renal excretion</text>
+      <text x="345.96" y="600.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">MM excretion</text>
+      <text x="345.96" y="621.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">BHB &gt; 0.5 mmol/L</text>
+    </g>
+    <g class="node" data-node-id="load">
+      <rect x="574.36" y="560.00" width="154.42857142857142" height="72" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2"/>
+      <text x="651.57" y="582.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Acidosis load</text>
+      <text x="651.57" y="600.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">acidosisLoad</text>
+      <text x="651.57" y="621.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">BHB &gt; 3.0, gate at I</text>
+    </g>
+    <g class="node" data-node-id="gameover">
+      <rect x="585.89" y="697.00" width="131.35714285714283" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2"/>
+      <text x="651.57" y="717.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">DKA game over</text>
+      <text x="651.57" y="735.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">load ≥ 600</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0">
+      <rect x="230.28" y="81.79" width="82.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="271.28" y="95.69" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">suppresses</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1">
+      <rect x="456.53" y="176.00" width="82.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="497.53" y="189.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">suppresses</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2">
+      <rect x="58.36" y="244.50" width="154.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="135.36" y="258.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">LIPOLYSIS_MAX · gate</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3">
+      <rect x="140.89" y="400.99" width="118.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="199.89" y="414.89" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">× CPT-1 · k_BHB</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4">
+      <rect x="324.77" y="381.50" width="74.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="362.17" y="395.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">modulates</text>
+    </g>
+    <g class="edge-label" data-edge-id="e5">
+      <rect x="126.49" y="499.01" width="146.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="199.89" y="512.91" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">oxidized (HR boost)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e6">
+      <rect x="325.56" y="518.50" width="67.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="359.36" y="532.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">excreted</text>
+    </g>
+    <g class="edge-label" data-edge-id="e7">
+      <rect x="410.97" y="508.37" width="204.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="513.17" y="522.27" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">BASE·excess + ACCEL·excess²</text>
+    </g>
+    <g class="edge-label" data-edge-id="e8">
+      <rect x="592.57" y="276.91" width="118.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="651.57" y="290.81" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">smoothstep gate</text>
+    </g>
+    <g class="edge-label" data-edge-id="e9">
+      <rect x="628.57" y="655.50" width="46.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="651.57" y="669.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">≥ 600</text>
+    </g>
+  </g>
+</svg>

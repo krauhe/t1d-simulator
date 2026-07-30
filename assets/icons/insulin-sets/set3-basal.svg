@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- SÆT 3 BASAL — flad PK-plateau-kurve (24h sustained release) -->
+  <!-- Lille drop øverst-venstre som insulin-konnektor -->
+  <path d="M5 3 C 7 5, 7 7, 5 8 C 3 7, 3 5, 5 3 Z" fill="#3B82F6" stroke="#94A3B8" stroke-width="0.8"/>
+  <!-- Plateau-kurve (langsomt op, fladt, langsomt ned) -->
+  <path d="M2 19 Q 4 11, 8 9 L 16 9 Q 20 11, 22 19"
+        fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Tids-akse -->
+  <line x1="2" y1="21" x2="22" y2="21" stroke="#94A3B8" stroke-width="0.8" stroke-linecap="round"/>
+</svg>

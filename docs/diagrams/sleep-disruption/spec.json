@@ -1,0 +1,47 @@
+{
+  "type": "compartment-diagram",
+  "title": "Sleep disruption model — nighttime interventions, chronic stress, and dawn amplification",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "nightAction", "label": "Night intervention", "var": "22:00-07:00", "color": "external", "type": "external" },
+    { "id": "awakeGate", "label": "Awakening gate", "var": ">30 min", "color": "stress", "type": "effect" },
+    { "id": "sleepLoss", "label": "Lost sleep", "var": "lostSleepHoursTonight", "unit": "h", "color": "stress", "type": "tissue" },
+
+    { "id": "morningGate", "label": "Morning gate", "var": "07:00 once/day", "color": "stress", "type": "effect" },
+    { "id": "pendingStress", "label": "Pending stress", "var": "_pendingChronicStress", "unit": "cap 0.30", "color": "stress", "type": "tissue" },
+    { "id": "chronicStress", "label": "Chronic stress", "var": "chronicStressLevel", "unit": "decay t½ = 12 h", "color": "stress", "type": "tissue" },
+
+    { "id": "dawnAmp", "label": "Dawn amplitude", "var": "circadianKortisolNiveau", "color": "liver", "type": "effect", "rank": "max" },
+    { "id": "insulinResistance", "label": "Insulin resistance", "var": "insulinResistanceFactor", "color": "insulin", "type": "effect", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "nightAction", "to": "awakeGate", "label": "new event if >30 min", "kind": "signal" },
+    { "from": "awakeGate", "to": "sleepLoss", "label": "+ clamp(N(1.0,0.3), 0.3,1.8)", "kind": "mass" },
+    { "from": "sleepLoss", "to": "dawnAmp", "label": "12%/h", "kind": "signal" },
+    { "from": "sleepLoss", "to": "morningGate", "label": "applySleepDebt()", "kind": "signal" },
+    { "from": "morningGate", "to": "pendingStress", "label": "+ min(0.30, lostSleep·0.06)", "kind": "mass" },
+    { "from": "pendingStress", "to": "chronicStress", "label": "smooth drain τ≈30 min", "kind": "mass" },
+    { "from": "chronicStress", "to": "dawnAmp", "label": "+30%", "kind": "signal" },
+    { "from": "chronicStress", "to": "insulinResistance", "label": "+50% IR", "kind": "signal" }
+  ],
+  "caption": {
+    "scope": "The sleep disruption model turns nighttime player actions into a next-day physiology effect. Interventions between 22:00 and 07:00 create awakening events, accumulate lost sleep, amplify the pre-morning dawn term while the night is still active, and at 07:00 convert sleep loss into pending chronic stress that drains into chronicStressLevel and raises insulin resistance.",
+    "variables": [
+      { "symbol": "22:00-07:00", "category": "compartment", "definition": "night interval during which game actions can disrupt the character's sleep" },
+      { "symbol": ">30 min", "category": "compartment", "definition": "minimum separation between interventions for a new awakening event; closer interventions are treated as the same waking period" },
+      { "symbol": "lostSleepHoursTonight", "category": "compartment", "definition": "accumulated sleep loss during the current night, in hours" },
+      { "symbol": "07:00 once/day", "category": "compartment", "definition": "morning gate that applies sleep debt once for the current simulated day" },
+      { "symbol": "_pendingChronicStress", "category": "compartment", "definition": "smoothed input pool for stress from sleep loss; capped at 0.30 from sleep alone" },
+      { "symbol": "chronicStressLevel", "category": "compartment", "definition": "longer-lived stress state that decays with half-life 12 simulated hours" },
+      { "symbol": "circadianKortisolNiveau", "category": "compartment", "definition": "dawn hepatic glucose production component after sleep-loss and chronic-stress amplification" },
+      { "symbol": "insulinResistanceFactor", "category": "compartment", "definition": "stress-driven insulin-resistance divisor used in currentISF" },
+      { "symbol": "+ clamp(N(1.0,0.3), 0.3,1.8)", "category": "flow", "definition": "per-awakening sleep-loss draw: normal distribution with mean 1.0 hour and SD 0.3 hour, clamped to 0.3-1.8 hours" },
+      { "symbol": "× (1 + 0.12·lostSleep)", "category": "flow", "definition": "direct amplification of the dawn amplitude before the morning sleep-debt reset" },
+      { "symbol": "applySleepDebt()", "category": "flow", "definition": "morning conversion of accumulated sleep loss to chronic stress" },
+      { "symbol": "+ min(0.30, lostSleep·0.06)", "category": "flow", "definition": "sleep-loss to chronic-stress conversion: 0.06 per lost hour, capped at 0.30" },
+      { "symbol": "smooth drain τ≈30 min", "category": "flow", "definition": "gradual transfer from pending stress into chronicStressLevel, preventing a visible discontinuity in ISF" },
+      { "symbol": "× (1 + 0.30·stress)", "category": "flow", "definition": "additional dawn-amplitude scaling from existing chronicStressLevel" },
+      { "symbol": "1 + 0.5·stress", "category": "flow", "definition": "mapping from chronicStressLevel to insulinResistanceFactor" }
+    ]
+  }
+}

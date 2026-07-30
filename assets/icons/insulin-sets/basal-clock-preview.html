@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basal insulin - 8 clock+syringe icons</title>
+<style>
+  :root {
+    --bg: #0A1120;
+    --panel: rgba(18, 28, 46, 0.94);
+    --line: rgba(141, 177, 230, 0.16);
+    --text: #EEF5FF;
+    --muted: #8EA4C7;
+    --blue: #60A5FA;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top left, rgba(48, 100, 180, 0.18), transparent 28%),
+      radial-gradient(circle at top right, rgba(96, 165, 250, 0.10), transparent 24%),
+      linear-gradient(180deg, #0A1120, #070D18 58%, #08101D);
+    padding: 28px;
+  }
+  .page { max-width: 1320px; margin: 0 auto; }
+  h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.02em; }
+  .intro {
+    margin: 0 0 24px;
+    max-width: 900px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .intro strong { color: var(--text); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px 20px;
+  }
+  .card h2 { margin: 0 0 6px; font-size: 18px; }
+  .card p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+  .preview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .block {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .dark { background: #0F172A; }
+  .light { background: #F1F5F9; }
+  .block-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .light .block-label { color: #64748B; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .row:last-child { margin-bottom: 0; }
+  .size {
+    width: 30px;
+    text-align: right;
+    font-size: 11px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .light .size { color: #64748B; }
+  .context {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .context img { width: 18px; height: 18px; }
+  .footer {
+    margin-top: 24px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    color: var(--muted);
+    line-height: 1.6;
+    font-size: 13px;
+  }
+  .footer strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Basal insulin - 8 clock + syringe concepts</h1>
+  <p class="intro">
+    Her er otte nye <strong>basal-insulin</strong> ikoner, hvor forskellen ikke kun er blaafarve, men ogsaa komposition og silhuet.
+    Alle otte indeholder baade <strong>en urskive</strong> og <strong>en sproejte</strong>.
+    Jeg har holdt mig i den blå familie, men gjort formerne klart forskellige, saa de kan skelnes hurtigere.
+  </p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>1. Badge</h2>
+      <p>Klassisk emblem. Tydelig urskive i venstre side, sproejte henover som aktivt lag. Mest "ikonisk".</p>
+      <div class="preview">
+        <div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-clock-1-badge.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-1-badge.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-1-badge.svg" width="64" height="64"></div></div>
+        <div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-clock-1-badge.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-1-badge.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-1-badge.svg" width="64" height="64"></div></div>
+      </div>
+      <div class="context"><img src="basal-clock-1-badge.svg" alt=""> Basal insulin</div>
+    </div>
+
+    <div class="card">
+      <h2>2. Split</h2>
+      <p>Mere grafisk og organiseret. Klokken og sproejten har hvert sit felt, saa betydningen bliver afkodet meget hurtigt.</p>
+      <div class="preview">
+        <div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-clock-2-split.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-2-split.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-2-split.svg" width="64" height="64"></div></div>
+        <div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-clock-2-split.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-2-split.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-2-split.svg" width="64" height="64"></div></div>
+      </div>
+      <div class="context"><img src="basal-clock-2-split.svg" alt=""> Basal insulin</div>
+    </div>
+
+    <div class="card">
+      <h2>3. Drop</h2>
+      <p>Medicinsk og flydende. Dråbeformen giver insulinfornemmelse, mens klokken og sproejten ligger som to tydelige tegn inde i formen.</p>
+      <div class="preview">
+        <div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-clock-3-drop.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-3-drop.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-3-drop.svg" width="64" height="64"></div></div>
+        <div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-clock-3-drop.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-3-drop.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-3-drop.svg" width="64" height="64"></div></div>
+      </div>
+      <div class="context"><img src="basal-clock-3-drop.svg" alt=""> Basal insulin</div>
+    </div>
+
+    <div class="card">
+      <h2>4. Hands</h2>
+      <p>Mere konceptuel. Sproejten er naesten bygget ind som en urviser. Mere original, mindre traditionel.</p>
+      <div class="preview">
+        <div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-clock-4-hands.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-4-hands.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-4-hands.svg" width="64" height="64"></div></div>
+        <div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-clock-4-hands.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-4-hands.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-4-hands.svg" width="64" height="64"></div></div>
+      </div>
+      <div class="context"><img src="basal-clock-4-hands.svg" alt=""> Basal insulin</div>
+    </div>
+
+    <div class="card">
+      <h2>5. Shield</h2>
+      <p>Foeles stabil og beskyttende. God hvis basal skal signalere baggrundsdækning og sikkerhed mere end fart.</p>
+      <div class="preview">
+        <div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-clock-5-shield.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-5-shield.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-5-shield.svg" width="64" height="64"></div></div>
+        <div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-clock-5-shield.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-5-shield.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-5-shield.svg" width="64" height="64"></div></div>
+      </div>
+      <div class="context"><img src="basal-clock-5-shield.svg" alt=""> Basal insulin</div>
+    </div>
+
+    <div class="card">
+      <h2>6. Orbit</h2>
+      <p>Mere dynamisk og lidt futuristisk. Klokken er rolig, mens orbit-ringen giver en fornemmelse af vedvarende virkning over tid.</p>
+      <div class="preview">
+        <div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-clock-6-orbit.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-6-orbit.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-6-orbit.svg" width="64" height="64"></div></div>
+        <div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-clock-6-orbit.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-6-orbit.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-6-orbit.svg" width="64" height="64"></div></div>
+      </div>
+      <div class="context"><img src="basal-clock-6-orbit.svg" alt=""> Basal insulin</div>
+    </div>
+
+    <div class="card">
+      <h2>7. Tile</h2>
+      <p>Mere UI-venlig. Firkantet ikon med intern struktur, saerligt godt hvis du vil have et mere moderne app-look.</p>
+      <div class="preview">
+        <div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-clock-7-tile.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-7-tile.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-7-tile.svg" width="64" height="64"></div></div>
+        <div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-clock-7-tile.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-7-tile.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-7-tile.svg" width="64" height="64"></div></div>
+      </div>
+      <div class="context"><img src="basal-clock-7-tile.svg" alt=""> Basal insulin</div>
+    </div>
+
+    <div class="card">
+      <h2>8. Twin-layer</h2>
+      <p>To lag i samme ikon. Foeles lidt som "baggrundsvirkning under overfladen". God hvis basal skal foeles mere lagdelt end akut.</p>
+      <div class="preview">
+        <div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-clock-8-twin.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-8-twin.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-8-twin.svg" width="64" height="64"></div></div>
+        <div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-clock-8-twin.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-clock-8-twin.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-clock-8-twin.svg" width="64" height="64"></div></div>
+      </div>
+      <div class="context"><img src="basal-clock-8-twin.svg" alt=""> Basal insulin</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <strong>Min foreloebige vurdering:</strong><br>
+    Hvis du vil have noget mest elegant og tydeligt i spil-UI, ville jeg selv starte med <strong>1, 2 eller 5</strong>.<br>
+    Hvis du vil have noget mere unikt og karakterfuldt, ville jeg kigge paa <strong>4, 6 eller 8</strong>.<br>
+    Hvis du vil, kan jeg bagefter tage de 2-3 bedste og lave en ny, finpudset finalerunde.
+  </div>
+</div>
+</body>
+</html>

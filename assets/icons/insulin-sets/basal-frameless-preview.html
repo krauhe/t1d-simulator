@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basal insulin - frameless concepts</title>
+<style>
+  :root {
+    --bg: #0A1120;
+    --panel: rgba(18, 28, 46, 0.94);
+    --line: rgba(141, 177, 230, 0.16);
+    --text: #EEF5FF;
+    --muted: #8EA4C7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top left, rgba(48, 100, 180, 0.18), transparent 28%),
+      linear-gradient(180deg, #0A1120, #070D18 58%, #08101D);
+    padding: 28px;
+  }
+  .page { max-width: 1280px; margin: 0 auto; }
+  h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.02em; }
+  .intro {
+    margin: 0 0 24px;
+    max-width: 920px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .intro strong { color: var(--text); }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px 20px;
+  }
+  .card h2 { margin: 0 0 6px; font-size: 18px; }
+  .card p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+  .preview { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .block { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .dark { background: #0F172A; }
+  .light { background: #F1F5F9; }
+  .block-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+  .light .block-label { color: #64748B; }
+  .row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .row:last-child { margin-bottom: 0; }
+  .size { width: 30px; text-align: right; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .light .size { color: #64748B; }
+  .context {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .context img { width: 18px; height: 18px; }
+  .footer {
+    margin-top: 24px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    color: var(--muted);
+    line-height: 1.6;
+    font-size: 13px;
+  }
+  .footer strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Basal insulin - uden ydre rammer</h1>
+  <p class="intro">
+    Her er en ny runde, hvor jeg har fjernet de store <strong>badges, skjolde, tiles og ydre cirkler</strong> omkring hele ikonet.
+    De er derfor mere lette og mindre "logo-agtige". Jeg har stadig beholdt dine krav:
+    <strong>blå farve</strong>, <strong>urskive</strong> og <strong>sproejte</strong>.
+  </p>
+
+  <div class="grid">
+    <div class="card"><h2>1. Inline</h2><p>Lille urskive og sproejte i samme flow. Mest neutral og ren.</p><div class="preview"><div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-frameless-1-inline.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-1-inline.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-1-inline.svg" width="64" height="64"></div></div><div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-frameless-1-inline.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-1-inline.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-1-inline.svg" width="64" height="64"></div></div></div><div class="context"><img src="basal-frameless-1-inline.svg" alt=""> Basal insulin</div></div>
+    <div class="card"><h2>2. Window</h2><p>Urskive lagt oven paa barrel-vinduet. Mere kompakt og UI-venlig.</p><div class="preview"><div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-frameless-2-window.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-2-window.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-2-window.svg" width="64" height="64"></div></div><div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-frameless-2-window.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-2-window.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-2-window.svg" width="64" height="64"></div></div></div><div class="context"><img src="basal-frameless-2-window.svg" alt=""> Basal insulin</div></div>
+    <div class="card"><h2>3. Tail clock</h2><p>Urskive som en ekstra lille hale til ikonet. Mere karakterfuld.</p><div class="preview"><div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-frameless-3-tailclock.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-3-tailclock.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-3-tailclock.svg" width="64" height="64"></div></div><div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-frameless-3-tailclock.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-3-tailclock.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-3-tailclock.svg" width="64" height="64"></div></div></div><div class="context"><img src="basal-frameless-3-tailclock.svg" alt=""> Basal insulin</div></div>
+    <div class="card"><h2>4. Overlap</h2><p>Urskive overlapper sproejten mere direkte. Mere dynamisk og mere ikonisk.</p><div class="preview"><div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-frameless-4-overlap.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-4-overlap.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-4-overlap.svg" width="64" height="64"></div></div><div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-frameless-4-overlap.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-4-overlap.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-4-overlap.svg" width="64" height="64"></div></div></div><div class="context"><img src="basal-frameless-4-overlap.svg" alt=""> Basal insulin</div></div>
+    <div class="card"><h2>5. Shallow</h2><p>Meget lav og bred silhuet. God hvis ikonet skal foeles mere som en pen end et badge.</p><div class="preview"><div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-frameless-5-shallow.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-5-shallow.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-5-shallow.svg" width="64" height="64"></div></div><div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-frameless-5-shallow.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-5-shallow.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-5-shallow.svg" width="64" height="64"></div></div></div><div class="context"><img src="basal-frameless-5-shallow.svg" alt=""> Basal insulin</div></div>
+    <div class="card"><h2>6. Hanging</h2><p>Urskive hænger under sproejten som en lille sekundær markør. Ret sær og let at kende.</p><div class="preview"><div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-frameless-6-hanging.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-6-hanging.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-6-hanging.svg" width="64" height="64"></div></div><div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-frameless-6-hanging.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-6-hanging.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-6-hanging.svg" width="64" height="64"></div></div></div><div class="context"><img src="basal-frameless-6-hanging.svg" alt=""> Basal insulin</div></div>
+    <div class="card"><h2>7. Pen + clock</h2><p>Mest klinisk og hverdagsagtig. Foeles som en rigtig insulin-pen med et tids-tegn ved siden af.</p><div class="preview"><div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-frameless-7-penclock.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-7-penclock.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-7-penclock.svg" width="64" height="64"></div></div><div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-frameless-7-penclock.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-7-penclock.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-7-penclock.svg" width="64" height="64"></div></div></div><div class="context"><img src="basal-frameless-7-penclock.svg" alt=""> Basal insulin</div></div>
+    <div class="card"><h2>8. Arc</h2><p>Urskiven og en lille tids-arc giver fornemmelse af vedvarende virkning, men uden stor ramme.</p><div class="preview"><div class="block dark"><div class="block-label">Dark</div><div class="row"><span class="size">24</span><img src="basal-frameless-8-arc.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-8-arc.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-8-arc.svg" width="64" height="64"></div></div><div class="block light"><div class="block-label">Light</div><div class="row"><span class="size">24</span><img src="basal-frameless-8-arc.svg" width="24" height="24"></div><div class="row"><span class="size">40</span><img src="basal-frameless-8-arc.svg" width="40" height="40"></div><div class="row"><span class="size">64</span><img src="basal-frameless-8-arc.svg" width="64" height="64"></div></div></div><div class="context"><img src="basal-frameless-8-arc.svg" alt=""> Basal insulin</div></div>
+  </div>
+
+  <div class="footer">
+    <strong>Hvis du vil have min hurtige smagdom:</strong><br>
+    De mest vellykkede i denne mere rene retning er efter min mening <strong>1, 4 og 7</strong>.<br>
+    Hvis du vil, kan jeg tage de tre og lave en endnu mere gennemarbejdet finalerunde med små variationer i stregtykkelse, balance og læsbarhed ved 16-20 px.
+  </div>
+</div>
+</body>
+</html>

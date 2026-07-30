@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>T1D SIMULATOR — Logo Capture</title>
+<!--
+  LOGO CAPTURE SIDE
+  =================
+  Åbn i browseren og:
+  - Screenshot → PNG/JPG (Win+Shift+S eller Snipping Tool)
+  - Screen-optag → GIF (brug ScreenToGif, ShareX, eller lignende)
+
+  Tip: Optag 4-8 sekunder for at fange en hel shimmer+sparkle cyklus.
+  Baggrunden er gennemsigtig sort — let at fjerne i en editor hvis nødvendigt.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #0b1120;
+    overflow: hidden;
+  }
+
+  .logo-container {
+    position: relative;
+    text-align: center;
+    padding: 60px 80px;
+  }
+
+  /* ── Baggrundsglow (pulserende aura) ── */
+  .logo-container::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    height: 200px;
+    background: radial-gradient(ellipse, rgba(147, 197, 253, 0.15) 0%, rgba(167, 139, 250, 0.08) 40%, transparent 70%);
+    animation: aura-pulse 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes aura-pulse {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  }
+
+  /* ── Hovedtekst: T1D SIMULATOR ── */
+  .brand {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 52px;
+    background: linear-gradient(135deg, #93c5fd, #d8b4fe, #a5b4fc, #93c5fd);
+    background-size: 200% 200%;
+    animation: brand-shimmer 4s ease-in-out infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 5px;
+    line-height: 1.1;
+    white-space: nowrap;
+    filter: drop-shadow(0 0 18px rgba(147, 197, 253, 0.9))
+            drop-shadow(0 0 40px rgba(167, 139, 250, 0.6))
+            drop-shadow(0 0 70px rgba(147, 197, 253, 0.3));
+    position: relative;
+    z-index: 2;
+  }
+
+  @keyframes brand-shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* ── Slogan ── */
+  .brand-slogan {
+    font-family: 'Orbitron', monospace;
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: rgba(148, 163, 184, 0.8);
+    text-transform: uppercase;
+    margin-top: 8px;
+    white-space: nowrap;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ── Sparkle-partikler ── */
+  .sparkles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #fff;
+    animation: sparkle-blink var(--duration) var(--delay) ease-in-out infinite;
+    box-shadow: 0 0 6px 2px rgba(147, 197, 253, 0.8),
+                0 0 12px 4px rgba(167, 139, 250, 0.4);
+  }
+
+  @keyframes sparkle-blink {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  /* ── Horisontal lens-flare linje ── */
+  .lens-flare {
+    position: absolute;
+    top: 48%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(147, 197, 253, 0) 15%,
+      rgba(147, 197, 253, 0.4) 40%,
+      rgba(255, 255, 255, 0.7) 50%,
+      rgba(167, 139, 250, 0.4) 60%,
+      rgba(167, 139, 250, 0) 85%,
+      transparent 100%
+    );
+    animation: flare-sweep 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  @keyframes flare-sweep {
+    0%, 100% { opacity: 0; transform: translate(-50%, -50%) scaleX(0.3); }
+    25% { opacity: 0; }
+    50% { opacity: 1; transform: translate(-50%, -50%) scaleX(1); }
+    75% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="logo-container">
+    <!-- Sparkle-partikler placeret rundt om teksten -->
+    <div class="sparkles">
+      <div class="sparkle" style="top:15%; left:5%;  --duration:2.5s; --delay:0.0s;"></div>
+      <div class="sparkle" style="top:10%; left:22%; --duration:3.2s; --delay:0.8s;"></div>
+      <div class="sparkle" style="top:25%; left:45%; --duration:2.0s; --delay:1.5s;"></div>
+      <div class="sparkle" style="top:8%;  left:65%; --duration:2.8s; --delay:0.3s;"></div>
+      <div class="sparkle" style="top:20%; left:85%; --duration:3.5s; --delay:1.1s;"></div>
+      <div class="sparkle" style="top:18%; left:95%; --duration:2.2s; --delay:2.0s;"></div>
+      <div class="sparkle" style="top:70%; left:10%; --duration:3.0s; --delay:0.6s;"></div>
+      <div class="sparkle" style="top:80%; left:30%; --duration:2.7s; --delay:1.8s;"></div>
+      <div class="sparkle" style="top:75%; left:55%; --duration:2.3s; --delay:0.4s;"></div>
+      <div class="sparkle" style="top:85%; left:75%; --duration:3.1s; --delay:1.3s;"></div>
+      <div class="sparkle" style="top:72%; left:92%; --duration:2.6s; --delay:0.9s;"></div>
+      <div class="sparkle" style="top:40%; left:2%;  --duration:3.4s; --delay:1.6s;"></div>
+      <div class="sparkle" style="top:50%; left:98%; --duration:2.1s; --delay:0.2s;"></div>
+    </div>
+
+    <!-- Lens-flare effekt -->
+    <div class="lens-flare"></div>
+
+    <!-- Logo-tekst -->
+    <div class="brand">T1D SIMULATOR</div>
+    <div class="brand-slogan">Try. Learn. Repeat.</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Diagrammaker"
+  short_description: "Lav fysiologiske SVG-diagrammer"
+  default_prompt: "Use $diagrammaker to create a physiological model diagram for the T1D simulator."
+
+policy:
+  allow_implicit_invocation: true

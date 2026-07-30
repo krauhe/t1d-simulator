@@ -1,0 +1,40 @@
+{
+  "type": "compartment-diagram",
+  "title": "Dietary fat → FFA-induced insulin resistance (Wolpert 2013)",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "stomach",   "label": "Stomach",            "var": "fatStomach",   "unit": "g fat",          "color": "fat",          "type": "depot" },
+    { "id": "intestine", "label": "Intestine",           "var": "fatIntestine", "unit": "τFatAbs ≈ 150 min", "color": "fat",          "type": "depot" },
+    { "id": "ffa",       "label": "Plasma FFA",          "var": "ffaBlood",     "unit": "t½ ≈ 180 min",   "color": "fat",          "type": "plasma" },
+    { "id": "hill",      "label": "Hill resistance",     "var": "FFAⁿ/(EC50ⁿ+FFAⁿ)", "color": "fat",    "type": "effect" },
+    { "id": "isf",       "label": "Effective ISF",       "var": "ISF/ffaResist","unit": "up to −42 %",    "color": "insulin-fast", "type": "effect" },
+    { "id": "kb",        "label": "kb1, kb2, kb3",       "var": "x1, x2, x3",  "color": "insulin-fast",  "type": "effect",        "rank": "max" },
+    { "id": "tau",       "label": "Carb absorption τG",  "var": "+ fatDelay",   "color": "carb",          "type": "effect",        "rank": "max" }
+  ],
+  "flows": [
+    { "from": "external",  "to": "stomach",   "label": "",                          "externalLabel": "fat meal (F g)",         "kind": "input" },
+    { "from": "stomach",   "to": "intestine", "label": "1/τG",                      "kind": "mass" },
+    { "from": "intestine", "to": "ffa",       "label": "1/τFatAbs",                 "kind": "mass" },
+    { "from": "intestine", "to": "tau",       "label": "fatDelay = 18·ln(1+fatIntestine/10)", "kind": "signal" },
+    { "from": "ffa",       "to": "external",  "label": "k_FFA·ffa",  "externalLabel": "oxidation / re-esterification (t½ ≈ 180 min)", "kind": "elimination" },
+    { "from": "ffa",       "to": "hill",      "label": "saturable binding",          "kind": "signal" },
+    { "from": "hill",      "to": "isf",       "label": "÷ (1 + 0.42·H)",            "kind": "signal" },
+    { "from": "isf",       "to": "kb",        "label": "scales each tick",           "kind": "signal" }
+  ],
+  "caption": {
+    "scope": "Dietary fat absorption and the resulting delayed-phase FFA-mediated insulin resistance, based on Wolpert et al. (Wolpert 2013: 60 g fat meal → +42 % insulin requirement at 5 h post-meal). Intestinal fat simultaneously drives two outputs: (1) incremental τG via fatDelay, slowing concurrent carbohydrate absorption as fat displaces gut motility; (2) entry into plasma as free fatty acids (ffaBlood, t½ ≈ 180 min via muscle oxidation and hepatic re-esterification), which activates a Hill-saturation resistance function that divides the effective ISF by up to 1.42. The reduced ISF rescales kb1/kb2/kb3 every simulation tick, so x1/x2/x3 (transport, peripheral disposal, and EGP suppression) all weaken proportionally — a single ISF modifier feeds back into all three Hovorka effect channels.",
+    "variables": [
+      { "symbol": "fatStomach",   "category": "compartment", "definition": "fat mass in stomach compartment (g)" },
+      { "symbol": "fatIntestine", "category": "compartment", "definition": "fat mass in small intestine compartment (g)" },
+      { "symbol": "ffaBlood",     "category": "compartment", "definition": "dietary free-fatty-acid plasma pool (g-equivalent); separate from the lipolysis FFA pool used in ketogenesis" },
+      { "symbol": "FFAⁿ/(EC50ⁿ+FFAⁿ)", "category": "compartment", "definition": "Hill saturation function for FFA resistance (n = 2, EC50 = 8 g); output range 0–1" },
+      { "symbol": "ISF/ffaResist","category": "compartment", "definition": "effective insulin sensitivity factor after FFA attenuation; denominator ffaResist = 1 + FFA_RESIST_MAX·H ranges 1.0–1.42" },
+      { "symbol": "x1, x2, x3",  "category": "compartment", "definition": "Hovorka effect compartments: x1 = transport (Q1→Q2), x2 = peripheral disposal, x3 = EGP suppression — all attenuated when ISF is reduced" },
+      { "symbol": "+ fatDelay",   "category": "compartment", "definition": "additive increment to τG (carbohydrate absorption time constant); formula: 18·ln(1 + fatIntestine/10) min" },
+      { "symbol": "τFatAbs",      "category": "flow", "definition": "intestinal fat absorption time constant (≈ 150 min)" },
+      { "symbol": "fatDelay",     "category": "flow", "definition": "intestinal-fat-driven delay added to τG = 18·ln(1 + fatIntestine/10); proportional to current intestinal fat load" },
+      { "symbol": "F",            "category": "flow", "definition": "fat content of the ingested meal (g); external input" },
+      { "symbol": "kb1, kb2, kb3","category": "flow", "definition": "Hovorka build-up rate constants for x1/x2/x3 — rescaled every tick by the effective ISF modifier" }
+    ]
+  }
+}

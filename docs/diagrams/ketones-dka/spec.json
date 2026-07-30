@@ -1,0 +1,54 @@
+{
+  "type": "compartment-diagram",
+  "title": "Ketone & DKA model — FFA-driven, two-gate ketogenesis (Cahill / Kitabchi)",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "I",        "label": "Plasma insulin",              "var": "I",            "unit": "mU/L",                          "color": "insulin-fast", "type": "plasma" },
+
+    { "id": "lipGate",  "label": "Lipolysis gate (HSL)",        "var": "EC50ⁿ / (EC50ⁿ + Iⁿ)", "unit": "EC50 = 8 mU/L, n = 3",         "color": "ketone", "type": "effect" },
+    { "id": "cpt1Gate", "label": "CPT-1 gate",                  "var": "1 − supp · Iⁿ / (EC50ⁿ + Iⁿ)", "unit": "EC50 = 8 mU/L, n = 4", "color": "ketone", "type": "effect" },
+
+    { "id": "ffa",      "label": "FFA (lipolysis)",             "var": "ffaLipolysis", "unit": "t½ ≈ 60 min",         "color": "fat",    "type": "plasma" },
+    { "id": "bhb",      "label": "Plasma BHB",                  "var": "BHB",          "unit": "mmol/L (clamp 0–20)",      "color": "ketone", "type": "plasma" },
+
+    { "id": "muscleBrain", "label": "Muscle + brain oxidation", "var": "MM clearance", "unit": "Vmax · BHB / (Km + BHB)", "color": "muscle", "type": "tissue" },
+    { "id": "renal",    "label": "Renal excretion",             "var": "MM excretion", "unit": "BHB > 0.5 mmol/L",             "color": "kidney", "type": "tissue" },
+
+    { "id": "load",     "label": "Acidosis load",               "var": "acidosisLoad", "unit": "BHB > 3.0, gate at I",         "color": "stress", "type": "tissue" },
+    { "id": "gameover", "label": "DKA game over",               "var": "load ≥ 600",                                       "color": "stress", "type": "tissue", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "I",        "to": "lipGate",     "label": "suppresses",                   "kind": "signal" },
+    { "from": "I",        "to": "cpt1Gate",    "label": "suppresses",                   "kind": "signal" },
+
+    { "from": "lipGate",  "to": "ffa",         "label": "LIPOLYSIS_MAX · gate",    "kind": "mass" },
+    { "from": "ffa",      "to": "bhb",         "label": "× CPT-1 · k_BHB",  "kind": "mass" },
+    { "from": "cpt1Gate", "to": "bhb",         "label": "modulates",                   "kind": "signal" },
+
+    { "from": "bhb",      "to": "muscleBrain", "label": "oxidized (HR boost)",          "kind": "elimination" },
+    { "from": "bhb",      "to": "renal",       "label": "excreted",                    "kind": "elimination" },
+
+    { "from": "bhb",      "to": "load",        "label": "BASE·excess + ACCEL·excess²", "kind": "signal" },
+    { "from": "I",        "to": "load",        "label": "smoothstep gate",             "kind": "signal" },
+    { "from": "load",     "to": "gameover",    "label": "≥ 600",                  "kind": "elimination" }
+  ],
+  "caption": {
+    "scope": "FFA-driven ketogenesis and DKA acidosis model implemented in the T1D simulator, structured after the ketone physiology described in Cahill Jr GF, N Engl J Med 282:668-675 (1970) for the two-gate ketogenesis pathway, and DKA severity criteria from Kitabchi et al., Diabetes Care 32:1335-1343 (2009). Plasma insulin I suppresses ketone production at two sequential gates: (1) the lipolysis gate — insulin inhibits hormone-sensitive lipase (HSL) via a Hill function (EC50 = 8 mU/L, n = 3), reducing FFA release from adipose; (2) the CPT-1 gate — insulin raises malonyl-CoA via acetyl-CoA carboxylase (ACC), blocking carnitine palmitoyltransferase-1 and preventing mitochondrial FFA import (EC50 = 8 mU/L, n = 4). Both gates must be open for ketone production: BHB production rate = LIPOLYSIS_MAX * lipolysisGate * ffaLipolysis * cpt1Activity * k_BHB. BHB is removed by Michaelis-Menten oxidation in muscle and brain (exercise-boosted) and by renal excretion above 0.5 mmol/L. Acidosis load accumulates above BHB 3.0 mmol/L with a smoothstep insulin gate that prevents nutritional ketosis from triggering DKA; game over fires when acidosisLoad reaches 600.",
+    "variables": [
+      { "symbol": "I",              "category": "compartment", "definition": "plasma insulin concentration (mU/L) — master suppressor of both ketogenic gates" },
+      { "symbol": "ffaLipolysis",   "category": "compartment", "definition": "FFA pool released from adipose lipolysis (mmol/L equivalent); separate from dietary ffaBlood; t1/2 approx 60 min via oxidation and re-esterification" },
+      { "symbol": "BHB",            "category": "compartment", "definition": "plasma beta-hydroxybutyrate (mmol/L); clamped to 0-20 range; dominant circulating ketone body" },
+      { "symbol": "MM clearance",   "category": "compartment", "definition": "Michaelis-Menten oxidation sink representing muscle and brain BHB uptake; Vmax = 0.02, Km = 2.0; multiplied by (1 + max(0, deltaHR/120)) during exercise" },
+      { "symbol": "MM excretion",   "category": "compartment", "definition": "renal ketone excretion sink; active above BHB 0.5 mmol/L threshold; BHB_RENAL_VMAX = 0.005/min, Km = 2.0" },
+      { "symbol": "acidosisLoad",   "category": "compartment", "definition": "running acidosis accumulator (dimensionless); driven by BHB excess above 3.0 mmol/L; recovers with t1/2 = 45 min when BHB falls below threshold" },
+      { "symbol": "load >= 600",    "category": "compartment", "definition": "DKA game-over compartment; triggered when acidosisLoad reaches 600, representing severe metabolic acidosis per Kitabchi 2009 criteria" },
+      { "symbol": "LIPOLYSIS_MAX",  "category": "flow",        "definition": "maximum lipolysis flux constant (mmol/L/min at I = 0)" },
+      { "symbol": "EC50n / (EC50n + In)", "category": "flow", "definition": "Hill suppression term for HSL gate: EC50 = 8 mU/L, n = 3; equals 1.0 at I = 0, approaches 0 at high insulin" },
+      { "symbol": "1 - supp * In / (EC50n + In)", "category": "flow", "definition": "Hill suppression term for CPT-1 gate: EC50 = 8 mU/L, n = 4; nearly binary — 1.0 at I = 0, approx 0.05 at basal insulin levels" },
+      { "symbol": "k_ffa",          "category": "flow",        "definition": "first-order FFA clearance rate constant; t1/2 = ln(2)/k_ffa approx 60 min; represents combined oxidation and re-esterification" },
+      { "symbol": "x CPT-1 * k_BHB", "category": "flow",      "definition": "net BHB production rate per unit FFA: product of cpt1Activity and BHB_PROD_RATE constant; both gates must be open for nonzero flux" },
+      { "symbol": "BASE*excess + ACCEL*excess2", "category": "flow", "definition": "acidosis accumulation rate; excess = BHB - 3.0 when BHB > 3.0; ACCEL term provides progressive acceleration mimicking pH drop kinetics from Kitabchi 2009" },
+      { "symbol": "smoothstep gate", "category": "flow",       "definition": "insulin-based gate on acidosis accumulation: 0 when insulin suppression <= 0.3, 1 when >= 0.5; prevents nutritional ketosis (insulin-sufficient fasting) from triggering DKA" }
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dawn phenomenon — hybrid HGP + circadian ISF model — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Dawn phenomenon — hybrid HGP + circadian ISF model (Bolli &amp; Gerich 1984 / simulator extension)</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="Dawn phenomenon — hybrid HGP + circadian ISF model">
+    </object>
+  </div>
+  <p class="scope">Simulator implementation of the dawn phenomenon (Bolli &amp; Gerich, <em>N Engl J Med</em> 310:746-750, 1984), split into two coupled mechanisms. <strong>Mechanism 1 — hepatic glucose output:</strong> a sine-arc circadianCortisol signal (peak 08:00, amplitude 0.15) is added to stressMultiplier, raising EGP = EGP&#x2080; &middot; max(0, stressMultiplier &minus; x3). <strong>Mechanism 2 — peripheral insulin sensitivity:</strong> circadianISF varies from 0.70 (08:00) to 1.20 (evening) and rescales kb1/kb2/kb3, so the same plasma insulin produces less peripheral effect at dawn. The amplitude baseAmp is recalculated at midnight as 0.15 &middot; (1 + 0.12&middot;h_lost) &middot; (1 + 0.30&middot;chronicStress), so poor sleep and residual cortisol amplify the next morning's rise. Combined effect at 08:00: stressMultiplier contribution 1.15 and circadianISF 0.70 yield approximately 64&nbsp;% more insulin needed than at evening baseline. This is a simulator extension; the original Bolli/Gerich observation has been extended with a circadian ISF component informed by Schmidt et al. (2014).</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">t</td><td class="def">time of day in 24-hour clock (00–24 h), drives circadian phase for both mechanisms</td></tr>
+        <tr><td class="symbol">h_lost</td><td class="def">hours of sleep lost relative to target (clamped 0–4 h); read from player input, resets at 07:00</td></tr>
+        <tr><td class="symbol">chronicStress</td><td class="def">residual cortisol carry-over from previous day (t&#x00BD; ≈ 12 h); updated each midnight</td></tr>
+        <tr><td class="symbol">baseAmp · f(h_lost, chronic)</td><td class="def">dawn cortisol amplitude = 0.15 · (1 + 0.12·h_lost) · (1 + 0.30·chronicStress), clamped 0.05–0.35</td></tr>
+        <tr><td class="symbol">circadianCortisol</td><td class="def">circadian cortisol signal — symmetric sine arc, rises 04:00, peaks 08:00, falls 12:00; amplitude set by baseAmp</td></tr>
+        <tr><td class="symbol">circadianISF</td><td class="def">circadian insulin sensitivity factor — cosine interpolation: 1.20 (00–04), 0.70 (08:00), 1.00 (14:00), 1.20 (19–24)</td></tr>
+        <tr><td class="symbol">stressMultiplier</td><td class="def">combined stress term (&ge; 1) fed into EGP equation; includes glycogenBaseline, gngBaseline, acute, chronic, dawn, and protein-glucagon components</td></tr>
+        <tr><td class="symbol">currentISF</td><td class="def">net ISF modifier = baseISF · circadianISF · vasodilatation · postExBoost / (insulinResist · ffaResist)</td></tr>
+        <tr><td class="symbol">EGP = EGP&#x2080; · max(0, stress &minus; x3)</td><td class="def">hepatic endogenous glucose production; stress raises EGP, x3 (insulin action) suppresses it</td></tr>
+        <tr><td class="symbol">kb1, kb2, kb3</td><td class="def">build-up rate constants for insulin effect compartments x1 (transport), x2 (disposal), x3 (EGP suppression); all scaled each tick by currentISF</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">+12 % / h_lost</td><td class="def">sleep deficit contribution to dawn amplitude: +12 percentage points per hour of lost sleep</td></tr>
+        <tr><td class="symbol">+30 % / chronicStress</td><td class="def">chronic stress contribution to dawn amplitude: +30 percentage points per unit of chronicStress</td></tr>
+        <tr><td class="symbol">phase (04→12 sine arc)</td><td class="def">clock-to-circadianCortisol mapping: active window 04:00–12:00, symmetric sine shape, peak at 08:00</td></tr>
+        <tr><td class="symbol">phase (cosine interp.)</td><td class="def">clock-to-circadianISF mapping: cosine interpolation through four control points across 24 h</td></tr>
+        <tr><td class="symbol">EGP</td><td class="def">hepatic glucose output rate entering plasma pool Q1 (mmol/min)</td></tr>
+        <tr><td class="symbol">kb_i (ISF-scaled)</td><td class="def">ISF-scaled build-up rates delivered to x1, x2, x3 each simulation tick</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

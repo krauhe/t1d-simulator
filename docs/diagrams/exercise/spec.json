@@ -1,0 +1,54 @@
+{
+  "type": "compartment-diagram",
+  "title": "Exercise model — Resalat E1 pathway with simulator extensions",
+  "direction": "top-to-bottom",
+  "straightLines": true,
+  "compartments": [
+    { "id": "activity", "label": "Activity profile", "var": "type, intensity", "color": "muscle", "type": "external" },
+    { "id": "hr", "label": "Heart rate", "var": "HR", "unit": "bpm", "color": "muscle", "type": "effect" },
+    { "id": "E1", "label": "Contraction response", "var": "E1", "unit": "τ = 5 min", "color": "muscle", "type": "effect" },
+    { "id": "hepatic", "label": "Exercise hepatic drive", "var": "exerciseHepaticDrive", "unit": "+ EGP_ex; t½ = 30 min", "color": "liver", "type": "effect" },
+    { "id": "session", "label": "Delayed sensitivity", "var": "fast + early + late", "unit": "continuous session response", "color": "insulin-fast", "type": "effect" },
+    { "id": "glycogen", "label": "Muscle glycogen", "var": "muscleGlycogenGrams", "unit": "g", "color": "muscle", "type": "tissue" },
+    { "id": "pulse", "label": "Depot perfusion", "var": "pulseFactor", "color": "insulin-fast", "type": "effect" },
+    { "id": "Q1", "label": "Plasma glucose", "var": "Q1", "unit": "mmol", "color": "plasma", "type": "plasma", "rank": "max" },
+    { "id": "Q2", "label": "Peripheral glucose", "var": "Q2", "unit": "mmol", "color": "glucose", "type": "tissue", "rank": "max" },
+    { "id": "sc", "label": "SC insulin depots", "var": "S1/S2, S1b/S2b", "color": "insulin-fast", "type": "depot", "rank": "max" },
+    { "id": "insulinAction", "label": "Muscle insulin action", "var": "x1, x2 EC50 shift", "color": "insulin-fast", "type": "effect", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "external", "to": "activity", "label": "", "externalLabel": "selected exercise", "kind": "input" },
+    { "from": "activity", "to": "hr", "label": "target HR", "kind": "signal" },
+    { "from": "activity", "to": "hepatic", "label": "rate, ceiling", "kind": "signal" },
+    { "from": "activity", "to": "session", "label": "scale, delay", "kind": "signal" },
+    { "from": "activity", "to": "glycogen", "label": "glycogenUseScaling", "kind": "signal" },
+    { "from": "hr", "to": "E1", "label": "exerciseInput", "kind": "signal" },
+    { "from": "hr", "to": "pulse", "label": "", "kind": "signal" },
+    { "from": "E1", "to": "Q2", "label": "−β·E1", "kind": "signal" },
+    { "from": "hepatic", "to": "Q1", "label": "", "kind": "signal" },
+    { "from": "session", "to": "insulinAction", "label": "cap: 2.5×", "kind": "signal" },
+    { "from": "glycogen", "to": "session", "label": "early × empty fraction", "kind": "signal" },
+    { "from": "pulse", "to": "sc", "label": "faster U_I, U_Ib", "kind": "signal" }
+  ],
+  "caption": {
+    "scope": "The contraction pathway adapts the E1 equation from Resalat et al. (PLOS ONE 15:e0237511, 2020): normalized heart-rate excess is filtered with a 5-minute time constant and enters Q2 once as β·E1. Exercise-specific hepatic output, delayed insulin sensitivity, muscle-glycogen turnover and pulseFactor are explicit simulator extensions calibrated or constrained against exercise literature.",
+    "variables": [
+      { "symbol": "type, intensity", "category": "compartment", "definition": "selected activity profile and intensity; supplies independent parameters for contraction uptake, hepatic drive, delayed sensitivity and glycogen use" },
+      { "symbol": "HR", "category": "compartment", "definition": "current heart rate in beats per minute; approaches the activity-specific target gradually" },
+      { "symbol": "E1", "category": "compartment", "definition": "dimensionless contraction-response state; dE1/dt = (exerciseInput − E1) / 5 min" },
+      { "symbol": "exerciseHepaticDrive", "category": "compartment", "definition": "bounded exercise-specific hepatic-output state; decays after exercise with a 30-minute half-life" },
+      { "symbol": "fast + early + late", "category": "compartment", "definition": "continuous delayed insulin-sensitivity components with independent activity-specific scales and 15-minute, 4-hour and 18-hour decay half-lives" },
+      { "symbol": "muscleGlycogenGrams", "category": "compartment", "definition": "intracellular bookkeeping pool used during exercise and replenished afterward without an additional plasma-glucose drain" },
+      { "symbol": "pulseFactor", "category": "compartment", "definition": "heart-rate-dependent multiplier for rapid and basal subcutaneous insulin absorption" },
+      { "symbol": "Q1", "category": "compartment", "definition": "plasma-accessible glucose pool in mmol" },
+      { "symbol": "Q2", "category": "compartment", "definition": "peripheral glucose pool in mmol; receives the contraction-mediated drain" },
+      { "symbol": "S1/S2, S1b/S2b", "category": "compartment", "definition": "rapid and basal two-stage subcutaneous insulin depots" },
+      { "symbol": "x1, x2 EC50 shift", "category": "compartment", "definition": "muscle insulin-action channels whose EC50 is shifted by the delayed sensitivity response; hepatic x3 is unchanged" },
+      { "symbol": "exerciseInput", "category": "flow", "definition": "max(0, (HR − HR_rest) / HR_rest) × contractionUptakeScaling" },
+      { "symbol": "β·E1", "category": "flow", "definition": "insulin-independent contraction-mediated glucose uptake applied once in the Q2 equation" },
+      { "symbol": "EGP_ex", "category": "flow", "definition": "hepatic glucose output generated by exerciseHepaticDrive × liver-glycogen availability" },
+      { "symbol": "glycogenUseScaling", "category": "flow", "definition": "activity-specific scale for muscle-glycogen consumption only" },
+      { "symbol": "U_I, U_Ib", "category": "flow", "definition": "rapid and basal insulin appearance rates accelerated by pulseFactor" }
+    ]
+  }
+}

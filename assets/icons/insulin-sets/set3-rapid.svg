@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- SÆT 3 RAPID — skarp PK-peak-kurve (hurtig top, hurtig fald) -->
+  <path d="M5 3 C 7 5, 7 7, 5 8 C 3 7, 3 5, 5 3 Z" fill="#14B8A6" stroke="#94A3B8" stroke-width="0.8"/>
+  <!-- Skarp peak -->
+  <path d="M2 19 Q 8 18, 11 5 Q 14 18, 22 19"
+        fill="none" stroke="#14B8A6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="2" y1="21" x2="22" y2="21" stroke="#94A3B8" stroke-width="0.8" stroke-linecap="round"/>
+</svg>

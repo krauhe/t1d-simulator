@@ -1,0 +1,618 @@
+/* =============================================================================
+   MOBILE.CSS — Portrait HUD layout for the mobile T1D Simulator shell
+   =============================================================================
+   The mobile shell's own layout. Design tokens (:root) mirror the desktop
+   style.css so the look stays familiar (see mobile/MOBILE-DESIGN.md §6). Unlike
+   the throwaway mockup this has NO device frame — it fills the whole viewport
+   (100dvh). Engine wiring lives in mobile.js.
+   ============================================================================= */
+:root{
+  --bg-primary:#0d1526; --bg-secondary:#141d2f;
+  --bg-card:rgba(20,29,47,0.98); --bg-card-glass:rgba(20,29,47,0.55);
+  --bg-elevated:rgba(255,255,255,0.07); --bg-hover:rgba(255,255,255,0.14);
+  --text-primary:#f5f8fc; --text-secondary:#c4d5e8; --text-muted:#8fa8c8;
+  --green:#4ade80; --green-rgb:74,222,128; --red:#ef4444; --orange:#fb923c;
+  --blue:#7dd3fc; --yellow:#fde047;
+  /* Bordeaux (deep wine red) — the close/exit affordance colour (welcome screen's
+     close button + the sheet/overlay close X's) so "leave" reads warmer and on-theme
+     rather than using the bright --red alert colour. */
+  --bordeaux:#9c3048; --bordeaux-rgb:156,48,72;
+  --macro-carb:var(--green); --macro-protein:#60a5fa; --macro-fat:#f59e0b;
+  --theme-insulin-start:#2563eb; --theme-insulin-end:#1d4ed8; --theme-insulin-border:rgba(96,165,250,0.42);
+  --theme-food-start:#d97706; --theme-food-end:#92400e; --theme-food-border:rgba(251,191,36,0.42);
+  --theme-activity-start:#16a34a; --theme-activity-end:#047857; --theme-activity-border:rgba(52,211,153,0.42);
+  --theme-kit-start:#475569; --theme-kit-end:#334155; --theme-kit-border:rgba(148,163,184,0.42);
+  --border-subtle:rgba(147,197,253,0.12); --border-medium:rgba(147,197,253,0.20);
+  --blue-glow:0 0 15px rgba(147,197,253,0.10),0 0 40px rgba(147,197,253,0.06);
+  --shadow-lg:0 8px 30px rgba(0,0,0,0.5),0 0 35px rgba(147,197,253,0.10);
+  --radius-sm:6px; --radius-md:12px; --radius-lg:16px; --radius-xl:18px;
+  --bounce:cubic-bezier(0.175,0.885,0.32,1.275);
+  /* Typography tokens mirroring the desktop style.css so the HUD fragments (copied
+     verbatim from desktop) resolve their font sizes/weights. --font-hero is a touch
+     larger than desktop (38 vs 32px) to keep the BG number prominent on a phone. */
+  --font-hero:38px; --font-ui:11px; --font-weight-value:600; --font-weight-label:600;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  background:var(--bg-primary); color:var(--text-primary);
+  font-family:Inter,system-ui,sans-serif; font-variant-numeric:tabular-nums;
+  min-height:100dvh;
+}
+/* #app is the shell. Phone-first: it fills the screen. On a WIDE desktop browser
+   it shrinks to a centred phone-sized frame so the mobile layout can be tested on
+   a PC (see "test on PC" note in MOBILE-DESIGN.md). */
+#app{
+  height:100dvh;
+  /* overflow:hidden gør elementet til en skjult scroll-container. Når en knap i en
+     overlay får fokus, kan browseren derfor ændre #app.scrollTop og trække hele HUD'et
+     op, så lukkede bottom sheets bliver synlige. overflow:clip klipper på samme måde,
+     men kan ikke scrolles automatisk. hidden står først som fallback til ældre browsere. */
+  overflow:hidden;
+  overflow:clip;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+}
+/* #game-view — the blurrable game surface (top/HUD/graph/dock). Fills #app as the flex
+   column so .graph-wrap keeps its flex:1. The symptom VFX applies its filter HERE only;
+   action sheets/overlays sit outside it and stay sharp during a hypo/DKA episode. */
+#game-view{ flex:1; min-height:0; display:flex; flex-direction:column; }
+/* Symptom VFX tunnel-vision overlay — copied from desktop #symptom-vignette (style.css).
+   position:fixed (body-level, so #game-view's filter can't break it). Sits above the game
+   surface but BELOW the action sheets/overlays (z-index 45 < scrim 48 < sheet 50 <
+   overlays 60-70) so popups stay readable during an episode. */
+#symptom-vignette{ position:fixed; inset:0; pointer-events:none; z-index:45; opacity:0;
+  transition:opacity 0.8s ease;
+  background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%); }
+@media (min-width:521px){
+  body{ background:#05080f; display:flex; align-items:center; justify-content:center; padding:24px; }
+  #app{ width:393px; height:852px; max-height:94vh; border-radius:42px;
+        box-shadow:0 0 0 12px #11151f, 0 0 0 14px #2a3240, var(--shadow-lg); }
+}
+
+/* 1. Top strip */
+/* padding-top adds env(safe-area-inset-top) so the top strip drops below a notch,
+   speaker cutout or dynamic island (the viewport meta sets viewport-fit=cover).
+   The inset is 0 on phones without a cutout and on the desktop preview frame. */
+.top{display:flex; align-items:center; gap:8px; padding:calc(14px + env(safe-area-inset-top)) 12px 6px; flex-shrink:0; z-index:20;}
+.icon-btn{width:42px; height:42px; flex-shrink:0; border:1px solid var(--border-subtle); background:var(--bg-card-glass); backdrop-filter:blur(18px); border-radius:var(--radius-md); color:var(--text-primary); font-size:19px; display:flex; align-items:center; justify-content:center;}
+.daytime{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; background:var(--bg-card-glass); backdrop-filter:blur(18px); border:1px solid var(--border-subtle); border-radius:var(--radius-md); min-height:42px; padding:4px 8px; color:var(--text-secondary);}
+.dt-mode{font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-muted);}
+/* Spread the day / time / day-night icon evenly across the full panel width
+   (day left, time centre, icon right) instead of a tight centred cluster. The dot
+   separator is hidden — the gaps do the separating. */
+.dt-day{display:flex; align-items:center; justify-content:space-between; width:100%; gap:7px; font-size:14px; font-weight:600;}
+.dt-day .sep{display:none;}
+.dt-tot{color:var(--text-muted); font-weight:600;}
+.daytime .num{color:var(--text-primary);} .daytime .sep{color:var(--text-muted);}
+/* Day/night icon with the desktop's pulsing glow (sun = gold, moon = silver-blue),
+   wrapper carries is-day/is-night so ::before can draw the glow behind the icon. */
+.daynight-wrap{position:relative; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; vertical-align:middle; isolation:isolate;}
+.daynight-icon{width:100%; height:100%; display:block; position:relative; z-index:1; transition:filter .5s ease, opacity .5s ease;}
+.daynight-wrap::before{content:''; position:absolute; inset:-10px; border-radius:50%; background:radial-gradient(circle, var(--daynight-glow, transparent) 0%, transparent 65%); pointer-events:none; z-index:0; animation:daynight-twinkle 2.6s ease-in-out infinite;}
+.daynight-wrap.is-day{--daynight-glow:rgba(251,191,36,0.7);}
+.daynight-wrap.is-day .daynight-icon{filter:drop-shadow(0 0 4px rgba(251,191,36,0.95)) drop-shadow(0 0 10px rgba(251,191,36,0.55)) drop-shadow(0 0 16px rgba(251,146,60,0.3));}
+.daynight-wrap.is-night{--daynight-glow:rgba(165,180,252,0.6);}
+.daynight-wrap.is-night .daynight-icon{filter:drop-shadow(0 0 4px rgba(199,210,254,0.85)) drop-shadow(0 0 10px rgba(165,180,252,0.55)) drop-shadow(0 0 16px rgba(129,140,248,0.3));}
+@keyframes daynight-twinkle{0%,100%{transform:scale(0.835); opacity:.5;} 50%{transform:scale(1.015); opacity:.8;}}
+
+/* 2. HUD row — two panels mirroring the desktop capsule fragments:
+   BG HERO (big zone-coloured number + trend, with IOB/COB stacked below — the desktop
+   #cgm-hero "now" fragment) | STATS (TIR/BSgns/kcal/points). The row keeps the glass
+   look; the BG hero on the left is the prominent panel. */
+.hud-row{margin:6px 12px 0; display:flex; align-items:stretch; gap:8px; flex-shrink:0;}
+.hud-panel{background:var(--bg-card-glass); backdrop-filter:blur(24px); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); display:flex; align-items:center;}
+/* BG HERO panel (left): base green glow. Column layout so the BG number row sits above
+   the IOB/COB info-pills — exactly like desktop #cgm-hero. flex:1 + min-width:0 so it
+   shares the row exactly 50/50 with the stats panel (symmetric, equal width). */
+/* BG hero shares the row with stats, but gets a little more width to hold the
+   character on the right (A4). Internally a row: BG/IOB/COB stack on the left,
+   character on the right. */
+/* space-between pins the BG/IOB/COB stack to the LEFT edge and the character to the
+   RIGHT edge: the character stays put when the BG number changes width (2 -> 3 digits),
+   since only the empty gap between them flexes. margin-left on the character guarantees
+   breathing room even when the number is at its widest. */
+.hud-hero{flex:1.4; min-width:0; flex-direction:row; justify-content:space-between; align-items:center; gap:8px; padding:10px 12px; box-shadow:0 0 24px rgba(var(--green-rgb),0.10);}
+.cgm-hero-main{display:flex; flex-direction:column; justify-content:center; align-items:flex-start; gap:4px; min-width:0;}
+/* Character: full figure (not a cropped circle) so the build reads — child/adult/large.
+   Ingen ramme eller interaktion; karakteren vælges før spilstart. */
+.cgm-character{display:flex; flex-direction:column; align-items:center; gap:2px; margin-left:12px; padding:0; background:none; border:none; color:var(--text-secondary); flex-shrink:0;}
+.cgm-character-portrait{position:relative; display:block; width:44px; height:44px; flex-shrink:0;}
+.cgm-character-avatar{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity 4s ease-in-out; pointer-events:none;}
+.cgm-character-avatar.is-visible{opacity:1;}
+.cgm-character-name{font-size:11px; font-weight:600; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:64px;}
+@media (prefers-reduced-motion:reduce){.cgm-character-avatar{transition-duration:.01ms;}}
+/* STATS panel (right): the desktop #stats-fragment layout. flex:1 + min-width:0 mirrors
+   the hero so the two panels are the same width (split the row 50/50). */
+.hud-stats{flex:1; min-width:0; flex-direction:column; justify-content:space-evenly; align-items:stretch; gap:0; padding:6px 12px;}
+
+/* --- Desktop #info-pills / .info-pill. Inside the BG hero the pills stack vertically
+   (IOB above COB), mirroring desktop's #capsule-bar #info-pills column. --- */
+#info-pills{display:flex; flex-direction:column; align-items:center; gap:2px;}
+.info-pill{background:none; border:none; padding:0; font-size:var(--font-ui); color:var(--text-muted);}
+.info-pill strong{color:var(--text-primary); font-weight:var(--font-weight-value); font-variant-numeric:tabular-nums; min-width:28px; display:inline-block; text-align:right;}
+
+/* --- Desktop #cgm-hero top row. The BG hero lives in the dock, so we mirror the
+   desktop's #capsule-bar DOCK override (style.css:1279-1288): number 26px / trend
+   22px, auto width, centred — NOT the larger overlay variant (38px, min-width:80px,
+   right-aligned), which left a gap and pushed the number off-centre here. --- */
+.cgm-hero-row{display:flex; align-items:center; gap:8px;}
+/* BG number = Inter tabular-nums (NOT Orbitron — per CLAUDE.md, Orbitron is logo/
+   brand only; the desktop .cgm-number is Inter 800). */
+/* Fixed min-width sized to the widest BG string ("14.2"/"40.0" ~57px at this font) +
+   left-align: the number is anchored at the panel's left edge AND the meta column
+   (mmol/L + trend arrow) sits at a fixed x, so neither moves when the digit count
+   changes (5.5 -> 14.2). Only the empty slack inside the number box flexes. */
+.cgm-number{font-size:26px; font-weight:800; color:var(--green); line-height:1; min-width:58px; text-align:left; display:inline-block; font-variant-numeric:tabular-nums; transition:color 0.3s var(--bounce);}
+.cgm-number.bg-target{color:var(--green);} .cgm-number.bg-elevated{color:var(--orange);}
+.cgm-number.bg-danger{color:var(--red);} .cgm-number.bg-offline{color:var(--text-muted);}
+.cgm-meta{display:flex; flex-direction:column; gap:2px;}
+.cgm-unit{font-size:var(--font-ui); color:var(--text-muted); font-weight:var(--font-weight-label);}
+.cgm-trend{font-size:22px; font-weight:900; color:var(--green); line-height:1; text-shadow:0 0 8px currentColor; -webkit-text-stroke:1px currentColor; min-width:auto; text-align:center; display:inline-block;}
+
+/* --- BG hero zone glow (copied verbatim from desktop #cgm-hero.glow-* style.css 866-887) --- */
+#cgm-hero{transition:box-shadow 1s ease, border-color 1s ease;}
+#cgm-hero.glow-target{box-shadow:0 0 15px rgba(52,211,153,0.2),0 0 40px rgba(52,211,153,0.1); border-color:rgba(52,211,153,0.3);}
+#cgm-hero.glow-elevated{box-shadow:0 0 20px rgba(251,146,60,0.3),0 0 50px rgba(251,146,60,0.15); border-color:rgba(251,146,60,0.4); animation:cgm-glow-warn 3s ease-in-out infinite;}
+#cgm-hero.glow-danger{box-shadow:0 0 25px rgba(239,68,68,0.4),0 0 60px rgba(239,68,68,0.2); border-color:rgba(239,68,68,0.5); animation:cgm-glow-danger 1.5s ease-in-out infinite;}
+@keyframes cgm-glow-warn{0%,100%{box-shadow:0 0 20px rgba(251,146,60,0.3),0 0 50px rgba(251,146,60,0.15);} 50%{box-shadow:0 0 35px rgba(251,146,60,0.45),0 0 70px rgba(251,146,60,0.2);}}
+@keyframes cgm-glow-danger{0%,100%{box-shadow:0 0 25px rgba(239,68,68,0.4),0 0 60px rgba(239,68,68,0.2);} 50%{box-shadow:0 0 40px rgba(239,68,68,0.55),0 0 80px rgba(239,68,68,0.3);}}
+
+/* --- Desktop #stats-fragment / .stats-frag-* (copied verbatim from style.css) --- */
+.stats-frag-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.stats-frag-label{font-size:10px; color:var(--text-muted); font-weight:500; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; text-align:left;}
+.stats-frag-sub{font-size:8px; text-transform:lowercase; letter-spacing:0; opacity:0.7; position:relative; top:1px; margin-left:1px;}
+.stats-frag-icon-img{width:18px; height:18px; display:block; object-fit:contain;}
+/* Value = number column (right-aligned, grows) + a fixed-width unit column, so the
+   NUMBERS line up vertically across rows with a constant gap to the unit. */
+.stats-frag-value{font-size:13px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; white-space:nowrap; flex:1; min-width:0; display:flex; align-items:baseline; justify-content:flex-end;}
+.stats-frag-value .sfv-num{flex:1; text-align:right;}
+/* Unit (%, mmol/L, kcal) in a fixed-width LEFT-aligned column after a constant gap, so
+   the numbers stay aligned regardless of unit width. Small + muted; keeps its own colour
+   even when the value is zone-coloured. Points has an empty unit (still reserves the
+   column so its value lines up under the others). */
+.stats-frag-unit{flex-shrink:0; width:38px; text-align:left; margin-left:4px; font-size:9px; font-weight:500; color:var(--text-muted);}
+/* Points value is always gold — the standard points colour across the game (desktop #fbbf24). */
+#points{color:#fbbf24;}
+
+/* Campaign level-info button — ported from desktop .campaign-info-btn. Glass icon in the
+   graph's top-right corner; the intro card collapses into it and tapping it reopens the
+   level intro/objectives. Toggled by syncLevelInfoBtn() (campaign only). */
+.level-info-btn{position:absolute; top:10px; right:10px; z-index:15; display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; padding:0; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-md); background:var(--bg-card-glass); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); cursor:pointer; transition:background .15s, border-color .15s, transform .1s;}
+.level-info-btn:active{transform:scale(0.96);}
+.level-info-btn img{width:30px; height:30px; display:block; object-fit:contain;}
+
+/* 3. Graph */
+.graph-wrap{flex:1; min-height:0; margin:10px 12px 0; position:relative; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border-subtle); background:rgba(8,13,24,0.6);}
+#graph{width:100%; height:100%; display:block;}
+.tip-bar{position:absolute; left:8px; right:8px; top:8px; display:flex; align-items:center; gap:10px; background:rgba(20,29,47,0.82); backdrop-filter:blur(14px); border:1px solid var(--border-medium); border-radius:var(--radius-md); padding:7px 8px; box-shadow:var(--shadow-lg); transition:opacity .4s;}
+.tip-bar .tip-bulb{width:26px; height:26px; object-fit:contain; flex-shrink:0; filter:drop-shadow(0 0 7px rgba(255,205,72,.32));}
+.tip-bar .txt{font-size:12px; line-height:1.3; color:var(--text-secondary); flex:1;}
+.tip-x{background:none; border:none; color:var(--text-muted); font-size:18px; width:24px; height:24px; flex-shrink:0;}
+/* Measurement result toast — pops in the centre of the graph after a fingerprick /
+   ketone test, then fades. */
+.measure-toast{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.9); background:rgba(20,29,47,0.92); backdrop-filter:blur(14px); border:1px solid var(--border-medium); border-radius:var(--radius-lg); padding:13px 22px; font-size:20px; font-weight:700; font-variant-numeric:tabular-nums; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:15; white-space:nowrap;}
+.measure-toast.show{opacity:1; transform:translate(-50%,-50%) scale(1);}
+
+/* 4. Bottom dock panel — desktop-dock look: blue glow, themed icon tiles + speed */
+.mdock{margin:10px 12px calc(12px + env(safe-area-inset-bottom)); padding:10px 12px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-xl); backdrop-filter:blur(10px); box-shadow:var(--blue-glow); flex-shrink:0;}
+.mdock-row{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+.mdock-item{display:flex; flex-direction:column; align-items:center; gap:5px; background:none; border:none; padding:0; cursor:pointer; font:inherit;}
+/* Pre-game (no mode started): the dock looks NORMAL and stays clickable so the player can
+   open the sheets and poke around — exactly like the desktop pre-game state. The actions
+   themselves no-op until a mode begins (guarded by actionsLive() in mobile.js), so poking
+   around never silently mutates the paused sandbox. #app.pre-start is toggled by the loop
+   on !_started; nothing here dims the dock anymore. */
+/* No tip before the game has started (nothing has happened yet). */
+.pre-start .tip-bar{display:none;}
+.mdock-icon{width:100%; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center; border:1px solid transparent;}
+.mdock-icon img{width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.25));}
+.mdock-item .lbl{font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;}
+.mdock-item.d-insulin .mdock-icon{background:linear-gradient(135deg,var(--theme-insulin-start),var(--theme-insulin-end)); border-color:var(--theme-insulin-border);}
+.mdock-item.d-food .mdock-icon{background:linear-gradient(135deg,var(--theme-food-start),var(--theme-food-end)); border-color:var(--theme-food-border);}
+.mdock-item.d-activity .mdock-icon{background:linear-gradient(135deg,var(--theme-activity-start),var(--theme-activity-end)); border-color:var(--theme-activity-border);}
+.mdock-item.d-kit .mdock-icon{background:linear-gradient(135deg,var(--theme-kit-start),var(--theme-kit-end)); border-color:var(--theme-kit-border);}
+/* Speed control = desktop speed-stepper design (capsule glow pill), on the dock panel.
+   The stepper stays centred; the physiology toggle is pinned to the right corner. */
+.mdock-speed{position:relative; display:flex; align-items:center; justify-content:center; margin-top:12px;}
+/* Physiology toggle — desktop .physiology-btn ported: subtle when off, amber/gold
+   gradient + glow when active (the active orange doubles as the "score not saved"
+   practice-mode indicator). Round pill in the dock's right corner. */
+.phys-toggle{position:absolute; right:0; top:50%; transform:translateY(-50%); width:40px; height:40px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; padding:0; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:999px; transition:background .25s, border-color .25s, box-shadow .25s;}
+/* The icon is a full-colour app-icon (rounded frame + graph curves), NOT a mono glyph,
+   so it is shown at natural colours — no invert filter. Inactive is slightly dimmed; the
+   active state lights the BUTTON amber (gradient ring + glow) around the icon, mirroring
+   desktop's .physiology-btn.active. */
+.phys-toggle img{width:26px; height:26px; object-fit:contain; display:block; opacity:.8;}
+.phys-toggle.active{background:linear-gradient(180deg,#d97706,#b45309); border-color:rgba(251,191,36,0.5); box-shadow:0 0 12px rgba(245,158,11,0.35);}
+.phys-toggle.active img{opacity:1;}
+.speed-stepper{display:inline-flex; align-items:stretch; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:999px; overflow:hidden; box-shadow:var(--blue-glow);}
+.speed-stepper button{background:none; border:none; color:var(--text-muted); height:40px;}
+.sp-step{padding:0 14px; font-size:13px;}
+.sp-step:active{background:var(--bg-hover); color:var(--text-primary);}
+.sp-step:disabled{opacity:.2;}                                  /* ▶ greyed at top speed */
+.sp-step:disabled:active{background:none; color:var(--text-muted);}
+.sp-current{display:flex; align-items:center; justify-content:center; gap:4px; min-width:104px; padding:0 10px; border-left:1px solid var(--border-subtle); border-right:1px solid var(--border-subtle); color:var(--text-secondary); font-weight:600; font-size:13px;}
+.sp-current:active{background:var(--bg-hover);}
+.sp-state{color:var(--blue); width:30px; text-align:left; letter-spacing:-2px;}
+.sp-lbl{font-variant-numeric:tabular-nums;}
+/* Visual feedback (desktop parity): arrows pulse while running (rate set per speed
+   via animation-duration in JS), static ⏸ when paused. */
+.speed-stepper.playing .sp-state{color:var(--text-secondary);}
+.speed-stepper.paused .sp-state{color:var(--text-secondary); letter-spacing:0;}
+.sp-state.pulsing{animation:speed-pulse ease-in-out infinite;}
+@keyframes speed-pulse{0%,100%{opacity:1;} 50%{opacity:.25;}}
+
+/* Bottom sheets */
+.scrim{position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:48; opacity:0; pointer-events:none; transition:opacity .25s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.sheet{position:absolute; left:0; right:0; bottom:0; z-index:50; background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl) var(--radius-xl) 0 0; padding:8px 14px calc(18px + env(safe-area-inset-bottom)); transform:translateY(110%); transition:transform .3s var(--bounce); max-height:84%; overflow-y:auto; box-shadow:0 -10px 40px rgba(0,0,0,0.6);}
+.sheet.open{transform:translateY(0);}
+/* Top-anchored panels (hamburger / settings / profile) drop DOWN from under the top
+   bar instead of sliding up from the bottom dock — they belong to the top buttons. */
+.sheet.from-top{top:56px; bottom:auto; left:8px; right:8px; border-radius:var(--radius-xl); padding-top:14px; padding-bottom:16px; max-height:calc(100% - 120px); transform:translateY(-130%); box-shadow:0 12px 40px rgba(0,0,0,0.6);}
+.sheet.from-top.open{transform:translateY(0);}
+.sheet.from-top .handle{display:none;}
+.handle{width:42px; height:5px; border-radius:99px; background:var(--text-muted); opacity:.5; margin:4px auto 10px;}
+.sheet-head{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+.sheet-head .back{background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); width:34px; height:34px; border-radius:var(--radius-md); font-size:18px; display:none;}
+.sheet-head h3{font-size:16px; display:flex; align-items:center; gap:8px;}
+.sheet-head h3 img{width:22px; height:22px;}
+/* Close (X) — same component as the level-select .ls-close, pushed to the head's
+   right edge (margin-left:auto). Always reachable, so a tall from-top sheet that
+   covers the scrim can still be dismissed without hunting for the backdrop. */
+.sheet-close{margin-left:auto; flex-shrink:0; width:34px; height:34px; border:1px solid rgba(var(--bordeaux-rgb),0.5); background:rgba(var(--bordeaux-rgb),0.16); border-radius:var(--radius-md); color:#db7c8d; font-size:20px; line-height:1; cursor:pointer;}
+.sheet-close:hover{background:rgba(var(--bordeaux-rgb),0.30); color:#f0a9b6;}
+.sheet-sub{font-size:12px; color:var(--text-muted); margin:2px 0 12px;}
+.level{display:none;} .level.show{display:block;}
+.cats{display:flex; flex-direction:column; gap:10px; margin-top:0; position:relative;}
+/* Vertical divider between the category column (left, 140px) and the "recently chosen"
+   column (right), centred in the 10px row gap so it separates the two columns cleanly. */
+.cats::before{content:''; position:absolute; top:0; bottom:0; left:145px; width:1px; background:var(--border-subtle);}
+.cat-tile{display:flex; align-items:center; gap:12px; padding:14px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); text-align:left; cursor:pointer;}
+.cat-tile img{width:34px; height:34px; object-fit:contain;}
+.cat-tile .nm{font-size:14px; font-weight:600; color:var(--text-primary);}
+.cat-tile .ds{font-size:11px; color:var(--text-muted);}
+/* Category rows: category tile (left) + "recently chosen" strip (right). Two-column
+   header labels (.cat-head) align over the two columns (same 140px left width). */
+.cat-head{display:flex; gap:10px; align-items:flex-end; margin:2px 0 8px;}
+.cat-head-cat{flex:0 0 140px; font-size:12px; color:var(--text-muted);}
+.cat-head-recent{flex:1; font-size:12px; color:var(--text-muted);}
+.cat-row{display:flex; gap:10px; align-items:stretch;}
+/* Uniform category tiles: fixed min-height so all three are the same size regardless of
+   how the name/description wraps; content vertically centred. */
+.cat-row .cat-tile{flex:0 0 140px; padding:12px; min-height:96px;}
+/* Recents = a fixed 2-column grid so each chip is always the same (half-width) size
+   whether the category has one or two recent items. */
+.cat-recents{flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.cat-recents .recent-chip{min-width:0; padding:9px 4px; justify-content:center; gap:4px;}
+.cat-recents .recent-chip img{width:26px; height:26px;}
+.cat-recents .recent-chip .nm{font-size:11px;}
+/* Visible empty state — the player can see the strip exists but has nothing yet. */
+/* Empty placeholder spans both grid columns so "Ingen endnu" reads as one empty area
+   while real chips stay half-width. */
+.cat-recents-empty{grid-column:1 / -1; display:flex; align-items:center; justify-content:center; text-align:center; color:var(--text-muted); font-size:11px; border:1px dashed var(--border-subtle); border-radius:var(--radius-md); padding:8px 6px;}
+.chips{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+/* cursor:pointer is REQUIRED on these onclick <div>s: without it, iOS Safari does not
+   deliver tap-synthesised click events to non-interactive elements, so the food and
+   activity chips would only play the audio-arming "pop" and never run their action. */
+.chip{background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:10px 5px 9px; display:flex; flex-direction:column; align-items:center; gap:3px; text-align:center; cursor:pointer;}
+.chip img{width:30px; height:30px; object-fit:contain;}
+.chip .nm{font-size:12px; font-weight:600; color:var(--text-primary); line-height:1.1;}
+.chip .cb{font-size:11px; color:var(--green);}
+/* Food-chip nutrition info — injected from FOODS by enrichFoodChips(). Mirrors the
+   desktop food button: weight + a carb/protein/fat macro-bar + the macro/kcal figures
+   (which live in a hover tooltip on desktop; shown inline here since touch has no hover). */
+.chip .wt{font-size:9px; color:var(--text-muted); line-height:1;}
+.chip .macro-bar{display:flex; width:100%; height:5px; border-radius:2px; overflow:hidden; margin-top:1px;}
+.chip .macro-bar span{height:100%;}
+.chip .mb-carb{background:var(--macro-carb);}
+.chip .mb-protein{background:var(--macro-protein);}
+.chip .mb-fat{background:var(--macro-fat);}
+.chip .macros{display:flex; gap:5px; justify-content:center; font-size:9px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1; margin-top:1px;}
+.chip .macros .m-c{color:var(--macro-carb);}
+.chip .macros .m-p{color:var(--macro-protein);}
+.chip .macros .m-f{color:var(--macro-fat);}
+.chip .kc{font-size:9px; color:var(--text-muted); line-height:1;}
+.kit-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;}
+/* Kit cells are <button>s — reset the UA button font/colour (otherwise the labels
+   render in the default system font + dark button text, unreadable on dark bg). */
+.kit-cell{display:flex; flex-direction:column; align-items:center; gap:8px; padding:22px 10px; border-radius:var(--radius-lg); border:1px solid var(--border-subtle); background:var(--bg-elevated); color:var(--text-primary); font:inherit; cursor:pointer;}
+.kit-cell img{width:40px; height:40px; object-fit:contain;}
+.kit-cell .nm{font-size:14px; font-weight:600; color:var(--text-primary);}
+.kit-cell.sos{background:rgba(239,68,68,0.10); border-color:rgba(239,68,68,0.30);}
+.kit-cell.sugar{background:rgba(253,224,71,0.10); border-color:rgba(253,224,71,0.30);}
+.preset-row{display:flex; gap:8px; margin-bottom:14px;}
+.preset-row .chip{flex:1; padding:12px 4px;}
+.preset-row .chip.sel{border-color:var(--theme-activity-border); background:rgba(34,197,94,0.15);}
+/* Activity duration chips — each one starts the activity (desktop duration-start). */
+.dur-row .chip.dur{gap:3px; padding:12px 2px;}
+.dur-row .chip.dur .dur-play{color:var(--green); font-size:13px; line-height:1;}
+.dur-row .chip.dur .nm{font-size:11px;}
+
+/* Insulin sheet — same layout + sizing as the desktop insulin panel (style.css):
+   section label, preset chips (blue=basal, teal=fast), a slider + give button, and
+   the recommended-dose hint. Fonts match desktop (11px UI / 14px values). */
+.dp-section-label{display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin:14px 2px 5px;}
+.dp-section-icon{width:18px; height:18px; object-fit:contain;}
+.dp-insulin-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.dp-insulin-presets{display:flex; gap:6px; width:100%;}
+.insulin-preset-chip{flex:1; min-width:0; display:flex; align-items:center; justify-content:center; padding:11px 6px; border-radius:var(--radius-md); border:1px solid var(--border-subtle); background:var(--bg-elevated); cursor:pointer;}
+.insulin-preset-chip .pc-name{font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--text-primary);}
+.dp-insulin-basal .insulin-preset-chip{background:rgba(37,99,235,0.12); border-color:rgba(96,165,250,0.25);}
+.dp-insulin-basal .insulin-preset-chip:active{background:rgba(37,99,235,0.28);}
+.dp-insulin-fast .insulin-preset-chip{background:rgba(13,148,136,0.12); border-color:rgba(45,212,191,0.25);}
+.dp-insulin-fast .insulin-preset-chip:active{background:rgba(13,148,136,0.28);}
+.dp-custom-dose{display:flex; align-items:center; gap:8px; flex:1 0 100%; margin-top:8px;}
+.dp-custom-dose input[type="range"]{flex:1; min-width:80px; accent-color:var(--blue);}
+.dp-insulin-fast .dp-custom-dose input[type="range"]{accent-color:#2dd4bf;}
+.dp-btn{padding:11px; border:none; border-radius:var(--radius-md); color:#fff; font-size:13px; font-weight:600; cursor:pointer;}
+.dp-btn-compact{padding:11px 14px; font-size:13px; min-width:64px; white-space:nowrap; font-variant-numeric:tabular-nums;}
+.btn-blue{background:linear-gradient(135deg,#2563eb,#1d4ed8); box-shadow:0 4px 15px rgba(37,99,235,0.3);}
+.btn-teal{background:linear-gradient(135deg,#0d9488,#0f766e); box-shadow:0 4px 15px rgba(13,148,136,0.3);}
+.dp-basal-hint{font-size:11px; color:var(--text-muted); text-align:center; padding:8px 0 0;}
+.dp-basal-hint strong{color:var(--blue);}
+.dp-fast-hint{font-size:10px; color:var(--text-muted); text-align:center; padding:8px 0 0;}
+.dp-divider{height:1px; background:var(--border-subtle); margin:14px 0;}
+
+.cta{width:100%; padding:16px; border:none; border-radius:var(--radius-lg); font-size:16px; font-weight:700; color:#fff; margin-top:6px; display:flex; align-items:center; justify-content:center; gap:8px;}
+.cta-icon{width:28px; height:28px; object-fit:contain; flex-shrink:0; filter:drop-shadow(0 2px 4px rgba(0,0,0,.28));}
+.cta.blue{background:linear-gradient(160deg,var(--theme-insulin-start),var(--theme-insulin-end));}
+.cta.green{background:linear-gradient(160deg,var(--theme-activity-start),var(--theme-activity-end));}
+.cta.orange{background:linear-gradient(160deg,#d97706,#b91c1c); margin-top:14px;}
+
+/* Settings sheet — same row/toggle/segmented-card components as the desktop
+   settings dropdown (style.css). */
+.sd-divider{display:flex; align-items:center; gap:10px; padding:14px 2px 6px;}
+.sd-divider-text{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; flex-shrink:0; color:var(--green);}
+.sd-divider-line{flex:1; height:1px; background:rgba(var(--green-rgb),0.2);}
+.sd-row{display:flex; align-items:center; gap:10px; padding:10px 2px; min-height:44px; cursor:pointer;}
+.sd-row-icon-img{width:24px; height:24px; object-fit:contain; flex-shrink:0;}
+.sheet-title-icon{width:28px; height:28px; object-fit:contain; vertical-align:middle; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.28));}
+.sd-row-content{flex:1; min-width:0;}
+.sd-row-label{font-size:13px; font-weight:500; color:var(--text-primary); line-height:1.3;}
+.sd-row-help{display:block; font-size:10px; color:var(--text-muted); margin-top:1px; line-height:1.35;}
+/* Highscore list (menu -> Highscores): ranked sandbox runs; top 3 tinted gold/silver/bronze. */
+.hs-list{display:flex; flex-direction:column; gap:8px; margin-top:6px; max-height:58vh; overflow-y:auto;}
+.hs-empty{text-align:center; color:var(--text-muted); font-size:13px; padding:20px 0;}
+/* Highscore view tabs (sandbox / campaign) — segmented control above the list. */
+.hs-tabs{display:flex; gap:6px; margin:0 0 12px;}
+.hs-tab{flex:1; padding:8px 10px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); color:var(--text-secondary); font:inherit; font-size:13px; font-weight:600; cursor:pointer;}
+.hs-tab.active{background:var(--blue); border-color:var(--blue); color:#fff;}
+/* Campaign rows reuse .hs-row; stars + record holder go in the meta line. */
+.hs-row .hs-stars{color:#fbbf24; letter-spacing:1px;}
+.hs-row{display:flex; align-items:center; gap:12px; padding:9px 12px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md);}
+.hs-rank{flex-shrink:0; width:26px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:15px; font-weight:800; color:var(--text-secondary); font-variant-numeric:tabular-nums;}
+.hs-rank-medal{width:24px; height:24px; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.28));}
+.hs-main{flex:1; min-width:0;}
+.hs-line{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
+.hs-name{font-size:14px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.hs-pts{flex-shrink:0; font-size:15px; font-weight:800; color:var(--green); font-variant-numeric:tabular-nums;}
+.hs-meta{font-size:10px; color:var(--text-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+/* Character tag (A4f): which fixed character set the run — icon + fixed name. Mirrors
+   the desktop .hs-char-tag / .hs-char-icon (round avatar + name). */
+.hs-char-tag{display:inline-flex; align-items:center; gap:5px; margin-top:2px; font-size:11px; color:var(--text-secondary); white-space:nowrap;}
+.hs-char-icon{width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0;}
+.hs-row.hs-gold{border-color:rgba(251,191,36,0.5);} .hs-row.hs-gold .hs-rank{color:#fbbf24;}
+.hs-row.hs-silver{border-color:rgba(203,213,225,0.5);} .hs-row.hs-silver .hs-rank{color:#cbd5e1;}
+.hs-row.hs-bronze{border-color:rgba(217,119,87,0.5);} .hs-row.hs-bronze .hs-rank{color:#d97757;}
+.sound-toggle{position:relative; width:44px; height:24px; border-radius:12px; border:none; background:var(--bg-elevated); flex-shrink:0; cursor:pointer; transition:background .2s;}
+.sound-toggle.active{background:#34d399;}
+.sound-toggle-knob{position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .2s; pointer-events:none;}
+.sound-toggle.active .sound-toggle-knob{transform:translateX(20px);}
+.sd-lang-cards{display:flex; gap:5px; flex-shrink:0;}
+.sd-lang-card{padding:6px 12px; font-size:12px; font-weight:600; font-family:inherit; border:1px solid rgba(147,197,253,0.20); border-radius:var(--radius-sm); background:transparent; color:var(--text-muted); cursor:pointer;}
+.sd-lang-card.selected{background:rgba(var(--green-rgb),0.15); border-color:var(--green); color:var(--green);}
+.sd-vol{margin-top:6px;} .sd-vol input[type="range"]{width:100%; accent-color:var(--blue);}
+/* sd-row reused as a button/link (menu items) — reset native element styling. */
+a.sd-row, button.sd-row{width:100%; background:none; border:none; text-align:left; color:inherit; text-decoration:none; font:inherit;}
+/* A permanently-disabled menu row (e.g. Box Challenge "Bygges"): muted + non-interactive
+   via the native disabled attr, so it never depends on the campaign-disabled gate. */
+button.sd-row:disabled{opacity:.4; cursor:default;}
+button.sd-row:disabled .sd-row-icon-img{filter:grayscale(0.6);}
+.sd-row-glyph{font-size:20px; color:var(--text-secondary); line-height:1;}
+/* Kort formålsnote: informativ blå framing frem for en alarmfarvet advarsel. */
+.menu-disclaimer{font-size:11px; color:var(--text-muted); line-height:1.45; padding:12px; margin-top:10px; border:1px solid rgba(125,211,252,0.30); border-radius:var(--radius-md); background:rgba(125,211,252,0.08);}
+.menu-disclaimer strong{display:block; color:var(--blue); font-size:12px; margin-bottom:4px;}
+/* Profile sheet fields.
+   Numeric fields use a symmetric one-line layout: label on the left, a fixed-width
+   CENTERED input + a fixed-width unit on the right. Fixed widths make all three
+   input boxes line up in a tidy column (mirrors the desktop profile's 80px centered
+   number inputs) instead of stretching full-width for a 2-3 digit value. */
+.pf-field{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:13px 2px 0;}
+.pf-field label{flex:1; min-width:0; font-size:13px; font-weight:600; color:var(--text-primary);}
+.pf-field label small{display:block; font-weight:400; font-size:10px; color:var(--text-muted); margin-top:1px;}
+.pf-input{display:flex; align-items:center; justify-content:flex-end; gap:6px; flex:0 0 auto;}
+.pf-input input{flex:0 0 auto; width:92px; text-align:center; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); color:var(--text-primary); font:inherit; font-size:16px; font-variant-numeric:tabular-nums; padding:10px 8px;}
+.pf-unit{flex:0 0 56px; text-align:left; font-size:11px; color:var(--text-muted);}
+/* Read-only notice + dimmed inputs while a game is running (desktop parity). */
+.pf-readonly-notice{font-size:12px; line-height:1.35; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:10px 12px; margin:2px 2px 0;}
+.pf-input input:disabled{opacity:0.5;}
+/* Name field — full-width free text with a stacked label (like the desktop profile,
+   where the name input is flex:1 while the numeric inputs are fixed-width). */
+.pf-field-name{display:block;}
+.pf-field-name label{display:block; margin-bottom:6px;}
+.pf-input-text{display:block;}
+.pf-input-text input{width:100%; text-align:left;}
+/* "Estimér fra vægt" button + weight-derived figures (mirrors the desktop profile). */
+.pf-estimate{width:100%; margin-top:14px; background:var(--bg-elevated); color:var(--text-secondary); border:1px solid var(--border-subtle);}
+.pf-calc{margin-top:14px; padding:10px 12px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md);}
+.pf-calc-row{display:flex; align-items:baseline; gap:8px; font-size:12px; color:var(--text-muted); padding:3px 0;}
+.pf-calc-row .pf-calc-label{flex:1;}
+.pf-calc-row strong{color:var(--blue); font-size:14px; font-variant-numeric:tabular-nums;}
+.pf-calc-row .pf-calc-unit{font-size:10px; color:var(--text-muted); flex-shrink:0;}
+/* Character selector (profile sheet, A4) — six characters in a PAIR-WISE grid (like
+   desktop): column-flow fills each column as a male/female pair, columns run small ->
+   large (child / adult / large). Green border/tint when chosen. */
+/* Body-type column headers (Barn/Voksen/Kraftig) aligned to the card grid's three
+   columns — same repeat(3,1fr) + column-gap + side margins so labels sit over columns. */
+.pf-archetype-headers{display:grid; grid-template-columns:repeat(3,1fr); column-gap:10px; margin:8px 2px 0;}
+.pf-archetype-headers span{text-align:center; font-size:10px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--text-muted);}
+.pf-archetype-cards{display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); grid-auto-flow:column; row-gap:6px; column-gap:10px; margin:6px 2px 0;}
+.pf-archetype-card{display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; border:1px solid rgba(147,197,253,0.20); border-radius:var(--radius-md); background:var(--bg-elevated); color:var(--text-secondary); font:inherit; cursor:pointer;}
+.pf-archetype-card.selected{background:rgba(var(--green-rgb),0.15); border-color:var(--green); color:var(--green);}
+.pf-archetype-card:disabled{opacity:0.5;}
+.pf-archetype-icon{width:46px; height:46px; object-fit:contain;}
+.pf-archetype-name{font-size:12px; font-weight:600;}
+.pf-actions{display:flex; gap:10px; align-items:center; margin-top:18px;}
+.pf-actions .pf-save{flex:1; margin-top:0;}
+
+/* Onboarding — first-touch intro cards (above everything). */
+.ob-overlay{position:absolute; inset:0; z-index:70; background:rgba(5,8,15,0.92); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; padding:24px;}
+.ob-overlay.open{display:flex;}
+/* Anti-flash: when the welcome screen is turned off, the <head> sets html.welcome-off
+   before the body is parsed, so the landing is hidden from the very first paint (the id
+   selector beats .ob-overlay.open). See the head script in index.html. */
+html.welcome-off #startScreen{display:none;}
+.ob-card{width:100%; max-width:340px; background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:26px 22px calc(22px + env(safe-area-inset-bottom)); box-shadow:var(--shadow-lg); text-align:center;}
+.ob-character{width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--border-medium); margin-bottom:10px;}
+.ob-character.is-full-body{width:126px; height:160px; border:0; border-radius:0; object-fit:contain; margin-bottom:8px;}
+.ob-title{font-size:21px; font-weight:800; color:var(--text-primary); margin-bottom:8px;}
+.ob-body{font-size:14px; line-height:1.5; color:var(--text-secondary); min-height:84px;}
+.ob-dots{display:flex; gap:7px; justify-content:center; margin:16px 0 6px;}
+.ob-dot{width:7px; height:7px; border-radius:50%; background:var(--bg-hover);}
+.ob-dot.on{background:var(--green);}
+.ob-skip{background:none; border:none; color:var(--text-muted); font:inherit; font-size:12px; margin-top:10px; cursor:pointer;}
+/* Welcome screen's "close" button — a bordeaux (wine red) pill so the exit reads as a
+   clear, theme-matching affordance (not the bright --red alert colour). Only the
+   landing's skip button; onboarding's plain-text skip keeps the base .ob-skip look. */
+#startScreen .ob-skip{color:#db7c8d; background:rgba(var(--bordeaux-rgb),0.14); border:1px solid rgba(var(--bordeaux-rgb),0.5); border-radius:var(--radius-md); font-size:13px; padding:9px 18px; margin-top:14px;}
+#startScreen .ob-skip:hover{background:rgba(var(--bordeaux-rgb),0.28); color:#f0a9b6;}
+
+/* Start screen — the mobile LANDING (reuses .ob-overlay). Two mode choice cards built
+   on the familiar .sd-row / card vocabulary, with the desktop mode icons. */
+.start-card{max-width:360px;}
+.start-intro{min-height:0; margin-bottom:14px;}
+/* Four short benefit lines on the landing — centred block, left-aligned items. */
+.start-benefits{list-style:none; margin:0 auto 16px; padding:0; max-width:280px; display:flex; flex-direction:column; gap:7px; text-align:left;}
+.start-benefits li{display:flex; align-items:center; gap:10px; font-size:12.5px; line-height:1.3; color:var(--text-secondary);}
+/* Small in-style dot in the brand green — replaces the old emoji bullets. */
+.start-benefits li::before{content:''; flex-shrink:0; width:5px; height:5px; border-radius:50%; background:var(--green);}
+.start-modes{display:flex; flex-direction:column; gap:12px;}
+/* "Show welcome on startup" checkbox on the landing — small, muted, centred. */
+.start-show-welcome{display:flex; align-items:center; justify-content:center; gap:7px; margin:14px auto 0; font-size:12px; color:var(--text-muted); cursor:pointer;}
+.start-show-welcome input{width:16px; height:16px; accent-color:var(--green); cursor:pointer;}
+/* Brand wordmark + slogan on the landing (copied from desktop style.css .brand/.brand-slogan):
+   Orbitron, animated gradient text + soft glow. Sized up a touch from the desktop top-bar
+   since it is the landing hero. Centred via .ob-card text-align:center. */
+.start-card .brand{font-family:'Orbitron', monospace; font-weight:800; font-size:27px; letter-spacing:3px; line-height:1.1; white-space:nowrap; cursor:default; margin-bottom:3px;
+  background:linear-gradient(135deg, #93c5fd, #d8b4fe, #a5b4fc, #93c5fd); background-size:200% 200%; animation:brand-shimmer 8s ease-in-out infinite;
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  text-shadow:0 0 10px rgba(147,197,253,0.48), 0 0 22px rgba(167,139,250,0.28), 0 0 42px rgba(147,197,253,0.14);}
+@keyframes brand-shimmer{0%,100%{background-position:0% 50%;} 50%{background-position:100% 50%;}}
+.start-card .brand-slogan{font-family:'Orbitron', monospace; font-weight:500; font-size:9px; letter-spacing:1.5px; line-height:1; text-transform:uppercase; color:var(--text-secondary); margin-bottom:16px;}
+.start-mode-card{display:flex; flex-direction:column; align-items:center; gap:6px; width:100%; padding:18px 14px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); color:var(--text-primary); font:inherit; cursor:pointer; text-align:center;}
+.start-mode-card:active{background:var(--bg-hover);}
+.start-mode-icon{width:56px; height:56px; object-fit:contain; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.25));}
+.start-mode-name{font-size:16px; font-weight:700; color:var(--text-primary);}
+.start-mode-desc{font-size:12px; color:var(--text-muted); line-height:1.35;}
+
+/* Game-over overlay — covers the whole shell, dismissed by restartGame(). */
+.go-overlay{position:absolute; inset:0; z-index:60; background:rgba(5,8,15,0.82); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:18px;}
+.go-overlay.open{display:flex;}
+.go-card{width:100%; max-height:92%; overflow-y:auto; background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:20px 18px calc(20px + env(safe-area-inset-bottom)); box-shadow:var(--shadow-lg); text-align:center;}
+.go-character{width:84px; height:84px; border-radius:50%; object-fit:cover; border:2px solid var(--border-medium); margin-bottom:6px;}
+.go-character.is-full-body{width:144px; height:180px; border:0; border-radius:0; object-fit:contain; margin-bottom:6px;}
+.campaign-character-caption-mobile{margin:-2px 0 8px; color:var(--blue); font-size:12px; font-weight:700; line-height:1.2;}
+.campaign-character-caption-mobile[hidden]{display:none;}
+.go-title{font-size:24px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:#b91c1c;}
+.go-cause{font-size:16px; font-weight:700; color:var(--text-primary); margin-top:4px;}
+.go-cause-detail{font-size:13px; color:var(--text-secondary); margin-top:4px; line-height:1.4;}
+.go-points{display:flex; flex-direction:column; align-items:center; gap:1px; margin:14px auto; padding:10px 22px; width:fit-content; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-lg);}
+.go-points-num{font-size:30px; font-weight:800; color:#fbbf24; font-variant-numeric:tabular-nums;}
+.go-points-lbl{font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-muted);}
+.go-section{text-align:left; margin-top:14px;}
+.go-sec-title{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:5px;}
+.go-section p{font-size:13px; color:var(--text-secondary); line-height:1.45;}
+.go-section ul{margin:0; padding-left:18px;}
+.go-section li{font-size:13px; color:var(--text-secondary); line-height:1.45; margin-bottom:5px;}
+/* Sign form (A4d): the player signs the score with their OWN name (separate from the
+   character). Label + input + Gem button, mirroring the desktop .go-save-form. */
+.go-save-form{display:flex; flex-direction:column; align-items:center; gap:7px; width:100%; margin:14px 0 4px;}
+.go-save-form[hidden]{display:none;}
+.go-save-label{font-size:10.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;}
+.go-save-row{display:flex; align-items:center; gap:8px;}
+.go-save-row input{width:160px; padding:8px 10px; font:inherit; font-size:14px; font-weight:600; color:var(--text-primary); background:rgba(255,255,255,0.06); border:1px solid var(--border-medium); border-radius:var(--radius-sm);}
+.go-save-row input:focus{outline:none; border-color:var(--blue);}
+.go-save-row input:disabled{opacity:0.6;}
+.go-save-btn{padding:8px 16px; font:inherit; font-size:14px; font-weight:700; color:#fff; background:#34d399; border:none; border-radius:var(--radius-sm); cursor:pointer;}
+.go-save-btn:disabled{opacity:0.55; cursor:default;}
+/* "Score not saved" note (physiology training mode) — amber, above the replay button. */
+.go-save-result{margin:14px 0 4px; font-size:12.5px; line-height:1.4; color:var(--orange); font-weight:600;}
+.go-save-result[hidden]{display:none;}
+
+/* =============================================================================
+   CAMPAIGN — gating, level select, intro, result screens (P2-P4)
+   ============================================================================= */
+
+/* Campaign gating — dim + disable a dock button / sheet section / food chip / preset
+   that the active level locks out. Same class name + spirit as the desktop
+   .campaign-disabled (style.css): not interactive, visibly muted. */
+.campaign-disabled{opacity:.32; pointer-events:none; filter:grayscale(0.6);}
+
+/* Level-select overlay — full-screen scrollable grid of all campaign levels. */
+.ls-overlay{position:absolute; inset:0; z-index:66; background:var(--bg-primary); display:none; flex-direction:column; padding:0;}
+.ls-overlay.open{display:flex;}
+.ls-head{display:flex; align-items:center; gap:10px; padding:18px 16px 12px; flex-shrink:0; border-bottom:1px solid var(--border-subtle);}
+.ls-title{flex:1; font-size:20px; font-weight:800; color:var(--text-primary);}
+.ls-close{width:38px; height:38px; flex-shrink:0; border:1px solid rgba(var(--bordeaux-rgb),0.5); background:rgba(var(--bordeaux-rgb),0.16); border-radius:var(--radius-md); color:#db7c8d; font-size:22px; cursor:pointer;}
+.ls-close:hover{background:rgba(var(--bordeaux-rgb),0.30); color:#f0a9b6;}
+.ls-grid{flex:1; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:14px 16px calc(20px + env(safe-area-inset-bottom));}
+/* Level card — number + title + best stars. Locked / under-construction variants
+   are dimmed and non-interactive (mirror the desktop level-card states). */
+.lc{position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; padding:16px 10px; border-radius:var(--radius-lg); border:1px solid var(--border-subtle); background:var(--bg-elevated); color:var(--text-primary); font:inherit; text-align:center; cursor:pointer; min-height:118px; justify-content:center;}
+.lc:active{background:var(--bg-hover);}
+.lc.completed{border-color:rgba(var(--green-rgb),0.40); background:rgba(var(--green-rgb),0.08);}
+.lc.locked, .lc.construction{opacity:.5; pointer-events:none;}
+.lc-number{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); font-variant-numeric:tabular-nums;}
+.lc-title{font-size:14px; font-weight:600; color:var(--text-primary); line-height:1.2;}
+.lc-stars{display:flex; gap:3px; font-size:14px; line-height:1;}
+.lc-star{color:var(--text-muted); opacity:.5;}
+.lc-star.earned{color:#fbbf24; opacity:1;}
+.lc-score{font-size:10px; color:var(--text-muted); font-variant-numeric:tabular-nums;}
+/* Record holder's name under the score (set on the player's best run). */
+.lc-name{font-size:10px; font-weight:600; color:#fbbf24; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.lc-glyph{line-height:1; display:flex; align-items:center; justify-content:center;}
+.lc-glyph-img{width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 2px 5px rgba(0,0,0,.25));}
+
+/* Campaign intro card — extends the ob-card. Adds the LEVEL X label + objectives. */
+.ci-card{max-width:360px;}
+.ci-character-caption{font-size:12px; font-weight:700; color:var(--blue); line-height:1.2; margin:-3px 0 8px;}
+.ci-level{font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:2px; color:var(--green); margin-bottom:4px; font-variant-numeric:tabular-nums;}
+.ci-title{font-size:20px; margin-bottom:6px;}
+.ci-desc{min-height:0; font-size:13px; margin-bottom:14px;}
+.ci-obj-section{text-align:left; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:16px;}
+.ci-obj-head{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:7px;}
+.ci-obj-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;}
+.ci-obj-list li{font-size:13px; color:var(--text-secondary); line-height:1.35; display:flex; gap:8px; align-items:flex-start;}
+.ci-obj-list li .obj-mark{flex-shrink:0; color:var(--text-muted); font-weight:700;}
+.ci-obj-list li.done{color:var(--green);} .ci-obj-list li.done .obj-mark{color:var(--green);}
+.ci-obj-list li .obj-prog{color:var(--text-muted); font-variant-numeric:tabular-nums; margin-left:auto; flex-shrink:0;}
+
+/* Campaign result card — extends the go-card. Stars/TIR/points (complete) or
+   missing objectives (failed); button row for replay / next / levels. */
+.cr-card{max-width:360px;}
+.cr-headline{font-size:22px; font-weight:800; color:var(--text-primary); margin:2px 0 2px;}
+.cr-subtitle{font-size:14px; font-weight:600; color:var(--text-secondary); margin-bottom:6px;}
+.cr-complete, .cr-failed{display:none;}
+.cr-complete.show, .cr-failed.show{display:block;}
+.cr-stars{display:flex; justify-content:center; gap:8px; font-size:34px; line-height:1; margin:12px 0;}
+.cr-stars .lc-star{color:var(--text-muted); opacity:.4;}
+.cr-stars .lc-star.earned{color:#fbbf24; opacity:1; text-shadow:0 0 12px rgba(251,191,36,0.6);}
+.cr-tir{font-size:15px; font-weight:600; color:var(--text-primary); margin-bottom:12px;}
+.cr-tir-label{font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted);}
+.cr-tir-value{font-variant-numeric:tabular-nums; color:var(--green);}
+.cr-points{text-align:left; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:10px 14px;}
+.cr-pts-row{display:flex; justify-content:space-between; align-items:baseline; font-size:13px; color:var(--text-secondary); padding:3px 0;}
+.cr-pts-value{font-variant-numeric:tabular-nums; font-weight:700; color:var(--text-primary);}
+.cr-pts-bonus{color:#fbbf24;}
+.cr-pts-total{border-top:1px solid var(--border-subtle); margin-top:4px; padding-top:7px; font-weight:700;}
+.cr-pts-total .cr-pts-label{color:var(--text-primary); font-weight:700;}
+.cr-pts-total .cr-pts-value{font-size:16px;}
+.cr-failed .cr-fail-body{font-size:14px; color:var(--text-secondary); margin:8px 0 12px; line-height:1.45;}
+.cr-failed .ci-obj-list{text-align:left;}
+.cr-buttons{display:flex; flex-direction:column; gap:8px; margin-top:18px;}
+.cr-buttons button{width:100%; padding:14px; border:none; border-radius:var(--radius-lg); font-size:15px; font-weight:700; font-family:inherit; cursor:pointer;}
+.cr-buttons .cr-btn-primary{background:linear-gradient(160deg,var(--theme-activity-start),var(--theme-activity-end)); color:#fff;}
+.cr-buttons .cr-btn-secondary{background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-secondary);}

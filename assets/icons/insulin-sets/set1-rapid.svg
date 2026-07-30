@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- SÆT 1 RAPID — drop med lyn indlagt (instant virkning) -->
+  <path d="M12 3 C 17 9, 18 14, 16.5 17 C 15 19.5, 9 19.5, 7.5 17 C 6 14, 7 9, 12 3 Z"
+        fill="#14B8A6" stroke="#94A3B8" stroke-width="1" stroke-linejoin="round"/>
+  <!-- Hvidt lyn (zigzag) i centrum -->
+  <path d="M13.5 8.5 L9 14.5 L11.5 14.5 L10.5 18.5 L15 12.5 L12.5 12.5 Z"
+        fill="#FFFFFF" stroke="none"/>
+</svg>

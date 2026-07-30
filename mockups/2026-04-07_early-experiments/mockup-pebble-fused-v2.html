@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fused Pebble — 6 variationer af én samlet organisk form</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1220;
+    --text-1: #f5f8fc;
+    --text-2: #c4d5e8;
+    --text-3: #8fa8c8;
+    --text-4: #5e7a99;
+    --green: #4ade80;
+    --green-glow: rgba(74, 222, 128, 0.3);
+    --red: #ef4444;
+    --orange: #fb923c;
+    --blue: #7dd3fc;
+    --teal: #2dd4bf;
+    --yellow: #fbbf24;
+    --border-s: rgba(147, 197, 253, 0.10);
+    --border-m: rgba(147, 197, 253, 0.16);
+    --insulin-bg: linear-gradient(135deg, #0e7490, #155e75);
+    --food-bg: linear-gradient(135deg, #92400e, #78350f);
+    --exercise-bg: linear-gradient(135deg, #065f46, #064e3b);
+    --kit-bg: linear-gradient(135deg, #134e4a, #0f3d3a);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: 'Outfit', system-ui, sans-serif;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    min-height: 100vh;
+  }
+
+  /* ═══ PAGE INTRO ═══ */
+  .intro {
+    max-width: 900px; margin: 0 auto;
+    background: linear-gradient(135deg, rgba(20, 29, 47, 0.8), rgba(11, 18, 32, 0.95));
+    border: 1px solid var(--border-m); border-radius: 16px;
+    padding: 28px 28px 22px; box-shadow: 0 0 30px rgba(147, 197, 253, 0.08);
+  }
+  .intro h1 { font-size: 22px; font-weight: 800; color: var(--blue); margin-bottom: 12px; letter-spacing: -0.5px; }
+  .intro p { font-size: 13px; color: var(--text-2); line-height: 1.7; margin-bottom: 6px; }
+  .intro .tag { display: inline-block; background: rgba(196, 181, 253, 0.12); color: #c4b5fd; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-right: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ═══ MOCKUP FRAME ═══ */
+  .mockup { width: 100%; max-width: 1000px; margin: 0 auto; }
+  .mockup-label {
+    background: linear-gradient(135deg, #1e1a2e, #0b1220);
+    border: 1px solid rgba(196, 181, 253, 0.3);
+    border-radius: 10px; padding: 14px 20px; margin-bottom: 24px; max-width: 620px;
+  }
+  .mockup-label h2 { font-size: 15px; font-weight: 700; color: #c4b5fd; margin-bottom: 5px; }
+  .mockup-label p { font-size: 11px; line-height: 1.6; color: var(--text-2); }
+  .mockup-label .tag { display: inline-block; background: rgba(196, 181, 253, 0.12); color: #c4b5fd; font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-right: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .stage {
+    background:
+      linear-gradient(180deg,
+        rgba(74, 222, 128, 0.02) 0%,
+        rgba(74, 222, 128, 0.05) 40%,
+        rgba(251, 146, 60, 0.03) 70%,
+        rgba(239, 68, 68, 0.02) 100%);
+    border: 1px solid var(--border-s);
+    border-radius: 18px;
+    padding: 30px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    min-height: 200px;
+  }
+
+
+  /* ═══ FÆLLES DATA-ELEMENTER ═══ */
+  .bg-val { font-size: 26px; font-weight: 800; color: var(--green); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+  .bg-unit { font-size: 9px; color: var(--text-4); font-weight: 500; letter-spacing: 0.04em; }
+  .bg-arrow { font-size: 20px; font-weight: 900; color: var(--green); text-shadow: 0 0 8px var(--green-glow); line-height: 1; }
+
+  .pill { font-size: 9px; color: var(--text-3); white-space: nowrap; }
+  .pill b { color: var(--text-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .mode { font-size: 12px; color: var(--text-3); letter-spacing: 0.04em; font-weight: 600; }
+  .star { font-size: 13px; }
+  .score { font-size: 22px; font-weight: 800; color: var(--yellow); font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+  .weight { font-size: 9px; color: var(--text-4); }
+
+  /* Dock-ikoner */
+  .di {
+    width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid transparent; position: relative;
+  }
+  .di:hover { transform: translateY(-8px) scale(1.18); z-index: 5; }
+  .di .k { position: absolute; bottom: 3px; right: 6px; font-size: 9px; font-weight: 600; color: var(--text-3); opacity: 0.6; }
+  .di-ins { background: var(--insulin-bg); border-color: rgba(14, 165, 210, 0.35); }
+  .di-ins:hover { box-shadow: 0 8px 24px rgba(14, 116, 144, 0.5); border-color: rgba(14, 165, 210, 0.7); }
+  .di-food { background: var(--food-bg); border-color: rgba(250, 204, 21, 0.25); }
+  .di-food:hover { box-shadow: 0 8px 24px rgba(234, 179, 8, 0.4); border-color: rgba(250, 204, 21, 0.6); }
+  .di-ex { background: var(--exercise-bg); border-color: rgba(52, 211, 153, 0.25); }
+  .di-ex:hover { box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4); border-color: rgba(52, 211, 153, 0.6); }
+  .di-kit { background: var(--kit-bg); border-color: rgba(94, 234, 212, 0.25); }
+  .di-kit:hover { box-shadow: 0 8px 24px rgba(94, 234, 212, 0.35); border-color: rgba(94, 234, 212, 0.6); }
+
+  /* Speed-pill */
+  .speed-pill {
+    display: flex; align-items: center;
+    background: rgba(255,255,255,0.04); border-radius: 20px; overflow: hidden; border: 1px solid var(--border-s);
+  }
+  .speed-pill .sp-btn {
+    background: transparent; border: none; color: var(--text-3);
+    font-size: 11px; padding: 5px 12px; cursor: pointer;
+    transition: all 0.15s; border-radius: 20px; font-family: 'Outfit', sans-serif;
+  }
+  .speed-pill .sp-btn:hover { color: var(--text-1); background: rgba(255,255,255,0.14); }
+  .speed-pill .sp-center {
+    background: rgba(255,255,255,0.07); border: none; color: var(--text-2);
+    font-size: 11px; font-weight: 600; padding: 5px 8px; cursor: pointer;
+    white-space: nowrap; display: inline-flex; align-items: center; gap: 3px;
+    font-variant-numeric: tabular-nums; font-family: 'Outfit', sans-serif;
+    border-left: 1px solid var(--border-s); border-right: 1px solid var(--border-s);
+    border-radius: 0; transition: all 0.15s;
+  }
+  .speed-pill .sp-center:hover { color: var(--text-1); }
+  .speed-pill .sp-icon { color: var(--blue); font-size: 10px; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     FÆLLES: Alle 6 variationer bygger på samme interne layout —
+     3 zoner (BG | Dock+Speed | Score) smeltet til ét stykke.
+     Kun den ydre form og zoneinddeling varierer.
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* Intern zone-layout (identisk i alle varianter) */
+  .pod { display: flex; align-items: stretch; position: relative; overflow: hidden; }
+  .zone { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  .zone-l { width: 155px; padding: 14px 20px; gap: 5px; }
+  .zone-c { flex: 1; padding: 12px 20px; gap: 10px; align-items: center; }
+  .zone-r { width: 155px; padding: 14px 20px; gap: 4px; text-align: center; }
+
+  .val-row { display: flex; align-items: baseline; gap: 6px; }
+  .pill-stack { display: flex; flex-direction: column; gap: 1px; }
+  .dock-row { display: flex; gap: 8px; align-items: flex-end; padding-bottom: 14px; }
+  .pts-row { display: flex; align-items: center; gap: 4px; justify-content: center; }
+
+  /* Fælles glasmorfisk base */
+  .pod-base {
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-m);
+    box-shadow:
+      0 0 15px rgba(147, 197, 253, 0.10),
+      0 0 40px rgba(147, 197, 253, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    background: radial-gradient(ellipse at 50% 40%, rgba(147, 197, 253, 0.03), transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(20, 32, 56, 0.95), rgba(14, 22, 40, 0.97));
+  }
+
+  /* Zone-separatorer (tynde glødende linjer) */
+  .zone-sep {
+    width: 1px; flex-shrink: 0;
+    background: linear-gradient(180deg, transparent 10%, rgba(147, 197, 253, 0.12) 40%, rgba(147, 197, 253, 0.12) 60%, transparent 90%);
+  }
+
+  /* Zonede baggrundsglødninger (via pseudo-elementer) */
+  .pod .zone-l::before,
+  .pod .zone-r::before {
+    content: '';
+    position: absolute;
+    width: 200px; height: 100%;
+    top: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .pod .zone-l::before { left: 0; background: radial-gradient(ellipse at 30% 50%, rgba(74, 222, 128, 0.04), transparent 70%); }
+  .pod .zone-r::before { right: 0; background: radial-gradient(ellipse at 70% 50%, rgba(251, 191, 36, 0.03), transparent 70%); }
+  .pod .zone > * { position: relative; z-index: 1; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     A: SMOOTH CAPSULE — Klassisk pille, ét sammenhængende stykke.
+        Zoner adskilt af svage glødende linjer.
+     ═══════════════════════════════════════════════════════════════ */
+  .pod-a {
+    border-radius: 60px;
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     B: BREATHING LENS — Center buler opad.
+        Siderne er lavere, center er højere → linseprofil.
+        Opnået med clip-path (elliptisk top).
+     ═══════════════════════════════════════════════════════════════ */
+  .stage-b { align-items: center; }
+  .pod-b-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+  .pod-b {
+    border-radius: 60px;
+    position: relative;
+  }
+  /* Ydre silhuet: buer opad i midten */
+  .pod-b::before {
+    content: '';
+    position: absolute;
+    inset: -12px 80px 100% 80px;
+    background: radial-gradient(ellipse at 50% 100%, rgba(20, 32, 56, 0.95), transparent 80%);
+    border-radius: 50%;
+    z-index: -1;
+  }
+  .pod-b .zone-c {
+    padding-top: 6px;
+    padding-bottom: 16px;
+    position: relative;
+  }
+  /* Forhøjet center-zone med gradient-overgang */
+  .pod-b .zone-c::after {
+    content: '';
+    position: absolute;
+    inset: -14px 0 0 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(147, 197, 253, 0.05), transparent 60%);
+    border-radius: 40px 40px 0 0;
+    pointer-events: none;
+  }
+  /* Clip hele formen til en organisk linse */
+  .pod-b {
+    clip-path: polygon(
+      0% 50%,
+      1% 35%, 4% 22%, 10% 12%, 18% 5%,
+      28% 1%, 38% -2%, 50% -4%,
+      62% -2%, 72% 1%, 82% 5%,
+      90% 12%, 96% 22%, 99% 35%, 100% 50%,
+      100% 65%, 98% 78%, 94% 88%, 88% 95%,
+      78% 99%, 65% 101%, 50% 102%,
+      35% 101%, 22% 99%, 12% 95%,
+      6% 88%, 2% 78%, 0% 65%
+    );
+    padding-top: 22px;
+    padding-bottom: 10px;
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     C: PINCHED CLOUD — Bløde indadgående kurver mellem zonerne.
+        Former en sky/knoglelignende silhuet.
+     ═══════════════════════════════════════════════════════════════ */
+  .pod-c {
+    clip-path: url(#cloud-clip);
+  }
+  .pod-c .zone-l { padding-left: 28px; }
+  .pod-c .zone-r { padding-right: 28px; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     D: LIQUID MERCURY — Afrundede hjørner med asymmetrisk
+        8-værdi border-radius for organisk, kviksølv-agtigt look.
+     ═══════════════════════════════════════════════════════════════ */
+  .pod-d {
+    border-radius: 52% 52% 48% 48% / 80% 80% 70% 70%;
+    padding: 4px 0;
+  }
+  .pod-d .zone-l { padding-left: 30px; }
+  .pod-d .zone-r { padding-right: 30px; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     E: SEED POD — Smal oval der buler ud i midten.
+        Tilspidsede ender, bred midte. Biologisk frø-form.
+     ═══════════════════════════════════════════════════════════════ */
+  .pod-e {
+    clip-path: url(#seed-clip);
+  }
+  .pod-e .zone-l { padding-left: 40px; width: 170px; }
+  .pod-e .zone-r { padding-right: 40px; width: 170px; }
+  .pod-e .zone-c { padding: 8px 16px; }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     F: NESTED SHELL — Ét stykke, men center-zonen er visuelt
+        hævet med sin egen indre skygge/border. Dybde inden i
+        samme form.
+     ═══════════════════════════════════════════════════════════════ */
+  .pod-f {
+    border-radius: 60px;
+  }
+  .pod-f .zone-c {
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 1px solid rgba(147, 197, 253, 0.10);
+    border-right: 1px solid rgba(147, 197, 253, 0.10);
+    box-shadow:
+      inset 0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+      0 0 20px rgba(147, 197, 253, 0.06);
+    margin: 6px 0;
+    border-radius: 16px;
+    position: relative;
+  }
+  /* Separator-effekt via gradient-overgang */
+  .pod-f .zone-sep { display: none; }
+
+</style>
+</head>
+<body>
+
+
+<!-- ═══════════════════ INTRO ═══════════════════ -->
+<div class="intro">
+  <h1>Fused Pebble — 6 variationer</h1>
+  <p>
+    Alle varianter smelter de tre zoner (BG, Dock+Speed, Score) til <strong>én samlet organisk form</strong>.
+    Intern opdeling antydes via svage glødende separatorer og lokale baggrundsgradienter — aldrig skarpe kanter.
+    <span class="tag">Symmetrisk</span> <span class="tag">Organisk</span> <span class="tag">Glasmorfisk</span>
+  </p>
+  <p style="color: var(--text-3); font-size: 12px; margin-top: 8px;">
+    A og F er de sikreste valg (simpel border-radius). B, C og E bruger clip-path for mere skulpturelle former.
+    D bruger asymmetrisk 8-værdi border-radius for en kviksølv-effekt.
+  </p>
+</div>
+
+
+<!-- ═══════════════════ SVG CLIP PATHS ═══════════════════ -->
+<svg width="0" height="0" style="position: absolute;">
+  <defs>
+    <!-- C: Cloud/bone — indbuede sider -->
+    <clipPath id="cloud-clip" clipPathUnits="objectBoundingBox">
+      <path d="
+        M 0.06,0.5
+        C 0.06,0.15  0.12,0    0.22,0
+        C 0.30,0     0.33,0.18 0.38,0.18
+        C 0.43,0.18  0.46,0.05 0.50,0.05
+        C 0.54,0.05  0.57,0.18 0.62,0.18
+        C 0.67,0.18  0.70,0    0.78,0
+        C 0.88,0     0.94,0.15 0.94,0.5
+        C 0.94,0.85  0.88,1    0.78,1
+        C 0.70,1     0.67,0.82 0.62,0.82
+        C 0.57,0.82  0.54,0.95 0.50,0.95
+        C 0.46,0.95  0.43,0.82 0.38,0.82
+        C 0.33,0.82  0.30,1    0.22,1
+        C 0.12,1     0.06,0.85 0.06,0.5
+        Z" />
+    </clipPath>
+
+    <!-- E: Seed — smal ved enderne, bred i midten -->
+    <clipPath id="seed-clip" clipPathUnits="objectBoundingBox">
+      <path d="
+        M 0.02,0.5
+        C 0.02,0.22  0.08,0.06  0.18,0.02
+        C 0.28,-0.02 0.40,0.04  0.50,0.04
+        C 0.60,0.04  0.72,-0.02 0.82,0.02
+        C 0.92,0.06  0.98,0.22  0.98,0.5
+        C 0.98,0.78  0.92,0.94  0.82,0.98
+        C 0.72,1.02  0.60,0.96  0.50,0.96
+        C 0.40,0.96  0.28,1.02  0.18,0.98
+        C 0.08,0.94  0.02,0.78  0.02,0.5
+        Z" />
+    </clipPath>
+  </defs>
+</svg>
+
+
+<!-- ═══════════════════ A: SMOOTH CAPSULE ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h2>A — Smooth Capsule</h2>
+    <p><span class="tag">border-radius: 60px</span> <span class="tag">simpel fusion</span>
+    Klassisk samlet pilleform. Interne zoner markeres kun af svage glødende vertikale linjer og lokale baggrundsfarver. Mindst kompleks, mest robust.</p>
+  </div>
+  <div class="stage">
+    <div class="pod pod-base pod-a">
+      <div class="zone zone-l">
+        <div class="val-row"><span class="bg-val">7.2</span><span class="bg-arrow">→</span></div>
+        <span class="bg-unit">mmol/L</span>
+        <div class="pill-stack"><span class="pill">IOB <b>2.4</b> E</span><span class="pill">COB <b>18</b> g</span></div>
+      </div>
+      <div class="zone-sep"></div>
+      <div class="zone zone-c">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="speed-pill">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="zone-sep"></div>
+      <div class="zone zone-r">
+        <div class="mode">🏖️ Sandbox</div>
+        <div class="pts-row"><span class="star">⭐</span><span class="score">142.5</span></div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ B: BREATHING LENS ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h2>B — Breathing Lens</h2>
+    <p><span class="tag">clip-path polygon</span> <span class="tag">center swells</span>
+    Center buler opad som en linse. Siderne er lavere. Giver en fornemmelse af at formen "trækker vejret" — organisk, levende, skulpturel.</p>
+  </div>
+  <div class="stage stage-b">
+    <div class="pod-b-wrap">
+      <div class="pod pod-base pod-b">
+        <div class="zone zone-l">
+          <div class="val-row"><span class="bg-val">7.2</span><span class="bg-arrow">→</span></div>
+          <span class="bg-unit">mmol/L</span>
+          <div class="pill-stack"><span class="pill">IOB <b>2.4</b> E</span><span class="pill">COB <b>18</b> g</span></div>
+        </div>
+        <div class="zone-sep"></div>
+        <div class="zone zone-c">
+          <div class="dock-row">
+            <div class="di di-ins">💉<span class="k">Z</span></div>
+            <div class="di di-food">🍽️<span class="k">X</span></div>
+            <div class="di di-ex">🏃<span class="k">C</span></div>
+            <div class="di di-kit">🩹<span class="k">V</span></div>
+          </div>
+          <div class="speed-pill">
+            <button class="sp-btn">◀</button>
+            <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+            <button class="sp-btn">▶</button>
+          </div>
+        </div>
+        <div class="zone-sep"></div>
+        <div class="zone zone-r">
+          <div class="mode">🏖️ Sandbox</div>
+          <div class="pts-row"><span class="star">⭐</span><span class="score">142.5</span></div>
+          <span class="weight">(×1.0)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ C: PINCHED CLOUD ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h2>C — Pinched Cloud</h2>
+    <p><span class="tag">SVG clip-path</span> <span class="tag">concave indentations</span>
+    Skyform med bløde indbuede kurver mellem zonerne. Formen antyder tre "rum" men er stadig ét stykke — som en trillingesky eller sammenvokset kirsebær.</p>
+  </div>
+  <div class="stage">
+    <div class="pod pod-base pod-c" style="min-height: 130px;">
+      <div class="zone zone-l">
+        <div class="val-row"><span class="bg-val">7.2</span><span class="bg-arrow">→</span></div>
+        <span class="bg-unit">mmol/L</span>
+        <div class="pill-stack"><span class="pill">IOB <b>2.4</b> E</span><span class="pill">COB <b>18</b> g</span></div>
+      </div>
+      <div class="zone zone-c">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="speed-pill">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="zone zone-r">
+        <div class="mode">🏖️ Sandbox</div>
+        <div class="pts-row"><span class="star">⭐</span><span class="score">142.5</span></div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ D: LIQUID MERCURY ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h2>D — Liquid Mercury</h2>
+    <p><span class="tag">8-value border-radius</span> <span class="tag">asymmetrisk bue</span>
+    Kviksølv-agtig blob: toppen er mere afrundet end bunden, siderne buler organisk. Bruger CSS's 8-værdi border-radius-syntax til en flydende, levende form uden clip-path.</p>
+  </div>
+  <div class="stage">
+    <div class="pod pod-base pod-d">
+      <div class="zone zone-l">
+        <div class="val-row"><span class="bg-val">7.2</span><span class="bg-arrow">→</span></div>
+        <span class="bg-unit">mmol/L</span>
+        <div class="pill-stack"><span class="pill">IOB <b>2.4</b> E</span><span class="pill">COB <b>18</b> g</span></div>
+      </div>
+      <div class="zone-sep"></div>
+      <div class="zone zone-c">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="speed-pill">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="zone-sep"></div>
+      <div class="zone zone-r">
+        <div class="mode">🏖️ Sandbox</div>
+        <div class="pts-row"><span class="star">⭐</span><span class="score">142.5</span></div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ E: SEED POD ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h2>E — Seed Pod</h2>
+    <p><span class="tag">SVG clip-path</span> <span class="tag">spidse ender</span>
+    Biologisk frøform: smal ved enderne, bred i midten. Inspireret af mandler, frøkapsler, øjne. Mest skulpturel og mindst "boxy" af alle varianter.</p>
+  </div>
+  <div class="stage">
+    <div class="pod pod-base pod-e" style="min-height: 130px;">
+      <div class="zone zone-l">
+        <div class="val-row"><span class="bg-val">7.2</span><span class="bg-arrow">→</span></div>
+        <span class="bg-unit">mmol/L</span>
+        <div class="pill-stack"><span class="pill">IOB <b>2.4</b> E</span><span class="pill">COB <b>18</b> g</span></div>
+      </div>
+      <div class="zone-sep"></div>
+      <div class="zone zone-c">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="speed-pill">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="zone-sep"></div>
+      <div class="zone zone-r">
+        <div class="mode">🏖️ Sandbox</div>
+        <div class="pts-row"><span class="star">⭐</span><span class="score">142.5</span></div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ F: NESTED SHELL ═══════════════════ -->
+<div class="mockup">
+  <div class="mockup-label">
+    <h2>F — Nested Shell</h2>
+    <p><span class="tag">border-radius: 60px</span> <span class="tag">indre dybde</span>
+    Samme glatte ydre pille som A, men center-zonen er visuelt "sunket ind" med inset shadow og egen border. Skaber dybde og hierarki uden at bryde formen — docken føles indlejret i en fordybning.</p>
+  </div>
+  <div class="stage">
+    <div class="pod pod-base pod-f">
+      <div class="zone zone-l">
+        <div class="val-row"><span class="bg-val">7.2</span><span class="bg-arrow">→</span></div>
+        <span class="bg-unit">mmol/L</span>
+        <div class="pill-stack"><span class="pill">IOB <b>2.4</b> E</span><span class="pill">COB <b>18</b> g</span></div>
+      </div>
+      <div class="zone-sep"></div>
+      <div class="zone zone-c">
+        <div class="dock-row">
+          <div class="di di-ins">💉<span class="k">Z</span></div>
+          <div class="di di-food">🍽️<span class="k">X</span></div>
+          <div class="di di-ex">🏃<span class="k">C</span></div>
+          <div class="di di-kit">🩹<span class="k">V</span></div>
+        </div>
+        <div class="speed-pill">
+          <button class="sp-btn">◀</button>
+          <button class="sp-center"><span class="sp-icon">▶▶</span> 4t/min</button>
+          <button class="sp-btn">▶</button>
+        </div>
+      </div>
+      <div class="zone-sep"></div>
+      <div class="zone zone-r">
+        <div class="mode">🏖️ Sandbox</div>
+        <div class="pts-row"><span class="star">⭐</span><span class="score">142.5</span></div>
+        <span class="weight">(×1.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

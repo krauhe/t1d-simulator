@@ -1,0 +1,43 @@
+{
+  "type": "compartment-diagram",
+  "title": "Protein → glucagon → hepatic glucose production (Paterson 2016)",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "pStomach", "label": "Stomach",         "var": "P_stomach", "color": "protein", "type": "depot" },
+    { "id": "pGut",     "label": "Gut",              "var": "P_gut",     "color": "protein", "type": "depot" },
+    { "id": "AA",       "label": "Amino acid pool",  "var": "AA",  "unit": "t½ ≈ 60 min", "color": "protein", "type": "plasma" },
+    { "id": "hill",     "label": "Hill response",    "var": "f_hill",    "color": "protein", "type": "effect" },
+    { "id": "glycogen", "label": "Liver glycogen",   "var": "R",   "unit": "0–1",           "color": "liver",   "type": "tissue" },
+    { "id": "stress",   "label": "Stress multiplier","var": "+protein-glucagon",             "color": "stress",  "type": "effect" },
+    { "id": "liver",    "label": "Liver EGP",        "var": "EGP = EGP₀ · max(0, stress − x3)", "color": "liver", "type": "tissue" },
+    { "id": "Q1",       "label": "Plasma glucose",   "var": "Q1",                            "color": "glucose", "type": "plasma", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "external", "to": "pStomach", "label": "",             "externalLabel": "protein meal (P g)", "kind": "input" },
+    { "from": "pStomach",  "to": "pGut",    "label": "1/τG",         "kind": "mass" },
+    { "from": "pGut",      "to": "AA",      "label": "1/τProtAbs",   "kind": "mass" },
+    { "from": "AA",        "to": "external","label": "AA_DECAY",     "externalLabel": "AA clearance", "kind": "elimination" },
+    { "from": "AA",        "to": "hill",    "label": "saturable",    "kind": "signal" },
+    { "from": "glycogen",  "to": "hill",    "label": "0.5 + 0.5·R", "kind": "signal" },
+    { "from": "hill",      "to": "stress",  "label": "+",            "kind": "signal" },
+    { "from": "stress",    "to": "liver",   "label": "+",            "kind": "signal" },
+    { "from": "liver",     "to": "Q1",      "label": "EGP",          "kind": "mass" }
+  ],
+  "caption": {
+    "scope": "Protein-driven hepatic glucose production pathway, calibrated to Paterson et al. (Diabet Med 33:1151-1157, 2016). Ingested protein is absorbed through a two-stage gastric-intestinal cascade (P_stomach → P_gut, shared τG with carbohydrates) into a circulating amino-acid pool (AA). A Hill-saturation function converts AA concentration to a glucagon drive signal (f_hill = PROTEIN_GLUCAGON_MAX · AAⁿ / (EC50ⁿ + AAⁿ); n = 2, EC50 = 8 g, max = 0.25). Liver glycogen reserve R scales f_hill by (0.5 + 0.5·R): when glycogen is replete the full glucagon effect (glycogenolysis + gluconeogenesis) applies; when glycogen is depleted only the gluconeogenesis half (~50 %) persists. The resulting signal is added to the unified stressMultiplier, which competes with insulin x3 suppression in the EGP equation. Calibration target: 75 g protein → +1.6–1.7 mmol/L peak BG at 150–180 min.",
+    "variables": [
+      { "symbol": "P_stomach", "category": "compartment", "definition": "protein in stomach after ingestion (g)" },
+      { "symbol": "P_gut",     "category": "compartment", "definition": "protein in small intestine; absorption rate-limited by τProtAbs ≈ 90 min (g)" },
+      { "symbol": "AA",        "category": "compartment", "definition": "circulating amino-acid pool (g-equivalents); cleared with t½ ≈ 60 min" },
+      { "symbol": "f_hill",    "category": "compartment", "definition": "Hill-saturation glucagon drive = PROTEIN_GLUCAGON_MAX · AAⁿ / (EC50ⁿ + AAⁿ); n = 2, EC50 = 8 g, max = 0.25; scaled by (0.5 + 0.5·R)" },
+      { "symbol": "R",         "category": "compartment", "definition": "liver glycogen reserve, 0–1 fraction of maximum glycogen pool" },
+      { "symbol": "Q1",        "category": "compartment", "definition": "plasma glucose pool — receives EGP output from liver" },
+      { "symbol": "τG",        "category": "flow",        "definition": "gastric emptying time constant (shared with carbohydrate absorption)" },
+      { "symbol": "τProtAbs",  "category": "flow",        "definition": "intestinal protein absorption time constant ≈ 90 min" },
+      { "symbol": "AA_DECAY",  "category": "flow",        "definition": "amino-acid clearance rate from plasma (t½ ≈ 60 min)" },
+      { "symbol": "EGP",       "category": "flow",        "definition": "endogenous glucose production = EGP₀ · max(0, stressMultiplier − x3)" },
+      { "symbol": "EGP₀",      "category": "flow",        "definition": "basal hepatic glucose production (~0.0161 × weight mmol/min at T1D fasting level)" },
+      { "symbol": "x3",        "category": "flow",        "definition": "insulin effect compartment suppressing EGP (Hovorka 2004)" }
+    ]
+  }
+}

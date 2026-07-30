@@ -1,0 +1,62 @@
+{
+  "type": "compartment-diagram",
+  "title": "Dawn phenomenon — hybrid HGP + circadian ISF model (Bolli & Gerich 1984 / simulator extension)",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "clock",    "label": "Time of day",    "var": "t (00–24)",         "color": "stress",       "type": "external" },
+    { "id": "sleep",    "label": "Sleep deficit",   "var": "h_lost (0–4)",      "color": "stress",       "type": "external" },
+    { "id": "chronic",  "label": "Chronic stress",  "var": "chronicStress",     "color": "stress",       "type": "external" },
+
+    { "id": "amp",      "label": "Dawn amplitude",  "var": "baseAmp · f(h_lost, chronic)", "color": "stress", "type": "effect" },
+    { "id": "circCort", "label": "Circadian cortisol","var": "circadianCortisol","color": "stress",       "type": "effect" },
+    { "id": "circISF",  "label": "Circadian ISF",   "var": "circadianISF",      "color": "insulin-fast", "type": "effect" },
+
+    { "id": "stress",   "label": "Stress multiplier","var": "stressMultiplier", "color": "stress",       "type": "effect" },
+    { "id": "isf",      "label": "ISF modifier",    "var": "currentISF",        "color": "insulin-fast", "type": "effect" },
+
+    { "id": "egp",      "label": "Liver EGP",       "var": "EGP = EGP₀ · max(0, stress − x3)", "color": "liver",  "type": "tissue", "rank": "max" },
+    { "id": "kb",       "label": "Effect rates",    "var": "kb1, kb2, kb3",     "color": "insulin-fast", "type": "effect", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "external", "to": "clock",   "label": "", "externalLabel": "simulation clock", "kind": "input" },
+    { "from": "external", "to": "sleep",   "label": "", "externalLabel": "night game action","kind": "input" },
+    { "from": "external", "to": "chronic", "label": "", "externalLabel": "prior-day cortisol t½≈12 h", "kind": "input" },
+
+    { "from": "sleep",   "to": "amp",     "label": "+12 % / h_lost",       "kind": "signal" },
+    { "from": "chronic", "to": "amp",     "label": "+30 % / chronicStress","kind": "signal" },
+
+    { "from": "amp",     "to": "circCort","label": "scales peak amplitude", "kind": "signal" },
+    { "from": "clock",   "to": "circCort","label": "phase (04→12 sine arc)","kind": "signal" },
+    { "from": "clock",   "to": "circISF", "label": "phase (cosine interp.)","kind": "signal" },
+
+    { "from": "circCort","to": "stress",  "label": "+circadianCortisol",    "kind": "signal" },
+    { "from": "circISF", "to": "isf",     "label": "× circadianISF",        "kind": "signal" },
+
+    { "from": "stress",  "to": "egp",     "label": "drives EGP via stressMultiplier", "kind": "signal" },
+    { "from": "isf",     "to": "kb",      "label": "scales kb1, kb2, kb3 each tick",  "kind": "signal" },
+
+    { "from": "egp", "to": "external", "label": "EGP",        "externalLabel": "→ plasma glucose (Q1)", "kind": "output" },
+    { "from": "kb",  "to": "external", "label": "kb_i (ISF-scaled)", "externalLabel": "→ x1, x2, x3 actions",  "kind": "output" }
+  ],
+  "caption": {
+    "scope": "Simulator implementation of the dawn phenomenon (Bolli & Gerich, N Engl J Med 310:746-750, 1984), split into two coupled mechanisms. Mechanism 1 — hepatic glucose output: a sine-arc circadianCortisol signal (peak 08:00, amplitude 0.15) is added to stressMultiplier, raising EGP = EGP₀ · max(0, stressMultiplier − x3). Mechanism 2 — peripheral insulin sensitivity: circadianISF varies from 0.70 (08:00) to 1.20 (evening) and rescales kb1/kb2/kb3, so the same plasma insulin produces less peripheral effect at dawn. The amplitude baseAmp is recalculated at midnight as 0.15 · (1 + 0.12·h_lost) · (1 + 0.30·chronicStress), so poor sleep and residual cortisol amplify the next morning's rise. Combined effect at 08:00: stressMultiplier contribution 1.15 and circadianISF 0.70 yield approximately 64 % more insulin needed than at evening baseline. This is a simulator extension; the original Bolli/Gerich observation has been extended with a circadian ISF component informed by Schmidt et al. (2014).",
+    "variables": [
+      { "symbol": "t",                  "category": "compartment", "definition": "time of day in 24-hour clock (00–24 h), drives circadian phase for both mechanisms" },
+      { "symbol": "h_lost",             "category": "compartment", "definition": "hours of sleep lost relative to target (clamped 0–4 h); read from player input, resets at 07:00" },
+      { "symbol": "chronicStress",      "category": "compartment", "definition": "residual cortisol carry-over from previous day (t½ ≈ 12 h); updated each midnight" },
+      { "symbol": "baseAmp · f(h_lost, chronic)", "category": "compartment", "definition": "dawn cortisol amplitude = 0.15 · (1 + 0.12·h_lost) · (1 + 0.30·chronicStress), clamped 0.05–0.35" },
+      { "symbol": "circadianCortisol",  "category": "compartment", "definition": "circadian cortisol signal — symmetric sine arc, rises 04:00, peaks 08:00, falls 12:00; amplitude set by baseAmp" },
+      { "symbol": "circadianISF",       "category": "compartment", "definition": "circadian insulin sensitivity factor — cosine interpolation: 1.20 (00–04), 0.70 (08:00), 1.00 (14:00), 1.20 (19–24)" },
+      { "symbol": "stressMultiplier",   "category": "compartment", "definition": "combined stress term (≥ 1) fed into EGP equation; includes glycogenBaseline, gngBaseline, acute, chronic, dawn, and protein-glucagon components" },
+      { "symbol": "currentISF",         "category": "compartment", "definition": "net ISF modifier = baseISF · circadianISF · vasodilatation · postExBoost / (insulinResist · ffaResist)" },
+      { "symbol": "EGP = EGP₀ · max(0, stress − x3)", "category": "compartment", "definition": "hepatic endogenous glucose production; stress raises EGP, x3 (insulin action) suppresses it" },
+      { "symbol": "kb1, kb2, kb3",      "category": "compartment", "definition": "build-up rate constants for insulin effect compartments x1 (transport), x2 (disposal), x3 (EGP suppression); all scaled each tick by currentISF" },
+      { "symbol": "+12 % / h_lost",     "category": "flow",        "definition": "sleep deficit contribution to dawn amplitude: +12 percentage points per hour of lost sleep" },
+      { "symbol": "+30 % / chronicStress", "category": "flow",     "definition": "chronic stress contribution to dawn amplitude: +30 percentage points per unit of chronicStress" },
+      { "symbol": "phase (04→12 sine arc)", "category": "flow",    "definition": "clock-to-circadianCortisol mapping: active window 04:00–12:00, symmetric sine shape, peak at 08:00" },
+      { "symbol": "phase (cosine interp.)", "category": "flow",    "definition": "clock-to-circadianISF mapping: cosine interpolation through four control points across 24 h" },
+      { "symbol": "EGP",               "category": "flow",         "definition": "hepatic glucose output rate entering plasma pool Q1 (mmol/min)" },
+      { "symbol": "kb_i (ISF-scaled)", "category": "flow",         "definition": "ISF-scaled build-up rates delivered to x1, x2, x3 each simulation tick" }
+    ]
+  }
+}

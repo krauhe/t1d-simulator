@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1025.1446428571428 698.002" width="1025.1446428571428" height="698.002" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>Exercise model — Resalat E1 pathway with simulator extensions</title>
+  <defs>
+    <marker id="arrow-84cc16" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#84cc16"/></marker>
+    <marker id="arrow-b45309" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/></marker>
+    <marker id="arrow-7dd3fc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 510.58928571428567 136.001 L 510.58928571428567 154.001" fill="none" stroke="#84cc16" stroke-width="2" marker-end="url(#arrow-84cc16)" data-edge-id="e0" data-from="__ext_in_0" data-to="activity"/>
+    <path d="M 458.28035714285716 206.001 L 458.28035714285716 271.001" fill="none" stroke="#84cc16" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-84cc16)" data-edge-id="e1" data-from="activity" data-to="hr"/>
+    <path d="M 416.07 194.74 L 135.36 238.50 L 135.36 307.00 L 135.36 375.50 L 135.36 408.00" fill="none" stroke="#84cc16" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-84cc16)" data-edge-id="e2" data-from="activity" data-to="hepatic"/>
+    <path d="M 600.45 206.00 L 712.77 238.50 L 712.77 307.00 L 712.77 375.50 L 756.13 408.00" fill="none" stroke="#84cc16" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-84cc16)" data-edge-id="e3" data-from="activity" data-to="session"/>
+    <path d="M 605.11 194.36 L 895.56 238.50 L 895.56 271.00" fill="none" stroke="#84cc16" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-84cc16)" data-edge-id="e4" data-from="activity" data-to="glycogen"/>
+    <path d="M 426.6017857142857 343.001 L 426.6017857142857 408.001" fill="none" stroke="#84cc16" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-84cc16)" data-edge-id="e5" data-from="hr" data-to="E1"/>
+    <path d="M 488.65357142857147 343.001 L 488.65357142857147 418.001" fill="none" stroke="#84cc16" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-84cc16)" data-edge-id="e6" data-from="hr" data-to="pulse"/>
+    <path d="M 362.71428571428567 480.001 L 362.71428571428567 545.001" fill="none" stroke="#84cc16" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-84cc16)" data-edge-id="e7" data-from="E1" data-to="Q2"/>
+    <path d="M 135.3571428571429 480.001 L 135.3571428571429 545.001" fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-b45309)" data-edge-id="e8" data-from="hepatic" data-to="Q1"/>
+    <path d="M 804.1607142857142 480.001 L 804.1607142857142 555.001" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e9" data-from="session" data-to="insulinAction"/>
+    <path d="M 849.8580357142857 343.001 L 849.8580357142857 408.001" fill="none" stroke="#84cc16" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-84cc16)" data-edge-id="e10" data-from="glycogen" data-to="session"/>
+    <path d="M 548.2642857142857 470.001 L 548.2642857142857 555.001" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e11" data-from="pulse" data-to="sc"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="activity">
+      <rect x="416.07" y="154.00" width="189.03571428571428" height="52" rx="10" ry="10" fill="rgba(132, 204, 22, 0.2)" stroke="#84cc16" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="510.59" y="174.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Activity profile</text>
+      <text x="510.59" y="192.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">type, intensity</text>
+    </g>
+    <g class="node" data-node-id="hr">
+      <rect x="410.49" y="271.00" width="90" height="72" rx="10" ry="10" fill="rgba(132, 204, 22, 0.2)" stroke="#84cc16" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="455.49" y="293.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Heart rate</text>
+      <text x="455.49" y="311.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">HR</text>
+      <text x="455.49" y="332.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">bpm</text>
+    </g>
+    <g class="node" data-node-id="E1">
+      <rect x="282.71" y="408.00" width="160" height="72" rx="10" ry="10" fill="rgba(132, 204, 22, 0.2)" stroke="#84cc16" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="362.71" y="430.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Contraction response</text>
+      <text x="362.71" y="448.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">E1</text>
+      <text x="362.71" y="469.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">τ = 5 min</text>
+    </g>
+    <g class="node" data-node-id="hepatic">
+      <rect x="12.00" y="408.00" width="246.7142857142857" height="72" rx="10" ry="10" fill="rgba(180, 83, 9, 0.2)" stroke="#b45309" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="135.36" y="430.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Exercise hepatic drive</text>
+      <text x="135.36" y="448.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">exerciseHepaticDrive</text>
+      <text x="135.36" y="469.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">+ EGP_ex; t½ = 30 min</text>
+    </g>
+    <g class="node" data-node-id="session">
+      <rect x="686.57" y="408.00" width="235.17857142857142" height="72" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="804.16" y="430.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Delayed sensitivity</text>
+      <text x="804.16" y="448.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">fast + early + late</text>
+      <text x="804.16" y="469.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">continuous session response</text>
+    </g>
+    <g class="node" data-node-id="glycogen">
+      <rect x="777.97" y="271.00" width="235.17857142857142" height="72" rx="10" ry="10" fill="rgba(132, 204, 22, 0.2)" stroke="#84cc16" stroke-width="2"/>
+      <text x="895.56" y="293.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Muscle glycogen</text>
+      <text x="895.56" y="311.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">muscleGlycogenGrams</text>
+      <text x="895.56" y="332.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">g</text>
+    </g>
+    <g class="node" data-node-id="pulse">
+      <rect x="476.82" y="418.00" width="142.89285714285714" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="548.26" y="438.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Depot perfusion</text>
+      <text x="548.26" y="456.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">pulseFactor</text>
+    </g>
+    <g class="node" data-node-id="Q1">
+      <rect x="76.96" y="545.00" width="116.8" height="72" rx="10" ry="10" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" stroke-width="2"/>
+      <text x="135.36" y="567.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Plasma glucose</text>
+      <text x="135.36" y="585.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">Q1</text>
+      <text x="135.36" y="606.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">mmol</text>
+    </g>
+    <g class="node" data-node-id="Q2">
+      <rect x="289.91" y="545.00" width="145.6" height="72" rx="10" ry="10" fill="rgba(74, 222, 128, 0.2)" stroke="#4ade80" stroke-width="2"/>
+      <text x="362.71" y="567.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Peripheral glucose</text>
+      <text x="362.71" y="585.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">Q2</text>
+      <text x="362.71" y="606.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">mmol</text>
+    </g>
+    <g class="node" data-node-id="sc">
+      <rect x="459.51" y="555.00" width="177.5" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2"/>
+      <text x="548.26" y="575.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">SC insulin depots</text>
+      <text x="548.26" y="593.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">S1/S2, S1b/S2b</text>
+    </g>
+    <g class="node" data-node-id="insulinAction">
+      <rect x="698.11" y="555.00" width="212.10714285714283" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="804.16" y="575.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Muscle insulin action</text>
+      <text x="804.16" y="593.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">x1, x2 EC50 shift</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0-ext">
+      <rect x="444.39" y="114.00" width="132.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="510.59" y="127.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">selected exercise</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1">
+      <rect x="420.88" y="229.50" width="74.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="458.28" y="243.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">target HR</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2">
+      <rect x="140.18" y="220.67" width="103.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="191.98" y="234.57" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">rate, ceiling</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3">
+      <rect x="664.57" y="266.63" width="96.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="712.77" y="280.53" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">scale, delay</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4">
+      <rect x="696.60" y="209.87" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="766.40" y="223.77" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">glycogenUseScaling</text>
+    </g>
+    <g class="edge-label" data-edge-id="e5">
+      <rect x="374.80" y="366.50" width="103.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="426.60" y="380.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">exerciseInput</text>
+    </g>
+    <g class="edge-label" data-edge-id="e7">
+      <rect x="339.71" y="503.50" width="46.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="362.71" y="517.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">−β·E1</text>
+    </g>
+    <g class="edge-label" data-edge-id="e9">
+      <rect x="766.76" y="508.50" width="74.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="804.16" y="522.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">cap: 2.5×</text>
+    </g>
+    <g class="edge-label" data-edge-id="e10">
+      <rect x="765.66" y="366.50" width="168.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="849.86" y="380.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">early × empty fraction</text>
+    </g>
+    <g class="edge-label" data-edge-id="e11">
+      <rect x="485.66" y="503.50" width="125.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="548.26" y="517.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">faster U_I, U_Ib</text>
+    </g>
+  </g>
+</svg>

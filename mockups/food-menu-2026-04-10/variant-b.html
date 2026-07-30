@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variant B · Pædagogisk (anbefalet) · Mad-menu mockup</title>
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="page-wrapper">
+    <div class="breadcrumb">
+        <a href="index.html">← Tilbage til oversigt</a>
+        <span>Variant B · Pædagogisk ★ anbefalet</span>
+    </div>
+
+    <header class="page-header">
+        <h1 class="page-title">Variant B · Pædagogisk <span style="color: var(--green);">★</span></h1>
+        <p class="page-subtitle">
+            Hver række har ét klart tema der lærer spilleren en fysiologisk pointe:
+            <strong>Lav-kulhydrat</strong> (ingen bolus nødvendig), <strong>Måltider</strong> (kræver bolus),
+            <strong>Justering</strong> (hurtig-virkende til hypo).
+        </p>
+    </header>
+
+    <div class="callout good">
+        <strong>Hvorfor denne er anbefalet:</strong> Mental model matcher virkeligheden. Nydiagnosticerede T1D
+        patienter skal lære at skelne mellem "fri mad" (lav carb), "måltid der kræver regning" (normal carb)
+        og "hurtig redning" (justerings-carb). Rækkerne bliver et mini-kursus i ernæring.
+    </div>
+
+    <section class="section">
+        <h2 class="section-title">🍽️ Den komplette 3-rækkers mad-menu</h2>
+
+        <!-- Context pill -->
+        <div class="bg-state-pill normal">
+            <span class="bg-dot"></span>
+            <span>Kontekst: BG 5.8 mmol/L · I range · Alle rækker aktive</span>
+        </div>
+
+        <div class="food-menu-frame">
+
+            <!-- RÆKKE 1: LAV-KULHYDRAT -->
+            <div class="food-row" data-row="lowcarb">
+                <div class="food-row-header">
+                    <div class="food-row-label">
+                        <span class="row-icon">🔵</span>
+                        <span>Lav-kulhydrat · "fri mad"</span>
+                    </div>
+                    <span class="food-row-hint">Typisk &lt; 5g C · ingen bolus</span>
+                </div>
+                <div class="food-row-chips">
+                    <div class="food-chip">
+                        <span class="chip-key-hint">Q</span>
+                        <span class="chip-carb-badge">1<span class="unit">g</span></span>
+                        <span class="chip-emoji">🥚</span>
+                        <span class="chip-name">Æg</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 3%;"></div>
+                            <div class="bar-p" style="width: 45%;"></div>
+                            <div class="bar-f" style="width: 52%;"></div>
+                        </div>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">W</span>
+                        <span class="chip-carb-badge">2<span class="unit">g</span></span>
+                        <span class="chip-emoji">🍗</span>
+                        <span class="chip-name">Kylling</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 4%;"></div>
+                            <div class="bar-p" style="width: 60%;"></div>
+                            <div class="bar-f" style="width: 36%;"></div>
+                        </div>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">E</span>
+                        <span class="chip-carb-badge">0<span class="unit">g</span></span>
+                        <span class="chip-emoji">🐟</span>
+                        <span class="chip-name">Laks</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 0%;"></div>
+                            <div class="bar-p" style="width: 55%;"></div>
+                            <div class="bar-f" style="width: 45%;"></div>
+                        </div>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">R</span>
+                        <span class="chip-carb-badge">5<span class="unit">g</span></span>
+                        <span class="chip-emoji">🥑</span>
+                        <span class="chip-name">Avocado</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 14%;"></div>
+                            <div class="bar-p" style="width: 14%;"></div>
+                            <div class="bar-f" style="width: 72%;"></div>
+                        </div>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">T</span>
+                        <span class="chip-carb-badge">5<span class="unit">g</span></span>
+                        <span class="chip-emoji">🥗</span>
+                        <span class="chip-name">Salat</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 40%;"></div>
+                            <div class="bar-p" style="width: 20%;"></div>
+                            <div class="bar-f" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RÆKKE 2: ALMINDELIGE MÅLTIDER -->
+            <div class="food-row" data-row="normal">
+                <div class="food-row-header">
+                    <div class="food-row-label">
+                        <span class="row-icon">🟡</span>
+                        <span>Måltider · "bolus-maden"</span>
+                    </div>
+                    <span class="food-row-hint">25-60g C · kræver bolus</span>
+                </div>
+                <div class="food-row-chips">
+                    <div class="food-chip">
+                        <span class="chip-key-hint">A</span>
+                        <span class="chip-carb-badge">25<span class="unit">g</span></span>
+                        <span class="chip-emoji">🍞</span>
+                        <span class="chip-name">Brød</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 70%;"></div>
+                            <div class="bar-p" style="width: 22%;"></div>
+                            <div class="bar-f" style="width: 8%;"></div>
+                        </div>
+                        <span class="chip-units-badge">~2.5 U</span>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">S</span>
+                        <span class="chip-carb-badge">30<span class="unit">g</span></span>
+                        <span class="chip-emoji">🥣</span>
+                        <span class="chip-name">Havregryn</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 75%;"></div>
+                            <div class="bar-p" style="width: 20%;"></div>
+                            <div class="bar-f" style="width: 5%;"></div>
+                        </div>
+                        <span class="chip-units-badge">~3.0 U</span>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">D</span>
+                        <span class="chip-carb-badge">50<span class="unit">g</span></span>
+                        <span class="chip-emoji">🍝</span>
+                        <span class="chip-name">Pasta</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 76%;"></div>
+                            <div class="bar-p" style="width: 15%;"></div>
+                            <div class="bar-f" style="width: 9%;"></div>
+                        </div>
+                        <span class="chip-units-badge">~5.0 U</span>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">F</span>
+                        <span class="chip-carb-badge">55<span class="unit">g</span></span>
+                        <span class="chip-emoji">🍕</span>
+                        <span class="chip-name">Pizza</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 55%;"></div>
+                            <div class="bar-p" style="width: 20%;"></div>
+                            <div class="bar-f" style="width: 25%;"></div>
+                        </div>
+                        <span class="chip-units-badge">~5.5 U</span>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">G</span>
+                        <span class="chip-carb-badge">60<span class="unit">g</span></span>
+                        <span class="chip-emoji">🎂</span>
+                        <span class="chip-name">Lagkage</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 60%;"></div>
+                            <div class="bar-p" style="width: 8%;"></div>
+                            <div class="bar-f" style="width: 32%;"></div>
+                        </div>
+                        <span class="chip-units-badge">~6.0 U</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RÆKKE 3: JUSTERING / HURTIG-VIRKENDE -->
+            <div class="food-row" data-row="adjust">
+                <div class="food-row-header">
+                    <div class="food-row-label">
+                        <span class="row-icon">🟢</span>
+                        <span>Justering · "hurtig redning"</span>
+                    </div>
+                    <span class="food-row-hint">Hurtig virkning · ingen bolus</span>
+                </div>
+                <div class="food-row-chips">
+                    <div class="food-chip">
+                        <span class="chip-key-hint">Z</span>
+                        <span class="chip-carb-badge">3<span class="unit">g</span></span>
+                        <span class="chip-emoji svg-icon">
+                            <svg viewBox="0 0 32 32">
+                                <ellipse cx="16" cy="16" rx="11" ry="7" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.5"/>
+                                <ellipse cx="13" cy="14" rx="2.5" ry="1.5" fill="#fff" opacity="0.7"/>
+                                <text x="16" y="20" font-family="Inter" font-size="9" font-weight="700" text-anchor="middle" fill="#0d1526">DEX</text>
+                            </svg>
+                        </span>
+                        <span class="chip-name">Druesukker</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">X</span>
+                        <span class="chip-carb-badge">15<span class="unit">g</span></span>
+                        <span class="chip-emoji">🍌</span>
+                        <span class="chip-name">Banan</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 92%;"></div>
+                            <div class="bar-p" style="width: 5%;"></div>
+                            <div class="bar-f" style="width: 3%;"></div>
+                        </div>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">C</span>
+                        <span class="chip-carb-badge">25<span class="unit">g</span></span>
+                        <span class="chip-emoji">🧃</span>
+                        <span class="chip-name">Juice</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 100%;"></div>
+                        </div>
+                        <span class="chip-liquid-indicator">💧</span>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">V</span>
+                        <span class="chip-carb-badge">20<span class="unit">g</span></span>
+                        <span class="chip-emoji">🍎</span>
+                        <span class="chip-name">Æble</span>
+                        <div class="chip-macro-bar">
+                            <div class="bar-c" style="width: 90%;"></div>
+                            <div class="bar-p" style="width: 5%;"></div>
+                            <div class="bar-f" style="width: 5%;"></div>
+                        </div>
+                    </div>
+                    <div class="food-chip">
+                        <span class="chip-key-hint">B</span>
+                        <span class="chip-carb-badge">—</span>
+                        <span class="chip-emoji">✏️</span>
+                        <span class="chip-name">Lav selv</span>
+                        <div class="chip-macro-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============== DYNAMIC STATE: HYPO ============== -->
+    <section class="section">
+        <h2 class="section-title">🚨 Dynamisk tilstand: Hypo-alarm</h2>
+        <p class="section-subtitle">
+            Samme menu, men nu med <strong>BG 3.8 mmol/L</strong>. Justerings-rækken pulserer grønt,
+            lav-kulhydrat-rækken dæmpes ned. Spilleren ledes intuitivt mod hurtig-virkende carbs.
+        </p>
+
+        <div class="bg-state-pill hypo">
+            <span class="bg-dot"></span>
+            <span>Kontekst: BG 3.8 mmol/L · HYPO · Justering fremhævet</span>
+        </div>
+
+        <div class="food-menu-frame">
+
+            <div class="food-row dimmed" data-row="lowcarb">
+                <div class="food-row-header">
+                    <div class="food-row-label">
+                        <span class="row-icon">🔵</span>
+                        <span>Lav-kulhydrat · "fri mad"</span>
+                    </div>
+                    <span class="food-row-hint">Ikke relevant ved hypo</span>
+                </div>
+                <div class="food-row-chips">
+                    <div class="food-chip"><span class="chip-key-hint">Q</span><span class="chip-carb-badge">1<span class="unit">g</span></span><span class="chip-emoji">🥚</span><span class="chip-name">Æg</span><div class="chip-macro-bar"><div class="bar-c" style="width:3%;"></div><div class="bar-p" style="width:45%;"></div><div class="bar-f" style="width:52%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">W</span><span class="chip-carb-badge">2<span class="unit">g</span></span><span class="chip-emoji">🍗</span><span class="chip-name">Kylling</span><div class="chip-macro-bar"><div class="bar-c" style="width:4%;"></div><div class="bar-p" style="width:60%;"></div><div class="bar-f" style="width:36%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">E</span><span class="chip-carb-badge">0<span class="unit">g</span></span><span class="chip-emoji">🐟</span><span class="chip-name">Laks</span><div class="chip-macro-bar"><div class="bar-c" style="width:0%;"></div><div class="bar-p" style="width:55%;"></div><div class="bar-f" style="width:45%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">R</span><span class="chip-carb-badge">5<span class="unit">g</span></span><span class="chip-emoji">🥑</span><span class="chip-name">Avocado</span><div class="chip-macro-bar"><div class="bar-c" style="width:14%;"></div><div class="bar-p" style="width:14%;"></div><div class="bar-f" style="width:72%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">T</span><span class="chip-carb-badge">5<span class="unit">g</span></span><span class="chip-emoji">🥗</span><span class="chip-name">Salat</span><div class="chip-macro-bar"><div class="bar-c" style="width:40%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:40%;"></div></div></div>
+                </div>
+            </div>
+
+            <div class="food-row dimmed" data-row="normal">
+                <div class="food-row-header">
+                    <div class="food-row-label">
+                        <span class="row-icon">🟡</span>
+                        <span>Måltider · "bolus-maden"</span>
+                    </div>
+                    <span class="food-row-hint">For langsom til akut hypo</span>
+                </div>
+                <div class="food-row-chips">
+                    <div class="food-chip"><span class="chip-key-hint">A</span><span class="chip-carb-badge">25<span class="unit">g</span></span><span class="chip-emoji">🍞</span><span class="chip-name">Brød</span><div class="chip-macro-bar"><div class="bar-c" style="width:70%;"></div><div class="bar-p" style="width:22%;"></div><div class="bar-f" style="width:8%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">S</span><span class="chip-carb-badge">30<span class="unit">g</span></span><span class="chip-emoji">🥣</span><span class="chip-name">Havregryn</span><div class="chip-macro-bar"><div class="bar-c" style="width:75%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:5%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">D</span><span class="chip-carb-badge">50<span class="unit">g</span></span><span class="chip-emoji">🍝</span><span class="chip-name">Pasta</span><div class="chip-macro-bar"><div class="bar-c" style="width:76%;"></div><div class="bar-p" style="width:15%;"></div><div class="bar-f" style="width:9%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">F</span><span class="chip-carb-badge">55<span class="unit">g</span></span><span class="chip-emoji">🍕</span><span class="chip-name">Pizza</span><div class="chip-macro-bar"><div class="bar-c" style="width:55%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:25%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">G</span><span class="chip-carb-badge">60<span class="unit">g</span></span><span class="chip-emoji">🎂</span><span class="chip-name">Lagkage</span><div class="chip-macro-bar"><div class="bar-c" style="width:60%;"></div><div class="bar-p" style="width:8%;"></div><div class="bar-f" style="width:32%;"></div></div></div>
+                </div>
+            </div>
+
+            <div class="food-row hypo-highlight" data-row="adjust">
+                <div class="food-row-header">
+                    <div class="food-row-label">
+                        <span class="row-icon">🟢</span>
+                        <span>Justering · "hurtig redning"</span>
+                    </div>
+                    <span class="food-row-hint" style="color: var(--green); font-weight: 700;">👉 VÆLG HERFRA</span>
+                </div>
+                <div class="food-row-chips">
+                    <div class="food-chip"><span class="chip-key-hint">Z</span><span class="chip-carb-badge">3<span class="unit">g</span></span><span class="chip-emoji svg-icon"><svg viewBox="0 0 32 32"><ellipse cx="16" cy="16" rx="11" ry="7" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.5"/><ellipse cx="13" cy="14" rx="2.5" ry="1.5" fill="#fff" opacity="0.7"/><text x="16" y="20" font-family="Inter" font-size="9" font-weight="700" text-anchor="middle" fill="#0d1526">DEX</text></svg></span><span class="chip-name">Druesukker</span><div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">X</span><span class="chip-carb-badge">15<span class="unit">g</span></span><span class="chip-emoji">🍌</span><span class="chip-name">Banan</span><div class="chip-macro-bar"><div class="bar-c" style="width:92%;"></div><div class="bar-p" style="width:5%;"></div><div class="bar-f" style="width:3%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">C</span><span class="chip-carb-badge">25<span class="unit">g</span></span><span class="chip-emoji">🧃</span><span class="chip-name">Juice</span><div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div><span class="chip-liquid-indicator">💧</span></div>
+                    <div class="food-chip"><span class="chip-key-hint">V</span><span class="chip-carb-badge">20<span class="unit">g</span></span><span class="chip-emoji">🍎</span><span class="chip-name">Æble</span><div class="chip-macro-bar"><div class="bar-c" style="width:90%;"></div><div class="bar-p" style="width:5%;"></div><div class="bar-f" style="width:5%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-key-hint">B</span><span class="chip-carb-badge">—</span><span class="chip-emoji">✏️</span><span class="chip-name">Lav selv</span><div class="chip-macro-bar"></div></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="section-note">
+            <strong>Pædagogisk effekt:</strong> Spilleren ser visuelt at to rækker "slukker ned" mens den grønne
+            pulserer — en direkte visuel version af reglen "brug hurtig carb ved hypo, ikke fedt-protein måltid".
+        </div>
+    </section>
+
+    <!-- ========= RECENTLY EATEN ========= -->
+    <section class="section">
+        <h2 class="section-title">🕒 Recently eaten mini-row (feature #15)</h2>
+        <p class="section-subtitle">
+            Nederste strip viser seneste 3-5 valg. Tap-for-repeat. Sparer mange taps for vanemenneske-spillere.
+        </p>
+        <div class="food-menu-frame">
+            <div class="recent-row" style="position: relative;">
+                <div class="recent-row-label">SENEST SPIST</div>
+                <div class="recent-chips">
+                    <div class="recent-chip">🍞 <span>Brød</span> · <span class="recent-carb">25g</span></div>
+                    <div class="recent-chip">🥣 <span>Havregryn</span> · <span class="recent-carb">30g</span></div>
+                    <div class="recent-chip">🍎 <span>Æble</span> · <span class="recent-carb">20g</span></div>
+                    <div class="recent-chip">🥚 <span>Æg</span> · <span class="recent-carb">1g</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">✅ Hvad vinder vi?</h2>
+        <ul style="line-height: 1.8; color: var(--text-secondary); padding-left: 20px;">
+            <li><strong>Stærk mental model</strong>: 3 rækker = 3 regler spilleren lærer at følge.</li>
+            <li>Rækkens tema matcher rollen i diabetes-håndtering (lav carb/bolus-maden/hurtig redning).</li>
+            <li>Hypo-pulsen bliver en <strong>pædagogisk prompt</strong>, ikke bare en UI-effekt.</li>
+            <li>Campaign-baner kan nemt fokusere på én række ad gangen (bane 1: kun måltids-rækken osv.).</li>
+            <li>Understøttet af Hovorka-modellen efter codex-review fixes (BG-respons er realistisk).</li>
+        </ul>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">⚠️ Overvejelser</h2>
+        <ul style="line-height: 1.8; color: var(--text-secondary); padding-left: 20px;">
+            <li>Tastaturgenveje skifter — Q er nu Æg, ikke Pizza. Brug af i18n-nøgler og unlock-system mildner dette.</li>
+            <li>Flere fødevarer end før (Laks, Banan) — skal have ikoner, navne og makroværdier i data.</li>
+            <li>Kræver data-driven omlægning (<code>js/foods.js</code>, feature #13) for at holde i18n + levels i sync.</li>
+        </ul>
+    </section>
+</div>
+</body>
+</html>

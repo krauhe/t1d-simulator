@@ -1,0 +1,4807 @@
+{
+  "version": 2,
+  "generatedAt": "2026-07-30",
+  "sensorContract": "deterministic-interstitial-no-faults",
+  "scenarios": {
+    "basal-24h": {
+      "name": "basal-24h",
+      "seed": 2001,
+      "profile": {
+        "weight": 70,
+        "isf": 3,
+        "icr": 10
+      },
+      "mode": "sandbox",
+      "durationMin": 1440,
+      "sampleEveryMin": 15,
+      "sensorContract": "deterministic-interstitial-no-faults",
+      "metrics": [
+        "trueBG",
+        "cgmBG",
+        "iob",
+        "cob",
+        "ketoneLevel",
+        "acidosisLoad",
+        "brainEnergyDeficit"
+      ],
+      "samples": [
+        {
+          "t": 0,
+          "trueBG": 5.49997616930893,
+          "cgmBG": 5.49997616930893,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.1,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 15,
+          "trueBG": 5.470232321902237,
+          "cgmBG": 5.496797917406064,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.09016878123448609,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 30,
+          "trueBG": 5.403928271596958,
+          "cgmBG": 5.466479657810908,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.0831921511415945,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 45,
+          "trueBG": 5.325407432495731,
+          "cgmBG": 5.408574017799939,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.0787334900271981,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 60,
+          "trueBG": 5.2472872306399045,
+          "cgmBG": 5.336361517656756,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.07653797524914255,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 75,
+          "trueBG": 5.176222595486341,
+          "cgmBG": 5.261341428085767,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.07639337525419115,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 90,
+          "trueBG": 5.115429363520118,
+          "cgmBG": 5.19096393866823,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.07810779876032438,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 105,
+          "trueBG": 5.066062501113255,
+          "cgmBG": 5.129348964212375,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.0814981251888262,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 120,
+          "trueBG": 5.028055014277828,
+          "cgmBG": 5.078331619100785,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.0863848309557437,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 135,
+          "trueBG": 5.000649613029124,
+          "cgmBG": 5.038299915893453,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.09259066289750888,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 150,
+          "trueBG": 4.982737635934384,
+          "cgmBG": 5.008782716501603,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.09994149938151393,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 165,
+          "trueBG": 4.973072244882713,
+          "cgmBG": 4.988841317299937,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.10826826865148428,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 180,
+          "trueBG": 4.970398688249673,
+          "cgmBG": 4.977321917975072,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.11740916827598584,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 195,
+          "trueBG": 4.973529990463414,
+          "cgmBG": 4.973013256838434,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.1272117150901484,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 210,
+          "trueBG": 4.981387097993063,
+          "cgmBG": 4.974740861477037,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.13753437076349892,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 225,
+          "trueBG": 4.993016280304653,
+          "cgmBG": 4.981419585416184,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.14824764229646942,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 240,
+          "trueBG": 5.007592369373489,
+          "cgmBG": 4.992079167977513,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.15923465796584954,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 255,
+          "trueBG": 5.024522611955863,
+          "cgmBG": 5.005876603665409,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.17039127810737548,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 270,
+          "trueBG": 5.05119222755771,
+          "cgmBG": 5.022696268858021,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.18162582784462436,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 285,
+          "trueBG": 5.10374834410132,
+          "cgmBG": 5.051347665270936,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.19285854567027455,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 300,
+          "trueBG": 5.18274927923688,
+          "cgmBG": 5.101440939499034,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.20402083596549528,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 315,
+          "trueBG": 5.289553375153896,
+          "cgmBG": 5.176620308069865,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2150544012347707,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 330,
+          "trueBG": 5.425703666739289,
+          "cgmBG": 5.279044043702659,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.22591031517182344,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 345,
+          "trueBG": 5.592471478186064,
+          "cgmBG": 5.410409608507063,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.23654808319015388,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 360,
+          "trueBG": 5.790666101109456,
+          "cgmBG": 5.572039161925655,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2469347241128502,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 375,
+          "trueBG": 6.020519070457933,
+          "cgmBG": 5.764796084645506,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2570438959005184,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 390,
+          "trueBG": 6.281593287391591,
+          "cgmBG": 5.988985473529274,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2668550797008087,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 405,
+          "trueBG": 6.572704572828318,
+          "cgmBG": 6.244263136617534,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2763528299591173,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 420,
+          "trueBG": 6.891855213011945,
+          "cgmBG": 6.529555366698774,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.28552609354576153,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 435,
+          "trueBG": 7.236184335976789,
+          "cgmBG": 6.842991117587533,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2943675975036077,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 450,
+          "trueBG": 7.601942819415432,
+          "cgmBG": 7.181851033296783,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.3028733027896469,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 465,
+          "trueBG": 7.984501717061333,
+          "cgmBG": 7.542540309067626,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.31104192000066816,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 480,
+          "trueBG": 8.378402947942075,
+          "cgmBG": 7.920593747881677,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.318874482309991,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 495,
+          "trueBG": 8.777560333299068,
+          "cgmBG": 8.31072487328381,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.3263739705185146,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 510,
+          "trueBG": 9.174875713630817,
+          "cgmBG": 8.707127510034406,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.3335451286855143,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 525,
+          "trueBG": 9.554032632996904,
+          "cgmBG": 9.101085343984863,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.34040809260871374,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 540,
+          "trueBG": 9.910443599610815,
+          "cgmBG": 9.480553196468493,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.3470500700245681,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 555,
+          "trueBG": 10.242404389009247,
+          "cgmBG": 9.839570054557411,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.35363651753845643,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 570,
+          "trueBG": 10.548754441021522,
+          "cgmBG": 10.175158330825859,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.3603865457554474,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 585,
+          "trueBG": 10.829024910127517,
+          "cgmBG": 10.485713754103704,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.3675524305004379,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 600,
+          "trueBG": 11.083351959796701,
+          "cgmBG": 10.770528813355714,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.37540772374720877,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 615,
+          "trueBG": 11.312353717540347,
+          "cgmBG": 11.029569944116318,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.38424181668690516,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 630,
+          "trueBG": 11.517021787321259,
+          "cgmBG": 11.26332463114887,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.39435867417375337,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 645,
+          "trueBG": 11.698635320618628,
+          "cgmBG": 11.472683106502872,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.4060779892476334,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 660,
+          "trueBG": 11.85869487549946,
+          "cgmBG": 11.658846269696896,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.4197374621818671,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 675,
+          "trueBG": 11.998869934246981,
+          "cgmBG": 11.823254151085903,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.4356952055762385,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 690,
+          "trueBG": 12.12095558455684,
+          "cgmBG": 11.96752931151275,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.4543314367725305,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 705,
+          "trueBG": 12.226835079349797,
+          "cgmBG": 12.093430541288472,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.4760486839829501,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 720,
+          "trueBG": 12.318446300951972,
+          "cgmBG": 12.202813413203158,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.5012697502991176,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 735,
+          "trueBG": 12.397751148984996,
+          "cgmBG": 12.297595455905157,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.5299107524214417,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 750,
+          "trueBG": 12.473666562827015,
+          "cgmBG": 12.380104280909991,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.5619131552810546,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 765,
+          "trueBG": 12.563414982210121,
+          "cgmBG": 12.460858449121295,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.5976943058728316,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 780,
+          "trueBG": 12.667292917567943,
+          "cgmBG": 12.550521022382078,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.6376399537358022,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 795,
+          "trueBG": 12.785611955877883,
+          "cgmBG": 12.652687566127511,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.6820862877965669,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 810,
+          "trueBG": 12.918784905013723,
+          "cgmBG": 12.76875886113794,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.7312995003082652,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 825,
+          "trueBG": 13.067098225436467,
+          "cgmBG": 12.899444328032823,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.7854546832495789,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 840,
+          "trueBG": 13.230640268009758,
+          "cgmBG": 13.045128404375415,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.8446164650473436,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 855,
+          "trueBG": 13.409250333117244,
+          "cgmBG": 13.205949678317506,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.9087241252738719,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 870,
+          "trueBG": 13.602316021981867,
+          "cgmBG": 13.381762986488148,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.977583645501805,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 885,
+          "trueBG": 13.8088079481472,
+          "cgmBG": 13.572013035011768,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.0508537509553204,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 900,
+          "trueBG": 14.027310840612286,
+          "cgmBG": 13.775754610774202,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.1280175467280795,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 915,
+          "trueBG": 14.255855165204919,
+          "cgmBG": 13.991615640616116,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.2084441704425777,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 930,
+          "trueBG": 14.492001342056412,
+          "cgmBG": 14.217715504119239,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.2914882615792775,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 945,
+          "trueBG": 14.73308292134654,
+          "cgmBG": 14.451737561741668,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.3765552884800238,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 960,
+          "trueBG": 14.976441075630502,
+          "cgmBG": 14.691120208637384,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.4631304848346895,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 975,
+          "trueBG": 15.219593233834573,
+          "cgmBG": 14.93326510881457,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.550783769520796,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 990,
+          "trueBG": 15.460333661781235,
+          "cgmBG": 15.17570452405865,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.6391622543291948,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1005,
+          "trueBG": 15.696780605092167,
+          "cgmBG": 15.416211945270256,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.7279781534544294,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1020,
+          "trueBG": 15.927386418324483,
+          "cgmBG": 15.652861581908143,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.8169963821302166,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1035,
+          "trueBG": 16.150924270853192,
+          "cgmBG": 15.884049163937023,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.9060237275292415,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1050,
+          "trueBG": 16.36646141752628,
+          "cgmBG": 16.108486558831977,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.9949001177372128,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1065,
+          "trueBG": 16.573325895567233,
+          "cgmBG": 16.32518034585744,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.0834918728244856,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1080,
+          "trueBG": 16.771071124574277,
+          "cgmBG": 16.53340175558857,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.171686589800906,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1095,
+          "trueBG": 16.95944118159647,
+          "cgmBG": 16.732653026652624,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.2593892825434483,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1110,
+          "trueBG": 17.13833835323001,
+          "cgmBG": 16.92263343078682,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.34651944885203,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1125,
+          "trueBG": 17.3077937891766,
+          "cgmBG": 17.103206928538654,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.4330088092177227,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1140,
+          "trueBG": 17.467941581187556,
+          "cgmBG": 17.2743725357918,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.5187995295401335,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1155,
+          "trueBG": 17.61899614957547,
+          "cgmBG": 17.436237894483973,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.6038427943250886,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1170,
+          "trueBG": 17.761232074781557,
+          "cgmBG": 17.58899592938424,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.688097637169929,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1185,
+          "trueBG": 17.894968358054342,
+          "cgmBG": 17.73290441865584,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.7715299638687685,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1200,
+          "trueBG": 18.02055616559601,
+          "cgmBG": 17.86826961672478,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.8541117231168207,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1215,
+          "trueBG": 18.138367998824886,
+          "cgmBG": 17.99543295811776,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.9358201931181243,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1230,
+          "trueBG": 18.248788469599756,
+          "cgmBG": 18.114759748785527,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.016637361386944,
+          "acidosisLoad": 0.010334305586200167,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1245,
+          "trueBG": 18.352206713929263,
+          "cgmBG": 18.226629601583088,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.096549381107198,
+          "acidosisLoad": 0.2803675888704801,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1260,
+          "trueBG": 18.44901032162056,
+          "cgmBG": 18.33142852372202,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.17554609155859,
+          "acidosisLoad": 0.9196016933245434,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1275,
+          "trueBG": 18.539580600648534,
+          "cgmBG": 18.429542529042585,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.253620592989501,
+          "acidosisLoad": 1.9330628107075611,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1290,
+          "trueBG": 18.624288981526522,
+          "cgmBG": 18.521352607277368,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.330768868346128,
+          "acidosisLoad": 3.3254257076202474,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1305,
+          "trueBG": 18.703494374710182,
+          "cgmBG": 18.607230865161835,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.406989445735192,
+          "acidosisLoad": 5.101028909715525,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1320,
+          "trueBG": 18.777541311364626,
+          "cgmBG": 18.687537656198977,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.4822830965854448,
+          "acidosisLoad": 7.263889758697438,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1335,
+          "trueBG": 18.846758718664454,
+          "cgmBG": 18.76261952914368,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.556652565299374,
+          "acidosisLoad": 9.817719289098603,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1350,
+          "trueBG": 18.911459202037573,
+          "cgmBG": 18.83280784385467,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.630102326828381,
+          "acidosisLoad": 12.7659368682858,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1365,
+          "trueBG": 18.971938726801095,
+          "cgmBG": 18.89841792335681,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.7026383691139384,
+          "acidosisLoad": 16.111684545829213,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1380,
+          "trueBG": 19.02847660972026,
+          "cgmBG": 18.959748630675822,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.7742679977486886,
+          "acidosisLoad": 19.857841064207456,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1395,
+          "trueBG": 19.081335746878707,
+          "cgmBG": 19.01708227717739,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.8449996605491488,
+          "acidosisLoad": 24.00703548999894,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1410,
+          "trueBG": 19.130763017878603,
+          "cgmBG": 19.07068478529545,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.9148427900128366,
+          "acidosisLoad": 28.561660432196742,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1425,
+          "trueBG": 19.176989817932178,
+          "cgmBG": 19.120806042551354,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.9838076618693328,
+          "acidosisLoad": 33.52388482151264,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 1440,
+          "trueBG": 19.22023267906924,
+          "cgmBG": 19.167680395718676,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 4.05190526813625,
+          "acidosisLoad": 38.89566623121771,
+          "brainEnergyDeficit": 0
+        }
+      ],
+      "aggregates": {
+        "meanTrueBG": 11.811971759116062,
+        "minTrueBG": 4.970398688249673,
+        "maxTrueBG": 19.22023267906924,
+        "tir": 0.38144329896907214
+      }
+    },
+    "bolus-2u": {
+      "name": "bolus-2u",
+      "seed": 2002,
+      "profile": {
+        "weight": 70,
+        "isf": 3,
+        "icr": 10
+      },
+      "mode": "sandbox",
+      "durationMin": 300,
+      "sampleEveryMin": 5,
+      "sensorContract": "deterministic-interstitial-no-faults",
+      "metrics": [
+        "trueBG",
+        "cgmBG",
+        "iob",
+        "cob",
+        "ketoneLevel",
+        "acidosisLoad",
+        "brainEnergyDeficit"
+      ],
+      "samples": [
+        {
+          "t": 0,
+          "trueBG": 15,
+          "cgmBG": 15,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.1,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 5,
+          "trueBG": 14.82949234683099,
+          "cgmBG": 15,
+          "iob": 1.5592540301077327,
+          "cob": 0,
+          "ketoneLevel": 0.09636757222691922,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 10,
+          "trueBG": 14.67066048430625,
+          "cgmBG": 14.965624492273314,
+          "iob": 1.552770180368254,
+          "cob": 0,
+          "ketoneLevel": 0.09298215058777347,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 15,
+          "trueBG": 14.505851028465615,
+          "cgmBG": 14.891033579372221,
+          "iob": 1.5375422534969794,
+          "cob": 0,
+          "ketoneLevel": 0.08974323765171258,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 20,
+          "trueBG": 14.32002555083471,
+          "cgmBG": 14.789099047840454,
+          "iob": 1.5133193383956802,
+          "cob": 0,
+          "ketoneLevel": 0.0866125447884361,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 25,
+          "trueBG": 14.103806843916725,
+          "cgmBG": 14.663451360631917,
+          "iob": 1.4809936097378245,
+          "cob": 0,
+          "ketoneLevel": 0.08358149793960834,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 30,
+          "trueBG": 13.853545022848326,
+          "cgmBG": 14.512930897709156,
+          "iob": 1.441854203095542,
+          "cob": 0,
+          "ketoneLevel": 0.08064976867020637,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 35,
+          "trueBG": 13.570197316617067,
+          "cgmBG": 14.334942704778896,
+          "iob": 1.397250787657701,
+          "cob": 0,
+          "ketoneLevel": 0.07781830276215991,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 40,
+          "trueBG": 13.257905552351271,
+          "cgmBG": 14.127508492093588,
+          "iob": 1.3484499162571975,
+          "cob": 0,
+          "ketoneLevel": 0.07508768439566174,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 45,
+          "trueBG": 12.922684453080786,
+          "cgmBG": 13.890243396352513,
+          "iob": 1.2965811650583352,
+          "cob": 0,
+          "ketoneLevel": 0.07245797672394481,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 50,
+          "trueBG": 12.571377337171342,
+          "cgmBG": 13.624591738232512,
+          "iob": 1.242624270975006,
+          "cob": 0,
+          "ketoneLevel": 0.06992889521187232,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 55,
+          "trueBG": 12.210904495366028,
+          "cgmBG": 13.333626011503625,
+          "iob": 1.1874142434049644,
+          "cob": 0,
+          "ketoneLevel": 0.0675000204025566,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 60,
+          "trueBG": 11.847770249276865,
+          "cgmBG": 13.021638383079079,
+          "iob": 1.1316536688616945,
+          "cob": 0,
+          "ketoneLevel": 0.06517099046567795,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 65,
+          "trueBG": 11.487774614135418,
+          "cgmBG": 12.693676572487906,
+          "iob": 1.0759272338584558,
+          "cob": 0,
+          "ketoneLevel": 0.06294167319306598,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 70,
+          "trueBG": 11.135874937203676,
+          "cgmBG": 12.355112691351161,
+          "iob": 1.0207162376075076,
+          "cob": 0,
+          "ketoneLevel": 0.06081232992250757,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 75,
+          "trueBG": 10.796150636801968,
+          "cgmBG": 12.011288204470098,
+          "iob": 0.966412157594304,
+          "cob": 0,
+          "ketoneLevel": 0.05878378533546619,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 80,
+          "trueBG": 10.471834258601366,
+          "cgmBG": 11.667248756452961,
+          "iob": 0.9133289319334286,
+          "cob": 0,
+          "ketoneLevel": 0.05685761655277689,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 85,
+          "trueBG": 10.165381663163357,
+          "cgmBG": 11.327565479650115,
+          "iob": 0.861713896065704,
+          "cob": 0,
+          "ketoneLevel": 0.055036374720202376,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 90,
+          "trueBG": 9.878562173559406,
+          "cgmBG": 10.996230801921945,
+          "iob": 0.8117574306306792,
+          "cob": 0,
+          "ketoneLevel": 0.05332385266937996,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 95,
+          "trueBG": 9.612555707003557,
+          "cgmBG": 10.676613613312536,
+          "iob": 0.763601424349606,
+          "cob": 0,
+          "ketoneLevel": 0.051725413046276786,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 100,
+          "trueBG": 9.368048636636294,
+          "cgmBG": 10.371458654275457,
+          "iob": 0.7173466694279097,
+          "cob": 0,
+          "ketoneLevel": 0.050248392088886554,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 105,
+          "trueBG": 9.145323376244816,
+          "cgmBG": 10.082916636930934,
+          "iob": 0.6730593057540459,
+          "cob": 0,
+          "ketoneLevel": 0.048902594392982786,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 110,
+          "trueBG": 8.944287319387769,
+          "cgmBG": 9.812593951198789,
+          "iob": 0.6307764226978502,
+          "cob": 0,
+          "ketoneLevel": 0.04770089268203242,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 115,
+          "trueBG": 8.762910604190711,
+          "cgmBG": 9.561609424891158,
+          "iob": 0.5905109176278134,
+          "cob": 0,
+          "ketoneLevel": 0.046659942674843434,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 120,
+          "trueBG": 8.600336987584226,
+          "cgmBG": 9.330353095405458,
+          "iob": 0.5522557002098958,
+          "cob": 0,
+          "ketoneLevel": 0.04580101524886821,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 125,
+          "trueBG": 8.456433425292355,
+          "cgmBG": 9.118569809540888,
+          "iob": 0.5159873219213293,
+          "cob": 0,
+          "ketoneLevel": 0.045150934743261595,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 130,
+          "trueBG": 8.330834319753091,
+          "cgmBG": 8.926028660548209,
+          "iob": 0.48166910132687346,
+          "cob": 0,
+          "ketoneLevel": 0.0447430921696109,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 135,
+          "trueBG": 8.223023222116652,
+          "cgmBG": 8.752480981470049,
+          "iob": 0.44925380761376515,
+          "cob": 0,
+          "ketoneLevel": 0.04461847483520004,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 140,
+          "trueBG": 8.132388024712055,
+          "cgmBG": 8.597609623715588,
+          "iob": 0.4186859576563617,
+          "cob": 0,
+          "ketoneLevel": 0.04482662058923781,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 145,
+          "trueBG": 8.058259002993935,
+          "cgmBG": 8.461014453171217,
+          "iob": 0.3899037754312527,
+          "cob": 0,
+          "ketoneLevel": 0.04542636928165651,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 150,
+          "trueBG": 7.999935442130405,
+          "cgmBG": 8.342216248945677,
+          "iob": 0.36284085686242074,
+          "cob": 0,
+          "ketoneLevel": 0.04648625304051022,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 155,
+          "trueBG": 7.956704442806998,
+          "cgmBG": 8.240668995523373,
+          "iob": 0.33742757807511164,
+          "cob": 0,
+          "ketoneLevel": 0.04808435079103992,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 160,
+          "trueBG": 7.927854224101266,
+          "cgmBG": 8.155775073346158,
+          "iob": 0.3135922805104713,
+          "cob": 0,
+          "ketoneLevel": 0.05030744293686172,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 165,
+          "trueBG": 7.912683467370181,
+          "cgmBG": 8.086900450754007,
+          "iob": 0.29126226233955543,
+          "cob": 0,
+          "ketoneLevel": 0.053249349550272114,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 170,
+          "trueBG": 7.91050776483792,
+          "cgmBG": 8.033388462330633,
+          "iob": 0.27036460205944685,
+          "cob": 0,
+          "ketoneLevel": 0.057008423493197916,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 175,
+          "trueBG": 7.9206639293229735,
+          "cgmBG": 7.994571591285274,
+          "iob": 0.25082683700578734,
+          "cob": 0,
+          "ketoneLevel": 0.06168429091387551,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 180,
+          "trueBG": 7.942512717801198,
+          "cgmBG": 7.969781128507953,
+          "iob": 0.23257751673011587,
+          "cob": 0,
+          "ketoneLevel": 0.06737406427929137,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 185,
+          "trueBG": 7.975440381143645,
+          "cgmBG": 7.958354817311869,
+          "iob": 0.2155466487267977,
+          "cob": 0,
+          "ketoneLevel": 0.07416836601985434,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 190,
+          "trueBG": 8.0188593520666,
+          "cgmBG": 7.959642703739999,
+          "iob": 0.1996660518171473,
+          "cob": 0,
+          "ketoneLevel": 0.08214756165145475,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 195,
+          "trueBG": 8.072208309335553,
+          "cgmBG": 7.97301145231451,
+          "iob": 0.1848696305755622,
+          "cob": 0,
+          "ketoneLevel": 0.09137858908026486,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 200,
+          "trueBG": 8.13495180029022,
+          "cgmBG": 7.997847388331885,
+          "iob": 0.17109358248556528,
+          "cob": 0,
+          "ketoneLevel": 0.10191268567313866,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 205,
+          "trueBG": 8.206579560654742,
+          "cgmBG": 8.03355850903978,
+          "iob": 0.15827654801715046,
+          "cob": 0,
+          "ketoneLevel": 0.11378417827630853,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 210,
+          "trueBG": 8.286605637034894,
+          "cgmBG": 8.079575678184481,
+          "iob": 0.14635971249810187,
+          "cob": 0,
+          "ketoneLevel": 0.12701034870230654,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 215,
+          "trueBG": 8.374567391227636,
+          "cgmBG": 8.13535318772008,
+          "iob": 0.13528686749082836,
+          "cob": 0,
+          "ketoneLevel": 0.14159225344904064,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 220,
+          "trueBG": 8.470024444876366,
+          "cgmBG": 8.20036884036287,
+          "iob": 0.12500443836478337,
+          "cob": 0,
+          "ketoneLevel": 0.15751628559568015,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 225,
+          "trueBG": 8.572557606912506,
+          "cgmBG": 8.274123678938496,
+          "iob": 0.11546148385673972,
+          "cob": 0,
+          "ketoneLevel": 0.1747562270086516,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 230,
+          "trueBG": 8.681767813720239,
+          "cgmBG": 8.356141463906557,
+          "iob": 0.1066096726228692,
+          "cob": 0,
+          "ketoneLevel": 0.19327554429608085,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 235,
+          "trueBG": 8.797275102329085,
+          "cgmBG": 8.44596797928936,
+          "iob": 0.09840324109509567,
+          "cob": 0,
+          "ketoneLevel": 0.21302971844114232,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 240,
+          "trueBG": 8.918717629604078,
+          "cgmBG": 8.543170229390086,
+          "iob": 0.09079893634833218,
+          "cob": 0,
+          "ketoneLevel": 0.2339684500493581,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 245,
+          "trueBG": 9.045691006310554,
+          "cgmBG": 8.647335573902971,
+          "iob": 0.08375594715500155,
+          "cob": 0,
+          "ketoneLevel": 0.2560376366025108,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 250,
+          "trueBG": 9.176570317786885,
+          "cgmBG": 8.75806647604224,
+          "iob": 0.07723582593982271,
+          "cob": 0,
+          "ketoneLevel": 0.2791810664318141,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 255,
+          "trueBG": 9.310612206181824,
+          "cgmBG": 8.87474242175959,
+          "iob": 0.0712024039433622,
+          "cob": 0,
+          "ketoneLevel": 0.303341812106287,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 260,
+          "trueBG": 9.447572878461026,
+          "cgmBG": 8.996533172587947,
+          "iob": 0.06562170155032823,
+          "cob": 0,
+          "ketoneLevel": 0.3284633326971511,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 265,
+          "trueBG": 9.58718285934518,
+          "cgmBG": 9.122775286158921,
+          "iob": 0.06046183543183789,
+          "cob": 0,
+          "ketoneLevel": 0.35449031105838574,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 270,
+          "trueBG": 9.7291627483627,
+          "cgmBG": 9.252932112165979,
+          "iob": 0.05569292388443731,
+          "cob": 0,
+          "ketoneLevel": 0.3813692609079796,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 275,
+          "trueBG": 9.873232632850868,
+          "cgmBG": 9.386549020098311,
+          "iob": 0.05128699151764041,
+          "cob": 0,
+          "ketoneLevel": 0.40904894132870684,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 280,
+          "trueBG": 10.019117670459181,
+          "cgmBG": 9.523226383015773,
+          "iob": 0.04721787424187691,
+          "cob": 0,
+          "ketoneLevel": 0.43748061531809085,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 285,
+          "trueBG": 10.166551352021981,
+          "cgmBG": 9.662603245383433,
+          "iob": 0.043461125336196234,
+          "cob": 0,
+          "ketoneLevel": 0.46661818578344955,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 290,
+          "trueBG": 10.3152773555504,
+          "cgmBG": 9.804347414984873,
+          "iob": 0.039993923226496586,
+          "cob": 0,
+          "ketoneLevel": 0.4964182380492942,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 295,
+          "trueBG": 10.465050536845325,
+          "cgmBG": 9.948149412909608,
+          "iob": 0.036794981477461575,
+          "cob": 0,
+          "ketoneLevel": 0.5267259424545023,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 300,
+          "trueBG": 10.61563739723925,
+          "cgmBG": 10.093718735025039,
+          "iob": 0.0338444613921627,
+          "cob": 0,
+          "ketoneLevel": 0.5572612168785712,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        }
+      ],
+      "aggregates": {
+        "meanTrueBG": 10.017479927367676,
+        "minTrueBG": 7.91050776483792,
+        "maxTrueBG": 15,
+        "tir": 0.6229508196721312
+      }
+    },
+    "meal-fat-protein": {
+      "name": "meal-fat-protein",
+      "seed": 2003,
+      "profile": {
+        "weight": 70,
+        "isf": 3,
+        "icr": 10
+      },
+      "mode": "sandbox",
+      "durationMin": 360,
+      "sampleEveryMin": 10,
+      "sensorContract": "deterministic-interstitial-no-faults",
+      "metrics": [
+        "trueBG",
+        "cgmBG",
+        "iob",
+        "cob",
+        "ketoneLevel",
+        "acidosisLoad",
+        "brainEnergyDeficit"
+      ],
+      "samples": [
+        {
+          "t": 0,
+          "trueBG": 7,
+          "cgmBG": 7,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.1,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 10,
+          "trueBG": 7.11444087053727,
+          "cgmBG": 6.998759968201123,
+          "iob": 0,
+          "cob": 55.55182863276149,
+          "ketoneLevel": 0.0931776824563867,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 20,
+          "trueBG": 7.580616840902526,
+          "cgmBG": 7.087434053587501,
+          "iob": 0,
+          "cob": 51.77666672291517,
+          "ketoneLevel": 0.08812890661693429,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 30,
+          "trueBG": 8.266243329030655,
+          "cgmBG": 7.389967852298502,
+          "iob": 0,
+          "cob": 48.25690222928407,
+          "ketoneLevel": 0.08521642551081549,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 40,
+          "trueBG": 9.054748887597622,
+          "cgmBG": 7.90243081784654,
+          "iob": 0,
+          "cob": 44.828000539439124,
+          "ketoneLevel": 0.08489494242764048,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 50,
+          "trueBG": 9.885244503326613,
+          "cgmBG": 8.564230700934718,
+          "iob": 0,
+          "cob": 41.422797794891984,
+          "ketoneLevel": 0.08771909752288877,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 60,
+          "trueBG": 10.737852794103107,
+          "cgmBG": 9.316849060698752,
+          "iob": 0,
+          "cob": 38.01506277477262,
+          "ketoneLevel": 0.09433816847003948,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 70,
+          "trueBG": 11.610294378164328,
+          "cgmBG": 10.123787347649305,
+          "iob": 0,
+          "cob": 34.588957971853375,
+          "ketoneLevel": 0.10547521697064166,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 80,
+          "trueBG": 12.50073092800906,
+          "cgmBG": 10.966618863258256,
+          "iob": 0,
+          "cob": 31.133644522548494,
+          "ketoneLevel": 0.1218828569143607,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 90,
+          "trueBG": 13.40664199939193,
+          "cgmBG": 11.835688817848045,
+          "iob": 0,
+          "cob": 27.641119137632785,
+          "ketoneLevel": 0.1442793466155171,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 100,
+          "trueBG": 14.324581830797886,
+          "cgmBG": 12.725076525447278,
+          "iob": 0,
+          "cob": 24.10514159437488,
+          "ketoneLevel": 0.17327487515707915,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 110,
+          "trueBG": 15.250280779126902,
+          "cgmBG": 13.630125706965686,
+          "iob": 0,
+          "cob": 20.520645633606556,
+          "ketoneLevel": 0.20930362548836523,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 120,
+          "trueBG": 16.178869567017475,
+          "cgmBG": 14.546348440569936,
+          "iob": 0,
+          "cob": 16.88339165060295,
+          "ketoneLevel": 0.25257860398136145,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 130,
+          "trueBG": 17.105123898881825,
+          "cgmBG": 15.469031925078854,
+          "iob": 0,
+          "cob": 13.189752019525425,
+          "ketoneLevel": 0.3030805325482433,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 140,
+          "trueBG": 18.02368533435529,
+          "cgmBG": 16.39318273515795,
+          "iob": 0,
+          "cob": 9.436574557294895,
+          "ketoneLevel": 0.3605810616587395,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 150,
+          "trueBG": 18.92924419556741,
+          "cgmBG": 17.313615754295988,
+          "iob": 0,
+          "cob": 5.621094625183769,
+          "ketoneLevel": 0.42469009020831966,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 160,
+          "trueBG": 19.816684052714756,
+          "cgmBG": 18.225090711461455,
+          "iob": 0,
+          "cob": 1.7408788006160925,
+          "ketoneLevel": 0.4949123524490475,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 170,
+          "trueBG": 20.681192383548243,
+          "cgmBG": 19.12245089409255,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.5700013818427158,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 180,
+          "trueBG": 21.5183429530022,
+          "cgmBG": 20.000745246314718,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.648385210720509,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 190,
+          "trueBG": 22.324154853051336,
+          "cgmBG": 20.855327954619714,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.7296379606392221,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 200,
+          "trueBG": 23.09513218293705,
+          "cgmBG": 21.681935322575814,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.8133719920240843,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 210,
+          "trueBG": 23.828287501232683,
+          "cgmBG": 22.47674190428532,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.8992324990512133,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 220,
+          "trueBG": 24.52115155962003,
+          "cgmBG": 23.236398445584932,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.9868993088249012,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 230,
+          "trueBG": 25.17177141183192,
+          "cgmBG": 23.95805413584149,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.0760854089061704,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 240,
+          "trueBG": 25.77869872067431,
+          "cgmBG": 24.639365439280628,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.1665338747749296,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 250,
+          "trueBG": 26.340969905108192,
+          "cgmBG": 25.278493526909827,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.2580142561051977,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 260,
+          "trueBG": 26.858079636780285,
+          "cgmBG": 25.874092120754078,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.3503190253097364,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 270,
+          "trueBG": 27.329949085011233,
+          "cgmBG": 26.425287394919025,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.4432603869446037,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 280,
+          "trueBG": 27.75689020642123,
+          "cgmBG": 26.931651441446768,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.5366675592951213,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 290,
+          "trueBG": 28.139567272869563,
+          "cgmBG": 27.393170690315873,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.6303845342379342,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 300,
+          "trueBG": 28.47895672624793,
+          "cgmBG": 27.81021056272271,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.7242682690805307,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 310,
+          "trueBG": 28.77630619614108,
+          "cgmBG": 28.183477527990455,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.8181872434157396,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 320,
+          "trueBG": 29.03309267716462,
+          "cgmBG": 28.513979482861775,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.9120203110288272,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 330,
+          "trueBG": 29.25098299885851,
+          "cgmBG": 28.80298506776832,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.0056557827478776,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 340,
+          "trueBG": 29.431797030059297,
+          "cgmBG": 29.05198380726031,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.0989906856235288,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 350,
+          "trueBG": 29.577472181152594,
+          "cgmBG": 29.26264793165358,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.191930154076142,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 360,
+          "trueBG": 29.6900299219499,
+          "cgmBG": 29.436795741232682,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.2843869182007626,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        }
+      ],
+      "aggregates": {
+        "meanTrueBG": 20.11805701603208,
+        "minTrueBG": 7,
+        "maxTrueBG": 29.6900299219499,
+        "tir": 0.16216216216216217
+      }
+    },
+    "exercise-cardio": {
+      "name": "exercise-cardio",
+      "seed": 2004,
+      "profile": {
+        "weight": 70,
+        "isf": 3,
+        "icr": 10
+      },
+      "mode": "sandbox",
+      "durationMin": 240,
+      "sampleEveryMin": 5,
+      "sensorContract": "deterministic-interstitial-no-faults",
+      "metrics": [
+        "trueBG",
+        "cgmBG",
+        "iob",
+        "cob",
+        "ketoneLevel",
+        "acidosisLoad",
+        "brainEnergyDeficit"
+      ],
+      "samples": [
+        {
+          "t": 0,
+          "trueBG": 9,
+          "cgmBG": 9,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.1,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 5,
+          "trueBG": 8.961652308926057,
+          "cgmBG": 9,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.09638006307800269,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 10,
+          "trueBG": 8.92661724054084,
+          "cgmBG": 8.992277277745245,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.09311019863305554,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 15,
+          "trueBG": 8.893881098128777,
+          "cgmBG": 8.975586335755256,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.09017907821733522,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 20,
+          "trueBG": 8.863105165583628,
+          "cgmBG": 8.953581003793392,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08758322701428756,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 25,
+          "trueBG": 8.834422655701836,
+          "cgmBG": 8.928581803605736,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08532694826094804,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 30,
+          "trueBG": 8.808260631164368,
+          "cgmBG": 8.90216895164609,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08342188550629578,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 35,
+          "trueBG": 8.779306801993913,
+          "cgmBG": 8.875528443502189,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08057702274974504,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 40,
+          "trueBG": 8.698282621014027,
+          "cgmBG": 8.84900433476232,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.07718477056447684,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 45,
+          "trueBG": 8.5275709633634,
+          "cgmBG": 8.812869643994755,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.0738734533183617,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 50,
+          "trueBG": 8.272242063105516,
+          "cgmBG": 8.745023780609069,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.07082427941176213,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 55,
+          "trueBG": 7.954624193923325,
+          "cgmBG": 8.627467922311476,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.0681157995961477,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 60,
+          "trueBG": 7.598438355872113,
+          "cgmBG": 8.45346669696737,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.06580578596636107,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 65,
+          "trueBG": 7.2340022268424375,
+          "cgmBG": 8.225957795314766,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.06452740932714057,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 70,
+          "trueBG": 6.933413034095858,
+          "cgmBG": 7.954858692565854,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.06456386287923285,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 75,
+          "trueBG": 6.7191652409847515,
+          "cgmBG": 7.665608639114395,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.06588890028515694,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 80,
+          "trueBG": 6.5799406418810396,
+          "cgmBG": 7.39002266600677,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.0685489032529086,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 85,
+          "trueBG": 6.49906342808305,
+          "cgmBG": 7.149103204142965,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.07260064853586308,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 90,
+          "trueBG": 6.4622570258335665,
+          "cgmBG": 6.952252177989921,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.07808761609604933,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 95,
+          "trueBG": 6.458790092231995,
+          "cgmBG": 6.801049975988654,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.0850365952403114,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 100,
+          "trueBG": 6.4809278832907395,
+          "cgmBG": 6.692783343919278,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.09346039526434882,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 105,
+          "trueBG": 6.52314731831627,
+          "cgmBG": 6.622824545491121,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.10336035949184211,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 110,
+          "trueBG": 6.581483233161435,
+          "cgmBG": 6.586023401183688,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.11472765389232902,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 115,
+          "trueBG": 6.65305242312714,
+          "cgmBG": 6.577435425740873,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.12754392365658965,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 120,
+          "trueBG": 6.735723262106604,
+          "cgmBG": 6.592649743076379,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.14178191590384862,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 125,
+          "trueBG": 6.827889996214368,
+          "cgmBG": 6.627893378733965,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.15740634158459685,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 130,
+          "trueBG": 6.928318818691286,
+          "cgmBG": 6.680020157390427,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.17437500456880584,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 135,
+          "trueBG": 7.036042345033953,
+          "cgmBG": 6.746446847143016,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.19264010991866798,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 140,
+          "trueBG": 7.150286622259102,
+          "cgmBG": 6.825070977172071,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2121496346746899,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 145,
+          "trueBG": 7.270420093324871,
+          "cgmBG": 6.914188070857838,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.23284865900601487,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 150,
+          "trueBG": 7.395917493829868,
+          "cgmBG": 7.01241653431117,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2546805849934026,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 155,
+          "trueBG": 7.526334007140957,
+          "cgmBG": 7.1186332457472545,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2775882001823897,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 160,
+          "trueBG": 7.661286547096704,
+          "cgmBG": 7.231920205743429,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.30151456751359795,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 165,
+          "trueBG": 7.800442066267481,
+          "cgmBG": 7.351521342849388,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.32640374092541435,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 170,
+          "trueBG": 7.943512770471665,
+          "cgmBG": 7.476808273270261,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.35220131742710764,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 175,
+          "trueBG": 8.090226988545663,
+          "cgmBG": 7.60725537460761,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.37885484302339023,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 180,
+          "trueBG": 8.240338017619916,
+          "cgmBG": 7.742415394623712,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.40631409286147874,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 185,
+          "trueBG": 8.393621277353333,
+          "cgmBG": 7.881901336888125,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.4345312465158574,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 190,
+          "trueBG": 8.549870325932586,
+          "cgmBG": 8.025374970989294,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.46346097832516664,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 195,
+          "trueBG": 8.708893852224202,
+          "cgmBG": 8.172537608116128,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.49306048081464604,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 200,
+          "trueBG": 8.870513388675667,
+          "cgmBG": 8.323122731059234,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.5232068903823018,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 205,
+          "trueBG": 9.034556862567674,
+          "cgmBG": 8.476890148837816,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.5535992743638736,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 210,
+          "trueBG": 9.19939865181067,
+          "cgmBG": 8.633621041086844,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.5841989047032917,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 215,
+          "trueBG": 9.364048755536707,
+          "cgmBG": 8.792878296550294,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.6149881715483443,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 220,
+          "trueBG": 9.528465572893529,
+          "cgmBG": 8.953859567028461,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.6459505877397671,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 225,
+          "trueBG": 9.692572305784624,
+          "cgmBG": 9.115953351589424,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.6770707242126236,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 230,
+          "trueBG": 9.856272450284603,
+          "cgmBG": 9.278720466570846,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.708334141733256,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 235,
+          "trueBG": 10.019459562961867,
+          "cgmBG": 9.441831835031254,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.7397273217776903,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 240,
+          "trueBG": 10.182023409023197,
+          "cgmBG": 9.60502958637362,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.771237598562499,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        }
+      ],
+      "aggregates": {
+        "meanTrueBG": 8.025511879404434,
+        "minTrueBG": 6.458790092231995,
+        "maxTrueBG": 10.182023409023197,
+        "tir": 0.9591836734693877
+      }
+    },
+    "sleep-dawn": {
+      "name": "sleep-dawn",
+      "seed": 2005,
+      "profile": {
+        "weight": 70,
+        "isf": 3,
+        "icr": 10
+      },
+      "mode": "sandbox",
+      "durationMin": 600,
+      "sampleEveryMin": 15,
+      "sensorContract": "deterministic-interstitial-no-faults",
+      "metrics": [
+        "trueBG",
+        "cgmBG",
+        "iob",
+        "cob",
+        "ketoneLevel",
+        "acidosisLoad",
+        "brainEnergyDeficit"
+      ],
+      "samples": [
+        {
+          "t": 0,
+          "trueBG": 6,
+          "cgmBG": 6,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.1,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 15,
+          "trueBG": 5.951207426517461,
+          "cgmBG": 5.992307124323127,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.09017907821733522,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 30,
+          "trueBG": 5.872492093745692,
+          "cgmBG": 5.949100786355267,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08342188550629578,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 45,
+          "trueBG": 5.801785956046414,
+          "cgmBG": 5.88193009012493,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08003437979576318,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 60,
+          "trueBG": 5.766646422095296,
+          "cgmBG": 5.818479325655099,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08088435154312912,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 75,
+          "trueBG": 5.783698159204688,
+          "cgmBG": 5.784126623298874,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08736240191853122,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 90,
+          "trueBG": 5.860672137414793,
+          "cgmBG": 5.796415697155053,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.101250068002666,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 105,
+          "trueBG": 5.999199239087679,
+          "cgmBG": 5.8648969174485,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.12438657814249039,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 120,
+          "trueBG": 6.197164450238935,
+          "cgmBG": 5.992911095129815,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.15819364139767791,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 135,
+          "trueBG": 6.450362185546778,
+          "cgmBG": 6.179621069766227,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.20329550259996565,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 150,
+          "trueBG": 6.7535590047684115,
+          "cgmBG": 6.421662272523826,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2594437859319531,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 165,
+          "trueBG": 7.101142881961261,
+          "cgmBG": 6.714304366128731,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.3257307311300197,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 180,
+          "trueBG": 7.4875094425214295,
+          "cgmBG": 7.052207187516851,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.40090981022367045,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 195,
+          "trueBG": 7.907287769810767,
+          "cgmBG": 7.429890263877034,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.4836645779928329,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 210,
+          "trueBG": 8.355468953199095,
+          "cgmBG": 7.84201543594752,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.57180824518812,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 225,
+          "trueBG": 8.827474352039589,
+          "cgmBG": 8.28355167626039,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.6623428736483103,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 240,
+          "trueBG": 9.315177996787867,
+          "cgmBG": 8.749753153112573,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.7546438167152398,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 255,
+          "trueBG": 9.800077816418016,
+          "cgmBG": 9.230329913725546,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.8482657338536368,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 270,
+          "trueBG": 10.278423790028123,
+          "cgmBG": 9.712652238718245,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.942845508677698,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 285,
+          "trueBG": 10.747697977264457,
+          "cgmBG": 10.19057972859941,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.038085269830523,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 300,
+          "trueBG": 11.2056186634392,
+          "cgmBG": 10.660465994198137,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.133737904796658,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 315,
+          "trueBG": 11.650312331481745,
+          "cgmBG": 11.119670409424485,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.2295957572174872,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 330,
+          "trueBG": 12.080325376452786,
+          "cgmBG": 11.566157814434899,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.325482188619966,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 345,
+          "trueBG": 12.494589247974181,
+          "cgmBG": 11.99836647972264,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.4212453977670074,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 360,
+          "trueBG": 12.892373312293476,
+          "cgmBG": 12.41513890282411,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.5167539046672938,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 375,
+          "trueBG": 13.273237455347797,
+          "cgmBG": 12.815667127706499,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.611893218528335,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 390,
+          "trueBG": 13.637664511302738,
+          "cgmBG": 13.199444692640611,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.7065633327054321,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 405,
+          "trueBG": 13.99481776266155,
+          "cgmBG": 13.568221061289398,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.800676794198202,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 420,
+          "trueBG": 14.347027078067544,
+          "cgmBG": 13.92814624732072,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.8941571741234369,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 435,
+          "trueBG": 14.693817152897012,
+          "cgmBG": 14.281771326554118,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.9869378216548714,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 450,
+          "trueBG": 15.034825152958536,
+          "cgmBG": 14.629620939591113,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.078960822375758,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 465,
+          "trueBG": 15.369696819781755,
+          "cgmBG": 14.971621051658127,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.170176107812833,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 480,
+          "trueBG": 15.698049315166415,
+          "cgmBG": 15.307502496231775,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.260540680055351,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 495,
+          "trueBG": 16.019457973368787,
+          "cgmBG": 15.636910883145244,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.3500179266761165,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 510,
+          "trueBG": 16.333452648226068,
+          "cgmBG": 15.959435086138292,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.4385770086430263,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 525,
+          "trueBG": 16.639518686054096,
+          "cgmBG": 16.274614936036862,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.526192308866886,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 540,
+          "trueBG": 16.937100658180977,
+          "cgmBG": 16.581944945485063,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.612842932347162,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 555,
+          "trueBG": 17.22560803425357,
+          "cgmBG": 16.880878448724147,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.6985122511201673,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 570,
+          "trueBG": 17.50442233886531,
+          "cgmBG": 17.17083309349975,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.783187488752023,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 585,
+          "trueBG": 17.772905463974904,
+          "cgmBG": 17.451197706000997,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.8668593401900364,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 600,
+          "trueBG": 18.030408861025776,
+          "cgmBG": 17.721340325046246,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.949521623545886,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        }
+      ],
+      "aggregates": {
+        "meanTrueBG": 11.197372607279778,
+        "minTrueBG": 5.766646422095296,
+        "maxTrueBG": 18.030408861025776,
+        "tir": 0.43902439024390244
+      }
+    },
+    "ketones-dka": {
+      "name": "ketones-dka",
+      "seed": 2006,
+      "profile": {
+        "weight": 70,
+        "isf": 3,
+        "icr": 10
+      },
+      "mode": "sandbox",
+      "durationMin": 720,
+      "sampleEveryMin": 15,
+      "sensorContract": "deterministic-interstitial-no-faults",
+      "metrics": [
+        "trueBG",
+        "cgmBG",
+        "iob",
+        "cob",
+        "ketoneLevel",
+        "acidosisLoad",
+        "brainEnergyDeficit"
+      ],
+      "samples": [
+        {
+          "t": 0,
+          "trueBG": 20,
+          "cgmBG": 20,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.1,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 15,
+          "trueBG": 19.616708441255188,
+          "cgmBG": 19.900529996858392,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.09017907821733522,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 30,
+          "trueBG": 19.423725493148527,
+          "cgmBG": 19.6645080975516,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08342188550629578,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 45,
+          "trueBG": 19.321805726675077,
+          "cgmBG": 19.477534987902615,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08003437979576318,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 60,
+          "trueBG": 19.288260449835295,
+          "cgmBG": 19.36227406629157,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08088435154312912,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 75,
+          "trueBG": 19.317160834131098,
+          "cgmBG": 19.315113428942848,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.08736240191853122,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 90,
+          "trueBG": 19.402945881464,
+          "cgmBG": 19.331217209308555,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.101250068002666,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 105,
+          "trueBG": 19.537324459464443,
+          "cgmBG": 19.404724696255066,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.12438657814249039,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 120,
+          "trueBG": 19.709809719127765,
+          "cgmBG": 19.52763771175836,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.15819364139767791,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 135,
+          "trueBG": 19.90890802668456,
+          "cgmBG": 19.69001689866471,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.20329550259996565,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 150,
+          "trueBG": 20.123140327117735,
+          "cgmBG": 19.880832768651224,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.2594437859319531,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 165,
+          "trueBG": 20.34174595499098,
+          "cgmBG": 20.08886946244514,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.3257307311300197,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 180,
+          "trueBG": 20.555106966075243,
+          "cgmBG": 20.30343408470167,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.40090981022367045,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 195,
+          "trueBG": 20.754966410595014,
+          "cgmBG": 20.514828359985728,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.4836645779928329,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 210,
+          "trueBG": 20.934506087215055,
+          "cgmBG": 20.714617784871315,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.57180824518812,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 225,
+          "trueBG": 21.088333105405045,
+          "cgmBG": 20.895750879241742,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.6623428736483103,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 240,
+          "trueBG": 21.212409995329267,
+          "cgmBG": 21.052575868879874,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.7546438167152398,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 255,
+          "trueBG": 21.317221050062177,
+          "cgmBG": 21.18205508961901,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.8482657338536368,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 270,
+          "trueBG": 21.41611385414563,
+          "cgmBG": 21.293836519532498,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.942845508677698,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 285,
+          "trueBG": 21.506493046401978,
+          "cgmBG": 21.395248373386234,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.038085269830523,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 300,
+          "trueBG": 21.58707550666967,
+          "cgmBG": 21.48725805209081,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.133737904796658,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 315,
+          "trueBG": 21.65726361738314,
+          "cgmBG": 21.56945695063382,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.2295957572174872,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 330,
+          "trueBG": 21.716876779414385,
+          "cgmBG": 21.641398260514,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.325482188619966,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 345,
+          "trueBG": 21.76602017506958,
+          "cgmBG": 21.702876944222147,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.4212453977670074,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 360,
+          "trueBG": 21.80500384423156,
+          "cgmBG": 21.753942242813345,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.5167539046672938,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 375,
+          "trueBG": 21.834284050011476,
+          "cgmBG": 21.794851849012314,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.611893218528335,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 390,
+          "trueBG": 21.85441471585159,
+          "cgmBG": 21.826019594577033,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.7065633327054321,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 405,
+          "trueBG": 21.866014331663983,
+          "cgmBG": 21.84796833720007,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.800676794198202,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 420,
+          "trueBG": 21.869743021004446,
+          "cgmBG": 21.861295127820593,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.8941571741234369,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 435,
+          "trueBG": 21.866281577232417,
+          "cgmBG": 21.86664481329136,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 1.9869378216548714,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 450,
+          "trueBG": 21.856313743841525,
+          "cgmBG": 21.86468793176722,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.078960822375758,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 465,
+          "trueBG": 21.840512173468507,
+          "cgmBG": 21.856102319594175,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.170176107812833,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 480,
+          "trueBG": 21.8195278189237,
+          "cgmBG": 21.84155837413735,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.260540680055351,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 495,
+          "trueBG": 21.79398228535257,
+          "cgmBG": 21.821707731108454,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.3500179266761165,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 510,
+          "trueBG": 21.764462631889966,
+          "cgmBG": 21.79717494636369,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.4385770086430263,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 525,
+          "trueBG": 21.731518143294444,
+          "cgmBG": 21.76855170772823,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.526192308866886,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 540,
+          "trueBG": 21.695658650479984,
+          "cgmBG": 21.73639311002212,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.612842932347162,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 555,
+          "trueBG": 21.657354043370734,
+          "cgmBG": 21.70121557034365,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.6985122511201673,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 570,
+          "trueBG": 21.61703468126651,
+          "cgmBG": 21.663496018244974,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.783187488752023,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 585,
+          "trueBG": 21.57509246129109,
+          "cgmBG": 21.623672054675016,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.8668593401900364,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 600,
+          "trueBG": 21.53188235333303,
+          "cgmBG": 21.582142828703148,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 2.949521623545886,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 615,
+          "trueBG": 21.487724250201985,
+          "cgmBG": 21.539270429705056,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.0311709609335677,
+          "acidosisLoad": 0.031846752814463135,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 630,
+          "trueBG": 21.44290501508995,
+          "cgmBG": 21.495381634273127,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.111806485891333,
+          "acidosisLoad": 0.3705599146143697,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 645,
+          "trueBG": 21.397680635659327,
+          "cgmBG": 21.450769881859024,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.1914295752244137,
+          "acidosisLoad": 1.0834254441256712,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 660,
+          "trueBG": 21.352278416046566,
+          "cgmBG": 21.4056973817151,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.27004360334396,
+          "acidosisLoad": 2.1751631400028875,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 675,
+          "trueBG": 21.3068991542178,
+          "cgmBG": 21.360397276817476,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.3476537173678285,
+          "acidosisLoad": 3.6501546366043494,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 690,
+          "trueBG": 21.261719259864247,
+          "cgmBG": 21.31507580646258,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.4242666314044,
+          "acidosisLoad": 5.512458452620759,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 705,
+          "trueBG": 21.21689281036767,
+          "cgmBG": 21.269914425668834,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.4998904385711533,
+          "acidosisLoad": 7.7658249018737875,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 720,
+          "trueBG": 21.17255352095101,
+          "cgmBG": 21.225071866777157,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 3.5745344394118517,
+          "acidosisLoad": 10.413710788059031,
+          "brainEnergyDeficit": 0
+        }
+      ],
+      "aggregates": {
+        "meanTrueBG": 21.06370725503198,
+        "minTrueBG": 19.288260449835295,
+        "maxTrueBG": 21.869743021004446,
+        "tir": 0
+      }
+    },
+    "hypo-overbolus": {
+      "name": "hypo-overbolus",
+      "seed": 2007,
+      "profile": {
+        "weight": 70,
+        "isf": 3,
+        "icr": 10
+      },
+      "mode": "sandbox",
+      "durationMin": 300,
+      "sampleEveryMin": 5,
+      "sensorContract": "deterministic-interstitial-no-faults",
+      "metrics": [
+        "trueBG",
+        "cgmBG",
+        "iob",
+        "cob",
+        "ketoneLevel",
+        "acidosisLoad",
+        "brainEnergyDeficit"
+      ],
+      "samples": [
+        {
+          "t": 0,
+          "trueBG": 8,
+          "cgmBG": 8,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.1,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 5,
+          "trueBG": 7.970760930155432,
+          "cgmBG": 8,
+          "iob": 2.337575822546464,
+          "cob": 0,
+          "ketoneLevel": 0.0963459079178726,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 10,
+          "trueBG": 7.933162965538956,
+          "cgmBG": 7.994150997212932,
+          "iob": 2.317089254276467,
+          "cob": 0,
+          "ketoneLevel": 0.09284275152656205,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 15,
+          "trueBG": 7.860321845973896,
+          "cgmBG": 7.9798042944245235,
+          "iob": 2.270646240168646,
+          "cob": 0,
+          "ketoneLevel": 0.08943255586864664,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 20,
+          "trueBG": 7.728014095825698,
+          "cgmBG": 7.951802450088271,
+          "iob": 2.199566794178972,
+          "cob": 0,
+          "ketoneLevel": 0.08612616749105204,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 25,
+          "trueBG": 7.52382833790716,
+          "cgmBG": 7.8982909485484285,
+          "iob": 2.108496619339512,
+          "cob": 0,
+          "ketoneLevel": 0.08293002871833034,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 30,
+          "trueBG": 7.247673975216169,
+          "cgmBG": 7.80577198712235,
+          "iob": 2.002798926106917,
+          "cob": 0,
+          "ketoneLevel": 0.07984512218054879,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 35,
+          "trueBG": 6.908606096285748,
+          "cgmBG": 7.6635905991520445,
+          "iob": 1.8874741431002329,
+          "cob": 0,
+          "ketoneLevel": 0.07687006463482336,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 40,
+          "trueBG": 6.5209325540531635,
+          "cgmBG": 7.466337363394222,
+          "iob": 1.7667790029268144,
+          "cob": 0,
+          "ketoneLevel": 0.07400251576802332,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 45,
+          "trueBG": 6.100923035519657,
+          "cgmBG": 7.214300313095778,
+          "iob": 1.6441552714067142,
+          "cob": 0,
+          "ketoneLevel": 0.07123976760344902,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 50,
+          "trueBG": 5.664495560273202,
+          "cgmBG": 6.91264835258768,
+          "iob": 1.52228648515049,
+          "cob": 0,
+          "ketoneLevel": 0.06857901291580201,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 55,
+          "trueBG": 5.22582274410652,
+          "cgmBG": 6.570026355320529,
+          "iob": 1.4031994832262358,
+          "cob": 0,
+          "ketoneLevel": 0.06601748588310961,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 60,
+          "trueBG": 4.79665134936002,
+          "cgmBG": 6.197050578563178,
+          "iob": 1.2883738388980208,
+          "cob": 0,
+          "ketoneLevel": 0.06355255193504139,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 65,
+          "trueBG": 4.386114053011835,
+          "cgmBG": 5.804986402907854,
+          "iob": 1.1788439036470135,
+          "cob": 0,
+          "ketoneLevel": 0.061181781415547455,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 70,
+          "trueBG": 4.00084846657657,
+          "cgmBG": 5.404731420323827,
+          "iob": 1.0752880891372143,
+          "cob": 0,
+          "ketoneLevel": 0.058903026370308156,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 75,
+          "trueBG": 3.647430055840192,
+          "cgmBG": 5.006124930741579,
+          "iob": 0.9781044198585909,
+          "cob": 0,
+          "ketoneLevel": 0.05671451529734755,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 80,
+          "trueBG": 3.333456952048625,
+          "cgmBG": 4.617842257440259,
+          "iob": 0.8874732250467634,
+          "cob": 0,
+          "ketoneLevel": 0.05461498155883625,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 85,
+          "trueBG": 3.0653232088124396,
+          "cgmBG": 4.248263441928187,
+          "iob": 0.8034084923704783,
+          "cob": 0,
+          "ketoneLevel": 0.05260384565778288,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 90,
+          "trueBG": 2.8494247545070492,
+          "cgmBG": 3.9051747291315895,
+          "iob": 0.7257995324528015,
+          "cob": 0,
+          "ketoneLevel": 0.05068147951815169,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 95,
+          "trueBG": 2.6900677273063267,
+          "cgmBG": 3.595978087156669,
+          "iob": 0.6544445086046333,
+          "cob": 0,
+          "ketoneLevel": 0.04884959257331594,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 100,
+          "trueBG": 2.5878560447167716,
+          "cgmBG": 3.327391550603047,
+          "iob": 0.589077211195509,
+          "cob": 0,
+          "ketoneLevel": 0.047111795032432575,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 105,
+          "trueBG": 2.5395994562636948,
+          "cgmBG": 3.104658847964768,
+          "iob": 0.5293882640256278,
+          "cob": 0,
+          "ketoneLevel": 0.045474412333949756,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 110,
+          "trueBG": 2.529621670582027,
+          "cgmBG": 2.930789980204554,
+          "iob": 0.4750417676189453,
+          "cob": 0,
+          "ketoneLevel": 0.04394764334783029,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 115,
+          "trueBG": 2.531003570484279,
+          "cgmBG": 2.8050641038052615,
+          "iob": 0.4256882214309946,
+          "cob": 0,
+          "ketoneLevel": 0.04254716592542821,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 120,
+          "trueBG": 2.5463214186864978,
+          "cgmBG": 2.7181438518136245,
+          "iob": 0.38097442588919184,
+          "cob": 0,
+          "ketoneLevel": 0.04129628314230115,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 125,
+          "trueBG": 2.5771455097364586,
+          "cgmBG": 2.661789431775376,
+          "iob": 0.34055094505885103,
+          "cob": 0,
+          "ketoneLevel": 0.040228651109822815,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 130,
+          "trueBG": 2.6237997500953396,
+          "cgmBG": 2.63110882789383,
+          "iob": 0.30407760943235224,
+          "cob": 0,
+          "ketoneLevel": 0.03939150981105695,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 135,
+          "trueBG": 2.6860178961066565,
+          "cgmBG": 2.6229792015447733,
+          "iob": 0.27122745343261256,
+          "cob": 0,
+          "ketoneLevel": 0.03884913470200487,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 140,
+          "trueBG": 2.763275663627957,
+          "cgmBG": 2.635236700417328,
+          "iob": 0.24168941134010025,
+          "cob": 0,
+          "ketoneLevel": 0.03868594979498211,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 145,
+          "trueBG": 2.8549559955178343,
+          "cgmBG": 2.666259269312021,
+          "iob": 0.21517003635540402,
+          "cob": 0,
+          "ketoneLevel": 0.039008457258319,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 150,
+          "trueBG": 2.9604285950858364,
+          "cgmBG": 2.7147500065008408,
+          "iob": 0.1913944585251126,
+          "cob": 0,
+          "ketoneLevel": 0.03994497450031678,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 155,
+          "trueBG": 3.0790856355162326,
+          "cgmBG": 2.77962258080171,
+          "iob": 0.17010675667900216,
+          "cob": 0,
+          "ketoneLevel": 0.041642293858555134,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 160,
+          "trueBG": 3.2103553614600537,
+          "cgmBG": 2.8599384617987904,
+          "iob": 0.15106988598272394,
+          "cob": 0,
+          "ketoneLevel": 0.04425890672928184,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 165,
+          "trueBG": 3.353648743815288,
+          "cgmBG": 2.954870452492592,
+          "iob": 0.13406527504465032,
+          "cob": 0,
+          "ketoneLevel": 0.04795530532381872,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 170,
+          "trueBG": 3.5070709474547024,
+          "cgmBG": 3.06367488484948,
+          "iob": 0.11889218375252983,
+          "cob": 0,
+          "ketoneLevel": 0.05288280218883422,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 175,
+          "trueBG": 3.6680206368470913,
+          "cgmBG": 3.1854436708656984,
+          "iob": 0.10536689433468743,
+          "cob": 0,
+          "ketoneLevel": 0.0591728732191154,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 180,
+          "trueBG": 3.8348426392414603,
+          "cgmBG": 3.3187458278818056,
+          "iob": 0.09332179285308667,
+          "cob": 0,
+          "ketoneLevel": 0.06692893795632701,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 185,
+          "trueBG": 4.006727344563928,
+          "cgmBG": 3.461966364900224,
+          "iob": 0.08260438586451956,
+          "cob": 0,
+          "ketoneLevel": 0.07622177654900947,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 190,
+          "trueBG": 4.181749615867039,
+          "cgmBG": 3.6136489533036067,
+          "iob": 0.07307628684843673,
+          "cob": 0,
+          "ketoneLevel": 0.08708879134750233,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 195,
+          "trueBG": 4.359270270159931,
+          "cgmBG": 3.7723940661996553,
+          "iob": 0.06461219879162877,
+          "cob": 0,
+          "ketoneLevel": 0.09953647249861904,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 200,
+          "trueBG": 4.539676907765752,
+          "cgmBG": 3.9367568528394945,
+          "iob": 0.05709891270391251,
+          "cob": 0,
+          "ketoneLevel": 0.11354497400577189,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 205,
+          "trueBG": 4.723095507269785,
+          "cgmBG": 4.105838702413553,
+          "iob": 0.050434336533973764,
+          "cob": 0,
+          "ketoneLevel": 0.1290736625581315,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 210,
+          "trueBG": 4.909507772399921,
+          "cgmBG": 4.279090993328706,
+          "iob": 0.0445265647263904,
+          "cob": 0,
+          "ketoneLevel": 0.14606672450043276,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 215,
+          "trueBG": 5.098816086996195,
+          "cgmBG": 4.456147168031535,
+          "iob": 0.03929299531486844,
+          "cob": 0,
+          "ketoneLevel": 0.1644582366238413,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 220,
+          "trueBG": 5.2908799791529395,
+          "cgmBG": 4.636733611615333,
+          "iob": 0.034659498821171794,
+          "cob": 0,
+          "ketoneLevel": 0.18417640354691067,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 225,
+          "trueBG": 5.485536920386371,
+          "cgmBG": 4.820623058164461,
+          "iob": 0.030559641190076894,
+          "cob": 0,
+          "ketoneLevel": 0.20514688367183395,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 230,
+          "trueBG": 5.682614399903054,
+          "cgmBG": 5.007610861524137,
+          "iob": 0.026933961427026254,
+          "cob": 0,
+          "ketoneLevel": 0.2272952601995529,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 235,
+          "trueBG": 5.8819370633467845,
+          "cgmBG": 5.197503457323627,
+          "iob": 0.02372930342539866,
+          "cob": 0,
+          "ketoneLevel": 0.25054878000082303,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 240,
+          "trueBG": 6.083331006345999,
+          "cgmBG": 5.390113226003507,
+          "iob": 0.020898200598980298,
+          "cob": 0,
+          "ketoneLevel": 0.2748375036405743,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 245,
+          "trueBG": 6.286626389909056,
+          "cgmBG": 5.58525662577244,
+          "iob": 0.01839831131025937,
+          "cob": 0,
+          "ketoneLevel": 0.3000950039877641,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 250,
+          "trueBG": 6.491659038878815,
+          "cgmBG": 5.782753914577583,
+          "iob": 0.01619190265569648,
+          "cob": 0,
+          "ketoneLevel": 0.32625873245331655,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 255,
+          "trueBG": 6.698271404992956,
+          "cgmBG": 5.9824295707723465,
+          "iob": 0.014245379893543802,
+          "cob": 0,
+          "ketoneLevel": 0.3532701495589011,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 260,
+          "trueBG": 6.906313119835918,
+          "cgmBG": 6.18411295206414,
+          "iob": 0.012528858644195263,
+          "cob": 0,
+          "ketoneLevel": 0.38107469490821383,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 265,
+          "trueBG": 7.115641274534586,
+          "cgmBG": 6.3876389647025515,
+          "iob": 0.011015776929918763,
+          "cob": 0,
+          "ketoneLevel": 0.40962165283268626,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 270,
+          "trueBG": 7.326120512190725,
+          "cgmBG": 6.592848639099419,
+          "iob": 0.009682544127887152,
+          "cob": 0,
+          "ketoneLevel": 0.4388639546645507,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 275,
+          "trueBG": 7.53762298918492,
+          "cgmBG": 6.799589573215376,
+          "iob": 0.008508223969770272,
+          "cob": 0,
+          "ketoneLevel": 0.46875794663852205,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 280,
+          "trueBG": 7.750028243490076,
+          "cgmBG": 7.007716238062615,
+          "iob": 0.007474248818430795,
+          "cob": 0,
+          "ketoneLevel": 0.4992631433923531,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 285,
+          "trueBG": 7.963222996923673,
+          "cgmBG": 7.217090155373988,
+          "iob": 0.006564162576072728,
+          "cob": 0,
+          "ketoneLevel": 0.5301968898368005,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 290,
+          "trueBG": 8.177100911009742,
+          "cgmBG": 7.427579963998104,
+          "iob": 0.005763389719513583,
+          "cob": 0,
+          "ketoneLevel": 0.5613011681934592,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 295,
+          "trueBG": 8.391562311214415,
+          "cgmBG": 7.6390613933360685,
+          "iob": 0.005059028110039671,
+          "cob": 0,
+          "ketoneLevel": 0.5925594917627728,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 300,
+          "trueBG": 8.606513890852181,
+          "cgmBG": 7.851417161543816,
+          "iob": 0.004439663382101799,
+          "cob": 0,
+          "ketoneLevel": 0.6239582684226609,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        }
+      ],
+      "aggregates": {
+        "meanTrueBG": 5.127880888536584,
+        "minTrueBG": 2.529621670582027,
+        "maxTrueBG": 8.606513890852181,
+        "tir": 0.639344262295082
+      }
+    },
+    "glucagon-rescue": {
+      "name": "glucagon-rescue",
+      "seed": 2008,
+      "profile": {
+        "weight": 70,
+        "isf": 3,
+        "icr": 10
+      },
+      "mode": "sandbox",
+      "durationMin": 300,
+      "sampleEveryMin": 5,
+      "sensorContract": "deterministic-interstitial-no-faults",
+      "metrics": [
+        "trueBG",
+        "cgmBG",
+        "iob",
+        "cob",
+        "ketoneLevel",
+        "acidosisLoad",
+        "brainEnergyDeficit"
+      ],
+      "samples": [
+        {
+          "t": 0,
+          "trueBG": 8,
+          "cgmBG": 8,
+          "iob": 0,
+          "cob": 0,
+          "ketoneLevel": 0.1,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 5,
+          "trueBG": 7.971000544527155,
+          "cgmBG": 8,
+          "iob": 2.339230487757085,
+          "cob": 0,
+          "ketoneLevel": 0.09636719333063562,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 10,
+          "trueBG": 7.941050904110759,
+          "cgmBG": 7.994171901590224,
+          "iob": 2.3324741470729298,
+          "cob": 0,
+          "ketoneLevel": 0.09297808356212883,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 15,
+          "trueBG": 7.900702533302687,
+          "cgmBG": 7.981037183224022,
+          "iob": 2.3164032899976568,
+          "cob": 0,
+          "ketoneLevel": 0.08972980097366255,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 20,
+          "trueBG": 7.840666127551186,
+          "cgmBG": 7.960776098533059,
+          "iob": 2.290482098147247,
+          "cob": 0,
+          "ketoneLevel": 0.08658434798390939,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 25,
+          "trueBG": 7.754417183111119,
+          "cgmBG": 7.930460705182553,
+          "iob": 2.2553792936903707,
+          "cob": 0,
+          "ketoneLevel": 0.08353413410618955,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 30,
+          "trueBG": 7.638732775046289,
+          "cgmBG": 7.885675328835907,
+          "iob": 2.2122256919056187,
+          "cob": 0,
+          "ketoneLevel": 0.08057948119266024,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 35,
+          "trueBG": 7.493324790736839,
+          "cgmBG": 7.8219970013281115,
+          "iob": 2.1622725794943136,
+          "cob": 0,
+          "ketoneLevel": 0.07772154733696526,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 40,
+          "trueBG": 7.3201495447134315,
+          "cgmBG": 7.735979425202463,
+          "iob": 2.106739701892229,
+          "cob": 0,
+          "ketoneLevel": 0.07496078835411095,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 45,
+          "trueBG": 7.122679934009312,
+          "cgmBG": 7.625636835088008,
+          "iob": 2.046752445301198,
+          "cob": 0,
+          "ketoneLevel": 0.0722968781065231,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 50,
+          "trueBG": 6.905267534475365,
+          "cgmBG": 7.490545423155458,
+          "iob": 1.9833205226451562,
+          "cob": 0,
+          "ketoneLevel": 0.06972891796572951,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 55,
+          "trueBG": 6.672637958479935,
+          "cgmBG": 7.331699230711728,
+          "iob": 1.9173355559199503,
+          "cob": 0,
+          "ketoneLevel": 0.06725565149240038,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 60,
+          "trueBG": 6.429520924997577,
+          "cgmBG": 7.151236361544044,
+          "iob": 1.8495768768753578,
+          "cob": 0,
+          "ketoneLevel": 0.06487563361403163,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 65,
+          "trueBG": 6.180398072826328,
+          "cgmBG": 6.952119417662326,
+          "iob": 1.7807205379860664,
+          "cob": 0,
+          "ketoneLevel": 0.06258735806702358,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 70,
+          "trueBG": 5.929345629561803,
+          "cgmBG": 6.737823978047823,
+          "iob": 1.7113492173453173,
+          "cob": 0,
+          "ketoneLevel": 0.060389355856907974,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 75,
+          "trueBG": 5.679949304653042,
+          "cgmBG": 6.512065223150766,
+          "iob": 1.6419619759452524,
+          "cob": 0,
+          "ketoneLevel": 0.05828027623758702,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 80,
+          "trueBG": 5.435271664829739,
+          "cgmBG": 6.278576045648182,
+          "iob": 1.5729834268881444,
+          "cob": 0,
+          "ketoneLevel": 0.05625895909261431,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 85,
+          "trueBG": 5.197855913220981,
+          "cgmBG": 6.040939179326897,
+          "iob": 1.504772157009457,
+          "cob": 0,
+          "ketoneLevel": 0.05432450556343828,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 90,
+          "trueBG": 4.969753543913621,
+          "cgmBG": 5.802469575076704,
+          "iob": 1.4376283704314254,
+          "cob": 0,
+          "ketoneLevel": 0.052476352527297994,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 95,
+          "trueBG": 4.752566428591864,
+          "cgmBG": 5.5661400849817895,
+          "iob": 1.3718007807345733,
+          "cob": 0,
+          "ketoneLevel": 0.05071435593573793,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 100,
+          "trueBG": 4.5474964245207445,
+          "cgmBG": 5.334542378755846,
+          "iob": 1.3074928017847782,
+          "cob": 0,
+          "ketoneLevel": 0.0490388879117294,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 105,
+          "trueBG": 4.355397603681663,
+          "cgmBG": 5.109875102183784,
+          "iob": 1.2448680948599018,
+          "cob": 0,
+          "ketoneLevel": 0.04745095273266763,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 110,
+          "trueBG": 4.176827762297856,
+          "cgmBG": 4.893952039394654,
+          "iob": 1.184055530153482,
+          "cob": 0,
+          "ketoneLevel": 0.045952327290417136,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 115,
+          "trueBG": 4.012097055568549,
+          "cgmBG": 4.688224098344452,
+          "iob": 1.1251536180440156,
+          "cob": 0,
+          "ketoneLevel": 0.04454573221866301,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 120,
+          "trueBG": 3.863253411053776,
+          "cgmBG": 4.493810078616715,
+          "iob": 1.0682344616086101,
+          "cob": 0,
+          "ketoneLevel": 0.043235040498564636,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 125,
+          "trueBG": 4.644734310158182,
+          "cgmBG": 4.311802733851295,
+          "iob": 1.0133472776105525,
+          "cob": 0,
+          "ketoneLevel": 0.04202553084675488,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 130,
+          "trueBG": 6.778378358378816,
+          "cgmBG": 4.290197223323444,
+          "iob": 0.9605215289993104,
+          "cob": 0,
+          "ketoneLevel": 0.04092419334936761,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 135,
+          "trueBG": 9.596978935359232,
+          "cgmBG": 4.7958060186640665,
+          "iob": 0.9097697079982541,
+          "cob": 0,
+          "ketoneLevel": 0.0399400943524852,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 140,
+          "trueBG": 11.63254446384382,
+          "cgmBG": 5.995243018961692,
+          "iob": 0.8610898051825852,
+          "cob": 0,
+          "ketoneLevel": 0.03908480619000803,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 145,
+          "trueBG": 13.005342340613662,
+          "cgmBG": 7.5543920629457775,
+          "iob": 0.8144674965810088,
+          "cob": 0,
+          "ketoneLevel": 0.03837290448306279,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 150,
+          "trueBG": 13.846549255411155,
+          "cgmBG": 9.12796142622477,
+          "iob": 0.769878077760977,
+          "cob": 0,
+          "ketoneLevel": 0.037822530992642246,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 155,
+          "trueBG": 14.232779381391502,
+          "cgmBG": 10.530133919837166,
+          "iob": 0.7272881710611623,
+          "cob": 0,
+          "ketoneLevel": 0.037456012885234716,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 160,
+          "trueBG": 14.209792252698048,
+          "cgmBG": 11.663483754893305,
+          "iob": 0.6866572295953047,
+          "cob": 0,
+          "ketoneLevel": 0.037300519461610594,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 165,
+          "trueBG": 13.80550561325536,
+          "cgmBG": 12.478939005581795,
+          "iob": 0.6479388593474634,
+          "cob": 0,
+          "ketoneLevel": 0.03738872490703843,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 170,
+          "trueBG": 13.36953429770012,
+          "cgmBG": 12.953566864499773,
+          "iob": 0.6110819785895673,
+          "cob": 0,
+          "ketoneLevel": 0.03775943099859731,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 175,
+          "trueBG": 13.068784567029873,
+          "cgmBG": 13.131507228232623,
+          "iob": 0.5760318319588796,
+          "cob": 0,
+          "ketoneLevel": 0.038458088280435336,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 180,
+          "trueBG": 12.852290002917115,
+          "cgmBG": 13.1442766544861,
+          "iob": 0.542730874817918,
+          "cob": 0,
+          "ketoneLevel": 0.039537140262704294,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 185,
+          "trueBG": 12.691163437585779,
+          "cgmBG": 13.075802186304857,
+          "iob": 0.5111195419662963,
+          "cob": 0,
+          "ketoneLevel": 0.04105610592461553,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 190,
+          "trueBG": 12.568779504084047,
+          "cgmBG": 12.972159690082172,
+          "iob": 0.4811369133681096,
+          "cob": 0,
+          "ketoneLevel": 0.04308131505234436,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 195,
+          "trueBG": 12.47534928001706,
+          "cgmBG": 12.858387669269801,
+          "iob": 0.4527212882863385,
+          "cob": 0,
+          "ketoneLevel": 0.04568522249996425,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 200,
+          "trueBG": 12.404916321841355,
+          "cgmBG": 12.747836035716066,
+          "iob": 0.42581067806503453,
+          "cob": 0,
+          "ketoneLevel": 0.04894525394683398,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 205,
+          "trueBG": 12.353689294784774,
+          "cgmBG": 12.64737022874604,
+          "iob": 0.4003432267595398,
+          "cob": 0,
+          "ketoneLevel": 0.0529421772872581,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 210,
+          "trueBG": 12.319113624076962,
+          "cgmBG": 12.560270791328708,
+          "iob": 0.37625756787452613,
+          "cob": 0,
+          "ketoneLevel": 0.05775804699424614,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 215,
+          "trueBG": 12.299352599446978,
+          "cgmBG": 12.487849682985901,
+          "iob": 0.35349312461991317,
+          "cob": 0,
+          "ketoneLevel": 0.06347382629153239,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 220,
+          "trueBG": 12.292995889566775,
+          "cgmBG": 12.43035105323453,
+          "iob": 0.33199036032732104,
+          "cob": 0,
+          "ketoneLevel": 0.07016684340011664,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 225,
+          "trueBG": 12.298894720514625,
+          "cgmBG": 12.387452582536367,
+          "iob": 0.3116909849769548,
+          "cob": 0,
+          "ketoneLevel": 0.07790827247349637,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 230,
+          "trueBG": 12.316067841116116,
+          "cgmBG": 12.358543676071106,
+          "iob": 0.29253812315972083,
+          "cob": 0,
+          "ketoneLevel": 0.08676083853775057,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 235,
+          "trueBG": 12.34364720691324,
+          "cgmBG": 12.342878963313476,
+          "iob": 0.2744764482356142,
+          "cob": 0,
+          "ketoneLevel": 0.09677692554896106,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 240,
+          "trueBG": 12.380846060778586,
+          "cgmBG": 12.339662156141303,
+          "iob": 0.25745228694120315,
+          "cob": 0,
+          "ketoneLevel": 0.1079972209290723,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 245,
+          "trueBG": 12.426939722643644,
+          "cgmBG": 12.348091077945192,
+          "iob": 0.24141369824116019,
+          "cob": 0,
+          "ketoneLevel": 0.12044996775029664,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 250,
+          "trueBG": 12.48125365164072,
+          "cgmBG": 12.367381117140457,
+          "iob": 0.22631052980646427,
+          "cob": 0,
+          "ketoneLevel": 0.13415082922985175,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 255,
+          "trueBG": 12.543155717242984,
+          "cgmBG": 12.396776764459933,
+          "iob": 0.21209445513082378,
+          "cob": 0,
+          "ketoneLevel": 0.14910331104092311,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 260,
+          "trueBG": 12.612050944849331,
+          "cgmBG": 12.435556636179308,
+          "iob": 0.19871899396310402,
+          "cob": 0,
+          "ketoneLevel": 0.16529964350414456,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 265,
+          "trueBG": 12.687377747617061,
+          "cgmBG": 12.483034997537263,
+          "iob": 0.18613951843353177,
+          "cob": 0,
+          "ketoneLevel": 0.18272200168800615,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 270,
+          "trueBG": 12.768605076934778,
+          "cgmBG": 12.538561461250161,
+          "iob": 0.17431324698195316,
+          "cob": 0,
+          "ketoneLevel": 0.20134393608076995,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 275,
+          "trueBG": 12.855230161823656,
+          "cgmBG": 12.60151978531626,
+          "iob": 0.1631992279545053,
+          "cob": 0,
+          "ketoneLevel": 0.22113189597787816,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 280,
+          "trueBG": 12.946776642704808,
+          "cgmBG": 12.671326274242212,
+          "iob": 0.15275831451806332,
+          "cob": 0,
+          "ketoneLevel": 0.24204674684772112,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 285,
+          "trueBG": 13.042792982172504,
+          "cgmBG": 12.74742805347741,
+          "iob": 0.14295313234732734,
+          "cob": 0,
+          "ketoneLevel": 0.26404520655768554,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 290,
+          "trueBG": 13.142851079839058,
+          "cgmBG": 12.829301356740029,
+          "iob": 0.1337480413652281,
+          "cob": 0,
+          "ketoneLevel": 0.287081149316599,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 295,
+          "trueBG": 13.246545044149837,
+          "cgmBG": 12.916449894248984,
+          "iob": 0.12510909266146888,
+          "cob": 0,
+          "ketoneLevel": 0.3111067477284158,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        },
+        {
+          "t": 300,
+          "trueBG": 13.353490089317155,
+          "cgmBG": 13.008403330880837,
+          "iob": 0.1170039815746868,
+          "cob": 0,
+          "ketoneLevel": 0.3360734409685934,
+          "acidosisLoad": 0,
+          "brainEnergyDeficit": 0
+        }
+      ],
+      "aggregates": {
+        "meanTrueBG": 9.835827245740989,
+        "minTrueBG": 3.863253411053776,
+        "maxTrueBG": 14.232779381391502,
+        "tir": 0.4426229508196721
+      }
+    }
+  }
+}

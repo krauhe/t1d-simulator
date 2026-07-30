@@ -1,0 +1,43 @@
+{
+  "type": "compartment-diagram",
+  "title": "Carbohydrate absorption — Hovorka 2004 gut model with dynamic gastric emptying",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "D1", "label": "Stomach (D1)", "var": "D1",
+      "unit": "τG = carbBase · fiberMod · retentionMod + fatDelay",
+      "color": "carb", "type": "depot" },
+    { "id": "D2", "label": "Gut (D2)", "var": "D2",
+      "color": "carb", "type": "depot" },
+    { "id": "Q1", "label": "Plasma glucose", "var": "Q1",
+      "color": "glucose", "type": "plasma", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "external", "to": "D1",
+      "label": "",
+      "externalLabel": "meal (C, fiber, fat)",
+      "kind": "input" },
+    { "from": "D1", "to": "D2",
+      "label": "D1 / τG",
+      "kind": "mass" },
+    { "from": "D2", "to": "Q1",
+      "label": "U_G = D2 · A_G / τG",
+      "kind": "mass" }
+  ],
+  "caption": {
+    "scope": "Two-compartment gut absorption cascade from the Hovorka 2004 glucose-insulin model (Hovorka et al., Physiol Meas 25:905-920, 2004). D1 (stomach) empties into D2 (gut) at rate D1/τG; D2 delivers glucose to plasma at rate U_G = D2 · A_G / τG. The Hovorka 2004 original uses a fixed τG = 40 min. This simulator extends it with a mixture-dependent τG recomputed each tick from the carbohydrate composition currently inside D1: τG = carbBase · fiberMod · retentionMod + fatDelay, yielding 25–50 min for liquids and up to ~120 min for high-fiber, high-fat meals. The fat-delay term follows the Wolpert/Smart 2013 pizza-effect extension (Wolpert & Smart, J Diabetes Sci Technol 7:1154-1156, 2013).",
+    "variables": [
+      { "symbol": "D1", "category": "compartment", "definition": "stomach glucose depot — first stage of the Hovorka gut cascade (mmol carb); mixture composition (simpleFrac, fiber, retentionRatio) is tracked here and drives τG" },
+      { "symbol": "D2", "category": "compartment", "definition": "gut glucose depot — second stage of the Hovorka gut cascade (mmol carb)" },
+      { "symbol": "Q1", "category": "compartment", "definition": "plasma glucose pool (mmol); receives appearance flux U_G from D2" },
+      { "symbol": "U_G",           "category": "flow", "definition": "glucose appearance rate into plasma = D2 · A_G / τG (mmol/min)" },
+      { "symbol": "A_G",           "category": "flow", "definition": "carbohydrate bioavailability fraction (Hovorka 2004: 0.8)" },
+      { "symbol": "τG",            "category": "flow", "definition": "dynamic gastric emptying time constant (min); range ~25 min liquid sugar to ~120 min high-fiber/fat meal; fallback τG = 40 min when stomachContentGrams < 0.1" },
+      { "symbol": "carbBase",      "category": "flow", "definition": "chemical-complexity term = 25 + (1 − simpleFrac) × 25 (range 25–50 min)" },
+      { "symbol": "fiberMod",      "category": "flow", "definition": "saturating fiber slowdown = 1 + 0.5 · ln(1 + fiber/2); fiber in grams inside D1" },
+      { "symbol": "retentionMod",  "category": "flow", "definition": "solid-liquid modifier = 1 − 0.6 · (1 − retentionRatio); range 0.4–1.0; liquids empty faster" },
+      { "symbol": "fatDelay",      "category": "flow", "definition": "fat-induced delay = 18 · ln(1 + fatIntestine/10) (min); Wolpert/Smart pizza-effect extension" },
+      { "symbol": "simpleFrac",    "category": "flow", "definition": "simple-sugar fraction = stomachCarbsSimple / stomachCarbsTotal" },
+      { "symbol": "retentionRatio","category": "flow", "definition": "solid-content ratio = stomachRetentionWeight / stomachContentGrams" }
+    ]
+  }
+}

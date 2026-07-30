@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portion stepper popup · Mad-menu mockup</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+    /* Lokal styling for popup-showcase */
+    .popup-showcase {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 20px;
+    }
+    @media (max-width: 720px) {
+        .popup-showcase { grid-template-columns: 1fr; }
+    }
+    .popup-demo {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+    }
+    .popup-demo h3 {
+        font-size: 14px;
+        margin: 0 0 4px;
+        color: var(--text-primary);
+    }
+    .popup-demo p {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin: 0 0 16px;
+        line-height: 1.4;
+    }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+    <div class="breadcrumb">
+        <a href="index.html">← Tilbage til oversigt</a>
+        <span>Portion stepper popup</span>
+    </div>
+
+    <header class="page-header">
+        <h1 class="page-title">Portion stepper popup</h1>
+        <p class="page-subtitle">
+            Touch-venlig erstatning for den gamle hover-slider. Alle interaktioner sker via dedikerede
+            knapper — ingen drag, ingen hover, ingen skjult info.
+        </p>
+    </header>
+
+    <div class="callout">
+        <strong>Design-principper:</strong>
+        <ul style="margin: 8px 0 0 0; padding-left: 18px; line-height: 1.6;">
+            <li>48×48px stepper-knapper (+/−) opfylder Apple HIG (44px min)</li>
+            <li>Stort synligt tal i midten — tabular-nums for jævn animation</li>
+            <li>Macro-breakdown vises altid — ingen tap nødvendigt</li>
+            <li>Expected BG-preview vises altid — ingen hover tooltip</li>
+            <li>"Annullér" og "Spis" er equally sized — ingen mus-præcision krævet</li>
+        </ul>
+    </div>
+
+    <!-- =========== DEMO 1: STANDARD PORTION =========== -->
+    <section class="section">
+        <h2 class="section-title">Demo 1 · Standard portion (1×)</h2>
+
+        <div class="popup-showcase">
+            <div>
+                <div class="portion-popup">
+                    <div class="portion-popup-header">
+                        <span class="portion-popup-emoji">🍕</span>
+                        <div>
+                            <h3 class="portion-popup-title">Pizza</h3>
+                            <p class="portion-popup-sub">Standard 1 stk · 220g · Måltid</p>
+                        </div>
+                    </div>
+                    <div class="portion-stepper">
+                        <button class="stepper-btn" aria-label="Reducer">−</button>
+                        <div class="stepper-value">1.0<span class="stepper-unit">× portion</span></div>
+                        <button class="stepper-btn" aria-label="Forøg">+</button>
+                    </div>
+                    <div class="portion-macros">
+                        <div class="portion-macro c">
+                            <span class="macro-label">Carbs</span>
+                            <span class="macro-value">55g</span>
+                        </div>
+                        <div class="portion-macro p">
+                            <span class="macro-label">Protein</span>
+                            <span class="macro-value">20g</span>
+                        </div>
+                        <div class="portion-macro f">
+                            <span class="macro-label">Fedt</span>
+                            <span class="macro-value">25g</span>
+                        </div>
+                    </div>
+                    <div class="bg-preview">
+                        <strong>Bolus: 5.5 U</strong> (ICR 10)<br>
+                        BG-peak om ~1t 30min · fedt forsinker peak ~30 min
+                    </div>
+                    <div class="portion-actions">
+                        <button>Annullér</button>
+                        <button class="confirm-btn">Spis</button>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 style="font-size: 13px; margin: 0 0 12px; color: var(--blue);">Hvad demoen viser:</h3>
+                <ul style="font-size: 12px; line-height: 1.7; color: var(--text-secondary); padding-left: 18px; margin: 0;">
+                    <li>Pizza 1 stk: <strong>55g carbs, 20g protein, 25g fedt</strong></li>
+                    <li>Bolus = carbs / ICR = 55/10 = <strong>5.5 U</strong></li>
+                    <li>BG-preview fortæller at peak kommer senere end normalt pga. fedt</li>
+                    <li>Knap-placering: Annullér til venstre, Spis (grøn) til højre</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========== DEMO 2: REDUCED PORTION =========== -->
+    <section class="section">
+        <h2 class="section-title">Demo 2 · Halv portion (0.5×)</h2>
+
+        <div class="popup-showcase">
+            <div>
+                <div class="portion-popup">
+                    <div class="portion-popup-header">
+                        <span class="portion-popup-emoji">🍝</span>
+                        <div>
+                            <h3 class="portion-popup-title">Pasta</h3>
+                            <p class="portion-popup-sub">Standard 1 tallerken · 200g · Måltid</p>
+                        </div>
+                    </div>
+                    <div class="portion-stepper">
+                        <button class="stepper-btn" aria-label="Reducer">−</button>
+                        <div class="stepper-value">0.5<span class="stepper-unit">× portion</span></div>
+                        <button class="stepper-btn" aria-label="Forøg">+</button>
+                    </div>
+                    <div class="portion-macros">
+                        <div class="portion-macro c">
+                            <span class="macro-label">Carbs</span>
+                            <span class="macro-value">25g</span>
+                        </div>
+                        <div class="portion-macro p">
+                            <span class="macro-label">Protein</span>
+                            <span class="macro-value">5g</span>
+                        </div>
+                        <div class="portion-macro f">
+                            <span class="macro-label">Fedt</span>
+                            <span class="macro-value">3g</span>
+                        </div>
+                    </div>
+                    <div class="bg-preview">
+                        <strong>Bolus: 2.5 U</strong> (ICR 10)<br>
+                        Hurtig peak om ~1t · minimal fedt-forsinkelse
+                    </div>
+                    <div class="portion-actions">
+                        <button>Annullér</button>
+                        <button class="confirm-btn">Spis</button>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 style="font-size: 13px; margin: 0 0 12px; color: var(--blue);">Hvad demoen viser:</h3>
+                <ul style="font-size: 12px; line-height: 1.7; color: var(--text-secondary); padding-left: 18px; margin: 0;">
+                    <li>Alle makroværdier <strong>skaleres live</strong> mens man trykker +/−</li>
+                    <li>Bolus-tal opdateres synkront</li>
+                    <li>BG-preview tilpasser sig mindre dosis og fedt-profil</li>
+                    <li>Man kan tappe 0.25× ved at ramme "−" nok gange (stepper-granularitet)</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========== DEMO 3: LARGE PORTION =========== -->
+    <section class="section">
+        <h2 class="section-title">Demo 3 · Dobbelt portion (2×)</h2>
+
+        <div class="popup-showcase">
+            <div>
+                <div class="portion-popup">
+                    <div class="portion-popup-header">
+                        <span class="portion-popup-emoji">🎂</span>
+                        <div>
+                            <h3 class="portion-popup-title">Lagkage</h3>
+                            <p class="portion-popup-sub">Standard 1 stk · 150g · Måltid</p>
+                        </div>
+                    </div>
+                    <div class="portion-stepper">
+                        <button class="stepper-btn" aria-label="Reducer">−</button>
+                        <div class="stepper-value">2.0<span class="stepper-unit">× portion</span></div>
+                        <button class="stepper-btn" aria-label="Forøg">+</button>
+                    </div>
+                    <div class="portion-macros">
+                        <div class="portion-macro c">
+                            <span class="macro-label">Carbs</span>
+                            <span class="macro-value">120g</span>
+                        </div>
+                        <div class="portion-macro p">
+                            <span class="macro-label">Protein</span>
+                            <span class="macro-value">10g</span>
+                        </div>
+                        <div class="portion-macro f">
+                            <span class="macro-label">Fedt</span>
+                            <span class="macro-value">50g</span>
+                        </div>
+                    </div>
+                    <div class="bg-preview" style="background: rgba(251, 146, 60, 0.08); border-left-color: var(--orange);">
+                        <strong style="color: var(--orange);">Stor dosis: 12.0 U</strong> (ICR 10)<br>
+                        <strong>⚠️ Advarsel:</strong> Høj fedt-indhold giver forlænget carb-absorption
+                        op til 4 timer. Overvej delt bolus.
+                    </div>
+                    <div class="portion-actions">
+                        <button>Annullér</button>
+                        <button class="confirm-btn">Spis</button>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 style="font-size: 13px; margin: 0 0 12px; color: var(--blue);">Hvad demoen viser:</h3>
+                <ul style="font-size: 12px; line-height: 1.7; color: var(--text-secondary); padding-left: 18px; margin: 0;">
+                    <li>Store portioner udløser <strong>advarselsfarve</strong> på BG-preview (orange)</li>
+                    <li>Spilleren får konkret feedback om fedt-forsinkelse og delt-bolus-strategi</li>
+                    <li>Bolus-tallet skifter farve når det går over ~8 U</li>
+                    <li>Undervisningseffekt: spilleren lærer at store carbs ≠ proportional bolus</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========== DEMO 4: HYPO FIX =========== -->
+    <section class="section">
+        <h2 class="section-title">Demo 4 · Hypo-fix (ingen bolus)</h2>
+
+        <div class="popup-showcase">
+            <div>
+                <div class="portion-popup" style="border-left: 3px solid var(--green);">
+                    <div class="portion-popup-header">
+                        <span class="portion-popup-emoji svg-icon" style="display: inline-flex; vertical-align: middle;">
+                            <svg viewBox="0 0 32 32" width="40" height="40">
+                                <ellipse cx="16" cy="16" rx="11" ry="7" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.5"/>
+                                <ellipse cx="13" cy="14" rx="2.5" ry="1.5" fill="#fff" opacity="0.7"/>
+                                <text x="16" y="20" font-family="Inter" font-size="9" font-weight="700" text-anchor="middle" fill="#0d1526">DEX</text>
+                            </svg>
+                        </span>
+                        <div>
+                            <h3 class="portion-popup-title">Druesukker</h3>
+                            <p class="portion-popup-sub">3g pr. tablet · Justering · <span style="color: var(--green);">ingen bolus</span></p>
+                        </div>
+                    </div>
+                    <div class="portion-stepper">
+                        <button class="stepper-btn" aria-label="Reducer">−</button>
+                        <div class="stepper-value">5<span class="stepper-unit">tabletter</span></div>
+                        <button class="stepper-btn" aria-label="Forøg">+</button>
+                    </div>
+                    <div class="portion-macros">
+                        <div class="portion-macro c">
+                            <span class="macro-label">Carbs</span>
+                            <span class="macro-value">15g</span>
+                        </div>
+                        <div class="portion-macro p">
+                            <span class="macro-label">Protein</span>
+                            <span class="macro-value">0g</span>
+                        </div>
+                        <div class="portion-macro f">
+                            <span class="macro-label">Fedt</span>
+                            <span class="macro-value">0g</span>
+                        </div>
+                    </div>
+                    <div class="bg-preview" style="background: rgba(74, 222, 128, 0.08); border-left-color: var(--green);">
+                        <strong style="color: var(--green);">Hurtig virkning</strong> (ingen bolus)<br>
+                        BG 3.2 → ~6.0 mmol/L om 15-20 min. Tjek igen efter 15 min.
+                    </div>
+                    <div class="portion-actions">
+                        <button>Annullér</button>
+                        <button class="confirm-btn">Spis</button>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 style="font-size: 13px; margin: 0 0 12px; color: var(--blue);">Hvad demoen viser:</h3>
+                <ul style="font-size: 12px; line-height: 1.7; color: var(--text-secondary); padding-left: 18px; margin: 0;">
+                    <li>Stepper-unit ændres til <strong>"tabletter"</strong> for druesukker (ikke "× portion")</li>
+                    <li>Ingen bolus-beregning — justerings-carb kræver ikke bolus</li>
+                    <li>Grøn border-accent matcher justerings-rækkens farvekodning</li>
+                    <li>BG-preview er beroligende grøn og giver konkret tidshorisont (15-20 min)</li>
+                    <li>"Regel om 15": tjek igen om 15 minutter — indbygget T1D-læring</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">🎯 Touch-sammenligning</h2>
+        <p class="section-subtitle">
+            Sammenligning mellem gamle hover-slider og ny touch-stepper.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="callout warning">
+                <strong>❌ Før (hover-slider):</strong>
+                <ul style="margin: 6px 0 0; padding-left: 18px; line-height: 1.6;">
+                    <li>Kræver præcision med mus</li>
+                    <li>Drag-gesture virker dårligt på touch</li>
+                    <li>Hover-tooltip skjuler info på mobil</li>
+                    <li>BG-preview kun synligt ved hover</li>
+                    <li>Ingen haptic feedback</li>
+                </ul>
+            </div>
+            <div class="callout good">
+                <strong>✅ Efter (touch-stepper):</strong>
+                <ul style="margin: 6px 0 0; padding-left: 18px; line-height: 1.6;">
+                    <li>48px knapper = nemt at ramme på tommel</li>
+                    <li>+/− er universelt forstået</li>
+                    <li>Al info altid synlig — ingen hover</li>
+                    <li>BG-preview er permanent del af popup</li>
+                    <li>Kan tilføje haptic feedback på mobil</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">♿ Tilgængelighed</h2>
+        <ul style="line-height: 1.8; color: var(--text-secondary); padding-left: 20px;">
+            <li><strong>aria-label</strong> på stepper-knapper ("Reducer" / "Forøg")</li>
+            <li><strong>Keyboard:</strong> Arrow keys ændrer værdi, Enter bekræfter, Escape annullerer</li>
+            <li><strong>Focus rings</strong> er synlige (ikke fjernet med <code>outline: none</code>)</li>
+            <li><strong>Kontrast:</strong> BG-preview tekst opfylder WCAG AA (4.5:1)</li>
+            <li><strong>Ingen farve-only info:</strong> Advarsel bruger både farve og tekst ("⚠️ Advarsel")</li>
+        </ul>
+    </section>
+</div>
+</body>
+</html>

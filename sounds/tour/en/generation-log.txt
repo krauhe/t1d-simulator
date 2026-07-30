@@ -1,0 +1,8 @@
+﻿Genereret: 2026-07-23
+Voice: Peter (qhEux886xDKbOdF7jkFP)
+Model: eleven_multilingual_v2
+Language: en, language_code=en
+
+File                          Stability  Similarity  Style  Status  Notes
+00-overview.mp3              0.45       0.78        0.85   REVIEW  Regenerated 2026-07-30, 211949 bytes. New concise purpose overview; awaiting listening. Exact filter: -Language en -Only 00-overview.mp3.
+14-learn.mp3                 0.45       0.78        0.85   REVIEW  Regenerated 2026-07-23, 160122 bytes. Accepted temporarily despite imperfect audio; replacement is TODO 77. Exact filter: -Language en -Only 14-learn.mp3.

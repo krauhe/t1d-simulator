@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- VARIANT 7 — Vandret sprøjte gennem ur-ringen -->
+  <!-- Ur-ring (tynd, så sprøjten ses igennem) -->
+  <circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.9)" stroke="#94A3B8" stroke-width="1.3"/>
+  <!-- Time-markører (kun de 4 hoved) -->
+  <line x1="12" y1="2.5" x2="12" y2="4.5" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="19.5" y1="12" x2="21.5" y2="12" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="12" y1="19.5" x2="12" y2="21.5" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="2.5" y1="12" x2="4.5" y2="12" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Mindre markører -->
+  <circle cx="17.3" cy="5.7" r="0.3" fill="#94A3B8"/>
+  <circle cx="18.3" cy="18.3" r="0.3" fill="#94A3B8"/>
+  <circle cx="5.7" cy="17.3" r="0.3" fill="#94A3B8"/>
+  <circle cx="5.7" cy="6.7" r="0.3" fill="#94A3B8"/>
+  <!-- Ur-visere (12 timer position, svage) -->
+  <line x1="12" y1="12" x2="12" y2="6.5" stroke="#94A3B8" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+  <!-- Horisontal sprøjte der går gennem urets centrum -->
+  <!-- Stempel-håndtag (venstre) -->
+  <line x1="1" y1="10.5" x2="1" y2="13.5" stroke="#3B82F6" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Stempel-stang -->
+  <line x1="1" y1="12" x2="3.5" y2="12" stroke="#3B82F6" stroke-width="1.3" stroke-linecap="round"/>
+  <!-- Cylinder (går gennem hele uret) -->
+  <rect x="3.5" y="10" width="13" height="4" rx="0.4" fill="rgba(255,255,255,0.95)" stroke="#3B82F6" stroke-width="1.3"/>
+  <!-- Insulin-væske (lang blå streg = lang virkning) -->
+  <rect x="4.5" y="11" width="11" height="2" fill="#3B82F6"/>
+  <!-- Nål (højre) -->
+  <line x1="16.5" y1="12" x2="20" y2="12" stroke="#3B82F6" stroke-width="1" stroke-linecap="round"/>
+  <!-- Centrum-prik -->
+  <circle cx="12" cy="12" r="0.7" fill="#94A3B8"/>
+</svg>

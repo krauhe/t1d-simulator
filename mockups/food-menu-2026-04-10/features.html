@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Features showcase · Mad-menu mockup</title>
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="page-wrapper">
+    <div class="breadcrumb">
+        <a href="index.html">← Tilbage til oversigt</a>
+        <span>Features showcase</span>
+    </div>
+
+    <header class="page-header">
+        <h1 class="page-title">Features showcase</h1>
+        <p class="page-subtitle">
+            Alle cross-cutting features vist isoleret og i kombination. Hver sektion kan blandes ind i
+            enhver variant (A, B, eller C).
+        </p>
+    </header>
+
+    <!-- ============== 1. ROW HEADER ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">01</span>Row header med ikon + label</h2>
+        <p class="section-subtitle">
+            Hver række får en titel der forklarer dens rolle. Ikon + tekst + hint.
+        </p>
+        <div class="food-menu-frame">
+            <div class="food-row" data-row="lowcarb">
+                <div class="food-row-header">
+                    <div class="food-row-label">
+                        <span class="row-icon">🔵</span>
+                        <span>Lav-kulhydrat</span>
+                    </div>
+                    <span class="food-row-hint">Ingen bolus · typisk &lt; 5g C</span>
+                </div>
+                <div style="padding: 14px; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 11px; color: var(--text-muted); text-align: center;">
+                    Row-chips vises her
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============== 2. ACCENT STRIPE ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">02</span>Row accent stripe (4px venstre kant)</h2>
+        <p class="section-subtitle">
+            Subtil farvekodning: blå = lav carb, gul = måltid, grøn = justering. Ubesværlig visuel scanning.
+        </p>
+        <div class="food-menu-frame">
+            <div class="food-row" data-row="lowcarb">
+                <div class="food-row-header">
+                    <div class="food-row-label"><span class="row-icon">🔵</span><span>Lav-kulhydrat (blå)</span></div>
+                </div>
+                <div style="padding: 8px; color: var(--text-muted); font-size: 11px;">— Rolig, stabil, ingen bolus</div>
+            </div>
+            <div class="food-row" data-row="normal">
+                <div class="food-row-header">
+                    <div class="food-row-label"><span class="row-icon">🟡</span><span>Måltider (gul)</span></div>
+                </div>
+                <div style="padding: 8px; color: var(--text-muted); font-size: 11px;">— Kræver bolus og regning</div>
+            </div>
+            <div class="food-row" data-row="adjust">
+                <div class="food-row-header">
+                    <div class="food-row-label"><span class="row-icon">🟢</span><span>Justering (grøn)</span></div>
+                </div>
+                <div style="padding: 8px; color: var(--text-muted); font-size: 11px;">— Hurtig redning ved hypo</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============== 3. MACRO BAR ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">03</span>Macro-bar skaleret til kcal</h2>
+        <p class="section-subtitle">
+            3-farvet linje under chippen viser C/P/F-fordeling. Spilleren lærer at læse "høj fedt"
+            versus "høj carb" ved et blik.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 820px;">
+            <div class="food-chip">
+                <span class="chip-carb-badge">55<span class="unit">g</span></span>
+                <span class="chip-emoji">🍕</span>
+                <span class="chip-name">Pizza</span>
+                <div class="chip-macro-bar">
+                    <div class="bar-c" style="width: 55%;"></div>
+                    <div class="bar-p" style="width: 20%;"></div>
+                    <div class="bar-f" style="width: 25%;"></div>
+                </div>
+                <span class="chip-units-badge">~5.5 U</span>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">1<span class="unit">g</span></span>
+                <span class="chip-emoji">🥚</span>
+                <span class="chip-name">Æg</span>
+                <div class="chip-macro-bar">
+                    <div class="bar-c" style="width: 3%;"></div>
+                    <div class="bar-p" style="width: 45%;"></div>
+                    <div class="bar-f" style="width: 52%;"></div>
+                </div>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">20<span class="unit">g</span></span>
+                <span class="chip-emoji">🍎</span>
+                <span class="chip-name">Æble</span>
+                <div class="chip-macro-bar">
+                    <div class="bar-c" style="width: 90%;"></div>
+                    <div class="bar-p" style="width: 5%;"></div>
+                    <div class="bar-f" style="width: 5%;"></div>
+                </div>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">5<span class="unit">g</span></span>
+                <span class="chip-emoji">🥑</span>
+                <span class="chip-name">Avocado</span>
+                <div class="chip-macro-bar">
+                    <div class="bar-c" style="width: 14%;"></div>
+                    <div class="bar-p" style="width: 14%;"></div>
+                    <div class="bar-f" style="width: 72%;"></div>
+                </div>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">25<span class="unit">g</span></span>
+                <span class="chip-emoji">🥣</span>
+                <span class="chip-name">Havregryn</span>
+                <div class="chip-macro-bar">
+                    <div class="bar-c" style="width: 75%;"></div>
+                    <div class="bar-p" style="width: 20%;"></div>
+                    <div class="bar-f" style="width: 5%;"></div>
+                </div>
+                <span class="chip-units-badge">~2.5 U</span>
+            </div>
+        </div>
+        <div style="display: flex; gap: 24px; margin-top: 16px; font-size: 11px; color: var(--text-muted);">
+            <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 4px; background: var(--macro-carb); border-radius: 2px;"></span> Kulhydrat</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 4px; background: var(--macro-protein); border-radius: 2px;"></span> Protein</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 4px; background: var(--macro-fat); border-radius: 2px;"></span> Fedt</div>
+        </div>
+    </section>
+
+    <!-- ============== 4. CARB HERO BADGE ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">04</span>Hero carb-badge (stort tal top-højre)</h2>
+        <p class="section-subtitle">
+            Det vigtigste tal (kulhydrat) er altid synligt som stor grøn pille i chippens hjørne.
+            Ingen tap nødvendig — info er der fra start.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 500px;">
+            <div class="food-chip" style="min-height: 140px;">
+                <span class="chip-carb-badge" style="font-size: 16px; padding: 6px 9px;">55<span class="unit" style="font-size: 10px;">g</span></span>
+                <span class="chip-emoji" style="font-size: 38px;">🍕</span>
+                <span class="chip-name">Pizza</span>
+                <div class="chip-macro-bar">
+                    <div class="bar-c" style="width:55%;"></div>
+                    <div class="bar-p" style="width:20%;"></div>
+                    <div class="bar-f" style="width:25%;"></div>
+                </div>
+            </div>
+            <div class="food-chip" style="min-height: 140px;">
+                <span class="chip-carb-badge" style="font-size: 16px; padding: 6px 9px;">20<span class="unit" style="font-size: 10px;">g</span></span>
+                <span class="chip-emoji" style="font-size: 38px;">🍎</span>
+                <span class="chip-name">Æble</span>
+                <div class="chip-macro-bar">
+                    <div class="bar-c" style="width:90%;"></div>
+                    <div class="bar-p" style="width:5%;"></div>
+                    <div class="bar-f" style="width:5%;"></div>
+                </div>
+            </div>
+            <div class="food-chip" style="min-height: 140px;">
+                <span class="chip-carb-badge" style="font-size: 16px; padding: 6px 9px;">0<span class="unit" style="font-size: 10px;">g</span></span>
+                <span class="chip-emoji" style="font-size: 38px;">🐟</span>
+                <span class="chip-name">Laks</span>
+                <div class="chip-macro-bar">
+                    <div class="bar-p" style="width:55%;"></div>
+                    <div class="bar-f" style="width:45%;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============== 5. HYPO PULSE HIGHLIGHT ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">05</span>Hypo-highlight (pulserende border)</h2>
+        <p class="section-subtitle">
+            Når BG &lt; 4.5 mmol/L pulserer justerings-rækken grønt, og de andre rækker dæmpes.
+            Spilleren guidet visuelt mod den rigtige handling. <strong>Live animation nedenfor.</strong>
+        </p>
+        <div class="bg-state-pill hypo">
+            <span class="bg-dot"></span>
+            <span>BG 3.8 mmol/L · HYPO</span>
+        </div>
+        <div class="food-menu-frame">
+            <div class="food-row dimmed" data-row="normal" style="margin-bottom: 10px;">
+                <div class="food-row-header">
+                    <div class="food-row-label"><span class="row-icon">🟡</span><span>Måltider (dæmpet)</span></div>
+                    <span class="food-row-hint">For langsom til akut hypo</span>
+                </div>
+                <div class="food-row-chips" style="opacity: 0.6;">
+                    <div class="food-chip" style="min-height: 70px;"><span class="chip-carb-badge">55<span class="unit">g</span></span><span class="chip-emoji" style="font-size: 22px;">🍕</span><span class="chip-name" style="font-size: 10px;">Pizza</span></div>
+                    <div class="food-chip" style="min-height: 70px;"><span class="chip-carb-badge">50<span class="unit">g</span></span><span class="chip-emoji" style="font-size: 22px;">🍝</span><span class="chip-name" style="font-size: 10px;">Pasta</span></div>
+                    <div class="food-chip" style="min-height: 70px;"><span class="chip-carb-badge">25<span class="unit">g</span></span><span class="chip-emoji" style="font-size: 22px;">🍞</span><span class="chip-name" style="font-size: 10px;">Brød</span></div>
+                    <div class="food-chip" style="min-height: 70px;"><span class="chip-carb-badge">60<span class="unit">g</span></span><span class="chip-emoji" style="font-size: 22px;">🎂</span><span class="chip-name" style="font-size: 10px;">Lagkage</span></div>
+                    <div class="food-chip" style="min-height: 70px;"><span class="chip-carb-badge">30<span class="unit">g</span></span><span class="chip-emoji" style="font-size: 22px;">🥣</span><span class="chip-name" style="font-size: 10px;">Havregryn</span></div>
+                </div>
+            </div>
+            <div class="food-row hypo-highlight" data-row="adjust">
+                <div class="food-row-header">
+                    <div class="food-row-label"><span class="row-icon">🟢</span><span>Justering — PULSERENDE</span></div>
+                    <span class="food-row-hint" style="color: var(--green); font-weight: 700;">👉 VÆLG HERFRA</span>
+                </div>
+                <div class="food-row-chips">
+                    <div class="food-chip">
+                        <span class="chip-carb-badge">3<span class="unit">g</span></span>
+                        <span class="chip-emoji svg-icon">
+                            <svg viewBox="0 0 32 32">
+                                <ellipse cx="16" cy="16" rx="11" ry="7" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.5"/>
+                                <ellipse cx="13" cy="14" rx="2.5" ry="1.5" fill="#fff" opacity="0.7"/>
+                                <text x="16" y="20" font-family="Inter" font-size="9" font-weight="700" text-anchor="middle" fill="#0d1526">DEX</text>
+                            </svg>
+                        </span>
+                        <span class="chip-name">Druesukker</span>
+                        <div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div>
+                    </div>
+                    <div class="food-chip"><span class="chip-carb-badge">15<span class="unit">g</span></span><span class="chip-emoji">🍌</span><span class="chip-name">Banan</span><div class="chip-macro-bar"><div class="bar-c" style="width:92%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-carb-badge">25<span class="unit">g</span></span><span class="chip-emoji">🧃</span><span class="chip-name">Juice</span><div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div><span class="chip-liquid-indicator">💧</span></div>
+                    <div class="food-chip"><span class="chip-carb-badge">20<span class="unit">g</span></span><span class="chip-emoji">🍎</span><span class="chip-name">Æble</span><div class="chip-macro-bar"><div class="bar-c" style="width:90%;"></div></div></div>
+                    <div class="food-chip"><span class="chip-carb-badge">—</span><span class="chip-emoji">✏️</span><span class="chip-name">Lav selv</span><div class="chip-macro-bar"></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============== 6. DIM IRRELEVANT ROWS ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">06</span>Dim irrelevante rækker</h2>
+        <p class="section-subtitle">
+            Rækker der ikke er relevante for nuværende situation dæmpes (opacity + saturate). Se ovenstående
+            eksempel — måltids-rækken er dæmpet fordi den er for langsom til at fikse hypoen.
+        </p>
+    </section>
+
+    <!-- ============== 7. LIQUID INDICATOR ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">07</span>Liquid indicator (💧)</h2>
+        <p class="section-subtitle">
+            Dråbe-ikon i chip-hjørne indikerer flydende mad — der optages hurtigere og rammer BG
+            tidligere. Spilleren lærer at se forskel.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 600px;">
+            <div class="food-chip">
+                <span class="chip-carb-badge">25<span class="unit">g</span></span>
+                <span class="chip-emoji">🧃</span>
+                <span class="chip-name">Juice</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div>
+                <span class="chip-liquid-indicator">💧</span>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">27<span class="unit">g</span></span>
+                <span class="chip-emoji">🥤</span>
+                <span class="chip-name">Cola</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div>
+                <span class="chip-liquid-indicator">💧</span>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">12<span class="unit">g</span></span>
+                <span class="chip-emoji">🥛</span>
+                <span class="chip-name">Mælk</span>
+                <div class="chip-macro-bar">
+                    <div class="bar-c" style="width:40%;"></div>
+                    <div class="bar-p" style="width:22%;"></div>
+                    <div class="bar-f" style="width:38%;"></div>
+                </div>
+                <span class="chip-liquid-indicator">💧</span>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">20<span class="unit">g</span></span>
+                <span class="chip-emoji">🍎</span>
+                <span class="chip-name">Æble</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:90%;"></div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============== 8. DRUESUKKER ICON ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">08</span>Ny druesukker-ikon (SVG)</h2>
+        <p class="section-subtitle">
+            Erstat den generiske ◻️ med en dedikeret SVG-pille der ligner en rigtig druesukker-tablet.
+        </p>
+        <div style="display: flex; align-items: center; gap: 24px;">
+            <div class="food-chip" style="width: 120px;">
+                <span class="chip-carb-badge">3<span class="unit">g</span></span>
+                <span class="chip-emoji svg-icon">
+                    <svg viewBox="0 0 32 32" width="32" height="32">
+                        <ellipse cx="16" cy="16" rx="11" ry="7" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.5"/>
+                        <ellipse cx="13" cy="14" rx="2.5" ry="1.5" fill="#fff" opacity="0.7"/>
+                        <text x="16" y="20" font-family="Inter" font-size="9" font-weight="700" text-anchor="middle" fill="#0d1526">DEX</text>
+                    </svg>
+                </span>
+                <span class="chip-name">Druesukker</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:100%;"></div></div>
+            </div>
+            <div style="color: var(--text-muted); font-size: 12px; line-height: 1.6; max-width: 360px;">
+                SVG'en er inline — ingen ekstra fil, ingen load-tid. "DEX"-label gør den øjeblikkeligt
+                genkendelig. Farven (lyseblå) matcher justerings-rækkens "rolige effekt" inden for
+                grøn accent-stripe.
+            </div>
+        </div>
+    </section>
+
+    <!-- ============== 9. EXPECTED BG PREVIEW (info tap) ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">09</span>Expected BG preview (tap info)</h2>
+        <p class="section-subtitle">
+            <strong>Touch-first:</strong> Tap på "ⓘ" knap — ikke hover. Viser forventet BG-kurve baseret på
+            spillerens ICR + ISF. Ingen hover-afhængighed, derfor mobil-klar.
+        </p>
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: start;">
+            <div>
+                <div class="food-chip has-info" style="width: 120px; position: relative;">
+                    <span class="chip-carb-badge">55<span class="unit">g</span></span>
+                    <span class="chip-info-btn" style="position: absolute; top: 6px; left: 34px; width: 22px; height: 22px; border-radius: 50%; background: rgba(125,211,252,0.15); border: 1px solid var(--blue); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--blue);">i</span>
+                    <span class="chip-emoji">🍕</span>
+                    <span class="chip-name">Pizza</span>
+                    <div class="chip-macro-bar">
+                        <div class="bar-c" style="width:55%;"></div>
+                        <div class="bar-p" style="width:20%;"></div>
+                        <div class="bar-f" style="width:25%;"></div>
+                    </div>
+                    <span class="chip-units-badge">~5.5 U</span>
+                </div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 6px;">↑ tap "i"</div>
+            </div>
+            <div class="bg-preview" style="font-size: 13px;">
+                <strong>Forventet BG (uden bolus):</strong><br>
+                Nu: 5.8 → +30 min: 7.2 → +1 time: 10.4 → +2 timer: <strong style="color: var(--orange);">13.1 mmol/L</strong>
+                <br><br>
+                <strong>Med 5.5 U bolus:</strong><br>
+                Nu: 5.8 → +30 min: 6.9 → +1 time: 8.1 → +2 timer: <strong style="color: var(--green);">6.5 mmol/L</strong>
+                <br><br>
+                <svg viewBox="0 0 280 70" width="100%" height="70" style="margin-top: 6px;">
+                    <!-- zones -->
+                    <rect x="0" y="18" width="280" height="30" fill="rgba(74,222,128,0.08)"/>
+                    <!-- no-bolus curve (orange) -->
+                    <polyline points="0,45 40,42 80,34 120,24 160,16 200,12 240,11 280,11" fill="none" stroke="#fb923c" stroke-width="2"/>
+                    <!-- with-bolus curve (green) -->
+                    <polyline points="0,45 40,43 80,38 120,32 160,30 200,32 240,36 280,38" fill="none" stroke="#4ade80" stroke-width="2"/>
+                    <text x="6" y="12" fill="#8fa8c8" font-size="8">BG</text>
+                    <text x="260" y="64" fill="#8fa8c8" font-size="8">2h</text>
+                </svg>
+                <div style="display: flex; gap: 16px; font-size: 10px; color: var(--text-muted); margin-top: 6px;">
+                    <span><span style="color: var(--orange);">━</span> uden bolus</span>
+                    <span><span style="color: var(--green);">━</span> med bolus</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============== 10. UNITS BADGE ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">10</span>Units-badge på chips</h2>
+        <p class="section-subtitle">
+            Hurtig-estimat af insulin-enheder vist nederst på bolus-mad. Beregnet fra
+            spillerens ICR i realtime.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 820px;">
+            <div class="food-chip">
+                <span class="chip-carb-badge">25<span class="unit">g</span></span>
+                <span class="chip-emoji">🍞</span>
+                <span class="chip-name">Brød</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:70%;"></div><div class="bar-p" style="width:22%;"></div><div class="bar-f" style="width:8%;"></div></div>
+                <span class="chip-units-badge">~2.5 U</span>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">50<span class="unit">g</span></span>
+                <span class="chip-emoji">🍝</span>
+                <span class="chip-name">Pasta</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:76%;"></div><div class="bar-p" style="width:15%;"></div><div class="bar-f" style="width:9%;"></div></div>
+                <span class="chip-units-badge">~5.0 U</span>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">55<span class="unit">g</span></span>
+                <span class="chip-emoji">🍕</span>
+                <span class="chip-name">Pizza</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:55%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:25%;"></div></div>
+                <span class="chip-units-badge">~5.5 U</span>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">60<span class="unit">g</span></span>
+                <span class="chip-emoji">🎂</span>
+                <span class="chip-name">Lagkage</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:60%;"></div><div class="bar-p" style="width:8%;"></div><div class="bar-f" style="width:32%;"></div></div>
+                <span class="chip-units-badge">~6.0 U</span>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">30<span class="unit">g</span></span>
+                <span class="chip-emoji">🥣</span>
+                <span class="chip-name">Havregryn</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:75%;"></div><div class="bar-p" style="width:20%;"></div><div class="bar-f" style="width:5%;"></div></div>
+                <span class="chip-units-badge">~3.0 U</span>
+            </div>
+        </div>
+        <div class="section-note">
+            <strong>Beregning:</strong> Enheder = carbs / ICR. Ved ICR=10 giver 50g pasta 5.0 U. Farven
+            matcher rapid-insulin-linjen i grafen (teal #5EEAD4). Ikke vist på lav-carb mad (ikke relevant).
+        </div>
+    </section>
+
+    <!-- ============== 11. PORTION STEPPER ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">11</span>Portion stepper popup</h2>
+        <p class="section-subtitle">
+            Touch-venlige +/− knapper erstatter drag-slider. Fuld info altid synlig uden hover.
+            Se <a href="portion-popup.html" style="color: var(--blue);">portion-popup.html</a> for fuld demo.
+        </p>
+        <div class="portion-popup" style="max-width: 420px;">
+            <div class="portion-popup-header">
+                <span class="portion-popup-emoji">🍕</span>
+                <div>
+                    <h3 class="portion-popup-title">Pizza</h3>
+                    <p class="portion-popup-sub">Standard 1 stk · 220g</p>
+                </div>
+            </div>
+            <div class="portion-stepper">
+                <button class="stepper-btn" aria-label="Reducer">−</button>
+                <div class="stepper-value">1.5<span class="stepper-unit">× portion</span></div>
+                <button class="stepper-btn" aria-label="Forøg">+</button>
+            </div>
+            <div class="portion-macros">
+                <div class="portion-macro c">
+                    <span class="macro-label">Carbs</span>
+                    <span class="macro-value">83g</span>
+                </div>
+                <div class="portion-macro p">
+                    <span class="macro-label">Protein</span>
+                    <span class="macro-value">30g</span>
+                </div>
+                <div class="portion-macro f">
+                    <span class="macro-label">Fedt</span>
+                    <span class="macro-value">38g</span>
+                </div>
+            </div>
+            <div class="bg-preview">
+                <strong>Bolus: 8.3 U</strong> (ICR 10)<br>
+                Forventet BG-peak om ~1t 30min · pizza-fedt forsinker ~60 min
+            </div>
+            <div class="portion-actions">
+                <button>Annullér</button>
+                <button class="confirm-btn">Spis</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============== 12. SMART REPEAT ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">12</span>Smart repeat (dobbelt-tap)</h2>
+        <p class="section-subtitle">
+            Enkelt tap: åbn portion-popup. Dobbelt-tap: spis direkte med standard portion.
+            Triple-tap: dobbelt portion. Skjult power-feature for øvede spillere.
+        </p>
+        <div class="callout">
+            <strong>Touch gestures:</strong><br>
+            • Enkelt tap → åbn stepper<br>
+            • Dobbelt tap → spis 1× straks<br>
+            • Hold nede 500ms → åbn stepper (samme som enkelt-tap, men med haptic feedback)<br>
+            <br>
+            Ingen af disse er hover-afhængige. Alle virker på mobil.
+        </div>
+    </section>
+
+    <!-- ============== 13. DATA DRIVEN ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">13</span>Data-driven arkitektur (js/foods.js)</h2>
+        <p class="section-subtitle">
+            Alle mad-data flyttes til én fil. Gør det nemt at ændre, tilføje eller A/B-teste madvalg.
+        </p>
+<pre style="background: var(--bg-elevated); padding: 16px; border-radius: var(--radius-sm); overflow-x: auto; font-size: 11px; line-height: 1.5; color: var(--text-secondary); font-family: 'SF Mono', monospace; border: 1px solid var(--border-subtle);"><span style="color: var(--text-muted);">// js/foods.js</span>
+const FOODS = {
+  pizza: {
+    id: <span style="color: var(--yellow);">'pizza'</span>,
+    row: <span style="color: var(--yellow);">'normal'</span>,        <span style="color: var(--text-muted);">// 'lowcarb' | 'normal' | 'adjust'</span>
+    i18nKey: <span style="color: var(--yellow);">'food.pizza'</span>,
+    emoji: <span style="color: var(--yellow);">'🍕'</span>,
+    carbs: <span style="color: var(--green);">55</span>,
+    protein: <span style="color: var(--green);">20</span>,
+    fat: <span style="color: var(--green);">25</span>,
+    weight: <span style="color: var(--green);">220</span>,         <span style="color: var(--text-muted);">// gram per standard portion</span>
+    liquid: <span style="color: var(--blue);">false</span>,
+    key: <span style="color: var(--yellow);">'F'</span>,           <span style="color: var(--text-muted);">// keyboard shortcut (desktop)</span>
+    unlockLevel: <span style="color: var(--green);">1</span>,     <span style="color: var(--text-muted);">// campaign gating</span>
+  },
+  druesukker: {
+    id: <span style="color: var(--yellow);">'druesukker'</span>,
+    row: <span style="color: var(--yellow);">'adjust'</span>,
+    i18nKey: <span style="color: var(--yellow);">'food.druesukker'</span>,
+    icon: <span style="color: var(--yellow);">'svg/druesukker.svg'</span>,  <span style="color: var(--text-muted);">// SVG replaces emoji</span>
+    carbs: <span style="color: var(--green);">3</span>,
+    fastCarb: <span style="color: var(--blue);">true</span>,      <span style="color: var(--text-muted);">// flag for hurtig absorption (τ = 15 min)</span>
+    key: <span style="color: var(--yellow);">'Z'</span>,
+    unlockLevel: <span style="color: var(--green);">1</span>,
+  },
+  <span style="color: var(--text-muted);">// ... alle andre fødevarer</span>
+};</pre>
+    </section>
+
+    <!-- ============== 14. CAMPAIGN GATING ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">14</span>Campaign-gating</h2>
+        <p class="section-subtitle">
+            I campaign låses nye fødevarer op gradvist. Bane 1 har kun grundlæggende carbs;
+            nye fødevarer dukker op bane for bane.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 820px;">
+            <div class="food-chip">
+                <span class="chip-carb-badge">25<span class="unit">g</span></span>
+                <span class="chip-emoji">🍞</span>
+                <span class="chip-name">Brød</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:70%;"></div><div class="bar-p" style="width:22%;"></div><div class="bar-f" style="width:8%;"></div></div>
+                <span class="chip-units-badge">~2.5 U</span>
+            </div>
+            <div class="food-chip">
+                <span class="chip-carb-badge">50<span class="unit">g</span></span>
+                <span class="chip-emoji">🍝</span>
+                <span class="chip-name">Pasta</span>
+                <div class="chip-macro-bar"><div class="bar-c" style="width:76%;"></div></div>
+                <span class="chip-units-badge">~5.0 U</span>
+            </div>
+            <div class="food-chip" style="opacity: 0.35; filter: grayscale(1);">
+                <span class="chip-carb-badge" style="background: var(--text-muted);">🔒</span>
+                <span class="chip-emoji">🍕</span>
+                <span class="chip-name">Pizza</span>
+                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border-radius: var(--radius-md);">
+                    <div style="font-size: 10px; color: var(--text-primary); background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px;">Bane 3</div>
+                </div>
+            </div>
+            <div class="food-chip" style="opacity: 0.35; filter: grayscale(1);">
+                <span class="chip-carb-badge" style="background: var(--text-muted);">🔒</span>
+                <span class="chip-emoji">🎂</span>
+                <span class="chip-name">Lagkage</span>
+                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border-radius: var(--radius-md);">
+                    <div style="font-size: 10px; color: var(--text-primary); background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px;">Bane 5</div>
+                </div>
+            </div>
+            <div class="food-chip" style="opacity: 0.35; filter: grayscale(1);">
+                <span class="chip-carb-badge" style="background: var(--text-muted);">🔒</span>
+                <span class="chip-emoji">🥣</span>
+                <span class="chip-name">Havregryn</span>
+                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border-radius: var(--radius-md);">
+                    <div style="font-size: 10px; color: var(--text-primary); background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px;">Bane 2</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============== 15. RECENTLY EATEN ============== -->
+    <section class="section">
+        <h2 class="section-title"><span class="mockup-label new">15</span>Recently eaten mini-row</h2>
+        <p class="section-subtitle">
+            Nederste strip med seneste 3-5 valg. Vanemennesker kan hurtigt gentage gårsdagens morgenmad.
+        </p>
+        <div class="food-menu-frame">
+            <div class="recent-row" style="position: relative;">
+                <div class="recent-row-label">SENEST SPIST</div>
+                <div class="recent-chips">
+                    <div class="recent-chip">🍞 <span>Brød</span> · <span class="recent-carb">25g</span></div>
+                    <div class="recent-chip">🥣 <span>Havregryn</span> · <span class="recent-carb">30g</span></div>
+                    <div class="recent-chip">🍎 <span>Æble</span> · <span class="recent-carb">20g</span></div>
+                    <div class="recent-chip">🥚 <span>Æg</span> · <span class="recent-carb">1g</span></div>
+                    <div class="recent-chip">🍕 <span>Pizza</span> · <span class="recent-carb">55g</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">🔗 Kombineret i praksis</h2>
+        <p class="section-subtitle">
+            Alle features findes sammen i <a href="variant-b.html" style="color: var(--blue);">Variant B</a>
+            (den anbefalede implementering).
+        </p>
+    </section>
+</div>
+</body>
+</html>

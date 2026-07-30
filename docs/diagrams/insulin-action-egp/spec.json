@@ -1,0 +1,62 @@
+{
+  "type": "compartment-diagram",
+  "title": "Hovorka 2004 insulin subsystem (extended) — absorption, action, and EGP regulation",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "S1",      "label": "SC rapid stage 1", "var": "S1",       "color": "insulin-fast",  "type": "depot" },
+    { "id": "S2",      "label": "SC rapid stage 2", "var": "S2",       "color": "insulin-fast",  "type": "depot" },
+    { "id": "S1b",     "label": "SC basal stage 1", "var": "S1b",      "color": "insulin-basal", "type": "depot" },
+    { "id": "S2b",     "label": "SC basal stage 2", "var": "S2b",      "color": "insulin-basal", "type": "depot" },
+    { "id": "I",       "label": "Plasma insulin",   "var": "I",        "unit": "mU/L",  "color": "insulin-fast",  "type": "plasma" },
+    { "id": "x1",      "label": "Transport",        "var": "x1",       "color": "insulin-fast",  "type": "effect" },
+    { "id": "x2",      "label": "Disposal",         "var": "x2",       "color": "insulin-fast",  "type": "effect" },
+    { "id": "x3",      "label": "EGP suppression",  "var": "x3",       "color": "insulin-fast",  "type": "effect" },
+    { "id": "stress",  "label": "Stress multiplier","var": "≥ 1",      "color": "stress",  "type": "effect" },
+    { "id": "liver",   "label": "Liver EGP",        "var": "EGP = EGP₀ · max(0, stress − x3)", "color": "liver",  "type": "tissue" },
+    { "id": "Q1",      "label": "Plasma glucose",   "var": "Q1",       "color": "glucose",  "type": "plasma",  "rank": "max" },
+    { "id": "Q2",      "label": "Peripheral glucose","var": "Q2",      "color": "glucose",  "type": "tissue",  "rank": "max" }
+  ],
+  "flows": [
+    { "from": "external", "to": "S1",  "label": "", "externalLabel": "rapid (D_bolus)", "kind": "input" },
+    { "from": "external", "to": "S1b", "label": "", "externalLabel": "basal (D_basal)", "kind": "input" },
+    { "from": "S1",  "to": "S2",  "label": "S1/τ_I",   "kind": "mass" },
+    { "from": "S2",  "to": "I",   "label": "S2/τ_I",   "kind": "mass" },
+    { "from": "S1b", "to": "S2b", "label": "S1b/τ_Ib", "kind": "mass" },
+    { "from": "S2b", "to": "I",   "label": "S2b/τ_Ib", "kind": "mass" },
+    { "from": "I", "to": "external", "label": "k_e·I", "externalLabel": "urine / clearance", "kind": "elimination" },
+    { "from": "I", "to": "x1", "label": "kb1·I", "kind": "signal" },
+    { "from": "I", "to": "x2", "label": "kb2·I", "kind": "signal" },
+    { "from": "I", "to": "x3", "label": "kb3·I", "kind": "signal" },
+    { "from": "stress", "to": "liver", "label": "+",   "kind": "signal" },
+    { "from": "x3",     "to": "liver", "label": "−",   "kind": "signal" },
+    { "from": "liver",  "to": "Q1", "label": "EGP",   "kind": "mass" },
+    { "from": "x1", "to": "Q1", "label": "−x1·Q1",   "kind": "signal" },
+    { "from": "x2", "to": "Q2", "label": "−x2·Q2",   "kind": "signal" }
+  ],
+  "caption": {
+    "scope": "Insulin pharmacokinetics and action subsystem of the Hovorka 2004 glucose-insulin model (Hovorka et al., Physiol Meas 25:905-920, 2004), with two simulator-specific extensions. CORE Hovorka structure: a two-stage subcutaneous absorption cascade (S1 → S2) feeds plasma insulin I, which drives three effect compartments x1 (transport), x2 (peripheral disposal), and x3 (EGP suppression). EXTENSIONS specific to this simulator: (1) a parallel basal shadow cascade S1b → S2b with fixed τ_Ib = 55 min that decouples basal absorption from bolus-specific τ_I variability; (2) a stressMultiplier term in the EGP equation (EGP = EGP₀ · max(0, stressMultiplier − x3)) that sums glycogen, gluconeogenesis, acute-stress, chronic-stress, dawn, and protein-glucagon contributions. Each kb_i is dynamically scaled by the ISF modifier (circadian × post-exercise × vasodilatation / insulin-resistance), so all three actions strengthen or weaken together with current insulin sensitivity.",
+    "variables": [
+      { "symbol": "S1",       "category": "compartment", "definition": "rapid (bolus) SC depot — first absorption stage (mU)" },
+      { "symbol": "S2",       "category": "compartment", "definition": "rapid (bolus) SC depot — second absorption stage (mU)" },
+      { "symbol": "S1b",      "category": "compartment", "definition": "basal (long-acting) SC depot — first absorption stage (mU); shadow cascade with fixed τ = 55 min" },
+      { "symbol": "S2b",      "category": "compartment", "definition": "basal (long-acting) SC depot — second absorption stage (mU)" },
+      { "symbol": "I",        "category": "compartment", "definition": "plasma insulin concentration (mU/L)" },
+      { "symbol": "x1",       "category": "compartment", "definition": "insulin effect on transport (Q1 → Q2)" },
+      { "symbol": "x2",       "category": "compartment", "definition": "insulin effect on disposal (Q2 oxidation)" },
+      { "symbol": "x3",       "category": "compartment", "definition": "insulin effect on EGP suppression" },
+      { "symbol": "Q1",       "category": "compartment", "definition": "plasma glucose pool — receives EGP from liver, exchanges with peripheral tissues" },
+      { "symbol": "Q2",       "category": "compartment", "definition": "peripheral (intracellular) glucose pool — site of insulin-mediated disposal" },
+      { "symbol": "U_I",      "category": "flow",        "definition": "rapid absorption rate from S2 to plasma — formula: S2·pulseFactor/τ_I" },
+      { "symbol": "U_Ib",     "category": "flow",        "definition": "basal absorption rate from S2b to plasma — formula: S2b·pulseFactor/τ_Ib" },
+      { "symbol": "EGP",      "category": "flow",        "definition": "endogenous glucose production = EGP₀ · max(0, stress − x3)" },
+      { "symbol": "τ_I",      "category": "flow",        "definition": "rapid time constant (mean 55 min, CV ~25 % per injection)" },
+      { "symbol": "τ_Ib",     "category": "flow",        "definition": "basal time constant (fixed 55 min — decoupled from bolus τ_I variability)" },
+      { "symbol": "pulseFactor", "category": "flow",     "definition": "heart-rate-dependent SC absorption multiplier — 1.0 at rest, ~1.5 at HR 120; multiplies all four SC cascade rates" },
+      { "symbol": "k_e",      "category": "flow",        "definition": "plasma insulin elimination rate constant (urine + hepatic clearance)" },
+      { "symbol": "kb1, kb2, kb3", "category": "flow",   "definition": "build-up rate constants for the three effect compartments — scaled each tick by ISF modifier" },
+      { "symbol": "ka1, ka2, ka3", "category": "flow",   "definition": "decay rate constants for the three effect compartments" },
+      { "symbol": "stress",   "category": "flow",        "definition": "stress multiplier (≥ 1) = glycogenBaseline + gngBaseline + acute + chronic + dawn + protein-glucagon" },
+      { "symbol": "EGP₀",     "category": "flow",        "definition": "basal hepatic glucose production (~0.0161 × weight mmol/min, T1D level)" }
+    ]
+  }
+}

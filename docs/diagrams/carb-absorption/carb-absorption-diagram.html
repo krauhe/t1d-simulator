@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Carbohydrate absorption — Hovorka 2004 gut model with dynamic gastric emptying — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Carbohydrate absorption — Hovorka 2004 gut model with dynamic gastric emptying</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="Carbohydrate absorption — Hovorka 2004 gut model with dynamic gastric emptying">
+    </object>
+  </div>
+  <p class="scope">Two-compartment gut absorption cascade from the Hovorka 2004 glucose-insulin model (Hovorka et al., <em>Physiol Meas</em> 25:905-920, 2004). D1 (stomach) empties into D2 (gut) at rate D1/τG; D2 delivers glucose to plasma at rate U_G = D2 &middot; A_G / τG. The Hovorka 2004 original uses a fixed τG = 40 min. This simulator extends it with a mixture-dependent τG recomputed each tick from the carbohydrate composition currently inside D1: τG = carbBase &middot; fiberMod &middot; retentionMod + fatDelay, yielding 25&ndash;50 min for liquids and up to ~120 min for high-fiber, high-fat meals. The fat-delay term follows the Wolpert/Smart 2013 pizza-effect extension (Wolpert &amp; Smart, <em>J Diabetes Sci Technol</em> 7:1154-1156, 2013).</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">D1</td><td class="def">stomach glucose depot — first stage of the Hovorka gut cascade (mmol carb); mixture composition (simpleFrac, fiber, retentionRatio) is tracked here and drives τG</td></tr>
+        <tr><td class="symbol">D2</td><td class="def">gut glucose depot — second stage of the Hovorka gut cascade (mmol carb)</td></tr>
+        <tr><td class="symbol">Q1</td><td class="def">plasma glucose pool (mmol); receives appearance flux U_G from D2</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">U_G</td><td class="def">glucose appearance rate into plasma = D2 &middot; A_G / τG (mmol/min)</td></tr>
+        <tr><td class="symbol">A_G</td><td class="def">carbohydrate bioavailability fraction (Hovorka 2004: 0.8)</td></tr>
+        <tr><td class="symbol">τG</td><td class="def">dynamic gastric emptying time constant (min); range ~25 min liquid sugar to ~120 min high-fiber/fat meal; fallback τG = 40 min when stomachContentGrams &lt; 0.1</td></tr>
+        <tr><td class="symbol">carbBase</td><td class="def">chemical-complexity term = 25 + (1 &minus; simpleFrac) &times; 25 (range 25&ndash;50 min)</td></tr>
+        <tr><td class="symbol">fiberMod</td><td class="def">saturating fiber slowdown = 1 + 0.5 &middot; ln(1 + fiber/2); fiber in grams inside D1</td></tr>
+        <tr><td class="symbol">retentionMod</td><td class="def">solid-liquid modifier = 1 &minus; 0.6 &middot; (1 &minus; retentionRatio); range 0.4&ndash;1.0; liquids empty faster</td></tr>
+        <tr><td class="symbol">fatDelay</td><td class="def">fat-induced delay = 18 &middot; ln(1 + fatIntestine/10) (min); Wolpert/Smart pizza-effect extension</td></tr>
+        <tr><td class="symbol">simpleFrac</td><td class="def">simple-sugar fraction = stomachCarbsSimple / stomachCarbsTotal</td></tr>
+        <tr><td class="symbol">retentionRatio</td><td class="def">solid-content ratio = stomachRetentionWeight / stomachContentGrams</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

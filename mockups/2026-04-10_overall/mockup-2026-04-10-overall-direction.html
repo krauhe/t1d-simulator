@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overall UI Direction</title>
+<style>
+  :root {
+    --bg: #09111f;
+    --panel: rgba(18, 28, 46, 0.94);
+    --panel-2: rgba(29, 42, 66, 0.9);
+    --line: rgba(141, 177, 230, 0.16);
+    --text: #eef5ff;
+    --muted: #8ea4c7;
+    --blue: #71c7ff;
+    --green: #56e39f;
+    --amber: #ffcc66;
+    --shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top left, rgba(48, 100, 180, 0.18), transparent 28%),
+      radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 24%),
+      linear-gradient(180deg, #0a1120, #070d18 58%, #08101d);
+    padding: 28px;
+  }
+  .page { max-width: 1280px; margin: 0 auto; display: grid; gap: 22px; }
+  .intro, .layout, .principles { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
+  .intro { padding: 22px 24px; }
+  h1, h2, h3, p { margin: 0; }
+  h1 { font-size: 28px; margin-bottom: 10px; letter-spacing: -0.02em; }
+  .intro p { color: var(--muted); max-width: 900px; line-height: 1.55; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip { padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.04); font-size: 12px; color: var(--muted); }
+  .layout { overflow: hidden; }
+  .topbar {
+    height: 68px; border-bottom: 1px solid var(--line); display: grid;
+    grid-template-columns: 1.2fr auto 1fr; align-items: center; gap: 14px;
+    padding: 0 18px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark { font-weight: 800; letter-spacing: 0.18em; color: #dcd6ff; }
+  .top-btns, .top-right { display: flex; gap: 8px; align-items: center; }
+  .btn { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 9px 14px; border-radius: 12px; font-size: 13px; }
+  .btn.primary { background: linear-gradient(180deg, #134f77, #0b3e60); }
+  .btn.start { background: linear-gradient(180deg, #178a6d, #10614d); }
+  .center-status { justify-self: center; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--muted); font-size: 13px; }
+  .main { display: grid; grid-template-columns: 1fr 280px; min-height: 700px; }
+  .graph-zone { position: relative; padding: 18px; background: linear-gradient(180deg, rgba(86, 227, 159, 0.04), rgba(255, 204, 102, 0.03) 55%, rgba(255,255,255,0.02)); }
+  .graph-card {
+    position: relative; height: 100%; min-height: 520px; border-radius: 22px; border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)), linear-gradient(180deg, rgba(86, 227, 159, 0.06), rgba(255, 204, 102, 0.04) 60%, rgba(255,255,255,0.02));
+    overflow: hidden;
+  }
+  .graph-lines { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 18%, rgba(255,255,255,0.06) 18.3%, transparent 18.6%), linear-gradient(180deg, transparent 52%, rgba(86, 227, 159, 0.11) 52.3%, transparent 52.6%), linear-gradient(180deg, transparent 78%, rgba(255,255,255,0.06) 78.3%, transparent 78.6%); }
+  .curve { position: absolute; left: 4%; right: 4%; top: 14%; bottom: 14%; }
+  .curve svg { width: 100%; height: 100%; }
+  .callout {
+    position: absolute; max-width: 220px; padding: 12px 14px; border-radius: 14px;
+    border: 1px solid var(--line); background: rgba(8, 15, 26, 0.82); backdrop-filter: blur(12px);
+    font-size: 12px; line-height: 1.45; color: var(--muted);
+  }
+  .callout strong { color: var(--text); }
+  .c1 { top: 18px; left: 18px; } .c2 { top: 18px; right: 18px; } .c3 { bottom: 128px; left: 18px; } .c4 { bottom: 128px; right: 18px; }
+  .sidebar { border-left: 1px solid var(--line); padding: 18px 16px; background: rgba(10, 16, 29, 0.7); display: grid; align-content: start; gap: 14px; }
+  .side-card { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); padding: 14px; }
+  .side-card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--blue); margin-bottom: 10px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 13px; color: var(--muted); border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .row:last-child { border-bottom: 0; } .row b { color: var(--text); font-weight: 700; }
+  .bottom { position: absolute; left: 18px; right: 18px; bottom: 18px; display: grid; grid-template-columns: 180px 1fr 180px; gap: 14px; align-items: end; }
+  .pod { border: 1px solid var(--line); background: rgba(13, 22, 37, 0.88); backdrop-filter: blur(14px); box-shadow: 0 18px 40px rgba(0,0,0,0.3); }
+  .pod.left { border-radius: 28px 16px 16px 28px; padding: 18px 18px 16px; }
+  .pod.right { border-radius: 16px 28px 28px 16px; padding: 18px; text-align: center; }
+  .pod.center { border-radius: 20px; padding: 14px 16px; display: grid; gap: 12px; }
+  .bg-value { font-size: 42px; font-weight: 800; color: var(--green); line-height: 0.95; letter-spacing: -0.04em; }
+  .bg-meta { color: var(--muted); font-size: 13px; }
+  .dock { display: flex; justify-content: center; gap: 10px; }
+  .dock-item {
+    width: 60px; height: 60px; border-radius: 18px; border: 1px solid var(--line); display: grid; place-items: center; font-size: 26px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  }
+  .dock-item.ins { background: linear-gradient(180deg, rgba(86, 165, 255, 0.2), rgba(45, 103, 195, 0.16)); }
+  .dock-item.food { background: linear-gradient(180deg, rgba(255, 204, 102, 0.18), rgba(179, 116, 28, 0.16)); }
+  .dock-item.move { background: linear-gradient(180deg, rgba(86, 227, 159, 0.16), rgba(19, 137, 83, 0.14)); }
+  .dock-item.kit { background: linear-gradient(180deg, rgba(95, 230, 221, 0.16), rgba(20, 134, 129, 0.14)); }
+  .speed { display: flex; justify-content: center; align-items: center; gap: 0; width: max-content; justify-self: center; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.03); }
+  .speed span { padding: 8px 12px; font-size: 13px; color: var(--muted); }
+  .speed .mid { border-left: 1px solid var(--line); border-right: 1px solid var(--line); color: var(--text); font-weight: 700; }
+  .score { font-size: 36px; line-height: 1; font-weight: 800; color: var(--amber); letter-spacing: -0.04em; }
+  .mode { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .principles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 16px; }
+  .principle { background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+  .principle h3 { margin-bottom: 8px; font-size: 14px; color: var(--blue); }
+  .principle p { color: var(--muted); font-size: 13px; line-height: 1.5; }
+  @media (max-width: 1100px) { .main { grid-template-columns: 1fr; } .sidebar { border-left: 0; border-top: 1px solid var(--line); } .principles { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 760px) {
+    body { padding: 16px; } .topbar { grid-template-columns: 1fr; height: auto; padding: 14px; }
+    .main { min-height: auto; } .bottom { position: static; grid-template-columns: 1fr; padding: 16px 0 0; }
+    .principles { grid-template-columns: 1fr; } .callout { position: static; max-width: none; margin: 12px; } .graph-card { min-height: 440px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="intro">
+      <h1>Overordnet retning</h1>
+      <p>Intentionen her er at gore UI'et roligere og mere laerbart uden at miste spilfoelelsen. Grafen skal vaere den klare hovedscene. Toppen skal vaere navigation. Bunden skal vaere command center. Alt det, der er sekundart, skal enten leve i en lettere sideflade eller vaere foldbart.</p>
+      <div class="chips">
+        <span class="chip">Graph first</span><span class="chip">Less permanent HUD</span><span class="chip">Command center bottom</span><span class="chip">Progressive disclosure</span><span class="chip">Food by learning goal</span>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="topbar">
+        <div class="brand">
+          <div class="brand-mark">T1D SIMULATOR</div>
+          <div class="top-btns"><button class="btn start">Start</button><button class="btn">Profile</button><button class="btn">Help</button></div>
+        </div>
+        <div class="center-status">Day 1 · 10:30 · 4h/min</div>
+        <div class="top-right" style="justify-self:end;"><button class="btn primary">Settings</button><button class="btn">Fullscreen</button></div>
+      </div>
+      <div class="main">
+        <div class="graph-zone">
+          <div class="graph-card">
+            <div class="graph-lines"></div>
+            <div class="curve">
+              <svg viewBox="0 0 1000 420" preserveAspectRatio="none">
+                <path d="M0,165 C70,158 120,170 180,210 C225,242 265,260 310,258 C352,256 378,206 425,170 C468,136 505,132 552,145 C598,159 629,175 682,176 C752,176 792,120 845,110 C890,102 935,112 1000,128" fill="none" stroke="#5c75ff" stroke-width="3" opacity="0.75"/>
+                <g fill="#56e39f">
+                  <circle cx="18" cy="165" r="4"/><circle cx="39" cy="164" r="4"/><circle cx="61" cy="167" r="4"/><circle cx="84" cy="171" r="4"/><circle cx="111" cy="184" r="4"/><circle cx="133" cy="196" r="4"/><circle cx="149" cy="210" r="4"/><circle cx="171" cy="228" r="4"/><circle cx="194" cy="242" r="4"/><circle cx="215" cy="250" r="4" fill="#ffcc66"/><circle cx="238" cy="256" r="4" fill="#ffcc66"/><circle cx="260" cy="258" r="4" fill="#ff7575"/><circle cx="288" cy="249" r="4"/><circle cx="318" cy="222" r="4"/><circle cx="342" cy="195" r="4"/><circle cx="366" cy="171" r="4"/><circle cx="388" cy="156" r="4"/><circle cx="411" cy="147" r="4"/><circle cx="438" cy="141" r="4"/><circle cx="462" cy="138" r="4"/><circle cx="487" cy="141" r="4"/><circle cx="510" cy="147" r="4"/><circle cx="540" cy="151" r="4"/><circle cx="571" cy="150" r="4"/><circle cx="598" cy="156" r="4"/><circle cx="626" cy="167" r="4"/><circle cx="657" cy="176" r="4"/><circle cx="682" cy="176" r="4"/><circle cx="712" cy="163" r="4"/><circle cx="735" cy="139" r="4"/><circle cx="757" cy="121" r="4"/><circle cx="780" cy="112" r="4" fill="#ffcc66"/><circle cx="806" cy="108" r="4" fill="#ffcc66"/><circle cx="833" cy="111" r="4" fill="#ffcc66"/><circle cx="862" cy="114" r="4" fill="#ffcc66"/>
+                </g>
+              </svg>
+            </div>
+            <div class="callout c1"><strong>1. Grafen er hovedscenen</strong><br>Kun det vigtigste maa ligge fast ovenpaa eller ved siden af den.</div>
+            <div class="callout c2"><strong>2. Sidefladen er sekundar</strong><br>Maal, avancerede data og kampagne-info bor her, ikke midt i grafen.</div>
+            <div class="callout c3"><strong>3. Bunden er command center</strong><br>BG, handlinger, hastighed og score samles i en rolig arbejdsflade.</div>
+            <div class="callout c4"><strong>4. HUD lagdeles</strong><br>Permanent: BG + handlinger. Foldbart: life bars, stats, forces, historik.</div>
+            <div class="bottom">
+              <div class="pod left"><div class="bg-value">7.2 →</div><div class="bg-meta">mmol/L · IOB 2.4 E · COB 18 g</div></div>
+              <div class="pod center"><div class="dock"><div class="dock-item ins">💉</div><div class="dock-item food">🍽️</div><div class="dock-item move">🏃</div><div class="dock-item kit">🩹</div></div><div class="speed"><span>◀</span><span class="mid">▶▶ 4h/min</span><span>▶</span></div></div>
+              <div class="pod right"><div class="mode">Sandbox</div><div class="score">142.5</div></div>
+            </div>
+          </div>
+        </div>
+        <aside class="sidebar">
+          <div class="side-card">
+            <h3>What Stays Visible</h3>
+            <div class="row"><span>BG + trend</span><b>Always</b></div><div class="row"><span>IOB / COB</span><b>Always</b></div><div class="row"><span>Primary actions</span><b>Always</b></div><div class="row"><span>Speed / pause</span><b>Always</b></div><div class="row"><span>Score / mode</span><b>Always</b></div>
+          </div>
+          <div class="side-card">
+            <h3>What Becomes Secondary</h3>
+            <div class="row"><span>Detailed stats</span><b>Foldable</b></div><div class="row"><span>Life bars</span><b>Optional</b></div><div class="row"><span>BG forces</span><b>Optional</b></div><div class="row"><span>History log</span><b>Compact</b></div><div class="row"><span>Debug data</span><b>Separate</b></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="principles">
+      <div class="principle"><h3>Top = Navigation</h3><p>Topbaren skal lose orientering og meta-opgaver, ikke vaere data-dump.</p></div>
+      <div class="principle"><h3>Center = Consequence</h3><p>Grafen viser konsekvensen af det spilleren gor. Den skal have mest plads og mindst stoej.</p></div>
+      <div class="principle"><h3>Bottom = Action</h3><p>Bunden skal foeles som et cockpit, men kun for det, der er handlingsrelevant nu.</p></div>
+      <div class="principle"><h3>Food = Teaching</h3><p>Madmenuen skal laere forskellen paa rescue, maaltid og sen effekt.</p></div>
+    </section>
+  </div>
+</body>
+</html>

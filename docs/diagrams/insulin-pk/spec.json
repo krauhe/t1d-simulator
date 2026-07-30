@@ -1,0 +1,38 @@
+{
+  "type": "compartment-diagram",
+  "title": "Insulin pharmacokinetics — core Hovorka 2004 model",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "S1", "label": "SC rapid stage 1", "var": "S1", "color": "insulin-fast", "type": "depot" },
+    { "id": "S2", "label": "SC rapid stage 2", "var": "S2", "color": "insulin-fast", "type": "depot" },
+    { "id": "I",  "label": "Plasma insulin",   "var": "I",  "unit": "mU/L", "color": "insulin-fast", "type": "plasma" },
+    { "id": "x1", "label": "Transport",        "var": "x1", "color": "insulin-fast", "type": "effect", "rank": "max" },
+    { "id": "x2", "label": "Disposal",         "var": "x2", "color": "insulin-fast", "type": "effect", "rank": "max" },
+    { "id": "x3", "label": "EGP suppression",  "var": "x3", "color": "insulin-fast", "type": "effect", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "external", "to": "S1",       "label": "",              "externalLabel": "injection (rapid bolus)", "kind": "input" },
+    { "from": "S1",       "to": "S2",       "label": "S1/τ_I",       "kind": "mass" },
+    { "from": "S2",       "to": "I",        "label": "U_I = S2/τ_I", "kind": "mass" },
+    { "from": "I",        "to": "external", "label": "ke · I",        "externalLabel": "urine / clearance", "kind": "elimination" },
+    { "from": "I",        "to": "x1",       "label": "kb1 · I − ka1 · x1", "kind": "signal" },
+    { "from": "I",        "to": "x2",       "label": "kb2 · I − ka2 · x2", "kind": "signal" },
+    { "from": "I",        "to": "x3",       "label": "kb3 · I − ka3 · x3", "kind": "signal" }
+  ],
+  "caption": {
+    "scope": "Core insulin pharmacokinetics subsystem from the Hovorka 2004 glucose-insulin model (Hovorka et al., Physiol Meas 25:905-920, 2004). A two-stage subcutaneous absorption cascade (S1 → S2) transfers insulin to plasma compartment I at rate U_I = S2/τ_I; plasma insulin is eliminated at rate ke · I and simultaneously drives three effect compartments x1 (glucose transport Q1 → Q2), x2 (peripheral disposal), and x3 (EGP suppression). This diagram covers the core Hovorka structure only — no basal shadow cascade, no EGP node, no glucose pools. See insulin-action-egp for the extended simulator view including basal cascade and EGP regulation.",
+    "variables": [
+      { "symbol": "S1",           "category": "compartment", "definition": "rapid (bolus) SC depot — first absorption stage (mU)" },
+      { "symbol": "S2",           "category": "compartment", "definition": "rapid (bolus) SC depot — second absorption stage (mU)" },
+      { "symbol": "I",            "category": "compartment", "definition": "plasma insulin concentration (mU/L)" },
+      { "symbol": "x1",           "category": "compartment", "definition": "insulin effect on glucose transport (Q1 → Q2)" },
+      { "symbol": "x2",           "category": "compartment", "definition": "insulin effect on peripheral glucose disposal" },
+      { "symbol": "x3",           "category": "compartment", "definition": "insulin effect on EGP suppression" },
+      { "symbol": "U_I",          "category": "flow",        "definition": "rapid absorption rate from S2 to plasma = S2/τ_I (mU/min)" },
+      { "symbol": "τ_I",          "category": "flow",        "definition": "SC absorption time constant for rapid insulin (mean 55 min in Hovorka 2004)" },
+      { "symbol": "ke",           "category": "flow",        "definition": "plasma insulin elimination rate constant (hepatic + renal clearance, min⁻¹)" },
+      { "symbol": "kb1, kb2, kb3","category": "flow",        "definition": "build-up rate constants driving the three effect compartments (min⁻¹ per mU/L)" },
+      { "symbol": "ka1, ka2, ka3","category": "flow",        "definition": "decay rate constants for the three effect compartments (min⁻¹)" }
+    ]
+  }
+}

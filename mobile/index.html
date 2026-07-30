@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1526">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- App icon for the iOS home screen (Add to Home Screen). Android uses the manifest icons. -->
+<link rel="apple-touch-icon" href="../assets/icons/app/t1d-game-icon.png">
+<!-- Favicon: a T1D-relevant glucose curve (mint line on a dark rounded tile), inline SVG
+     data-URI shared verbatim with the desktop shell (index.html) so the browser tab reads
+     as a blood-sugar app, not a generic page. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23181c24'/><polyline points='4,22 10,18 14,10 18,20 22,14 28,16' fill='none' stroke='%2300e5a0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<title>T1D Simulator — Mobil</title>
+<!--
+  =============================================================================
+  MOBILE SHELL — portrait HUD entry point for the mobile T1D Simulator
+  =============================================================================
+  The real (non-mockup) mobile shell. Reuses the project's real assets
+  (../assets/...) and the shared graph helpers (../js/graph-renderer.js). Layout
+  in mobile.css; behaviour in mobile.js. See mobile/MOBILE-DESIGN.md.
+
+  STATUS (Phase 1, foundation): static HUD + working bottom-sheet/speed UI. The
+  graph is still a placeholder curve and the engine is NOT wired yet.
+  TODO (next): load the shared model scripts and wire a live Simulator:
+    ../js/sounds.js ../js/i18n.js ../js/foods.js ../js/levels.js ../js/symptoms.js
+    ../js/hovorka.js ../js/physiology-engine.js ../js/simulator.js
+    ../js/guide-data.js ../js/version-data.js
+  then run a mobile game loop and replace the placeholder renderer with the
+  shared drawGraph (once it is migrated into graph-renderer.js), fed a 12h view.
+  =============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Inter for all UI + number displays (tabular-nums; see CLAUDE.md). Orbitron is the
+     brand/logo font — used ONLY for the T1D SIMULATOR wordmark on the landing screen
+     (same combined font request as the desktop shell so the brand renders identically). -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="mobile.css?v=0.9.114">
+<!-- Anti-flash: decide the welcome screen's visibility BEFORE <body> is parsed, so the
+     landing can never paint even for one frame when it is turned off. This runs in the
+     <head> (before #startScreen exists), so it sets a class on <html> that the already-
+     loaded mobile.css uses to hide #startScreen from the very first paint — independent
+     of when the parser reaches the body (an inline script after the element could still
+     flash if the parser yields a paint mid-block). The body-level script + load handler
+     still manage the "open" class and the checkbox for the show case. -->
+<script>try{if(localStorage.getItem('t1dMobileShowWelcome')==='0')document.documentElement.classList.add('welcome-off');}catch(e){}</script>
+</head>
+<body>
+<!-- #app starts in .pre-start so the first paint already shows the blank pre-game state
+     (the tip bar is hidden; the loop keeps .pre-start until a mode starts). Without it,
+     the HTML's default welcome tip flashed on every refresh before the loop ran. -->
+<div id="app" class="pre-start">
+  <!-- #game-view wraps the blurrable game surface (top bar, HUD, graph, dock) so the
+       symptom VFX (blur/desaturate) applies HERE only. Action sheets and overlays live
+       OUTSIDE this wrapper so they stay sharp — you can still dose insulin during a hypo
+       episode. Mirrors desktop's #game-container blur target. -->
+  <div id="game-view">
+  <!-- 1. Top strip -->
+  <div class="top">
+    <button class="icon-btn" aria-label="Menu" onclick="openSheet('menu')">&#9776;</button>
+    <div class="daytime">
+      <div class="dt-mode" id="modeLabel"></div>
+      <div class="dt-day"><span><span data-i18n="m.badge.day">Dag</span> <span class="num" id="dayNum">1</span><span class="dt-tot" id="dayTotal" style="display:none">/7</span></span><span class="sep">&middot;</span><span class="num" id="clock">00:00</span><span class="daynight-wrap is-night" id="dnWrap"><img class="daynight-icon" id="dnIcon" src="../assets/icons/moon.svg" alt=""></span></div>
+    </div>
+    <button class="icon-btn" aria-label="Indstillinger" onclick="openSheet('settings')">&#9881;</button>
+  </div>
+
+  <!-- 2. HUD row — two panels mirroring the desktop capsule fragments:
+       BG HERO (big zone-coloured number + trend, with IOB/COB stacked below) | STATS
+       (TIR/BSgns/kcal). Each panel reuses the desktop component markup/classes verbatim
+       (info-pill, cgm-hero-row/cgm-number/cgm-meta/cgm-trend, stats-frag-*) so the look
+       cannot drift from desktop. The BG hero carries the zone glow (glow-target/
+       elevated/danger), set each tick by updateHud(). -->
+  <div class="hud-row">
+    <!-- BG HERO panel (left): the desktop #cgm-hero verbatim — big zone-coloured number
+         + unit + trend on top, IOB/COB info-pills stacked below. All "now" values live
+         together here, like the desktop capsule-left fragment. -->
+    <div class="hud-panel hud-hero glow-target" id="cgm-hero">
+      <div class="cgm-hero-main">
+        <div class="cgm-hero-row">
+          <!-- Defaults match the pre-game idle state (updateHud !_started branch) so the
+               first paint shows dashes, not a placeholder 5.5 mmol/L, before JS runs. -->
+          <span class="cgm-number bg-offline" id="bgValue">– . –</span>
+          <div class="cgm-meta">
+            <span class="cgm-unit">mmol/L</span>
+            <span class="cgm-trend" id="bgTrend"></span>
+          </div>
+        </div>
+        <div id="info-pills">
+          <span class="info-pill">IOB <strong id="iob">0.0</strong> E</span>
+          <span class="info-pill">COB <strong id="cob">0</strong> g</span>
+        </div>
+      </div>
+      <!-- Character (A4): full figure + name, so the BG panel "belongs" to the played
+           character. Figuren er kun en visning; karakteren vælges før spilstart. -->
+      <div class="cgm-character" id="cgmCharacter">
+        <span class="cgm-character-portrait" id="cgmCharacterPortrait" role="img" aria-label="">
+          <img class="cgm-character-avatar is-visible" data-portrait-layer="a" alt="">
+          <img class="cgm-character-avatar" data-portrait-layer="b" alt="" aria-hidden="true">
+        </span>
+        <span class="cgm-character-name" id="cgmCharacterName">—</span>
+      </div>
+    </div>
+    <!-- STATS panel (right): TIR / BS(gns) / kcal-balance + a compact Points readout.
+         Desktop #stats-fragment / .stats-frag-* rows. -->
+    <div class="hud-panel hud-stats" id="stats-fragment-ish">
+      <div class="stats-frag-row">
+        <span class="stats-frag-label" data-i18n="stats.tir">TIR</span>
+        <span class="stats-frag-value" id="tir">—</span>
+      </div>
+      <div class="stats-frag-row">
+        <span class="stats-frag-label"><span data-i18n="stats.bgShort">BS</span><sub class="stats-frag-sub" data-i18n="stats.avgBgSub">gns</sub></span>
+        <span class="stats-frag-value" id="avgBg">—</span>
+      </div>
+      <div class="stats-frag-row" id="kcalRow">
+        <span class="stats-frag-label"><img class="stats-frag-icon-img" src="../assets/icons/app/status-calorie-balance.png" alt="kcal"></span>
+        <span class="stats-frag-value" id="kcalBal">—</span>
+      </div>
+      <div class="stats-frag-row">
+        <span class="stats-frag-label" data-i18n="m.pill.points">Point</span>
+        <span class="stats-frag-value" id="points">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Graph -->
+  <div class="graph-wrap">
+    <canvas id="graph"></canvas>
+    <!-- Campaign level-info button (top-right corner of the graph) — desktop's
+         #campaignInfoBtn ported. The level intro/objectives live here: it is what the
+         intro card collapses INTO on Start, and tapping it reopens the intro. Shown only
+         while a campaign level is active (syncLevelInfoBtn). -->
+    <button class="level-info-btn" id="levelInfoBtn" style="display:none;" onclick="reopenLevelIntro()" aria-label="Banens krav"><img src="../assets/icons/app/level-info.png" alt=""></button>
+    <!-- Transient result of a fingerprick / ketone test (shown by showMeasurement). -->
+    <div class="measure-toast" id="measureToast"></div>
+    <!-- Tip bar: short neutral observations about the simulated state. -->
+    <div class="tip-bar" id="tipBar">
+      <!-- Width/height attributes keep the icon compact even if a browser briefly serves
+           an older cached copy of mobile.css during deployment. -->
+      <img class="tip-bulb" src="../assets/icons/app/tip-lightbulb.png" width="26" height="26" alt="">
+      <div class="txt"><span data-i18n="m.tip.welcome">Følg kurven, og afprøv hvordan mad, insulin og aktivitet påvirker karakterens blodsukker.</span></div>
+      <button class="tip-x" onclick="dismissTip()" aria-label="Luk tip">&times;</button>
+    </div>
+  </div>
+
+  <!-- 4. Bottom dock panel — desktop-dock look + speed on the same panel -->
+  <div class="mdock">
+    <div class="mdock-row">
+      <button class="mdock-item d-insulin" onclick="openSheet('insulin')"><span class="mdock-icon"><img src="../assets/icons/app/rapid-syringe.png" alt=""></span><span class="lbl" data-i18n="m.dock.insulin">Insulin</span></button>
+      <button class="mdock-item d-food" onclick="openSheet('food')"><span class="mdock-icon"><img src="../assets/icons/app/meal-plate.png" alt=""></span><span class="lbl" data-i18n="m.dock.food">Mad</span></button>
+      <button class="mdock-item d-activity" onclick="openSheet('activity')"><span class="mdock-icon"><img src="../assets/icons/app/activity-shoe.png" alt=""></span><span class="lbl" data-i18n="m.dock.activity">Aktivitet</span></button>
+      <button class="mdock-item d-kit" onclick="openSheet('kit')"><span class="mdock-icon"><img src="../assets/icons/app/t1d-kit-pouch.png" alt=""></span><span class="lbl" data-i18n="m.dock.kit">T1D Kit</span></button>
+    </div>
+    <div class="mdock-speed">
+      <div class="speed-stepper" id="speedStepper">
+        <button class="sp-step" id="spDown" onclick="stepSpeed(-1)" aria-label="Langsommere">&#9664;</button>
+        <button class="sp-current" onclick="togglePlay()"><span class="sp-state" id="spIc">&#9654;&#9654;</span><span class="sp-lbl" id="spLbl">4t/min</span></button>
+        <button class="sp-step" id="spUp" onclick="stepSpeed(1)" aria-label="Hurtigere">&#9654;</button>
+      </div>
+      <!-- Physiology toggle — desktop's #physiologyToggle ported: the button IS the
+           "practice mode" indicator (amber gradient + glow when active, score not saved).
+           Click toggles the whole physiology view via togglePhysiologyMobile(). -->
+      <button class="phys-toggle" id="physToggleDock" data-i18n-title="ui.title.physiology" title="Vis fysiologiske kræfter bag blodsukkeret (score gemmes ikke)" aria-label="Fysiologi" onclick="togglePhysiologyMobile()"><img src="../assets/icons/app/settings-physiology.png" alt=""></button>
+    </div>
+  </div>
+
+  </div><!-- #game-view -->
+
+  <div class="scrim" id="scrim" onclick="closeSheets()"></div>
+
+  <!-- INSULIN sheet — same layout and coarse basal-control logic as desktop.
+       Knapperne og slider-loftet udledes af et afrundet karakter-loft, ikke af
+       motorens præcise dosis. Keyboard-genveje udelades på mobil. -->
+  <div class="sheet" id="sheet-insulin">
+    <div class="handle"></div>
+    <div class="sheet-head"><h3><img src="../assets/icons/app/rapid-syringe.png" alt=""><span data-i18n="m.sheet.insulin">Giv insulin</span></h3><button class="sheet-close" onclick="closeSheets()" aria-label="Luk">&times;</button></div>
+
+    <label class="dp-section-label"><img class="dp-section-icon" src="../assets/icons/app/basal-syringe-clock.png" alt=""> <span data-i18n="m.insulin.basalLabel">Basal</span></label>
+    <div class="dp-insulin-row dp-insulin-basal">
+      <div class="dp-insulin-presets">
+        <div class="insulin-preset-chip" onclick="giveBasalPreset(0)"><span class="pc-name"><span id="bp1">--</span> E</span></div>
+        <div class="insulin-preset-chip" onclick="giveBasalPreset(1)"><span class="pc-name"><span id="bp2">--</span> E</span></div>
+        <div class="insulin-preset-chip" onclick="giveBasalPreset(2)"><span class="pc-name"><span id="bp3">--</span> E</span></div>
+        <div class="insulin-preset-chip" onclick="giveBasalPreset(3)"><span class="pc-name"><span id="bp4">--</span> E</span></div>
+        <div class="insulin-preset-chip" onclick="giveBasalPreset(4)"><span class="pc-name"><span id="bp5">--</span> E</span></div>
+      </div>
+      <div class="dp-custom-dose">
+        <input type="range" id="basalSlider" min="1" max="30" value="10" step="1" oninput="onBasalSlider()">
+        <button class="dp-btn dp-btn-compact btn-blue" onclick="giveBasalSlider()"><span id="basalSliderVal">10</span> E</button>
+      </div>
+    </div>
+    <div class="dp-basal-hint"><span data-i18n="m.insulin.tryScenarioWith">Afprøv i scenariet med</span> <strong id="basalTrialCharacter"></strong>: <strong id="basalTrialRange">--</strong> <span data-i18n="m.unit.ePerDay">E/dag</span></div>
+
+    <div class="dp-divider"></div>
+
+    <label class="dp-section-label"><img class="dp-section-icon" src="../assets/icons/app/rapid-syringe.png" alt=""> <span data-i18n="m.insulin.fastLabel">Hurtig</span></label>
+    <div class="dp-insulin-row dp-insulin-fast">
+      <div class="dp-insulin-presets">
+        <div class="insulin-preset-chip insulin-preset-fast" onclick="giveFast(0.5)"><span class="pc-name">½ E</span></div>
+        <div class="insulin-preset-chip insulin-preset-fast" onclick="giveFast(1)"><span class="pc-name">1 E</span></div>
+        <div class="insulin-preset-chip insulin-preset-fast" onclick="giveFast(2)"><span class="pc-name">2 E</span></div>
+        <div class="insulin-preset-chip insulin-preset-fast" onclick="giveFast(4)"><span class="pc-name">4 E</span></div>
+        <div class="insulin-preset-chip insulin-preset-fast" onclick="giveFast(8)"><span class="pc-name">8 E</span></div>
+      </div>
+      <div class="dp-custom-dose">
+        <input type="range" id="fastSlider" min="0.5" max="10" value="4" step="0.5" oninput="onFastSlider()">
+        <button class="dp-btn dp-btn-compact btn-teal" onclick="giveFastSlider()"><span id="fastSliderVal">4.0</span> E</button>
+      </div>
+    </div>
+    <div class="dp-fast-hint" data-i18n="m.insulin.fastHint">Bolus dækker måltidernes kulhydrater</div>
+  </div>
+
+  <!-- FOOD sheet (two-step) — SAME 3 desktop categories + real food icons -->
+  <div class="sheet" id="sheet-food">
+    <div class="handle"></div>
+        <div class="sheet-head"><button class="back" onclick="toLevel1('food')">&#8592;</button><h3><img src="../assets/icons/app/meal-plate.png" alt=""><span data-i18n="m.sheet.food">Giv mad</span></h3><button class="sheet-close" onclick="closeSheets()" aria-label="Luk">&times;</button></div>
+    <div class="level show" data-level1>
+      <!-- Category rows: tap a category tile (left) to open its full list, or tap one of
+           the up-to-2 "recently chosen" chips (right) to re-eat it directly. The recents
+           strips are filled by renderFoodRecents() (mobile.js) from t1dMobileFoodRecents. -->
+      <div class="cat-head">
+        <span class="cat-head-cat" data-i18n="m.food.pickCategory">Vælg en kategori.</span>
+        <span class="cat-head-recent" data-i18n="m.food.recent">Sidste valgte</span>
+      </div>
+      <div class="cats">
+        <div class="cat-row">
+          <button class="cat-tile" onclick="toLevel2('food','low','m.food.cat.lowCarb')"><img src="../assets/icons/food/salad.png"><div><div class="nm" data-i18n="m.food.cat.lowCarb">Lav-kulhydrat</div><div class="ds" data-i18n="m.food.cat.lowCarb.ex">æg, salat, nødder…</div></div></button>
+          <div class="cat-recents" data-recents="low"></div>
+        </div>
+        <div class="cat-row">
+          <button class="cat-tile" onclick="toLevel2('food','meal','m.food.cat.meals')"><img src="../assets/icons/food/pasta.png"><div><div class="nm" data-i18n="m.food.cat.meals">Måltider</div><div class="ds" data-i18n="m.food.cat.meals.ex">pasta, pizza, burger…</div></div></button>
+          <div class="cat-recents" data-recents="meal"></div>
+        </div>
+        <div class="cat-row">
+          <button class="cat-tile" onclick="toLevel2('food','fast','m.food.cat.fast')"><img src="../assets/icons/food/glucose-tablets.png"><div><div class="nm" data-i18n="m.food.cat.fast">Hurtige kulhydrater</div><div class="ds" data-i18n="m.food.cat.fast.ex">druesukker, juice, slik…</div></div></button>
+          <div class="cat-recents" data-recents="fast"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Chips carry only data-food + name/icon; weight, macro-bar and macro/kcal
+         figures are injected from the shared FOODS table by enrichFoodChips()
+         (mobile.js) so the on-chip info matches the desktop food buttons. -->
+    <div class="level" data-level2="low"><div class="chips">
+      <div class="chip" data-food="æg" onclick="eatFood('æg')"><img src="../assets/icons/food/egg.png"><div class="nm">Æg</div></div>
+      <div class="chip" data-food="nødder" onclick="eatFood('nødder')"><img src="../assets/icons/food/nuts.png"><div class="nm">Nødder</div></div>
+      <div class="chip" data-food="salat" onclick="eatFood('salat')"><img src="../assets/icons/food/salad.png"><div class="nm">Salat</div></div>
+      <div class="chip" data-food="laksAvocado" onclick="eatFood('laksAvocado')"><img src="../assets/icons/food/lowcarb-salmon-avocado.png"><div class="nm">Laks &amp; avocado</div></div>
+      <div class="chip" data-food="ægBacon" onclick="eatFood('ægBacon')"><img src="../assets/icons/food/lowcarb-eggs-bacon.png"><div class="nm">Æg &amp; bacon</div></div>
+      <div class="chip" data-food="bøfBearnaise" onclick="eatFood('bøfBearnaise')"><img src="../assets/icons/food/lowcarb-steak-bearnaise.png"><div class="nm">Bøf &amp; bearnaise</div></div>
+    </div></div>
+    <div class="level" data-level2="meal"><div class="chips">
+      <div class="chip" data-food="bollerIKarry" onclick="eatFood('bollerIKarry')"><img src="../assets/icons/food/curry-rice.png"><div class="nm">Boller i karry</div></div>
+      <div class="chip" data-food="havregryn" onclick="eatFood('havregryn')"><img src="../assets/icons/food/oatmeal.png"><div class="nm">Havregryn</div></div>
+      <div class="chip" data-food="burger" onclick="eatFood('burger')"><img src="../assets/icons/food/burger.png"><div class="nm">Burger</div></div>
+      <div class="chip" data-food="pasta" onclick="eatFood('pasta')"><img src="../assets/icons/food/pasta.png"><div class="nm">Pasta</div></div>
+      <div class="chip" data-food="pizza" onclick="eatFood('pizza')"><img src="../assets/icons/food/pizza.png"><div class="nm">Pizza</div></div>
+      <div class="chip" data-food="lagkage" onclick="eatFood('lagkage')"><img src="../assets/icons/food/cake.png"><div class="nm">Lagkage</div></div>
+    </div></div>
+    <div class="level" data-level2="fast"><div class="chips">
+      <div class="chip" data-food="druesukker" onclick="eatFood('druesukker')"><img src="../assets/icons/food/glucose-tablets.png"><div class="nm">Druesukker</div></div>
+      <div class="chip" data-food="slik" onclick="eatFood('slik')"><img src="../assets/icons/food/candy.png"><div class="nm">Slik</div></div>
+      <div class="chip" data-food="juice" onclick="eatFood('juice')"><img src="../assets/icons/food/juice.png"><div class="nm">Juice</div></div>
+      <div class="chip" data-food="cola" onclick="eatFood('cola')"><img src="../assets/icons/food/cola.png"><div class="nm">Cola</div></div>
+      <div class="chip" data-food="banan" onclick="eatFood('banan')"><img src="../assets/icons/food/banana.png"><div class="nm">Banan</div></div>
+      <div class="chip" data-food="chokolade" onclick="eatFood('chokolade')"><img src="../assets/icons/food/chocolate.png"><div class="nm">Chokolade</div></div>
+    </div></div>
+  </div>
+
+  <!-- ACTIVITY sheet (flat, like the desktop panel) — type + intensity + duration.
+       Setup view picks type/intensity then a duration chip STARTS the activity
+       (mirrors the desktop duration-start chips). When an activity is running the
+       sheet switches to the active view with a Stop button. -->
+  <div class="sheet" id="sheet-activity">
+    <div class="handle"></div>
+    <div class="sheet-head"><h3><img src="../assets/icons/app/activity-shoe.png" alt=""><span data-i18n="m.sheet.activity">Aktivitet</span></h3><button class="sheet-close" onclick="closeSheets()" aria-label="Luk">&times;</button></div>
+    <div id="activitySetup">
+      <div class="sheet-sub" data-i18n="m.activity.type">Type</div>
+      <div class="preset-row">
+        <div class="chip sel" onclick="setActType('cardio',this)"><img src="../assets/icons/app/activity-shoe.png"><div class="nm" data-i18n="activity.cardio">Cardio</div></div>
+        <div class="chip" onclick="setActType('styrke',this)"><img src="../assets/icons/app/activity-strength.png"><div class="nm" data-i18n="activity.strength">Styrke</div></div>
+        <div class="chip" onclick="setActType('blandet',this)"><img src="../assets/icons/app/activity-ball.png"><div class="nm" data-i18n="activity.mixed">Blandet</div></div>
+      </div>
+      <div class="sheet-sub" data-i18n="m.activity.intensity">Intensitet</div>
+      <div class="preset-row">
+        <div class="chip" onclick="setIntensity('Lav',this)"><img src="../assets/icons/app/intensity-low.png"><div class="nm" data-i18n="activity.intensity.low">Let</div></div>
+        <div class="chip sel" onclick="setIntensity('Medium',this)"><img src="../assets/icons/app/intensity-medium.png"><div class="nm" data-i18n="activity.intensity.medium">Middel</div></div>
+        <div class="chip" onclick="setIntensity('Høj',this)"><img src="../assets/icons/app/intensity-high.png"><div class="nm" data-i18n="activity.intensity.high">Hård</div></div>
+      </div>
+      <div class="sheet-sub" data-i18n="m.activity.duration">Tid</div>
+      <div class="preset-row dur-row">
+        <div class="chip dur" onclick="startActivity(15)"><span class="dur-play">&#9654;</span><div class="nm">15 min</div></div>
+        <div class="chip dur" onclick="startActivity(30)"><span class="dur-play">&#9654;</span><div class="nm">30 min</div></div>
+        <div class="chip dur" onclick="startActivity(60)"><span class="dur-play">&#9654;</span><div class="nm">60 min</div></div>
+        <div class="chip dur" onclick="startActivity('open')"><span class="dur-play">&#9654;</span><div class="nm" data-i18n="m.activity.open">Åben</div></div>
+      </div>
+    </div>
+    <div id="activityActive" style="display:none;">
+      <div class="sheet-sub" id="activeActLabel">Aktivitet kører.</div>
+      <button class="cta orange" onclick="stopActivity()">&#9632; <span data-i18n="m.activity.stop">Stop aktivitet</span></button>
+    </div>
+  </div>
+
+  <!-- KIT sheet — flat symmetric 2x2 (emergency on bottom row) -->
+  <div class="sheet" id="sheet-kit">
+    <div class="handle"></div>
+    <div class="sheet-head"><h3><img src="../assets/icons/app/t1d-kit-pouch.png" alt=""><span data-i18n="m.sheet.kit">T1D Kit</span></h3><button class="sheet-close" onclick="closeSheets()" aria-label="Luk">&times;</button></div>
+    <div class="sheet-sub" data-i18n="m.kit.hint">Måling øverst · nødhjælp nederst.</div>
+    <div class="kit-grid">
+      <button class="kit-cell" onclick="kitAction('finger')"><img src="../assets/icons/app/blood-drop.png"><div class="nm" data-i18n="m.kit.fingerprick">Fingerprik</div></button>
+      <button class="kit-cell" onclick="kitAction('ketone')"><img src="../assets/icons/app/ketone-reagent.png"><div class="nm" data-i18n="m.kit.ketone">Keton-test</div></button>
+      <button class="kit-cell sos" onclick="kitAction('glucagon')"><img src="../assets/icons/app/glucagon-pen.png"><div class="nm" data-i18n="m.kit.glucagon">Glukagon</div></button>
+      <button class="kit-cell sugar" onclick="kitAction('dextrose')"><img src="../assets/icons/food/glucose-tablets.png"><div class="nm" data-i18n="m.kit.dextro">Druesukker</div></button>
+    </div>
+  </div>
+
+  <!-- MENU sheet (hamburger) — mirrors the desktop secondary actions that apply to
+       the shell, plus the funnel link to the full desktop version (the whole point
+       of the mobile shell). Uses the same sd-row component as the settings sheet. -->
+  <div class="sheet from-top" id="sheet-menu">
+    <div class="handle"></div>
+    <div class="sheet-head"><h3>&#9776; <span data-i18n="m.menu.title">Menu</span></h3><button class="sheet-close" onclick="closeSheets()" aria-label="Luk">&times;</button></div>
+    <button class="sd-row" onclick="openLevelSelect()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/mode-campaign.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.menu.campaign">Kampagne</span><span class="sd-row-help" data-i18n="m.menu.campaign.help">Spil banerne og lær trin for trin.</span></div>
+    </button>
+    <!-- Box Challenge — the daily-challenge mode (branch direction: Campaign + Box
+         Challenge). Disabled for now (native disabled attr, NOT campaign-disabled, so
+         clearCampaignGating leaves it muted) with a "Bygges" note until the mode flow
+         is wired into the mobile shell. Replaces the retired "Ny sandkasse" entry. -->
+    <button class="sd-row" disabled>
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/mode-box-challenge.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="mode.boxchallenge">Box Challenge</span><span class="sd-row-help" data-i18n="m.campaign.construction">Bygges</span></div>
+    </button>
+    <button class="sd-row" onclick="openHighscores()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/highscore-trophy.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="highscore.title">Highscores</span><span class="sd-row-help" data-i18n="m.menu.highscore.help">Dine bedste resultater fra kampagnen.</span></div>
+    </button>
+    <button class="sd-row" onclick="openSheet('profile')">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/profile-menu.png" alt=""></span>
+          <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.sheet.profile">Karakter</span><span class="sd-row-help" data-i18n="m.menu.profile.help">Vælg hvilken karakter du hjælper.</span></div>
+    </button>
+    <button class="sd-row" onclick="shareDesktop()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/share-link.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.menu.share">Send til din computer</span><span class="sd-row-help" data-i18n="m.menu.share.help">Del linket til den fulde version, så du kan åbne den på en pc.</span></div>
+    </button>
+    <!-- Kort formålsnote. Samme afgrænsning vises ved første spilstart. -->
+    <div class="menu-disclaimer">
+      <strong data-i18n="m.disclaimer.title">Om simulatoren</strong>
+      <span data-i18n="m.disclaimer.body">T1D Simulator er et læringsspil om, hvad der påvirker blodsukkeret. Du hjælper faste, fiktive karakterer. Spillet beregner ikke insulindoser til virkelige personer og er ikke beregnet som grundlag for behandling.</span>
+    </div>
+  </div>
+
+    <!-- CHARACTER sheet (A4) — pick which of the six named characters you help. Mirrors
+       the desktop character picker. Saved to the same localStorage key
+       (diabetesDystenProfile) so the choice carries over to the full desktop version.
+       The key contains only characterId; saving returns to the paused pre-game state. -->
+  <div class="sheet from-top" id="sheet-profile">
+    <div class="handle"></div>
+    <div class="sheet-head"><h3><img class="sheet-title-icon" src="../assets/icons/app/profile-menu.png" alt=""> <span data-i18n="m.sheet.profile">Karakter</span></h3><button class="sheet-close" onclick="closeSheets()" aria-label="Luk">&times;</button></div>
+    <div class="sheet-sub" id="pfSub" data-i18n="m.profile.intro">Ændringer starter forfra med den valgte karakter.</div>
+    <!-- Read-only notice — shown instead of the sub while a game is running. Changing
+         the fixed character would restart the run, so the picker is locked. -->
+    <div class="pf-readonly-notice" id="pfReadonlyNotice" data-i18n="profile.readonlyNotice" style="display:none">Karakteren kan ikke ændres mens du spiller. Afslut banen eller gå til hovedmenuen for at vælge en anden karakter.</div>
+    <!-- A4d: no player-name field here. The player's own name is a highscore SIGNATURE,
+         kept separate from the character and entered at game over / level complete. The
+         character has a fixed name we define (re-typing it would re-introduce self-modelling). -->
+    <!-- Character selector (A4): pick one of the six fixed characters to play instead
+         of typing in weight/ICR/ISF. The cards are populated by renderArchetypeCards();
+         tapping one selects it. -->
+    <div class="pf-field pf-field-name"><label data-i18n="profile.character">Vælg karakter</label></div>
+    <!-- Column headers naming the three body types (the picker columns: child / adult /
+         large, left -> right) so the grouping is explicit rather than only implied by
+         icon size. Static spans aligned to the card grid's three columns. -->
+    <div class="pf-archetype-headers" id="pfArchetypeHeaders">
+      <span data-i18n="character.col.child">Barn</span>
+      <span data-i18n="character.col.adult">Voksen</span>
+      <span data-i18n="character.col.large">Kraftig</span>
+    </div>
+    <div class="pf-archetype-cards" id="pfArchetypeCards"></div>
+    <!-- Starting figure for the chosen character: the resting burn. A5: no recommended
+         basal number is shown — that read as a dosing recommendation. -->
+    <div class="pf-calc">
+      <div class="pf-calc-row"><span class="pf-calc-label" data-i18n="profile.restingKcal">Hvileforbrug</span><strong id="pfKcal">--</strong><span class="pf-calc-unit" data-i18n="stats.unit.kcalPerDay">kcal/dag</span></div>
+    </div>
+    <!-- A separate "reset to default" button is redundant now the picker is six
+         tappable cards — the chosen card becomes the active character. Only Gem remains. -->
+    <div class="pf-actions">
+      <button class="cta green pf-save" onclick="saveProfile()" data-i18n="profile.save">Gem</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS sheet — mirrors the desktop settings dropdown (the rows that apply to
+       the mobile shell): fullscreen + blood-glucose unit. Sound/VFX/life-bars/stats
+       are desktop-only; language is omitted while the shell strings are Danish-only. -->
+  <div class="sheet from-top" id="sheet-settings">
+    <div class="handle"></div>
+    <div class="sheet-head"><h3>&#9881; <span data-i18n="m.sheet.settings">Indstillinger</span></h3><button class="sheet-close" onclick="closeSheets()" aria-label="Luk">&times;</button></div>
+    <div class="sd-divider sd-divider-display"><span class="sd-divider-text" data-i18n="m.settings.display">Visning</span><span class="sd-divider-line"></span></div>
+    <div class="sd-row" onclick="toggleFullscreen()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-fullscreen.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.settings.fullscreen">Fuld skærm</span><span class="sd-row-help" data-i18n="m.settings.fullscreen.help">Skjul browserens kanter.</span></div>
+      <span class="sound-toggle" id="fullscreenToggle"><span class="sound-toggle-knob"></span></span>
+    </div>
+    <!-- Switch to the full desktop version (moved here from the menu — it's a display/
+         platform choice, next to fullscreen). Action row, no toggle. -->
+    <button class="sd-row" onclick="switchToDesktop()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/switch-to-desktop.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.menu.desktop">Skift til desktop-version</span><span class="sd-row-help" data-i18n="m.menu.desktop.help">Åbn den fulde version her på enheden.</span></div>
+    </button>
+    <div class="sd-row" onclick="toggleVfxMobile()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-vfx.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="settings.vfx">VFX</span><span class="sd-row-help" data-i18n="settings.vfx.help2">Slør, afmætning og tunnelsyn ved lavt blodsukker, langvarigt højt blodsukker og syrebelastning.</span></div>
+      <span class="sound-toggle" id="vfxToggleM"><span class="sound-toggle-knob"></span></span>
+    </div>
+    <div class="sd-row" onclick="togglePhysiologyMobile()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-physiology.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.settings.physiology">Fysiologi</span><span class="sd-row-help" data-i18n="m.settings.physiology.help">Vis insulin, kulhydrater, eISF og ketoner på grafen.</span></div>
+      <span class="sound-toggle" id="physToggleM"><span class="sound-toggle-knob"></span></span>
+    </div>
+    <div class="sd-row" onclick="toggleTipsMobile()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-general-tips.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="settings.tips">Tips</span><span class="sd-row-help" data-i18n="settings.tips.help">Tips og hints om kontrol, baner og fysiologi.</span></div>
+      <span class="sound-toggle" id="tipsToggleM"><span class="sound-toggle-knob"></span></span>
+    </div>
+    <div class="sd-row" onclick="toggleShowWelcomeMobile()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/t1d-game-icon.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.settings.showWelcome">Velkomstskærm</span><span class="sd-row-help" data-i18n="m.settings.showWelcome.help">Vis velkomst-skærmen når appen åbnes.</span></div>
+      <span class="sound-toggle" id="showWelcomeToggleM"><span class="sound-toggle-knob"></span></span>
+    </div>
+    <div class="sd-row">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-bg-unit.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.settings.bgUnit">Blodsukkerenhed</span><span class="sd-row-help" data-i18n="m.settings.bgUnit.help">Skift mellem mmol/L og mg/dL.</span></div>
+      <div class="sd-lang-cards">
+        <button class="sd-lang-card selected" id="unitMmol" onclick="setBgUnit('mmol')">mmol/L</button>
+        <button class="sd-lang-card" id="unitMg" onclick="setBgUnit('mg')">mg/dL</button>
+      </div>
+    </div>
+    <div class="sd-row">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-language.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.settings.lang">Sprog</span><span class="sd-row-help" data-i18n="m.settings.lang.help">Skift mellem dansk og engelsk.</span></div>
+      <div class="sd-lang-cards">
+        <button class="sd-lang-card selected" id="langDa" onclick="setLang('da')">DA</button>
+        <button class="sd-lang-card" id="langEn" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+    <div class="sd-divider"><span class="sd-divider-text" data-i18n="m.settings.sound">Lyd</span><span class="sd-divider-line"></span></div>
+    <div class="sd-row" onclick="toggleSfxMobile()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-sfx.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.settings.sfx">Lydeffekter</span><span class="sd-row-help" data-i18n="m.settings.sfx.help">Lyde ved handlinger og hændelser.</span></div>
+      <span class="sound-toggle" id="sfxToggleM"><span class="sound-toggle-knob"></span></span>
+    </div>
+    <div class="sd-row" onclick="toggleCgmMobile()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-cgm-sounds.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.settings.cgm">CGM-lyde</span><span class="sd-row-help" data-i18n="m.settings.cgm.help">Lyd ved nye målinger og advarsler.</span></div>
+      <span class="sound-toggle" id="cgmToggleM"><span class="sound-toggle-knob"></span></span>
+    </div>
+    <div class="sd-row" onclick="toggleMusicMobile()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-music.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.settings.music">Musik</span>
+        <div class="sd-vol" onclick="event.stopPropagation()"><input type="range" id="musicVolM" min="0" max="100" step="5" oninput="setMusicVolMobile(this.value)"></div>
+      </div>
+      <span class="sound-toggle" id="musicToggleM"><span class="sound-toggle-knob"></span></span>
+    </div>
+    <div class="sd-divider"><span class="sd-divider-text" data-i18n="m.settings.data">Data</span><span class="sd-divider-line"></span></div>
+    <button class="sd-row" onclick="clearHighscores()">
+      <span class="sd-row-icon"><img class="sd-row-icon-img" src="../assets/icons/app/settings-clear-data.png" alt=""></span>
+      <div class="sd-row-content"><span class="sd-row-label" data-i18n="m.settings.clearHs">Ryd highscores</span><span class="sd-row-help" data-i18n="m.settings.clearHs.help">Slet dine gemte rekorder.</span></div>
+    </button>
+  </div>
+
+  <!-- HIGHSCORE sheet (menu -> Highscores) — kampagnens bedste resultat pr. bane.
+       Populated by renderHighscores() each time it opens (openSheet hook). -->
+  <div class="sheet from-top" id="sheet-highscore">
+    <div class="handle"></div>
+    <div class="sheet-head"><h3><img class="sheet-title-icon" src="../assets/icons/app/highscore-trophy.png" alt=""> <span data-i18n="highscore.title">Highscores</span></h3><button class="sheet-close" onclick="closeSheets()" aria-label="Luk">&times;</button></div>
+    <div class="sheet-sub" id="hsSub" data-i18n="m.highscore.subCampaign">Din bedste score for hver bane.</div>
+    <div class="hs-list" id="hsList"></div>
+  </div>
+
+  <!-- GAME-OVER overlay — shown by the showGameOverPopup() shim (mobile.js) when the
+       engine ends the run. Shows the selected fictional character, points, what
+       happened + how to avoid, and a restart. -->
+  <div class="go-overlay" id="gameOverOverlay">
+    <div class="go-card">
+      <img class="go-character" id="goCharacter" src="../assets/icons/app/character-erik.png" alt="">
+      <div class="campaign-character-caption-mobile" id="goCharacterCaption" hidden></div>
+      <h2 class="go-title" data-i18n="m.gameover.title">Game Over</h2>
+      <div class="go-cause" id="goCause"></div>
+      <p class="go-cause-detail" id="goCauseDetail"></p>
+      <div class="go-points"><span class="go-points-num" id="goPoints">0</span><span class="go-points-lbl" data-i18n="m.pill.points">Points</span></div>
+      <div class="go-section"><div class="go-sec-title" data-i18n="m.gameover.whatHappened">Hvad skete der?</div><p id="goExplain"></p></div>
+      <div class="go-section"><div class="go-sec-title" data-i18n="m.gameover.howToAvoid">Sådan undgår du det næste gang</div><ul id="goTips"></ul></div>
+      <!-- A4d: the player signs the score with their OWN name here (separate from the
+           character). Pre-filled with the last-used signature; nothing saves until the
+           player presses Gem, so signing is a deliberate choice. Hidden for campaign runs
+           and physiology (training) runs — those don't write a sandbox highscore. -->
+      <div class="go-save-form" id="goSaveForm" hidden>
+        <label class="go-save-label" for="goSignatureInput" data-i18n="game.over.saveLabel">Skriv dit navn på resultatet</label>
+        <div class="go-save-row">
+          <input type="text" id="goSignatureInput" maxlength="20" placeholder="Dit navn" data-i18n-placeholder="profile.name.placeholder">
+          <button class="go-save-btn" id="goSaveBtn" data-i18n="game.over.saveBtn">Gem</button>
+        </div>
+      </div>
+      <!-- Save outcome (rank text), or the "score not saved" note for physiology runs. -->
+      <p class="go-save-result" id="goSaveResult" hidden></p>
+      <button class="cta green" onclick="restartGame()"><img class="cta-icon" src="../assets/icons/app/action-replay.png" alt=""> <span data-i18n="m.gameover.replay">Spil igen</span></button>
+    </div>
+  </div>
+
+  <!-- START SCREEN — the mobile LANDING shown on load (the sim is PAUSED behind it).
+       Mirrors the public desktop flow with a short learning-framed welcome followed by
+       Campaign. Box Challenge is not yet wired into the mobile shell, and the local
+       developer sandbox/editor are not public mobile modes. -->
+  <div class="ob-overlay open" id="startScreen">
+    <div class="ob-card start-card">
+      <!-- Brand wordmark + slogan (same .brand/.brand-slogan component + ui.slogan i18n key
+           as the desktop top-bar) so the landing reads as T1D SIMULATOR. -->
+      <div class="brand">T1D SIMULATOR</div>
+      <div class="brand-slogan" data-i18n="ui.slogan">Prøv. Lær. Gentag.</div>
+      <h2 class="ob-title" data-i18n="m.start.title">Velkommen</h2>
+      <p class="ob-body start-intro" data-i18n="m.start.intro">Udforsk, hvordan mad, insulin, aktivitet, søvn og stress påvirker blodsukkeret hos spillets karakterer.</p>
+      <!-- Four short benefits — what the player gets out of it (motivating framing for
+           newly-diagnosed players). A small in-style CSS dot marks each line (no emoji);
+           the text is i18n. -->
+      <ul class="start-benefits">
+        <li><span data-i18n="m.start.benefit1">Motiverende læring i dit eget tempo</span></li>
+        <li><span data-i18n="m.start.benefit2">Hurtig feedback med det samme</span></li>
+        <li><span data-i18n="m.start.benefit3">Interaktiv udforskning med hurtig feedback</span></li>
+        <li><span data-i18n="m.start.benefit4">Forstå fysiologien bag kurven</span></li>
+      </ul>
+      <!-- Sandbox is disabled (desktop parity — it is not offered as a play mode).
+           Box Challenge will join Campaign here in the mode-flow phase. -->
+      <div class="start-modes">
+        <button class="start-mode-card" onclick="startScreenChoose('campaign')">
+          <img class="start-mode-icon" src="../assets/icons/app/mode-campaign.png" alt="">
+          <span class="start-mode-name" data-i18n="mode.campaign">Kampagne</span>
+          <span class="start-mode-desc" data-i18n="mode.campaign.desc">Hjælp en karakter med at holde blodsukkeret stabilt — trin for trin</span>
+        </button>
+      </div>
+      <!-- "Show welcome on startup" preference (checked = show the landing each launch).
+           Unchecking it + closing means the app opens straight to the inactive graph next
+           time; it can be re-enabled from Settings. Persisted in t1dMobileShowWelcome. -->
+      <label class="start-show-welcome"><input type="checkbox" id="startShowWelcome" checked> <span data-i18n="m.start.showWelcome">Vis velkomst ved opstart</span></label>
+      <!-- Close the landing without starting anything — reveals the inactive graph + menus
+           (desktop-parity blank pre-game state). Pick a mode (or press play) to begin. -->
+      <button class="ob-skip" onclick="closeStartScreen()" data-i18n="m.start.skip">Luk velkomst menu</button>
+    </div>
+  </div>
+  <!-- Decide the landing's visibility AS EARLY AS POSSIBLE — inline, right after the
+       element, before the render-blocking scripts (Tone.js CDN etc.) further down.
+       The HTML pre-opens #startScreen so it never flashes a blank graph when the
+       welcome IS on; here, when the player turned the welcome OFF, we strip "open"
+       during parse (before the first paint) so it never flashes ON for ~½s either.
+       Doing this in mobile.js was too late: that script loads last, after the CDN
+       fetch, during which the open overlay had already painted. We also reflect the
+       saved preference in the checkbox here so it never shows the HTML default. -->
+  <script>
+    (function () {
+      try {
+        var show = localStorage.getItem('t1dMobileShowWelcome') !== '0';
+        var chk = document.getElementById('startShowWelcome');
+        if (chk) chk.checked = show;
+        if (!show) document.getElementById('startScreen').classList.remove('open');
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- ONBOARDING — a light 3-card first-touch intro (replaces the desktop graph
+       overlay tour, which is desktop-only). Shown once (localStorage flag); warm,
+       learning-framed tone for newly-diagnosed players. Single card swapped by JS. -->
+  <div class="ob-overlay" id="onboarding">
+    <div class="ob-card">
+      <img class="ob-character" id="obCharacter" src="../assets/icons/app/character-erik.png" alt="">
+      <h2 class="ob-title" id="obTitle"></h2>
+      <p class="ob-body" id="obBody"></p>
+      <div class="ob-dots" id="obDots"></div>
+      <button class="cta green" id="obBtn" onclick="obNext()">Næste</button>
+      <button class="ob-skip" onclick="obFinish()" data-i18n="m.ob.skip">Spring over</button>
+    </div>
+  </div>
+
+  <!-- PURPOSE AND LIMITS — shown once, the first time the player starts a game
+       (any path off the landing). Reuses the ob-overlay/ob-card pattern. Same text
+       as the menu note (m.disclaimer.*). Accepting sets t1dMobileDisclaimerSeen. -->
+  <div class="ob-overlay" id="disclaimerOverlay">
+    <div class="ob-card">
+      <h2 class="ob-title" data-i18n="m.disclaimer.title">Om simulatoren</h2>
+      <p class="ob-body" data-i18n="m.disclaimer.body">T1D Simulator er et læringsspil om, hvad der påvirker blodsukkeret. Du hjælper faste, fiktive karakterer. Spillet beregner ikke insulindoser til virkelige personer og er ikke beregnet som grundlag for behandling.</p>
+      <button class="cta green" onclick="acceptDisclaimer()" data-i18n="m.disclaimer.ok">Forstået</button>
+    </div>
+  </div>
+
+  <!-- LEVEL-SELECT overlay — full-screen scrollable grid of all campaign levels.
+       Built from core.getProgress() + core.isLevelUnlocked() by openLevelSelect()
+       (mobile.js). Mirrors the desktop level-select cards: number, title, best stars,
+       locked / under-construction state. Tapping an unlocked card boots that level. -->
+  <div class="ls-overlay" id="levelSelect">
+    <div class="ls-head">
+      <h2 class="ls-title" data-i18n="campaign.selectLevel">Vælg bane</h2>
+      <button class="ls-close" onclick="closeLevelSelect()" aria-label="Luk">&times;</button>
+    </div>
+    <div class="ls-grid" id="lsGrid"></div>
+  </div>
+
+  <!-- CAMPAIGN INTRO overlay — selected character, LEVEL X, title,
+       description, the objectives checklist, and a Start button. Reuses the ob-card
+       look. The sim is PAUSED behind it (set by showCampaignIntro). Built by
+       showCampaignIntro() from the core's intro descriptor. -->
+  <div class="ob-overlay" id="campaignIntro">
+    <div class="ob-card ci-card">
+      <img class="ob-character" id="ciCharacter" src="../assets/icons/app/character-erik.png" alt="">
+      <div class="ci-character-caption" id="ciCharacterCaption"></div>
+      <div class="ci-level" id="ciLevel">LEVEL 1</div>
+      <h2 class="ob-title ci-title" id="ciTitle"></h2>
+      <p class="ob-body ci-desc" id="ciDesc"></p>
+      <div class="ci-obj-section">
+        <div class="ci-obj-head" data-i18n="campaign.objectives">Krav</div>
+        <ul class="ci-obj-list" id="ciObjList"></ul>
+      </div>
+      <button class="cta green" id="ciStartBtn" onclick="closeCampaignIntro()" data-i18n="campaign.startLevel">▶ Start banen</button>
+    </div>
+  </div>
+
+  <!-- CAMPAIGN RESULT overlay — shared by level-complete and level-failed. Reuses the
+       go-card look (centred result card). Built by showCampaignComplete() /
+       showCampaignFailed() from the core's descriptors. Stars + TIR + points show
+       on complete; missing objectives show on failed. Buttons differ per outcome. -->
+  <div class="go-overlay" id="campaignResult">
+    <div class="go-card cr-card">
+      <img class="go-character" id="crCharacter" src="../assets/icons/app/character-erik.png" alt="">
+      <div class="campaign-character-caption-mobile" id="crCharacterCaption"></div>
+      <div class="ci-level" id="crLevel">LEVEL 1</div>
+      <h2 class="cr-headline" id="crHeadline"></h2>
+      <h3 class="cr-subtitle" id="crSubtitle"></h3>
+      <!-- Complete-only: stars + TIR + points breakdown -->
+      <div class="cr-complete" id="crComplete">
+        <div class="cr-stars" id="crStars"></div>
+        <div class="cr-tir"><span class="cr-tir-label">TIR</span> <span class="cr-tir-value" id="crTir">0%</span></div>
+        <div class="cr-points">
+          <div class="cr-pts-row"><span class="cr-pts-label" data-i18n="campaign.basePoints">Points</span><span class="cr-pts-value" id="crBase">0</span></div>
+          <div class="cr-pts-row"><span class="cr-pts-label" id="crStarLabel">⭐ × 0</span><span class="cr-pts-value cr-pts-bonus" id="crBonus">+0</span></div>
+          <div class="cr-pts-row cr-pts-total"><span class="cr-pts-label" data-i18n="campaign.total">Total</span><span class="cr-pts-value" id="crTotal">0</span></div>
+        </div>
+      </div>
+      <!-- Failed-only: encouragement + missing objectives -->
+      <div class="cr-failed" id="crFailed">
+        <p class="cr-fail-body" data-i18n="campaign.failed.body">Et eller flere mål blev ikke opfyldt</p>
+        <ul class="ci-obj-list" id="crMissing"></ul>
+      </div>
+      <!-- A4d: sign the campaign score. saveLevelResult already stored the existing
+           signature; this lets a campaign-only player type/confirm their name so the
+           grid shows it. Hidden on failed/physiology runs (no best score recorded). -->
+      <div class="go-save-form" id="crSaveForm" hidden>
+        <label class="go-save-label" for="crSignatureInput" data-i18n="game.over.saveLabel">Skriv dit navn på resultatet</label>
+        <div class="go-save-row">
+          <input type="text" id="crSignatureInput" maxlength="20" placeholder="Dit navn" data-i18n-placeholder="profile.name.placeholder">
+          <button class="go-save-btn" id="crSaveBtn" data-i18n="game.over.saveBtn">Gem</button>
+        </div>
+      </div>
+      <!-- Shown only when the run used physiology view (practice mode) — stars/score not saved. -->
+      <p class="go-save-result" id="crSaveResult" hidden></p>
+      <div class="cr-buttons" id="crButtons"></div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- Symptom VFX tunnel-vision overlay — a body-level sibling of #app (NOT inside it):
+     a CSS filter on #game-view would otherwise break this element's position:fixed.
+     Driven by updateSymptomEffects() (opacity 0..0.7). Copied from desktop #symptom-vignette. -->
+<div id="symptom-vignette"></div>
+
+  <!-- Shared core (reused verbatim from the desktop build): i18n + food data +
+       the physiology model + the BG-zone/trend helpers. mobile.js provides the
+       few globals these expect (appSettings, cgmDataPoints, …) and drives a
+       sandbox Simulator. -->
+  <!-- Audio: Tone.js + the shared sounds.js. AUDIO_BASE_PATH tells sounds.js where
+       the audio files live relative to this page (/mobile/ → ../). sounds.js owns the
+       global appSettings, so it must load before the model + mobile.js. -->
+  <script>window.AUDIO_BASE_PATH = '../';</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+<script src="../js/sounds.js?v=0.9.114"></script>
+<script src="../js/i18n.js?v=0.9.114"></script>
+<script src="../js/dose-controls.js?v=0.9.114"></script>
+<script src="../js/foods.js?v=0.9.114"></script>
+<script src="../js/hovorka.js?v=0.9.114"></script>
+<script src="../js/physiology-engine.js?v=0.9.114"></script>
+<script src="../js/graph-renderer.js?v=0.9.114"></script>
+<script src="../js/simulator.js?v=0.9.114"></script>
+  <!-- Campaign data + shared DOM-free engine. levels.js (CAMPAIGN_LEVELS +
+       GLOBAL_TIPS) must load before campaign-core.js; both before mobile.js so
+       the mobile host can construct the engine. -->
+<script src="../js/levels.js?v=0.9.114"></script>
+<script src="../js/archetypes.js?v=0.9.114"></script>
+<script src="../js/symptoms.js?v=0.9.114"></script>
+<script src="../js/campaign-core.js?v=0.9.114"></script>
+<script src="mobile.js?v=0.9.114"></script>
+</body>
+</html>

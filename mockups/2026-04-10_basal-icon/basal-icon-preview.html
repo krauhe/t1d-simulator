@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>Basal-ikon preview</title>
+<style>
+  body {
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: Inter, system-ui, sans-serif;
+    padding: 32px;
+    margin: 0;
+  }
+  h1 { font-size: 18px; margin: 0 0 24px; font-weight: 500; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 24px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+  .row .label { width: 120px; font-size: 12px; color: #94a3b8; }
+  .row img { display: block; }
+  .checkered {
+    background:
+      linear-gradient(45deg, #1e293b 25%, transparent 25%),
+      linear-gradient(-45deg, #1e293b 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #1e293b 75%),
+      linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+    padding: 8px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+<h1>basal-ikon på forskellige størrelser (mod mørk baggrund)</h1>
+
+<div class="row">
+  <span class="label">16 px (lille)</span>
+  <div class="checkered"><img src="../assets/icons/syringe-blue.svg" width="16" height="16"></div>
+</div>
+<div class="row">
+  <span class="label">20 px (graf)</span>
+  <div class="checkered"><img src="../assets/icons/syringe-blue.svg" width="20" height="20"></div>
+</div>
+<div class="row">
+  <span class="label">24 px (dock)</span>
+  <div class="checkered"><img src="../assets/icons/syringe-blue.svg" width="24" height="24"></div>
+</div>
+<div class="row">
+  <span class="label">48 px</span>
+  <div class="checkered"><img src="../assets/icons/syringe-blue.svg" width="48" height="48"></div>
+</div>
+<div class="row">
+  <span class="label">96 px</span>
+  <div class="checkered"><img src="../assets/icons/syringe-blue.svg" width="96" height="96"></div>
+</div>
+<div class="row">
+  <span class="label">192 px</span>
+  <div class="checkered"><img src="../assets/icons/syringe-blue.svg" width="192" height="192"></div>
+</div>
+</body>
+</html>

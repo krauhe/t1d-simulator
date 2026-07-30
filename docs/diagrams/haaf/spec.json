@@ -1,0 +1,36 @@
+{
+  "type": "compartment-diagram",
+  "title": "HAAF — area-based hypo memory and counterregulation gate (Cryer / Dagogo-Jack)",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "lowBG",  "label": "Hypoglycemia trigger", "var": "BG < 3.0 mmol/L", "color": "stress",  "type": "external" },
+    { "id": "highBG", "label": "Recovery trigger",     "var": "BG > 4.0 mmol/L", "color": "glucose", "type": "external" },
+
+    { "id": "area",   "label": "Hypo memory",      "var": "hypoArea", "unit": "decay t½ ≈ 3 days", "color": "stress",  "type": "tissue" },
+    { "id": "gate",   "label": "Counterreg gate",  "var": "counterRegFactor",  "color": "stress", "type": "effect" },
+
+    { "id": "acute",  "label": "Acute stress amp", "var": "× counterRegFactor", "color": "stress", "type": "effect" },
+    { "id": "egp",    "label": "Liver EGP",        "var": "rescue response",    "color": "liver",  "type": "tissue", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "lowBG",  "to": "area",  "label": "+=depth·dt", "kind": "input" },
+    { "from": "highBG", "to": "area",  "label": "−k_d·area",  "kind": "elimination" },
+    { "from": "area",   "to": "gate",  "label": "0.3 + 0.7 · exp(−hypoArea / 30)", "kind": "signal" },
+    { "from": "gate",   "to": "acute", "label": "× factor",                   "kind": "signal" },
+    { "from": "acute",  "to": "egp",   "label": "drives glucagon/adrenaline", "kind": "signal" }
+  ],
+  "caption": {
+    "scope": "Hypoglycemia-Associated Autonomic Failure (HAAF; Cryer 1992, Cryer et al. 2003) is modelled as an area-based memory rather than a discrete episode count. When BG falls below 3.0 mmol/L, hypoArea accumulates proportionally to depth × duration; when BG stays above 4.0 mmol/L it decays with t½ ≈ 3 simulated days (calibrated to Dagogo-Jack et al., J Clin Invest 91:819-828, 1993 and Cranston et al., Lancet 344:283-287, 1994). The accumulated burden passes through a sigmoid that produces counterRegFactor between 0.3 and 1.0. This factor multiplies the acute stress amplitude — modelled here as the gate factor multiplying acute stress amplitude in the stress multiplier — so repeated hypoglycemia progressively blunts the catecholamine/glucagon rescue response. Acute stress in T1D is already capped at 0.4 (vs ~5.0 healthy) due to absent glucagon secretion; HAAF further reduces what little counter-regulatory reserve remains.",
+    "variables": [
+      { "symbol": "hypoArea",         "category": "compartment", "definition": "cumulative hypo burden (mmol·min equivalent); accumulates at rate max(0, 3.0 − BG) while BG < 3.0 mmol/L" },
+      { "symbol": "counterRegFactor", "category": "compartment", "definition": "counter-regulatory gate output: 0.3 + 0.7 · exp(−hypoArea / 30); range [0.3, 1.0]; floor at 0.3 (blunting is never complete)" },
+      { "symbol": "BG < 3.0 mmol/L", "category": "compartment", "definition": "triggering condition for hypo memory accumulation (hypo threshold)" },
+      { "symbol": "BG > 4.0 mmol/L", "category": "compartment", "definition": "triggering condition for hypo memory decay (recovery threshold)" },
+      { "symbol": "+= max(0, 3.0 − BG) · dt", "category": "flow", "definition": "incremental hypoArea accumulation rate — proportional to hypoglycemia depth and proportional to simulated time step dt" },
+      { "symbol": "exponential decay", "category": "flow",        "definition": "hypoArea decay toward zero with half-life ≈ 3 simulated days when BG > 4.0 mmol/L; parameterised as ln(2)/4320 per sim-minute" },
+      { "symbol": "0.3 + 0.7 · exp(−hypoArea / 30)", "category": "flow", "definition": "sigmoid mapping hypoArea to counterRegFactor; scale constant 30 calibrated so BG 2.5 for 20 min yields ~20 % reduction (Dagogo-Jack 1993)" },
+      { "symbol": "× factor",          "category": "flow",        "definition": "counterRegFactor applied as multiplicative scalar to acute stress amplitude in the stress multiplier sum" },
+      { "symbol": "drives glucagon/adrenaline", "category": "flow", "definition": "acute stress amplitude modulated by counterRegFactor; feeds directly into the stressMultiplier term used in EGP = EGP₀ · max(0, stressMultiplier − x3)" }
+    ]
+  }
+}

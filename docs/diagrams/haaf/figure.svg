@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 426.07142857142856 609.001" width="426.07142857142856" height="609.001" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>HAAF — area-based hypo memory and counterregulation gate (Cryer / Dagogo-Jack)</title>
+  <defs>
+    <marker id="arrow-f472b6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f472b6"/></marker>
+    <marker id="arrow-4ade80" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4ade80"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 176.80714285714285 64 L 176.80714285714285 129" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e0" data-from="lowBG" data-to="area"/>
+    <path d="M 249.26428571428573 64 L 249.26428571428573 129" fill="none" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow-4ade80)" data-edge-id="e1" data-from="highBG" data-to="area"/>
+    <path d="M 213.03571428571428 201 L 213.03571428571428 266" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e2" data-from="area" data-to="gate"/>
+    <path d="M 213.03571428571428 318 L 213.03571428571428 383" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e3" data-from="gate" data-to="acute"/>
+    <path d="M 213.03571428571428 435 L 213.03571428571428 500" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e4" data-from="acute" data-to="egp"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="lowBG">
+      <rect x="12.00" y="12.00" width="189.03571428571428" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="106.52" y="32.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Hypoglycemia trigger</text>
+      <text x="106.52" y="50.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">BG &lt; 3.0 mmol/L</text>
+    </g>
+    <g class="node" data-node-id="highBG">
+      <rect x="225.04" y="12.00" width="189.03571428571428" height="52" rx="10" ry="10" fill="rgba(74, 222, 128, 0.2)" stroke="#4ade80" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="319.55" y="32.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Recovery trigger</text>
+      <text x="319.55" y="50.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">BG &gt; 4.0 mmol/L</text>
+    </g>
+    <g class="node" data-node-id="area">
+      <rect x="152.58" y="129.00" width="120.91428571428571" height="72" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2"/>
+      <text x="213.04" y="151.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Hypo memory</text>
+      <text x="213.04" y="169.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">hypoArea</text>
+      <text x="213.04" y="190.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">decay t½ ≈ 3 days</text>
+    </g>
+    <g class="node" data-node-id="gate">
+      <rect x="112.75" y="266.00" width="200.57142857142856" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="213.04" y="286.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Counterreg gate</text>
+      <text x="213.04" y="304.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">counterRegFactor</text>
+    </g>
+    <g class="node" data-node-id="acute">
+      <rect x="101.21" y="383.00" width="223.6428571428571" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="213.04" y="403.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Acute stress amp</text>
+      <text x="213.04" y="421.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">× counterRegFactor</text>
+    </g>
+    <g class="node" data-node-id="egp">
+      <rect x="118.52" y="500.00" width="189.03571428571428" height="52" rx="10" ry="10" fill="rgba(180, 83, 9, 0.2)" stroke="#b45309" stroke-width="2"/>
+      <text x="213.04" y="520.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Liver EGP</text>
+      <text x="213.04" y="538.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">rescue response</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0">
+      <rect x="135.81" y="87.50" width="82.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="176.81" y="101.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+=depth·dt</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1">
+      <rect x="211.86" y="87.50" width="74.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="249.26" y="101.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">−k_d·area</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2">
+      <rect x="96.44" y="224.50" width="233.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="213.04" y="238.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">0.3 + 0.7 · exp(−hypoArea / 30)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3">
+      <rect x="179.24" y="341.50" width="67.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="213.04" y="355.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">× factor</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4">
+      <rect x="114.44" y="458.50" width="197.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="213.04" y="472.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">drives glucagon/adrenaline</text>
+    </g>
+  </g>
+</svg>

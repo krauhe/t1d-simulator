@@ -1,0 +1,802 @@
+================================================================================
+FULD MODELGENNEMGANG — T1D Simulator
+Dato: 2026-03-20
+Reviewer: Claude Opus 4.6 (fysiologisk modelreview)
+Filer gennemgået:
+  - js/hovorka.js (524 linjer)
+  - js/simulator.js (~3008 linjer)
+  - docs/MODEL-IMPLEMENTATION.md (~2100 linjer)
+  - docs/BG-SCIENCE.md (~200 linjer, indledning)
+================================================================================
+
+OVERBLIK
+--------
+Simulatoren implementerer Hovorka 2004-modellen (13 ODE'er) med omfattende
+udvidelser: fedt/protein-modellering, ketonmodel, stresshormon-system,
+circadian ISF, HAAF, lever-glykogenpool, hjerne-energi-deficit, acidose,
+CGM-simulation og søvnforstyrrelses-model. Arkitekturen er gennemtænkt og
+velkommenteret. Nedenfor følger en systematisk gennemgang af hvert subsystem.
+
+
+================================================================================
+## [OK] — Hovorka 2004 kernemodel (11+2 ODE'er)
+================================================================================
+
+**Fil:** hovorka.js, linje 278-476
+**Subsystem:** Glukose-insulin ODE-system
+
+Tilstandsvariable og ODE'er er korrekt implementeret i forhold til Hovorka 2004:
+- D1/D2 tarm-kompartmenter: korrekt 2-kompartment med tau_G og A_G.
+- S1/S2 subkutane insulin-depoter: korrekt med pulsFaktor-udvidelse.
+- Q1/Q2 glukose-kompartmenter: korrekt med alle flux-termer.
+- I plasma-insulin: korrekt (U_I/V_I - k_e*I).
+- x1/x2/x3 insulin-aktionsvariable: korrekt (kb*I - ka*x).
+- C CGM-sensor: korrekt (ka_int*(G-C)).
+- E1/E2 motionseffekter: korrekt (Resalat 2020).
+
+Parameterværdier matcher publicerede værdier fra Hovorka 2004.
+Euler-integration er passende for tidsstep <= 1 min (subdeles korrekt).
+
+Clamping: alle tilstande >= 0, Q1 >= 0.5*V_G. Korrekt og nødvendigt.
+
+
+================================================================================
+## [OK] — EGP-formel (stressMultiplier - x3)
+================================================================================
+
+**Fil:** hovorka.js, linje 354
+**Subsystem:** Endogen glukoseproduktion
+
+Formlen `EGP = EGP_0 * max(0, stressMultiplier - x3)` er en forbedring
+over originalen `EGP_0 * (1-x3)`. Den tillader kontraregulering at "bryde
+igennem" insulin-suppression, hvilket er fysiologisk korrekt.
+
+Kapning via max(0,...) sikrer ikke-negativ EGP. Korrekt.
+
+
+================================================================================
+## [OK] — Insulin steady-state initialisering
+================================================================================
+
+**Fil:** hovorka.js, linje 168-211
+**Subsystem:** Binær søgning til steady-state
+
+20 iterationer af binær søgning med 2000 Euler-steps giver tilstrækkelig
+konvergens. Steady-state basal rate gemmes korrekt.
+
+
+================================================================================
+## [OK] — Bolus-puls overlap-beregning
+================================================================================
+
+**Fil:** simulator.js, linje 1086-1109
+**Subsystem:** Hurtigvirkende insulin-input
+
+Robust beregning med overlap-fraction mellem step-interval og puls-vindue.
+Løser korrekt det numeriske problem med store tidsstep der kunne misse hele
+bolus-pulsen. Vel-dokumenteret.
+
+
+================================================================================
+## [OK] — ISF-mapping til Hovorka-parametre
+================================================================================
+
+**Fil:** simulator.js, linje 192, 1376-1377
+**Subsystem:** ISF → k_b skalering
+
+`insulinSensitivityScale = ISF / 3.75` ved konstruktion.
+Dynamisk ISF-modifier via `setISFModifier(currentISF / this.ISF)` hvert tick.
+Korrekt: basisskaleringen er allerede indlejret i S_IT/S_ID/S_IE, og den
+dynamiske modifier skalerer relativt.
+
+
+================================================================================
+## [OK] — Fedt-kompartmentmodel (pizza-effekt)
+================================================================================
+
+**Fil:** simulator.js, linje 1140-1160
+**Subsystem:** Fedt-forsinkelse af kulhydratabsorption
+
+Korrekt 2-kompartment: fatStomach → fatIntestine → absorberet.
+Dynamisk tau_G = 40 + 18*ln(1 + fatIntestine/10) er elegant og giver den
+ønskede logaritmiske mætning (kalibreret mod Smart 2013: 35g → ~47 min).
+Hovorka's tau_G opdateres korrekt hvert tick.
+
+
+================================================================================
+## [OK] — FFA-induceret insulinresistens
+================================================================================
+
+**Fil:** simulator.js, linje 1162-1184
+**Subsystem:** Diæt-FFA → ISF-reduktion
+
+Korrekt Hill-funktion med passende parametre (max 42%, EC50=8g, n=2).
+Clearance med t½=180 min matcher Wolpert 2013's tidsforløb.
+Feedforward til currentISF via division. Korrekt separation fra
+lipolyse-FFA (ffaLipolysis) i ketonmodellen.
+
+
+================================================================================
+## [OK] — Protein-model (glukagon-drevet HGP)
+================================================================================
+
+**Fil:** simulator.js, linje 1186-1227
+**Subsystem:** Protein → aminosyrer → glukagon → EGP
+
+3-kompartment absorption korrekt. Hill-funktion (EC50=8, n=2, max=0.25)
+giver den rigtige tærskeleffekt og mætning. Integration med stressMultiplier
+via glycogen-afhængighed (0.5 + 0.5*glycogenReserve) er fysiologisk
+velbegrundet. Kalibrering mod Paterson 2016 (+1.7 mmol/L ved 75g) er
+dokumenteret.
+
+
+================================================================================
+## [OK] — Ketonmodel (FFA-drevet, lipolyse + CPT-1)
+================================================================================
+
+**Fil:** simulator.js, linje 2486-2598
+**Subsystem:** Ketoner (BHB)
+
+Dobbelt Hill-gating (lipolyse EC50=5, CPT-1 EC50=8) er en elegant
+modellering der fanger begge fysiologiske kontrolpunkter. Michaelis-Menten
+clearance med motions-boost og renal excretion er korrekt.
+
+Kalibrering mod kliniske scenarier (normal, faste, pumpesvigt 4t/8t)
+er dokumenteret og verificeret med tests.
+
+
+================================================================================
+## [OK] — Hjerne-energi-deficit model
+================================================================================
+
+**Fil:** simulator.js, linje 2024-2053
+**Subsystem:** Neuroglykopeni / game over
+
+Deficit-rate = F_01 * (1 - BG/2.5) er en fornuftig lineær approksimation.
+Tærskel 8.0 mmol ≈ 1.4g glykogenreserve (Oz 2007). Recovery t½=45 min.
+Korrekt implementeret med eksponentiel decay.
+
+
+================================================================================
+## [OK] — Acidose-belastningsmodel
+================================================================================
+
+**Fil:** simulator.js, linje 2073-2120
+**Subsystem:** DKA acidose → game over
+
+Lineær + kvadratisk rate (pH er logaritmisk — korrekt begrundelse).
+Insulin-suppression guard (plasmaI-baseret Hill-funktion) sikrer at
+faste-ketose ikke fejlagtigt udløser acidose. Elegant løsning.
+
+
+================================================================================
+## [OK] — Stress-system (akut + kronisk)
+================================================================================
+
+**Fil:** simulator.js, linje 1874-1945
+**Subsystem:** Kontraregulering, Somogyi, dawn
+
+To-lags system med korrekte henfaldskonstanter.
+Akut stress cap=0.4 for T1D er velbegrundet (tabt glukagon-respons).
+counterRegFactor skalerer hypo-stress korrekt.
+insulinResistanceFactor = 1.0 + chronicStress*0.5 er fysiologisk passende.
+
+
+================================================================================
+## [OK] — HAAF-model (kontinuert areal-baseret)
+================================================================================
+
+**Fil:** simulator.js, linje 1977-2001
+**Subsystem:** Hypoglykæmi-unawareness
+
+Areal-baseret model er overlegent i forhold til episode-tælling.
+Sigmoid mapping (gulv 0.3, skala 30) er kalibreret passende.
+Recovery t½=3 sim-dage (komprimeret fra kliniske 2-3 uger).
+Korrekt: recovery stopper under aktiv hypo (BG < 4.0).
+
+
+================================================================================
+## [OK] — Lever-glykogenpool
+================================================================================
+
+**Fil:** simulator.js, linje 2160-2231
+**Subsystem:** Massebalanceret glykogenmodel
+
+Eksplicit massebalance med forbrug (basal, stress, motion) og genopfyldning
+(gluconeogenese, postprandial). Skalering med glycogenReserve sikrer
+energibalance (review 2026-03-19 fix). Passende parametre.
+
+
+================================================================================
+## [OK] — CGM-simulation
+================================================================================
+
+**Fil:** simulator.js, linje 1411-1477 + hovorka.js linje 438
+**Subsystem:** CGM-sensor med forsinkelse, støj, drift
+
+Fysiologisk forsinkelse via Hovorka's C-kompartment (ka_int=0.073 → ~14 min).
+Proportional støj (2.5-4% af BG), sinusbølge-drift, diskontinuiteter.
+Kalibreret fra 34.000 Libre 2-målinger. Korrekt 5-min opdateringsinterval.
+
+
+================================================================================
+## [OK] — Circadian ISF-kurve
+================================================================================
+
+**Fil:** simulator.js, linje 959-988
+**Subsystem:** Døgnvariation i insulinfølsomhed
+
+Cosinus-interpolation mellem kontrolpunkter giver glat S-kurve.
+Morgen nadir 0.70 (08:00) og aften peak 1.20 (19:00) er klinisk passende.
+Ærlig vurdering af evidensgrundlaget er dokumenteret.
+
+
+================================================================================
+## [OK] — Circadian kortisol (dawn-fænomenet)
+================================================================================
+
+**Fil:** simulator.js, linje 875-906
+**Subsystem:** Morgenkortisol → HGP
+
+Kvart-sinusbue med dag-til-dag variation (amplitude, peak-tid).
+Søvngæld og kronisk stress forstærker amplitude. Korrekt.
+
+
+================================================================================
+## [OK] — Insulinvariabilitet
+================================================================================
+
+**Fil:** simulator.js, linje 1766-1796
+**Subsystem:** Bioavailability og tauFactor
+
+Box-Muller normalfordeling med passende CV'er. Bioavailability mean 78%
+(bolus) / 82% (basal) matcher litteraturen. tauFactor CV=25% matcher
+Heinemann 2002's intra-individuelle variation.
+
+
+================================================================================
+## [OK] — Søvnforstyrrelses-model
+================================================================================
+
+**Fil:** simulator.js, linje 1639-1701
+**Subsystem:** Natlige interventioner → søvntab → stress
+
+Korrekt mekanik: vågenhed → søvntab → chronicStress om morgenen.
+30-min sammenlægningsvindue for vågen-hændelser. Max 4 timer/nat.
+Baseret på Donga 2010 (~21% ISF-reduktion ved 1 nat).
+
+
+================================================================================
+                     A D V A R S L E R
+================================================================================
+
+
+================================================================================
+## [ADVARSEL] — Motions-glykogenforbrug er IKKE skaleret med glycogenReserve
+================================================================================
+
+**Fil:** simulator.js, linje 2181-2196
+**Subsystem:** Lever-glykogenpool → motionsforbrug
+
+**Problem:** exerciseEGP_gPerMin trækkes fra glykogenpoolen uden at skalere
+med glycogenReserve. Basal- og stress-glycogenolysis skaleres korrekt
+(linje 2193-2194), men motionsforbrug skaleres ikke:
+
+    const scaledBasal = basalGlycogenolysis_gPerMin * this.glycogenReserve;
+    const scaledStress = stressEGP_gPerMin * this.glycogenReserve;
+    // ^ skaleret korrekt
+
+    const totalConsumption = scaledBasal + scaledStress + exerciseEGP_gPerMin;
+    // ^ exerciseEGP er IKKE skaleret
+
+**Evidens:** Når glykogenpoolen nærmer sig 0, trækker motion stadig fuld rate.
+Det kan give negative glykogen-værdier (clampes til 0, men forbruget er
+allerede "brugt" fra en tom pool). Ved 90g start og høj cardio (0.63 g/min)
+plus stress (0.08 g/min) tømmes poolen hurtigt, men motionsdelen driver
+forbruget selv efter glycogenReserve=0.
+
+**Forslag:** Skalér exerciseEGP_gPerMin med glycogenReserve, da leverens
+glykogen-baserede energilevering også afhænger af tilgængelige reserver:
+
+    const scaledExercise = exerciseEGP_gPerMin * this.glycogenReserve;
+    const totalConsumption = scaledBasal + scaledStress + scaledExercise;
+
+Alternativt kan man argumentere for at musklernes energibehov under motion
+delvist dækkes af andre substrater (FFA, laktat), men det afspejles ikke
+i den nuværende model.
+
+
+================================================================================
+## [ADVARSEL] — Post-exercise ISF-boost: docs siger lineær, kode bruger
+## eksponentiel decay
+================================================================================
+
+**Fil:** simulator.js, linje 738-751 vs. docs/MODEL-IMPLEMENTATION.md, linje 1000
+**Subsystem:** Post-exercise insulinfølsomhed
+
+**Problem:** Dokumentationen (MODEL-IMPLEMENTATION.md linje 1000) siger:
+    "The boost decays linearly from maximum to normal over the period."
+
+Men koden bruger eksponentielt henfald:
+    const decay = Math.pow(0.5, timeAfterExercise / halfLife);
+    const currentIncrease = (motion.maxSensitivityIncreaseFactor - 1) * decay;
+
+Eksponentiel decay er fysiologisk mere korrekt (og implementeret korrekt),
+men dokumentationen bør opdateres til at matche koden.
+
+**Forslag:** Opdatér MODEL-IMPLEMENTATION.md linje 1000 fra "linearly" til
+"exponentially" og tilføj halveringstiderne (3-5 timer afhængig af intensitet).
+
+
+================================================================================
+## [ADVARSEL] — Post-exercise ISF-boost: "Duration" i docs-tabel stemmer
+## ikke med koden
+================================================================================
+
+**Fil:** simulator.js, linje 2369-2376 vs. docs/MODEL-IMPLEMENTATION.md, linje 994-998
+**Subsystem:** Post-exercise ISF varighed
+
+**Problem:** Dokumentationens tabel siger:
+    Lav:  1× exercise duration
+    Medium: 2× exercise duration
+    Høj:  4× exercise duration
+
+Men koden beregner:
+    sensitivityHalfLife = halfLife * e2Scale
+    (halfLife = 180/240/300 min for Lav/Medium/Høj)
+    sensitivityCutoffMinutes = sensitivityHalfLife * 7
+
+Varigheden afhænger IKKE af træningsvarigheden. En 15-min høj cardio-session
+giver samme post-exercise halveringstid som en 60-min session. Kun intensiteten
+bestemmer halveringstiden.
+
+Koden er sandsynligvis korrekt (halveringstid er fysiologisk uafhængig af
+varighed), men dokumentationen er misvisende.
+
+**Forslag:** Opdatér tabellen i MODEL-IMPLEMENTATION.md til at vise de
+faktiske halveringstider (180/240/300 min skaleret med e2Scaling) i stedet
+for "x exercise duration".
+
+
+================================================================================
+## [ADVARSEL] — DKA game-over dokumentation er forældet
+================================================================================
+
+**Fil:** docs/MODEL-IMPLEMENTATION.md, linje 1588-1604
+**Subsystem:** DKA game over
+
+**Problem:** Dokumentationens §11 beskriver stadig en gammel tidsbaseret
+DKA game-over model:
+    "When all of the following conditions are met simultaneously:
+    - Blood glucose above 12 mmol/L
+    - IOB below 0.1 units
+    - No active basal insulin
+    - Last insulin more than 8 hours ago
+    ...a DKA timer starts. After 6 hours a warning..."
+
+Denne tidsbaserede model eksisterer IKKE i den nuværende kode. Koden bruger
+udelukkende acidosisLoad-modellen (simulator.js linje 2073-2120 og 2844).
+Der er ingen DKA-timer, ingen BG>12 check, ingen IOB<0.1 check.
+
+Linjen 1604 siger endda: "A future improvement will tie the game-over
+condition directly to the BHB level" — men dette ER allerede implementeret!
+
+**Forslag:** Fjern hele afsnittet om den tidsbaserede DKA-model og erstat
+med beskrivelse af acidosisLoad-modellen der faktisk bruges. Dokumenter:
+    - Akkumulering: lineær + kvadratisk med BHB-overskud > 3.0 mmol/L
+    - insulinSuppression guard (faste-ketose vs. DKA)
+    - Recovery: t½ = 45 min
+    - Tærskel: 200 (game over)
+
+
+================================================================================
+## [ADVARSEL] — Game over hypo-betingelse i docs matcher ikke kode
+================================================================================
+
+**Fil:** docs/MODEL-IMPLEMENTATION.md, linje 1984
+       simulator.js, linje 2807-2823
+
+**Subsystem:** Hypo game over
+
+**Problem:** Dokumentationen siger:
+    "1. Severe hypoglycemia: Blood glucose below 1.5 mmol/L (brain death)"
+
+Men koden bruger brainEnergyDeficit-modellen, IKKE en BG < 1.5 tærskel:
+    if (this.brainEnergyDeficit >= this.BRAIN_DEFICIT_THRESHOLD) { ... }
+
+Med BG=2.0 tager det ~59 min at nå game over. Med BG=1.5 ~29 min.
+BG=1.5 er ikke en instant-death tærskel.
+
+**Forslag:** Opdatér dokumentationen til at beskrive den progressive
+neuroglykopeni-model der faktisk bruges.
+
+
+================================================================================
+## [ADVARSEL] — Game over kroniske komplikationer: docs siger 14 dage,
+## kode siger 7 dage
+================================================================================
+
+**Fil:** docs/MODEL-IMPLEMENTATION.md, linje 1987
+       simulator.js, linje 2860-2862
+
+**Subsystem:** Kroniske komplikationer game over
+
+**Problem:** Dokumentationen siger:
+    "4. Chronic complications: 14-day average BG > 15 mmol/L (after day 14)"
+
+Men koden bruger 7-dages gennemsnit efter dag 7:
+    if (this.day > 7) {
+        const avg7d = this.calculateAverageBGForPeriod(7 * 24 * 60, true);
+        if (avg7d !== null && avg7d > 15.0) { ... }
+
+Kommentaren over checkGameOverConditions (linje 2801) siger selv:
+    "4. CHRONIC COMPLICATIONS (14-day average BG > 15 mmol/L after day 14)"
+— men koden implementerer 7/7 i stedet for 14/14.
+
+**Forslag:** Synkronisér enten kode eller dokumentation. 7 dage med 7-dages
+gennemsnit er strengere end det dokumenterede 14/14 men sandsynligvis bedre
+for gameplay.
+
+
+================================================================================
+## [ADVARSEL] — IOB-beregning inkluderer ikke plasma-insulin (I)
+================================================================================
+
+**Fil:** simulator.js, linje 1137-1138
+
+**Subsystem:** Insulin On Board
+
+**Problem:** IOB beregnes som (S1 + S2) / 1000, men inkluderer IKKE
+plasma-insulin (I). Kommentaren i koden (linje 1133-1136) siger:
+    "IOB: beregn fra Hovorka's insulin-kompartmenter. S1+S2 er total
+    subkutan insulin (basal + bolus)."
+
+Men S1+S2 er kun det insulin der STADIG er under huden. Insulin der allerede
+er absorberet til plasma (state[6] = I) er aktivt og bør indgå i IOB.
+
+Det samlede aktive insulin er: S1 + S2 + I*V_I (I er i mU/L, V_I i L,
+så I*V_I er i mU).
+
+HovorkaModel's egen `get insulinOnBoard()` gør det samme (S1+S2), men
+kommentaren siger "Insulin On Board — total aktiv insulin i subkutane depoter"
+— så den er korrekt dokumenteret som kun subkutan.
+
+**Evidens:** Ved et bolus-peak har en væsentlig del af insulinet forladt
+depotet og er i plasma. IOB ville vise dette som "brugt" (lavere IOB) selv
+om insulinet stadig er farmakologisk aktivt. I praksis er effekten sandsynligvis
+lille fordi plasma-insulin clears hurtigt (k_e=0.138 min⁻¹, t½ ~5 min),
+men ved store doser eller under motion (hurtig absorption) kan det give
+et IOB der underdrevender det reelle aktive insulin.
+
+**Forslag:** Overvej at tilføje plasma-insulin til IOB:
+    const totalIOB = (S1 + S2 + I * this.hovorka.V_I) / 1000;
+
+Eller behold nuværende og dokumentér eksplicit at IOB er SUBKUTANT insulin,
+ikke totalt aktivt insulin.
+
+
+================================================================================
+## [ADVARSEL] — Fedt-kompartmenternes tau_G bruges også for protein,
+## men proteinStomach-input sker via addFood, ikke carbRate
+================================================================================
+
+**Fil:** simulator.js, linje 1206, 1737-1740
+
+**Subsystem:** Protein-absorption × fedt-interaktion
+
+**Problem:** Protein transit fra stomach til gut bruger den dynamiske
+currentTauG (linje 1206):
+    const protStomachToGut = this.proteinStomach / currentTauG * simulatedMinutesPassed;
+
+currentTauG afhænger af fatIntestine. Men fedt tilføjes til fatStomach i
+addFood (linje 1739), mens protein tilføjes til proteinStomach (linje 1740).
+Fedt fra et nyt måltid begynder i fatStomach og skal først transit til
+fatIntestine for at påvirke tau_G. Men proteinStomach deler tau_G MED
+kulhydraternes D1→D2 rate.
+
+Det hele er konsistent — men der er en subtil timing-issue: kulhydrater
+feedes via carbRate til D1 kun under "spisetiden" (10 min), mens protein
+og fedt tilføjes til mave-kompartmenterne med det samme. Kulhydraternes
+effekt ophører efter 10 min, men D1→D2 og D2→blod køres af tau_G i
+Hovorka-modellen. Protein og fedt transit styres af den SAMME tau_G, men i
+Simulator's egne ODE'er.
+
+Dette er korrekt og veldesignet — bare en note for klarhed.
+
+
+================================================================================
+                         N O T E R
+================================================================================
+
+
+================================================================================
+## [NOTE] — stressMultiplier baseline er ikke 1.0 — den er
+## glycogenBaseline + gngBaseline = 0.5*glycogenReserve + 0.5
+================================================================================
+
+**Fil:** simulator.js, linje 1348-1356
+
+**Subsystem:** StressMultiplier-beregning
+
+**Problem:** Dokumentationen (MODEL-IMPLEMENTATION.md linje 1063-1064) siger:
+    "stressMultiplier = 1.0 + acuteStress + chronicStress + circadianCortisol"
+
+Men koden beregner:
+    glycogenBaseline = 0.5 * glycogenReserve  // 0.0-0.5
+    gngBaseline = 0.5                          // fast
+    stressMultiplikator = glycogenBaseline + gngBaseline + effectiveAcuteStress
+        + chronicStressLevel + circadianKortisolNiveau + effectiveProteinGlucagon
+
+Med fuld glykogen: 0.5 + 0.5 = 1.0 → matcher. Men med tom glykogen:
+0 + 0.5 = 0.5 → stressMultiplier baseline er 0.5, ikke 1.0.
+
+Denne forskel er KORREKT fysiologisk (tom lever producerer halvt EGP), men
+dokumentationen bør opdateres for præcision.
+
+**Forslag:** Opdatér dokumentationen med den aktuelle formel der inkluderer
+glycogen-afhængighed.
+
+
+================================================================================
+## [NOTE] — Basal insulin-rate justeres til Hovorka steady-state,
+## men spillerens estimatedTDD beregnes anderledes
+================================================================================
+
+**Fil:** simulator.js, linje 661-678
+
+**Subsystem:** Basal insulin initialisering
+
+**Problem:** Spillerens basalDose beregnes fra estimatedTDD via 100-reglen:
+    TDD = 100 / ISF, basal = TDD * 0.45
+
+Men den faktiske rate der bruges er Hovorka's steadyStateBasalRate, som
+findes via binær søgning. Den initiale basal-dosis justeres (linje 678):
+    initialBasal.dose = hovorkaSteadyStateBasalRate * totalDuration / 1000
+
+Så den beregnede basalDose bruges KUN til at finde startgæt for binær
+søgning — den reelle rate styres af Hovorka. Dette er korrekt og robust,
+men kan være forvirrende: basalDose (vist i UI?) matcher ikke nødvendigvis
+den rate der faktisk bruges.
+
+**Forslag:** Kommentér eksplicit at basalDose er spillerens "label-dosis"
+og at den effektive rate kan afvige.
+
+
+================================================================================
+## [NOTE] — Renal clearance parameter R_cl: enhed mismatch i kommentar
+================================================================================
+
+**Fil:** hovorka.js, linje 109
+
+**Subsystem:** Nyrer
+
+**Problem:** Kommentaren siger: `R_cl = 0.003 // Clearance-rate [1/min]`
+
+Men i formlen (linje 328):
+    F_R = R_cl * (G - R_thr) * V_G
+
+F_R er i [mmol/min]. G og R_thr er i [mmol/L]. V_G er i [L].
+Så: R_cl * [mmol/L] * [L] = R_cl * [mmol].
+For at F_R er i [mmol/min] skal R_cl være i [1/min]. Korrekt.
+
+Men dimensionsanalysen giver: R_cl * (G - R_thr) * V_G = [1/min] * [mmol/L]
+* [L] = [mmol/min]. OK, det checker ud. Enheden [1/min] er korrekt.
+
+Ingen rettelse nødvendig — dette er OK ved nærmere eftersyn.
+
+
+================================================================================
+## [NOTE] — exerciseFactor bruger E2^2 men E2 er typisk << 1
+================================================================================
+
+**Fil:** hovorka.js, linje 359
+
+**Subsystem:** Motions-forstærkning af insulin
+
+**Problem:** exerciseFactor = 1 + alpha * E2 * E2, hvor alpha=1.79.
+E2 har en tidskonstant på 200 min og drives af E1 (τ=20 min).
+
+Ved puls 130 (medium cardio):
+    HR_effect_raw = (130-60)/60 = 1.167
+    HR_effect = 1.167 * 1.0 = 1.167 (cardio, e1Scaling=1.0)
+    E1 → 1.167 (steady state, τ=20 min → nås hurtigt)
+    E2 → E1 = 1.167 (steady state, τ=200 min → nås langsomt)
+
+    Ved steady state: exerciseFactor = 1 + 1.79 * 1.167^2 = 1 + 2.44 = 3.44
+
+Det er en MEGET kraftig forstærkning (insulin virker 3.4× stærkere).
+I praksis nås steady state aldrig ved en 30-60 min session. Men ved langvarig
+motion (>2 timer) kan E2 nå 0.8-1.0, og exerciseFactor når 2.1-2.8.
+
+Dette er kraftigere end hvad Resalat 2020 dokumenterer, men er en direkte
+konsekvens af alpha=1.79 parameteren fra deres model. Bør verificeres med
+faktiske simuleringer.
+
+
+================================================================================
+## [NOTE] — Euler-integration vs. RK4 for ketonmodellen
+================================================================================
+
+**Fil:** simulator.js, linje 2530-2598
+
+**Subsystem:** Ketonmodel numerisk stabilitet
+
+Ketonmodellen bruger Euler-integration i hovedløkken (1 step per tick).
+Hovorka-modellen subdeles korrekt (maxStepSize=1.0 min), men
+updateKetones() kaldes med hele simulatedMinutesPassed som simMinutes.
+
+Ved høj hastighed (speed=240) kan simMinutes nå 4 min. Med Michaelis-Menten
+kinetik og potentielt stive dynamik (hurtig lipolyse-start) kan dette
+give unøjagtigheder. I praksis er BHB-dynamikken langsom nok til at 4-min
+steps sandsynligvis er OK, men det er en potentiel kilde til numerisk drift.
+
+**Forslag:** Overvej at subdele updateKetones() ligesom Hovorka-modellen
+subdeles, eller verificér at 4-min steps giver < 5% afvigelse fra 1-min steps.
+
+
+================================================================================
+## [NOTE] — Fedt/protein ODE'er er Euler-integreret med hele tidssteppet
+================================================================================
+
+**Fil:** simulator.js, linje 1153-1218
+
+**Subsystem:** Fedt/protein-kompartmenter
+
+Fedt- og protein-kompartmenterne integreres med hele simulatedMinutesPassed
+(potentielt 4 min ved høj hastighed). Da tau_FAT_ABS=150 min og
+tau_PROT_ABS=90 min er tidskonstanterne store nok til at 4-min steps er
+stabile (krav: dt << tau, 4 << 90). Potentielt problem kun ved ekstremt
+høj hastighed.
+
+
+================================================================================
+## [NOTE] — Glucagon fra protein påvirker ikke ketonmodel
+================================================================================
+
+**Fil:** simulator.js
+
+**Subsystem:** Protein-glukagon → ketonmodel
+
+Protein-glukagon driver HGP via stressMultiplier, men påvirker IKKE
+ketonmodellen. Fysiologisk stimulerer glukagon faktisk BÅDE hepatisk
+glukoseproduktion og ketogenese. Men da protein normalt spises med insulin
+til stede, og ketonmodellen drives af plasma-insulin (ikke glukagon direkte),
+er dette en acceptabel forenkling.
+
+
+================================================================================
+## [NOTE] — COB-estimat bruger lineær decay, ikke Hovorka's faktiske D1+D2
+================================================================================
+
+**Fil:** simulator.js, linje 1253-1255
+
+**Subsystem:** Carbs On Board
+
+Koden estimerer COB med en simpel lineær decay baseret på tid:
+    const decayTime = 3 * currentTauG;
+    const carbDecay = Math.max(0, 1 - timeSinceConsumption / decayTime);
+
+Men Hovorka-modellens D1+D2 kompartmenter HAR den faktiske resterende
+kulhydratmængde (hovorka.carbsOnBoard getter).
+
+For UI-formål er den lineære approksimation sandsynligvis tilstrækkelig,
+men den matcher ikke nødvendigvis modellens interne tilstand præcist.
+
+**Forslag:** Overvej at bruge hovorka.carbsOnBoard direkte i stedet.
+NB: den giver mmol → gram konvertering allerede (* 180/1000).
+
+
+================================================================================
+## [NOTE] — Circadian ISF feedforward til Hovorka k_b parametre:
+## potentiel dobbelt-effekt med circadianKortisol
+================================================================================
+
+**Fil:** simulator.js, linje 1376-1377, 1355-1356
+
+**Subsystem:** ISF-modifier → Hovorka ODE'er
+
+circadianISF indgår i currentISF (linje 773), som bruges til at beregne
+ISF-modifier (linje 1376: currentISF / this.ISF). Denne modifier skalerer
+k_b1/k_b2/k_b3 i Hovorka-modellen.
+
+Samtidig indgår circadianKortisolNiveau i stressMultiplier (linje 1356),
+som skalerer EGP.
+
+Begge mekanismer er KORREKT og TILSIGTET (hybrid dawn-model, dokumenteret
+i MODEL-IMPLEMENTATION.md §8). Men det er vigtigt at huske at den samlede
+morgeneffekt er summen af begge: 15% øget HGP + 30% reduceret ISF → ~43%
+mere insulin nødvendigt. Hvis nogen justerer den ene parameter, skal den
+anden justeres tilsvarende.
+
+
+================================================================================
+## [NOTE] — Doc refererer til BG < 1.5 game over men kode har progressiv model
+================================================================================
+
+**Fil:** docs/MODEL-IMPLEMENTATION.md, linje 1984
+
+**Subsystem:** Dokumentation
+
+MODEL-IMPLEMENTATION.md §15 nævner "Blood glucose below 1.5 mmol/L (brain
+death)" som game over-betingelse, men koden bruger brainEnergyDeficit.
+hovorka.js clamper Q1 til minimum 0.5 mmol/L (linje 474), så BG kan aldrig
+nå 0. Det er brainEnergyDeficit-akkumuleringen der driver game over.
+
+(Allerede nævnt under ADVARSEL — game over hypo-betingelse.)
+
+
+================================================================================
+## [NOTE] — Afslapnings puls-targets er UNDER hvilepuls — ingen negativ effekt
+================================================================================
+
+**Fil:** simulator.js, linje 120 (AKTIVITETSTYPER)
+
+**Subsystem:** Afslapning
+
+Afslapning har hrTarget: { Lav: 58, Medium: 55, Høj: 52 }, alle UNDER
+HR_base=60. Sammen med e1Scaling=0.0 giver dette:
+- HR_effect_raw = max(0, (55-60)/60) = 0 (negativ, clamped til 0)
+- pulsFaktor = 1 + max(0, ...) * 0.5 = 1.0
+
+Afslapning kan aldrig REDUCERE insulinabsorption (pulsFaktor kan ikke gå
+under 1.0). Det er korrekt og tilsigtet (parasympatisk aktivering sænker
+ikke blodflow i subkutis nævneværdigt), men værd at notere.
+
+
+================================================================================
+## [NOTE] — Søvntab-tæller nulstilles muligvis for tidligt
+================================================================================
+
+**Fil:** simulator.js, linje 1487-1490
+
+**Subsystem:** Søvnforstyrrelses-model
+
+    if (currentHour === 22 && this.lostSleepHoursTonight > 0
+        && this.sleepDebtAppliedForDay === this.day) {
+        this.lostSleepHoursTonight = 0;
+
+Nulstillingen sker kun ved currentHour===22 OG sleepDebtAppliedForDay===day.
+Hvis spilleren aldrig vækkes (ingen natlige interventioner), nulstilles
+tælleren heller aldrig — men den er allerede 0. Korrekt.
+
+Men: applySleepDebt (linje 1698) sætter lostSleepHoursTonight=0 allerede
+ved kl. 07:00. Så ved kl. 22 er den allerede 0. Nulstillingen ved 22 er
+redundant men ufarlig.
+
+Det eneste edge case: hvis spilleren tager en natlig intervention EFTER
+sleepDebt er applied (fx kl. 07:05) men FØR kl. 22 nulstilling. Det
+søvntab ville IKKE tælles til næste morgen (da applySleepDebt allerede har
+kørt for denne dag). Resultatet: søvntab fra interventioner 07:00-22:00
+tælles aldrig. Men det er sandsynligvis tilsigtet, da søvnforstyrrelse
+kun er relevant om natten.
+
+
+================================================================================
+                         OPSUMMERING
+================================================================================
+
+Samlet vurdering:
+  KRITISK:   0
+  ADVARSEL:  7
+  NOTE:      11
+  OK:        16
+
+Simulatoren er generelt veludført med solid fysiologisk modellering.
+De vigtigste fund er dokumentations-mismatches (5 af 7 advarsler), ikke
+kodefejl. Den eneste reelle KODE-advarsel er den manglende glycogenReserve-
+skalering af exerciseEGP, og IOB-beregningens manglende inklusion af
+plasma-insulin.
+
+Alle KRITISKE issues (enhedsfejl, numerisk ustabilitet, forkert fysiologi)
+er fraværende — modellen er korrekt implementeret.
+
+ADVARSEL-listen:
+  1. Motions-glykogenforbrug mangler glycogenReserve-skalering
+  2. Post-exercise ISF: docs siger "lineær", kode er eksponentiel
+  3. Post-exercise ISF: "Duration" i docs matcher ikke kodens halveringstider
+  4. DKA game-over dokumentation er forældet (gammel tidsbaseret model)
+  5. Hypo game-over i docs: "BG < 1.5" vs. kodens brainEnergyDeficit
+  6. Kroniske komplikationer: docs siger 14d, kode siger 7d
+  7. IOB inkluderer ikke plasma-insulin
+
+================================================================================

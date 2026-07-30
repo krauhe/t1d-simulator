@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- VARIANT 2 — Concentrisk: ur-ring rundt om vertikal sprøjte i midten -->
+  <!-- Ydre ur-ring (bare ringen, ikke fyldt) -->
+  <circle cx="12" cy="12" r="11" fill="none" stroke="#94A3B8" stroke-width="1.2"/>
+  <circle cx="12" cy="12" r="9.5" fill="none" stroke="#94A3B8" stroke-width="0.5" stroke-dasharray="0.5,1.2"/>
+  <!-- Time-markører på ydre ring -->
+  <circle cx="12" cy="2" r="0.6" fill="#3B82F6"/>
+  <circle cx="22" cy="12" r="0.6" fill="#3B82F6"/>
+  <circle cx="12" cy="22" r="0.6" fill="#3B82F6"/>
+  <circle cx="2" cy="12" r="0.6" fill="#3B82F6"/>
+  <!-- Mindre markører -->
+  <circle cx="19.07" cy="4.93" r="0.35" fill="#94A3B8"/>
+  <circle cx="19.07" cy="19.07" r="0.35" fill="#94A3B8"/>
+  <circle cx="4.93" cy="19.07" r="0.35" fill="#94A3B8"/>
+  <circle cx="4.93" cy="4.93" r="0.35" fill="#94A3B8"/>
+  <!-- Vertikal sprøjte i centrum -->
+  <!-- Stempel-håndtag -->
+  <line x1="10.5" y1="5" x2="13.5" y2="5" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Stempel-stang -->
+  <line x1="12" y1="5" x2="12" y2="8" stroke="#94A3B8" stroke-width="1.3" stroke-linecap="round"/>
+  <!-- Cylinder -->
+  <rect x="9.8" y="8" width="4.4" height="8" rx="0.4" fill="rgba(255,255,255,0.95)" stroke="#94A3B8" stroke-width="1.2"/>
+  <!-- Insulin-væske (blå, fylder det meste = langtidsvirkende) -->
+  <rect x="10.4" y="9.5" width="3.2" height="6" fill="#3B82F6"/>
+  <!-- Nål -->
+  <line x1="12" y1="16" x2="12" y2="19" stroke="#94A3B8" stroke-width="0.9" stroke-linecap="round"/>
+</svg>

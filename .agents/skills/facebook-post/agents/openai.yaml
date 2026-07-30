@@ -1,0 +1,7 @@
+interface:
+  display_name: "Facebook Post"
+  short_description: "Lav opslag til T1D-gruppen"
+  default_prompt: "Use $facebook-post to draft a Facebook update for the T1D Simulator group."
+
+policy:
+  allow_implicit_invocation: true

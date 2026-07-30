@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 677.3214285714286 561.002" width="677.3214285714286" height="561.002" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>CGM sensor — interstitial delay, noise, drift, discontinuities (Rebrin &amp; Steil 1999)</title>
+  <defs>
+    <marker id="arrow-4ade80" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4ade80"/></marker>
+    <marker id="arrow-ef4444" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"/></marker>
+    <marker id="arrow-9ca3af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#9ca3af"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 92 136.001 L 92 154.001" fill="none" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow-4ade80)" data-edge-id="e0" data-from="__ext_in_0" data-to="G"/>
+    <path d="M 92 226.001 L 92 291.001" fill="none" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow-4ade80)" data-edge-id="e1" data-from="G" data-to="C"/>
+    <path d="M 92.00 363.00 L 92.00 395.50 L 294.68 437.99" fill="none" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow-ef4444)" data-edge-id="e2" data-from="C" data-to="display"/>
+    <path d="M 334.09017857142857 353.001 L 334.09017857142857 428.001" fill="none" stroke="#9ca3af" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-9ca3af)" data-edge-id="e3" data-from="noise" data-to="display"/>
+    <path d="M 422.49017857142854 353.001 L 422.49017857142854 428.001" fill="none" stroke="#9ca3af" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-9ca3af)" data-edge-id="e4" data-from="drift" data-to="display"/>
+    <path d="M 603.32 353.00 L 603.32 395.50 L 447.48 434.76" fill="none" stroke="#9ca3af" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-9ca3af)" data-edge-id="e5" data-from="jump" data-to="display"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="G">
+      <rect x="14.79" y="154.00" width="154.42857142857142" height="72" rx="10" ry="10" fill="rgba(74, 222, 128, 0.2)" stroke="#4ade80" stroke-width="2"/>
+      <text x="92.00" y="176.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">True plasma glucose</text>
+      <text x="92.00" y="194.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">G = Q1 / V_G</text>
+      <text x="92.00" y="215.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">mmol/L</text>
+    </g>
+    <g class="node" data-node-id="C">
+      <rect x="12.00" y="291.00" width="160" height="72" rx="10" ry="10" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" stroke-width="2"/>
+      <text x="92.00" y="313.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Interstitial glucose</text>
+      <text x="92.00" y="331.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">C</text>
+      <text x="92.00" y="352.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">τ ≈ 14 min</text>
+    </g>
+    <g class="node" data-node-id="noise">
+      <rect x="196.00" y="301.00" width="177.5" height="52" rx="10" ry="10" fill="rgba(156, 163, 175, 0.2)" stroke="#9ca3af" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="284.75" y="321.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Sensor noise</text>
+      <text x="284.75" y="339.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">Gaussian σ(BG)</text>
+    </g>
+    <g class="node" data-node-id="drift">
+      <rect x="397.50" y="301.00" width="119.82142857142856" height="52" rx="10" ry="10" fill="rgba(156, 163, 175, 0.2)" stroke="#9ca3af" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="457.41" y="321.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Slow drift</text>
+      <text x="457.41" y="339.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">sine wave</text>
+    </g>
+    <g class="node" data-node-id="jump">
+      <rect x="541.32" y="301.00" width="124" height="52" rx="10" ry="10" fill="rgba(156, 163, 175, 0.2)" stroke="#9ca3af" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="603.32" y="321.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Discontinuities</text>
+      <text x="603.32" y="339.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">≈ 0.7/day</text>
+    </g>
+    <g class="node" data-node-id="display">
+      <rect x="294.68" y="428.00" width="152.8" height="52" rx="10" ry="10" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" stroke-width="2"/>
+      <text x="371.08" y="448.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Displayed CGM value</text>
+      <text x="371.08" y="466.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">cgmBG</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0-ext">
+      <rect x="-42.60" y="114.00" width="269.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="92.00" y="127.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">plasma glucose (from Hovorka Q1/V_G)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1">
+      <rect x="29.40" y="249.50" width="125.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="92.00" y="263.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">ka_int · (G − C)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2">
+      <rect x="168.84" y="404.41" width="17.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="177.44" y="418.31" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">C</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3">
+      <rect x="303.89" y="381.50" width="60.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="334.09" y="395.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+ ε(BG)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4">
+      <rect x="377.89" y="381.50" width="89.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="422.49" y="395.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+ slow bias</text>
+    </g>
+    <g class="edge-label" data-edge-id="e5">
+      <rect x="501.41" y="400.94" width="89.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="546.01" y="414.84" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+ rare jump</text>
+    </g>
+  </g>
+</svg>

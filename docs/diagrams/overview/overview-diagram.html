@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>T1D Simulator — overall model architecture (simplified) — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>T1D Simulator &#8212; overall model architecture (simplified)</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="T1D Simulator — overall model architecture (simplified)">
+    </object>
+  </div>
+  <p class="scope">Simplified architecture of the T1D simulator, showing the three player-controlled input pathways (food, insulin, activity) and how they connect to the <strong>Hovorka 2004 glucose-insulin core</strong> and simulator-specific extensions. Plasma insulin I acts on glucose pools Q1/Q2 via three effect compartments (x1: transport, x2: peripheral disposal, x3: EGP suppression). Stress hormones and exercise modulate hepatic glucose production and peripheral disposal, respectively. Ketogenesis is determined by plasma insulin level. The CGM sensor reads interstitial glucose with a diffusion delay. Compartments <em>gut</em> (D1, D2) and <em>sc</em> (S1/S2 + S1b/S2b) each roll up two ODE states into a single block &#8212; this is a deliberate overview-level simplification; each subsystem is detailed in its own sub-model figure.</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">C/F/P</td><td class="def">carbohydrate / fat / protein content of a meal (player input)</td></tr>
+        <tr><td class="symbol">U/Ub</td><td class="def">rapid (bolus) and basal insulin doses (player input, mU)</td></tr>
+        <tr><td class="symbol">HR, type</td><td class="def">heart rate and exercise type driving the exercise dynamics (player input)</td></tr>
+        <tr><td class="symbol">D1, D2</td><td class="def">gut absorption cascade: stomach (D1) and intestine (D2) compartments &#8212; see gut sub-model figure</td></tr>
+        <tr><td class="symbol">S1/S2 + S1b/S2b</td><td class="def">subcutaneous insulin depots: two-stage rapid cascade (S1, S2) and parallel basal shadow cascade (S1b, S2b) &#8212; see insulin PK sub-model figure</td></tr>
+        <tr><td class="symbol">E1, E2</td><td class="def">exercise effect compartments: fast GLUT4-mediated uptake (E1) and slow post-exercise insulin sensitivity (E2)</td></tr>
+        <tr><td class="symbol">acute + chronic</td><td class="def">stress hormone state: acute catecholamine surge and chronic hypercortisol contribution to EGP elevation</td></tr>
+        <tr><td class="symbol">I</td><td class="def">plasma insulin concentration (mU/L)</td></tr>
+        <tr><td class="symbol">x1, x2, x3</td><td class="def">insulin effect compartments: x1 = glucose transport (Q1 to Q2), x2 = peripheral disposal, x3 = EGP suppression</td></tr>
+        <tr><td class="symbol">EGP</td><td class="def">endogenous (hepatic) glucose production = EGP0 &#183; max(0, stress &#8722; x3)</td></tr>
+        <tr><td class="symbol">Q1, Q2</td><td class="def">glucose pools: Q1 = plasma glucose (BG = Q1 / V<sub>G</sub>), Q2 = peripheral (intracellular) glucose</td></tr>
+        <tr><td class="symbol">BHB</td><td class="def">beta-hydroxybutyrate &#8212; dominant ketone body; rate of production gated by plasma insulin level</td></tr>
+        <tr><td class="symbol">C_int</td><td class="def">interstitial glucose concentration read by the CGM sensor (mmol/L)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">U_G</td><td class="def">glucose appearance rate from gut into plasma (mmol/min)</td></tr>
+        <tr><td class="symbol">U_I</td><td class="def">rapid insulin appearance rate from SC depot into plasma (mU/min)</td></tr>
+        <tr><td class="symbol">U_Ib</td><td class="def">basal insulin appearance rate from SC shadow cascade into plasma (mU/min)</td></tr>
+        <tr><td class="symbol">kb</td><td class="def">build-up rate constant driving I into effect compartments (kb1, kb2, kb3 for x1, x2, x3)</td></tr>
+        <tr><td class="symbol">F01c</td><td class="def">insulin-independent glucose uptake (brain, red blood cells, etc.) &#8212; fixed ~0.0097 &#215; weight mmol/min</td></tr>
+        <tr><td class="symbol">F_R</td><td class="def">renal glucose excretion: occurs when plasma glucose exceeds ~9 mmol/L (renal threshold)</td></tr>
+        <tr><td class="symbol">ka_int</td><td class="def">interstitial diffusion rate constant (~0.073 /min, giving ~14 min CGM lag)</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Protein → glucagon → hepatic glucose production (Paterson 2016) — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Protein → glucagon → hepatic glucose production (Paterson 2016)</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="Protein → glucagon → hepatic glucose production (Paterson 2016)">
+    </object>
+  </div>
+  <p class="scope">Protein-driven hepatic glucose production pathway, calibrated to Paterson et al. (<em>Diabet Med</em> 33:1151-1157, 2016). Ingested protein is absorbed through a two-stage gastric-intestinal cascade (P_stomach → P_gut, shared τG with carbohydrates) into a circulating amino-acid pool (AA). A Hill-saturation function converts AA concentration to a glucagon drive signal (f_hill = PROTEIN_GLUCAGON_MAX · AAⁿ / (EC50ⁿ + AAⁿ); n = 2, EC50 = 8 g, max = 0.25). Liver glycogen reserve R scales f_hill by (0.5 + 0.5·R): when glycogen is replete the full glucagon effect (glycogenolysis + gluconeogenesis) applies; when glycogen is depleted only the gluconeogenesis half (~50 %) persists. The resulting signal is added to the unified stressMultiplier, which competes with insulin x3 suppression in the EGP equation. Calibration target: 75 g protein → +1.6–1.7 mmol/L peak BG at 150–180 min.</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">P_stomach</td><td class="def">protein in stomach after ingestion (g)</td></tr>
+        <tr><td class="symbol">P_gut</td><td class="def">protein in small intestine; absorption rate-limited by τProtAbs ≈ 90 min (g)</td></tr>
+        <tr><td class="symbol">AA</td><td class="def">circulating amino-acid pool (g-equivalents); cleared with t½ ≈ 60 min</td></tr>
+        <tr><td class="symbol">f_hill</td><td class="def">Hill-saturation glucagon drive = PROTEIN_GLUCAGON_MAX · AAⁿ / (EC50ⁿ + AAⁿ); n = 2, EC50 = 8 g, max = 0.25; scaled by (0.5 + 0.5·R)</td></tr>
+        <tr><td class="symbol">R</td><td class="def">liver glycogen reserve, 0–1 fraction of maximum glycogen pool</td></tr>
+        <tr><td class="symbol">Q1</td><td class="def">plasma glucose pool — receives EGP output from liver</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">τG</td><td class="def">gastric emptying time constant (shared with carbohydrate absorption)</td></tr>
+        <tr><td class="symbol">τProtAbs</td><td class="def">intestinal protein absorption time constant ≈ 90 min</td></tr>
+        <tr><td class="symbol">AA_DECAY</td><td class="def">amino-acid clearance rate from plasma (t½ ≈ 60 min)</td></tr>
+        <tr><td class="symbol">EGP</td><td class="def">endogenous glucose production = EGP₀ · max(0, stressMultiplier − x3)</td></tr>
+        <tr><td class="symbol">EGP₀</td><td class="def">basal hepatic glucose production (~0.0161 × weight mmol/min at T1D fasting level)</td></tr>
+        <tr><td class="symbol">x3</td><td class="def">insulin effect compartment suppressing EGP (Hovorka 2004)</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

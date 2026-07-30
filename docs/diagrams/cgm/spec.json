@@ -1,0 +1,38 @@
+{
+  "type": "compartment-diagram",
+  "title": "CGM sensor — interstitial delay, noise, drift, discontinuities (Rebrin & Steil 1999)",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "G",       "label": "True plasma glucose", "var": "G = Q1 / V_G", "unit": "mmol/L", "color": "glucose", "type": "plasma" },
+    { "id": "C",       "label": "Interstitial glucose", "var": "C", "unit": "τ ≈ 14 min", "color": "plasma", "type": "plasma" },
+
+    { "id": "noise",   "label": "Sensor noise",   "var": "Gaussian σ(BG)", "color": "neutral", "type": "effect" },
+    { "id": "drift",   "label": "Slow drift",     "var": "sine wave",      "color": "neutral", "type": "effect" },
+    { "id": "jump",    "label": "Discontinuities","var": "≈ 0.7/day",      "color": "neutral", "type": "effect" },
+
+    { "id": "display", "label": "Displayed CGM value", "var": "cgmBG", "color": "plasma", "type": "plasma", "rank": "max" }
+  ],
+  "flows": [
+    { "from": "external", "to": "G",   "label": "", "externalLabel": "plasma glucose (from Hovorka Q1/V_G)", "kind": "input" },
+    { "from": "G",       "to": "C",       "label": "ka_int · (G − C)",  "kind": "mass" },
+    { "from": "C",       "to": "display", "label": "C",                 "kind": "mass" },
+    { "from": "noise",   "to": "display", "label": "+ ε(BG)",           "kind": "signal" },
+    { "from": "drift",   "to": "display", "label": "+ slow bias",       "kind": "signal" },
+    { "from": "jump",    "to": "display", "label": "+ rare jump",       "kind": "signal" }
+  ],
+  "caption": {
+    "scope": "CGM sensor model showing the four sources of deviation between true plasma glucose G and the value cgmBG displayed to the player, following the two-compartment interstitial delay framework of Rebrin & Steil (Rebrin K, Steil GM et al., Am J Physiol 277:E561-E571, 1999). (1) Interstitial compartment C follows G with first-order kinetics at ka_int = 0.073 /min (τ ≈ 14 min), producing a low-pass lag that causes CGM to under-read during rapidly rising BG and over-read during rapid falls. (2) Gaussian sensor noise with σ ≈ 0.03 · BG mmol/L, calibrated from ~34 000 real Libre 2 readings. (3) Slow sinusoidal drift (period 4–8 h, amplitude 0.3–0.7 mmol/L) representing systematic sensor bias. (4) Rare discontinuities (~0.7 per simulated day, magnitude up to ±2 mmol/L) for compression and calibration artefacts. The signal generators noise, drift, and jump are not ODE states — they are additive corrections computed each simulation tick and summed onto C to produce cgmBG.",
+    "variables": [
+      { "symbol": "G",       "category": "compartment", "definition": "true plasma glucose concentration derived from Hovorka model: G = Q1 / V_G (mmol/L)" },
+      { "symbol": "C",       "category": "compartment", "definition": "interstitial fluid glucose — the physiological quantity sensed by the CGM electrode (mmol/L)" },
+      { "symbol": "cgmBG",   "category": "compartment", "definition": "displayed CGM reading after all signal corrections are applied (mmol/L)" },
+      { "symbol": "Gaussian σ(BG)", "category": "compartment", "definition": "sensor noise generator: Gaussian draw scaled by BG, σ ≈ 0.03 · BG; calibrated to Libre 2 in-vivo data" },
+      { "symbol": "sine wave",      "category": "compartment", "definition": "drift generator: sinusoidal bias, period U(4, 8) h, amplitude U(0.3, 0.7) mmol/L" },
+      { "symbol": "≈ 0.7/day",      "category": "compartment", "definition": "discontinuity generator: Poisson-rate events (~0.7 per simulated day), magnitude up to ±2 mmol/L, modelling compression and calibration artefacts" },
+      { "symbol": "ka_int",  "category": "flow", "definition": "plasma-to-interstitium glucose diffusion rate constant = 0.073 /min (τ ≈ 14 min); from Rebrin & Steil 1999" },
+      { "symbol": "ε(BG)",   "category": "flow", "definition": "instantaneous noise sample added each tick: ε ~ N(0, σ²), σ = 0.03 · BG (Box-Muller)" },
+      { "symbol": "slow bias","category": "flow", "definition": "instantaneous drift value sampled from the running sine generator and added to C" },
+      { "symbol": "rare jump","category": "flow", "definition": "instantaneous discontinuity offset added to C on each stochastic event" }
+    ]
+  }
+}

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 610.6428571428571 883.001" width="610.6428571428571" height="883.001" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>Sleep disruption model — nighttime interventions, chronic stress, and dawn amplification</title>
+  <defs>
+    <marker id="arrow-6b7280" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/></marker>
+    <marker id="arrow-f472b6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f472b6"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 305.32142857142856 64 L 305.32142857142856 129" fill="none" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-6b7280)" data-edge-id="e0" data-from="nightAction" data-to="awakeGate"/>
+    <path d="M 305.32142857142856 181 L 305.32142857142856 246" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e1" data-from="awakeGate" data-to="sleepLoss"/>
+    <path d="M 234.75892857142856 318 L 234.75892857142856 774" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e2" data-from="sleepLoss" data-to="dawnAmp"/>
+    <path d="M 386.9392857142857 318 L 386.9392857142857 383" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e3" data-from="sleepLoss" data-to="morningGate"/>
+    <path d="M 428.1821428571428 435 L 428.1821428571428 500" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e4" data-from="morningGate" data-to="pendingStress"/>
+    <path d="M 428.1821428571428 572 L 428.1821428571428 637" fill="none" stroke="#f472b6" stroke-width="2" marker-end="url(#arrow-f472b6)" data-edge-id="e5" data-from="pendingStress" data-to="chronicStress"/>
+    <path d="M 347.95 709.00 L 275.52 741.50 L 207.27 774.00" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e6" data-from="chronicStress" data-to="dawnAmp"/>
+    <path d="M 428.66249999999997 709 L 428.66249999999997 774" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f472b6)" data-edge-id="e7" data-from="chronicStress" data-to="insulinResistance"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="nightAction">
+      <rect x="232.52" y="12.00" width="145.6" height="52" rx="10" ry="10" fill="rgba(107, 114, 128, 0.2)" stroke="#6b7280" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="305.32" y="32.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Night intervention</text>
+      <text x="305.32" y="50.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">22:00-07:00</text>
+    </g>
+    <g class="node" data-node-id="awakeGate">
+      <rect x="246.92" y="129.00" width="116.8" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="305.32" y="149.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Awakening gate</text>
+      <text x="305.32" y="167.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">&gt;30 min</text>
+    </g>
+    <g class="node" data-node-id="sleepLoss">
+      <rect x="176.20" y="246.00" width="258.25" height="72" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2"/>
+      <text x="305.32" y="268.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Lost sleep</text>
+      <text x="305.32" y="286.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">lostSleepHoursTonight</text>
+      <text x="305.32" y="307.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">h</text>
+    </g>
+    <g class="node" data-node-id="morningGate">
+      <rect x="339.43" y="383.00" width="177.5" height="52" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="428.18" y="403.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Morning gate</text>
+      <text x="428.18" y="421.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">07:00 once/day</text>
+    </g>
+    <g class="node" data-node-id="pendingStress">
+      <rect x="299.06" y="500.00" width="258.25" height="72" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2"/>
+      <text x="428.18" y="522.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Pending stress</text>
+      <text x="428.18" y="540.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">_pendingChronicStress</text>
+      <text x="428.18" y="561.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">cap 0.30</text>
+    </g>
+    <g class="node" data-node-id="chronicStress">
+      <rect x="316.36" y="637.00" width="223.6428571428571" height="72" rx="10" ry="10" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="2"/>
+      <text x="428.18" y="659.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Chronic stress</text>
+      <text x="428.18" y="677.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">chronicStressLevel</text>
+      <text x="428.18" y="698.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">decay t½ = 12 h</text>
+    </g>
+    <g class="node" data-node-id="dawnAmp">
+      <rect x="12.00" y="774.00" width="281.32142857142856" height="52" rx="10" ry="10" fill="rgba(180, 83, 9, 0.2)" stroke="#b45309" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="152.66" y="794.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Dawn amplitude</text>
+      <text x="152.66" y="812.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">circadianKortisolNiveau</text>
+    </g>
+    <g class="node" data-node-id="insulinResistance">
+      <rect x="317.32" y="774.00" width="281.32142857142856" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="457.98" y="794.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Insulin resistance</text>
+      <text x="457.98" y="812.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">insulinResistanceFactor</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0">
+      <rect x="228.32" y="87.50" width="154.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="305.32" y="101.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">new event if &gt;30 min</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1">
+      <rect x="199.52" y="204.50" width="211.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="305.32" y="218.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+ clamp(N(1.0,0.3), 0.3,1.8)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2">
+      <rect x="211.76" y="537.00" width="46.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="234.76" y="550.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">12%/h</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3">
+      <rect x="324.34" y="341.50" width="125.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="386.94" y="355.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">applySleepDebt()</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4">
+      <rect x="325.98" y="458.50" width="204.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="428.18" y="472.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+ min(0.30, lostSleep·0.06)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e5">
+      <rect x="347.58" y="595.50" width="161.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="428.18" y="609.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">smooth drain τ≈30 min</text>
+    </g>
+    <g class="edge-label" data-edge-id="e6">
+      <rect x="257.85" y="731.72" width="38.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="277.25" y="745.62" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+30%</text>
+    </g>
+    <g class="edge-label" data-edge-id="e7">
+      <rect x="398.46" y="732.50" width="60.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="428.66" y="746.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">+50% IR</text>
+    </g>
+  </g>
+</svg>

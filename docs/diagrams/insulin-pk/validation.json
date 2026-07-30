@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "nodeCount": 6,
+  "edgeCount": 7,
+  "conflicts": [
+    {
+      "type": "edge-label-overlaps-edge-label",
+      "labels": [
+        "e5",
+        "e6"
+      ],
+      "severity": "warning"
+    }
+  ]
+}

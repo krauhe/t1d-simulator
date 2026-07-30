@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T1D Simulator — Fysiologi-dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* =============================================================
+           FYSIOLOGI-DASHBOARD — Separat browservindue med multi-graf
+           =============================================================
+           Familiært design: matcher hovedsidens dark theme og graf-stil.
+           9 subgrafer (insulin opdelt i IOB + rates/plasma, ISF flyttet
+           tæt på insulin). Foldbare sektioner — klik header for at
+           klappe graf sammen/ud. Klik legend-item for at skjule/vise
+           en individuel dataserie. Tidsskala vælges med knapper.
+           Data modtages via postMessage fra hovedvinduet.
+        */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header: titel + status + tidsskala-knapper --- */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px 4px;
+        }
+        h1 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+        .status-bar {
+            font-size: 11px;
+            color: #64748b;
+            padding: 0 12px 6px;
+        }
+        .status-bar .connected { color: #22c55e; }
+        .status-bar .disconnected { color: #ef4444; }
+
+        /* Tidsskala-knapper: matcher hovedsidens top-btn/profile-btn stil */
+        .time-scale-btns {
+            display: flex;
+            gap: 2px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 2px;
+        }
+        .time-scale-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .time-scale-btn:hover {
+            color: #94a3b8;
+            background: rgba(255,255,255,0.05);
+        }
+        .time-scale-btn.active {
+            background: rgba(255,255,255,0.10);
+            color: #e2e8f0;
+        }
+
+        /* --- Graf-container: fylder al resterende plads (ingen scrollbar) --- */
+        .graph-container {
+            padding: 0 10px 4px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* --- Foldbar sektion: header + canvas --- */
+        .graph-section {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            margin-bottom: 1px;
+            /* Transitioner flex-basis for glidende fold-animation */
+            transition: flex 0.2s ease;
+        }
+        /* Åbne sektioner deler pladsen ligeligt (flex: 1) */
+        .graph-section:not(.collapsed) {
+            flex: 1;
+        }
+        /* BG-grafen er lidt højere end de andre */
+        .graph-section:first-child:not(.collapsed) { flex: 1.3; }
+        /* Sammenklappet sektion: kun header-baren vises */
+        .graph-section.collapsed {
+            flex: 0 0 auto;
+        }
+        .graph-section.collapsed canvas {
+            display: none;
+        }
+
+        /* --- Label-bar (klikbar header) --- */
+        .graph-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #94a3b8;
+            padding: 1px 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            cursor: pointer;
+            user-select: none;
+            border-radius: 4px;
+            transition: background 0.15s ease;
+        }
+        .graph-label:hover {
+            background: rgba(255,255,255,0.04);
+        }
+
+        /* Chevron-ikon til fold-indikator (3× forstørret for bedre synlighed) */
+        .fold-chevron {
+            font-size: 30px;
+            color: #64748b;
+            width: 36px;
+            text-align: center;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        .collapsed .fold-chevron {
+            transform: rotate(-90deg);
+        }
+
+        /* --- Legend-items (klikbare for serie-toggle) --- */
+        .graph-label .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 10px;
+            color: #64748b;
+            cursor: pointer;
+            transition: opacity 0.15s ease;
+        }
+        /* Legend-items der linker til MODEL-IMPLEMENTATION.md */
+        .graph-label .legend-item[data-section] {
+            text-decoration: underline dotted rgba(100,116,139,0.4);
+            text-underline-offset: 2px;
+        }
+        .graph-label .legend-item[data-section]:hover {
+            color: #94a3b8;
+        }
+        /* Skjult serie: dæmpet + gennemstreget */
+        .graph-label .legend-item.series-hidden {
+            opacity: 0.35;
+            text-decoration: line-through;
+        }
+        .graph-label .legend-item.series-hidden .legend-dot {
+            opacity: 0.3;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 3px;
+            border-radius: 1px;
+        }
+
+        /* Canvas-elementer: fylder al resterende plads i sin graph-section */
+        canvas {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            display: block;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.10);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header med titel og tidsskala-knapper -->
+    <div class="header">
+        <h1 id="dashTitle">T1D Simulator — Physiology</h1>
+        <div class="time-scale-btns">
+            <button class="time-scale-btn" data-minutes="60">1h</button>
+            <button class="time-scale-btn active" data-minutes="240">4h</button>
+            <button class="time-scale-btn" data-minutes="720">12h</button>
+            <button class="time-scale-btn" data-minutes="1440">24h</button>
+        </div>
+    </div>
+    <div class="status-bar">
+        <span id="connectionStatus" class="disconnected">Waiting for simulator...</span>
+        <span id="timeDisplay"></span>
+    </div>
+
+    <div class="graph-container">
+        <!-- 1. Blood glucose -->
+        <div class="graph-section" data-graph="bg">
+            <div class="graph-label">
+                <span class="fold-chevron">&#9662;</span>
+                <span data-key="bg">Blood glucose (mmol/L)</span>
+                <span class="legend-item" data-series="0" data-section="#3-glucose--the-bodys-fuel" title="True blood glucose — the actual physiological value."><span class="legend-dot" style="background:#ef4444"></span>True BG</span>
+                <span class="legend-item" data-series="1" data-section="#12-cgm-simulation--the-sensors-limitations" title="CGM reading — delayed ~10 min, with sensor noise and drift."><span class="legend-dot" style="background:#3b82f6"></span>CGM</span>
+            </div>
+            <canvas id="graph-bg"></canvas>
+        </div>
+
+        <!-- 2. Insulin on board + IAN (plasma insulin) -->
+        <div class="graph-section" data-graph="iob">
+            <div class="graph-label">
+                <span class="fold-chevron">&#9662;</span>
+                <span data-key="iob">Insulin on board</span>
+                <span class="legend-item" data-series="0" data-section="#iob--insulin-on-board" title="Bolus IOB (U). Remaining active rapid insulin from injections. Peak 1-2h, duration 3-5h."><span class="legend-dot" style="background:#0d9488"></span><span data-key="bolusIOB">Bolus IOB (U)</span></span>
+                <span style="flex:1"></span>
+                <span class="legend-item" data-series="r0" data-section="#how-does-insulin-work-in-the-model" title="Rapid plasma insulin (mU). Classic PK curve — rises gradually, peaks ~55 min."><span class="legend-dot" style="background:#8b5cf6"></span><span data-key="rapidIAN">Rapid IAN</span> &rarr;</span>
+                <span class="legend-item" data-series="r1" data-section="#rapid-acting-vs-long-acting-insulin" title="Basal plasma insulin level (mU). Steady-state from long-acting insulin."><span class="legend-dot" style="background:#3b82f6"></span><span data-key="basalIAN">Basal IAN</span> &rarr;</span>
+            </div>
+            <canvas id="graph-iob"></canvas>
+        </div>
+
+        <!-- 3. Insulin delivery & plasma -->
+        <div class="graph-section" data-graph="insulin-rates">
+            <div class="graph-label">
+                <span class="fold-chevron">&#9662;</span>
+                <span data-key="insulinRates">Insulin rates & plasma</span>
+                <span class="legend-item" data-series="0" data-section="#rapid-acting-vs-long-acting-insulin" title="Basal insulin delivery rate (U/h). Long-acting background insulin."><span class="legend-dot" style="background:#2563eb"></span><span data-key="basalRate">Basal (U/h)</span></span>
+                <span style="flex:1"></span>
+                <span class="legend-item" data-series="r0" data-section="#how-does-insulin-work-in-the-model" title="Plasma insulin concentration (mU/L). Drives glucose uptake and EGP suppression."><span class="legend-dot" style="background:#8b5cf6"></span><span data-key="plasmaI">Plasma (mU/L)</span> &rarr;</span>
+            </div>
+            <canvas id="graph-insulin-rates"></canvas>
+        </div>
+
+        <!-- 4. Insulin sensitivity (flyttet tæt på insulin) -->
+        <div class="graph-section" data-graph="sensitivity">
+            <div class="graph-label">
+                <span class="fold-chevron">&#9662;</span>
+                <span data-key="sensitivity">Insulin sensitivity</span>
+                <span class="legend-item" data-series="0" title="Effective ISF (mmol/L per U). The combined, final insulin sensitivity after all modifiers."><span class="legend-dot" style="background:#e2e8f0"></span><span data-key="effectiveISF">Effective ISF</span></span>
+                <span class="legend-item" data-series="1" data-section="#8-the-dawn-phenomenon-and-circadian-insulin-sensitivity" title="Circadian ISF modifier. 0.70 morning, 1.20 evening."><span class="legend-dot" style="background:#3b82f6"></span><span data-key="circadianISF">Circadian</span></span>
+                <span class="legend-item" data-series="2" data-section="#4-fat-and-protein----the-forgotten-macronutrients" title="FFA insulin resistance factor. Fat → reduced ISF."><span class="legend-dot" style="background:#eab308"></span><span data-key="ffaResist">FFA</span></span>
+                <span class="legend-item" data-series="3" data-section="#28-glucotoxicity--when-high-blood-sugar-causes-insulin-resistance" title="Glucotoxicity resistance. Sustained BG >10 → up to 40% ISF reduction."><span class="legend-dot" style="background:#ef4444"></span><span data-key="glucotoxResist">Glucotox</span></span>
+                <span class="legend-item" data-series="4" data-section="#two-layer-stress-system" title="Stress-driven insulin resistance. Cortisol impairs insulin signaling."><span class="legend-dot" style="background:#f97316"></span><span data-key="stressResist">Stress</span></span>
+                <span class="legend-item" data-series="5" data-section="#6-activity--four-activity-types-with-different-physiology" title="Exercise sensitivity multiplier. Increases insulin effect during/after exercise."><span class="legend-dot" style="background:#22c55e"></span><span data-key="exerciseFactor">Exercise</span></span>
+            </div>
+            <canvas id="graph-sensitivity"></canvas>
+        </div>
+
+        <!-- 5. Food absorption -->
+        <div class="graph-section" data-graph="food">
+            <div class="graph-label">
+                <span class="fold-chevron">&#9662;</span>
+                <span data-key="food">Food absorption</span>
+                <span class="legend-item" data-series="0" data-section="#carbohydrate-absorption" title="Carb absorption rate from gut (UG). Delayed by gastric emptying and dietary fat."><span class="legend-dot" style="background:#f97316"></span><span data-key="carbs">Carbs</span></span>
+                <span class="legend-item" data-series="1" data-section="#protein-effect--glucagon-driven-hepatic-glucose-production" title="Protein → glucagon stimulation. Onset ~60-90 min, peak ~150-180 min."><span class="legend-dot" style="background:#92400e"></span>Protein</span>
+                <span class="legend-item" data-series="2" data-section="#ffa-induced-insulin-resistance--the-second-wave" title="Dietary FFA in blood. Fat absorption drives insulin resistance (peak 5-6h)."><span class="legend-dot" style="background:#eab308"></span>FFA</span>
+            </div>
+            <canvas id="graph-food"></canvas>
+        </div>
+
+        <!-- 6. Stress hormones -->
+        <div class="graph-section" data-graph="stress">
+            <div class="graph-label">
+                <span class="fold-chevron">&#9662;</span>
+                <span data-key="stress">Stress hormones</span>
+                <span class="legend-item" data-series="0" data-section="#two-layer-stress-system" title="Acute stress (adrenaline/glucagon). t½ ~60 min. Drives rapid hepatic glucose release."><span class="legend-dot" style="background:#ef4444"></span><span data-key="acute">Acute</span></span>
+                <span class="legend-item" data-series="1" data-section="#two-layer-stress-system" title="Chronic stress (cortisol). t½ ~12h. Causes insulin resistance."><span class="legend-dot" style="background:#f97316"></span><span data-key="chronic">Chronic</span></span>
+                <span class="legend-item" data-series="2" data-section="#8-the-dawn-phenomenon-and-circadian-insulin-sensitivity" title="Circadian cortisol rhythm. Peaks 04-08 (dawn phenomenon)."><span class="legend-dot" style="background:#a855f7"></span>Circadian</span>
+                <span class="legend-item" data-series="3" data-section="#counterregulation-in-t1d--why-is-it-so-weak" title="Counter-regulatory factor (0-1). Low = blunted hypo defense (HAAF)."><span class="legend-dot" style="background:#22c55e"></span><span data-key="counterreg">Counter-reg</span></span>
+            </div>
+            <canvas id="graph-stress"></canvas>
+        </div>
+
+        <!-- 7. Liver & glycogen -->
+        <div class="graph-section" data-graph="liver">
+            <div class="graph-label">
+                <span class="fold-chevron">&#9662;</span>
+                <span data-key="liver">Liver & glycogen</span>
+                <span class="legend-item" data-series="0" data-section="#the-egp-formula--tug-of-war-between-insulin-and-stress-hormones" title="Hepatic glycogen pool (grams). Depleted by stress-driven glycogenolysis and exercise."><span class="legend-dot" style="background:#22c55e"></span><span data-key="glycogen">Glycogen (g)</span></span>
+                <span class="legend-item" data-series="1" data-section="#the-egp-formula--tug-of-war-between-insulin-and-stress-hormones" title="Endogenous Glucose Production. Liver glucose output driven by stress, suppressed by insulin."><span class="legend-dot" style="background:#f97316"></span>EGP</span>
+            </div>
+            <canvas id="graph-liver"></canvas>
+        </div>
+
+        <!-- 8. Ketones -->
+        <div class="graph-section" data-graph="ketones">
+            <div class="graph-label">
+                <span class="fold-chevron">&#9662;</span>
+                <span data-key="ketones">Ketones</span>
+                <span class="legend-item" data-series="0" data-section="#11-ketones-and-ketoacidosis-dka" title="Blood BHB. Driven by insulin deficiency → lipolysis → ketogenesis. DKA >3.0 mmol/L."><span class="legend-dot" style="background:#ef4444"></span>BHB (mmol/L)</span>
+                <span class="legend-item" data-series="1" data-section="#dka-as-a-game-over-condition--acidosis-load-model" title="Acidosis load (÷100). Accumulates when BHB >3.0. Game over at threshold."><span class="legend-dot" style="background:#991b1b"></span><span data-key="acidosis">Acidosis</span></span>
+                <span class="legend-item" data-series="2" data-section="#how-is-it-modeled-4" title="FFA from lipolysis. Driven by low plasma insulin. Feeds CPT-1 → ketone production."><span class="legend-dot" style="background:#f97316"></span><span data-key="ffalipolysis">FFA lipolysis</span></span>
+            </div>
+            <canvas id="graph-ketones"></canvas>
+        </div>
+
+        <!-- 9. Heart rate & exercise (bunden — har tidslabels) -->
+        <div class="graph-section" data-graph="heartrate">
+            <div class="graph-label">
+                <span class="fold-chevron">&#9662;</span>
+                <span data-key="heartrate">Heart rate & exercise</span>
+                <span class="legend-item" data-series="0" data-section="#the-exercise-model-e1-and-e2" title="E1: GLUT4-mediated glucose uptake. Active during exercise."><span class="legend-dot" style="background:#22c55e"></span>E1 (GLUT4)</span>
+                <span class="legend-item" data-series="1" data-section="#post-exercise-insulin-sensitivity" title="E2: Post-exercise insulin sensitivity. Persists hours after exercise."><span class="legend-dot" style="background:#3b82f6"></span>E2 (post-ex)</span>
+                <span style="flex:1"></span>
+                <span class="legend-item" data-series="r0" data-section="#heart-rate-model" title="Simulated heart rate. Affects subcutaneous insulin absorption speed." style="color:#ef4444cc"><span class="legend-dot" style="background:#ef4444"></span><span data-key="hr">HR (bpm) &rarr;</span></span>
+            </div>
+            <canvas id="graph-heartrate"></canvas>
+        </div>
+    </div>
+
+    <script>
+    // =============================================================================
+    // FYSIOLOGI-DASHBOARD — Multi-graf realtidsvisning med foldbare sektioner
+    // =============================================================================
+    //
+    // Modtager data fra hovedvinduet via postMessage.
+    // Akkumulerer snapshots i lokal buffer og tegner 9 synkroniserede grafer.
+    //
+    // Nye features i denne version:
+    // - Foldbare sektioner: klik header for at klappe graf sammen/ud
+    // - Serie-toggle: klik legend-item for at skjule/vise en serie
+    // - Insulin opdelt i IOB + rates/plasma
+    // - Insulinfølsomhed flyttet tæt på insulin
+    // - Effective ISF tilføjet til sensitivity-grafen
+    // =============================================================================
+
+    // --- Sproghåndtering ---
+    const daTexts = {
+        title: 'T1D Simulator — Fysiologi',
+        waiting: 'Venter på simulator...',
+        noConnection: 'Ingen forbindelse til simulatoren',
+        connected: 'Forbundet',
+        bg: 'Blodsukker (mmol/L)',
+        iob: 'Insulin on board',
+        bolusIOB: 'Bolus IOB (U)',
+        rapidIAN: 'Rapid IAN',
+        basalIAN: 'Basal IAN',
+        insulinRates: 'Insulinrater & plasma',
+        basalRate: 'Basal (U/t)',
+        plasmaI: 'Plasma (mU/L)',
+        insulin: 'Insulin',
+        food: 'Mad-absorption', carbs: 'Kulhydrater',
+        stress: 'Stresshormoner', acute: 'Akut', chronic: 'Kronisk',
+        counterreg: 'Kontra-reg',
+        liver: 'Lever & glykogen', glycogen: 'Glykogen (g)',
+        ketones: 'Ketoner', acidosis: 'Acidose', ffalipolysis: 'FFA lipolyse',
+        sensitivity: 'Insulinfølsomhed',
+        effectiveISF: 'Effektiv ISF',
+        circadianISF: 'Cirkadisk',
+        ffaResist: 'FFA', glucotoxResist: 'Glukotoks', stressResist: 'Stress',
+        exerciseFactor: 'Motion',
+        heartrate: 'Puls & motion', hr: 'Puls (bpm)',
+    };
+    const enTexts = {
+        title: 'T1D Simulator — Physiology',
+        waiting: 'Waiting for simulator...',
+        noConnection: 'No connection to simulator',
+        connected: 'Connected',
+        bg: 'Blood glucose (mmol/L)',
+        iob: 'Insulin on board',
+        bolusIOB: 'Bolus IOB (U)',
+        rapidIAN: 'Rapid IAN',
+        basalIAN: 'Basal IAN',
+        insulinRates: 'Insulin rates & plasma',
+        basalRate: 'Basal (U/h)',
+        plasmaI: 'Plasma (mU/L)',
+        insulin: 'Insulin',
+        food: 'Food absorption', carbs: 'Carbs',
+        stress: 'Stress hormones', acute: 'Acute', chronic: 'Chronic',
+        counterreg: 'Counter-reg',
+        liver: 'Liver & glycogen', glycogen: 'Glycogen (g)',
+        ketones: 'Ketones', acidosis: 'Acidosis', ffalipolysis: 'FFA lipolysis',
+        sensitivity: 'Insulin sensitivity',
+        effectiveISF: 'Effective ISF',
+        circadianISF: 'Circadian',
+        ffaResist: 'FFA', glucotoxResist: 'Glucotox', stressResist: 'Stress',
+        exerciseFactor: 'Exercise',
+        heartrate: 'Heart rate & exercise', hr: 'HR (bpm)',
+    };
+
+    let lang = 'en';
+    let txt = enTexts;
+
+    function applyLanguage(newLang) {
+        if (newLang === lang) return;
+        lang = newLang;
+        txt = lang === 'da' ? daTexts : enTexts;
+        document.getElementById('dashTitle').textContent = txt.title;
+        document.querySelectorAll('[data-key]').forEach(el => {
+            const key = el.getAttribute('data-key');
+            if (txt[key]) el.textContent = txt[key];
+        });
+    }
+
+    // --- Tidsskala: styrer hvor mange minutters data der vises ---
+    let viewWindowMinutes = 240;
+    const gridIntervals = { 60: 10, 240: 30, 720: 120, 1440: 240 };
+
+    document.querySelectorAll('.time-scale-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelector('.time-scale-btn.active').classList.remove('active');
+            btn.classList.add('active');
+            viewWindowMinutes = parseInt(btn.getAttribute('data-minutes'));
+        });
+    });
+
+    // --- Foldbare sektioner: klik på header toggler collapsed ---
+    document.querySelectorAll('.graph-label').forEach(label => {
+        label.addEventListener('click', (e) => {
+            // Ignorer klik på legend-items (de toggler serier i stedet)
+            if (e.target.closest('.legend-item')) return;
+            const section = label.closest('.graph-section');
+            section.classList.toggle('collapsed');
+        });
+    });
+
+    // --- Serie-toggle: klik på legend-item for at skjule/vise ---
+    // Gemmer skjulte serier per graf som Set af serie-index (fx '0', '1', 'r0')
+    const hiddenSeries = {};
+
+    document.querySelectorAll('.legend-item[data-series]').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation(); // Forhindrer at fold-klik også fyrer
+            const graphKey = item.closest('.graph-section').getAttribute('data-graph');
+            const seriesId = item.getAttribute('data-series');
+            if (!hiddenSeries[graphKey]) hiddenSeries[graphKey] = new Set();
+            if (hiddenSeries[graphKey].has(seriesId)) {
+                hiddenSeries[graphKey].delete(seriesId);
+                item.classList.remove('series-hidden');
+            } else {
+                hiddenSeries[graphKey].add(seriesId);
+                item.classList.add('series-hidden');
+            }
+        });
+    });
+
+    // Klik-handler for legend-items med data-section — åbner MODEL-IMPLEMENTATION.md
+    const bgScienceBase = 'https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md';
+    document.querySelectorAll('.legend-item[data-section]').forEach(item => {
+        // Dobbeltklik åbner linket (enkeltklik toggler serie)
+        item.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            const section = item.getAttribute('data-section');
+            window.open(bgScienceBase + section, '_blank');
+        });
+        item.title = (item.title || '') + ' (double-click to open docs)';
+    });
+
+    // --- Data-buffer og forbindelsestilstand ---
+    const MAX_BUFFER = 600;
+    const dataBuffer = [];
+    let lastDataTime = -1;
+    let connected = false;
+    let lastMessageTime = 0;
+
+    // --- Canvas-opsætning ---
+    // Ny rækkefølge: BG, IOB, rates/plasma, sensitivity, food, stress, liver, ketones, heartrate
+    const graphOrder = ['bg', 'iob', 'insulin-rates', 'sensitivity', 'food', 'stress', 'liver', 'ketones', 'heartrate'];
+    const graphs = {};
+    graphOrder.forEach(key => { graphs[key] = { canvas: null, ctx: null }; });
+
+    function initGraphs() {
+        graphOrder.forEach(key => {
+            const canvas = document.getElementById('graph-' + key);
+            if (!canvas) return;
+            graphs[key].canvas = canvas;
+            graphs[key].ctx = canvas.getContext('2d');
+        });
+    }
+
+    // --- Modtag data via postMessage fra hovedvinduet ---
+    window.addEventListener('message', function(event) {
+        if (!event.data) return;
+
+        // Reset-besked fra hovedvinduet: ryd al data (nyt spil startet/stoppet)
+        if (event.data.type === 'physiology-reset') {
+            dataBuffer.length = 0;
+            lastDataTime = -1;
+            connected = false;
+            return;
+        }
+
+        if (event.data.type !== 'physiology-snapshot') return;
+
+        const snap = event.data.data;
+        if (!snap || !snap.time) return;
+
+        if (event.data.lang) applyLanguage(event.data.lang);
+
+        lastMessageTime = performance.now();
+        connected = true;
+
+        // Hvis tid er gået tilbage (nyt spil), ryd gammel data
+        if (snap.time.totalMinutes < lastDataTime) {
+            dataBuffer.length = 0;
+            lastDataTime = -1;
+        }
+
+        // Kun tilføj nyt datapunkt hvis tiden er skredet (undgå duplikater)
+        if (snap.time.totalMinutes > lastDataTime) {
+            lastDataTime = snap.time.totalMinutes;
+            dataBuffer.push(snap);
+            if (dataBuffer.length > MAX_BUFFER) dataBuffer.shift();
+        }
+    });
+
+    // --- Render-loop ---
+    function tick() {
+        const statusEl = document.getElementById('connectionStatus');
+        const timeEl = document.getElementById('timeDisplay');
+
+        // Forbindelsesstatus
+        const timeSinceMsg = performance.now() - lastMessageTime;
+        if (!connected || timeSinceMsg > 5000) {
+            if (statusEl) {
+                statusEl.className = 'disconnected';
+                statusEl.textContent = connected ? txt.noConnection : txt.waiting;
+            }
+        } else {
+            if (statusEl) {
+                statusEl.className = 'connected';
+                statusEl.textContent = txt.connected;
+            }
+        }
+
+        // Vis tid fra seneste datapunkt
+        if (dataBuffer.length > 0) {
+            const last = dataBuffer[dataBuffer.length - 1];
+            if (timeEl) {
+                const dayLabel = lang === 'da' ? 'Dag' : 'Day';
+                const h = String(Math.floor((last.time.timeInDay || 0) / 60)).padStart(2, '0');
+                const m = String(Math.floor((last.time.timeInDay || 0) % 60)).padStart(2, '0');
+                timeEl.textContent = ` — ${dayLabel} ${last.time.day} ${h}:${m}`;
+            }
+        }
+
+        drawAllGraphs();
+        requestAnimationFrame(tick);
+    }
+
+    // --- Filtrér buffer til valgt tidsvindue ---
+    function getVisibleData() {
+        if (dataBuffer.length < 2) return [];
+        const tMax = dataBuffer[dataBuffer.length - 1].time.totalMinutes;
+        const tMin = tMax - viewWindowMinutes;
+        return dataBuffer.filter(d => d.time.totalMinutes >= tMin);
+    }
+
+    // --- Hjælpefunktion: tjek om en serie er skjult ---
+    function isSeriesHidden(graphKey, seriesId) {
+        return hiddenSeries[graphKey] && hiddenSeries[graphKey].has(seriesId);
+    }
+
+    // --- Tegn alle grafer ---
+    function drawAllGraphs() {
+        const visData = getVisibleData();
+        if (visData.length < 2) return;
+
+        // 1. BG — fast y-akse 0-20, grøn zone 4-10
+        drawGraph('bg', visData, [
+            { key: d => d.bg.trueBG, color: '#ef4444', width: 1.5 },
+            { key: d => d.bg.cgmBG, color: '#3b82f6', width: 1, dash: [3,3] },
+        ], { yMin: 0, yMax: 20, fixed: true });
+
+        // 2. IOB (venstre) + IAN plasma insulin (højre)
+        // Rapid IAN = total plasma minus basal baseline. Basal IAN = baseline.
+        drawGraph('iob', visData, [
+            { key: d => d.insulin.bolusIOB, color: '#0d9488', width: 1.5 },
+        ], { yMin: 0, fixed: false, yMax: 5,
+             rightSeries: [
+                 { key: d => Math.max(0, d.insulin.plasmaInsulin - (d.insulin.basalPlasmaBaseline || 0)), color: '#8b5cf6', width: 1.5 },
+                 { key: d => d.insulin.basalPlasmaBaseline || 0, color: '#3b82f6', width: 1, dash: [4,3] },
+             ],
+             rightYMin: 0 });
+
+        // 3. Insulin rates & plasma — basal (U/h) venstre, plasma (mU/L) højre
+        drawGraph('insulin-rates', visData, [
+            { key: d => d.insulin.basalRate * 60 / 1000, color: '#2563eb', width: 1.5 },
+        ], { yMin: 0, fixed: false,
+             rightSeries: [{ key: d => d.insulin.plasmaInsulin / 1000, color: '#8b5cf6', width: 1.5 }],
+             rightYMin: 0 });
+
+        // 4. Insulinfølsomhed — effective ISF + alle modifikatorer
+        // Effective ISF bruger sin egen y-akse (mmol/L per U), modifikatorer er dimensionsløse (~0.5-1.8)
+        // Vi normaliserer effectiveISF til baseISF-ratio så den passer på modifikator-skalaen
+        drawGraph('sensitivity', visData, [
+            { key: d => {
+                const base = d.sensitivity.baseISF || 1;
+                return d.sensitivity.currentISF / base;
+            }, color: '#e2e8f0', width: 2 },
+            { key: d => d.sensitivity.circadianISF, color: '#3b82f6', width: 1.5 },
+            { key: d => d.sensitivity.ffaResistanceFactor, color: '#eab308', width: 1.5 },
+            { key: d => d.sensitivity.glucotoxicResistanceFactor, color: '#ef4444', width: 1.5 },
+            { key: d => d.sensitivity.insulinResistanceFactor, color: '#f97316', width: 1 },
+            { key: d => d.sensitivity.exerciseFactor, color: '#22c55e', width: 1.5 },
+        ], { yMin: 0.5, yMax: 1.8, fixed: false, refLine: 1.0 });
+
+        // 5. Mad-absorption
+        drawGraph('food', visData, [
+            { key: d => d.food.carbAbsorption, color: '#f97316', width: 1.5 },
+            { key: d => d.food.proteinGlucagonLevel, color: '#92400e', width: 1 },
+            { key: d => d.food.ffaBlood, color: '#eab308', width: 1 },
+        ], { yMin: 0, fixed: false });
+
+        // 6. Stresshormoner — fast y-akse 0-0.5
+        drawGraph('stress', visData, [
+            { key: d => d.stress.acute, color: '#ef4444', width: 1.5 },
+            { key: d => d.stress.chronic, color: '#f97316', width: 1 },
+            { key: d => d.stress.circadian, color: '#a855f7', width: 1.5 },
+            { key: d => d.stress.counterReg, color: '#22c55e', width: 1 },
+        ], { yMin: 0, yMax: 0.5, fixed: true });
+
+        // 7. Lever & glykogen — semi-fast y-akse (0-120g standard, auto-skalerer op)
+        drawGraph('liver', visData, [
+            { key: d => d.liver.glycogen, color: '#22c55e', width: 1.5 },
+            { key: d => d.liver.egp, color: '#f97316', width: 1 },
+        ], { yMin: 0, yMax: 120, fixed: false });
+
+        // 8. Ketoner — semi-fast y-akse (0-5 standard, auto-skalerer op)
+        drawGraph('ketones', visData, [
+            { key: d => d.ketones.bhb, color: '#ef4444', width: 1.5 },
+            { key: d => d.ketones.acidosisLoad / 100, color: '#991b1b', width: 1 },
+            { key: d => d.ketones.ffaLipolysis, color: '#f97316', width: 1 },
+        ], { yMin: 0, yMax: 5, fixed: false });
+
+        // 9. Puls & motion — E1/E2 venstre (0-1.5), HR højre (40-180 bpm)
+        drawGraph('heartrate', visData, [
+            { key: d => d.exercise.e1, color: '#22c55e', width: 1 },
+            { key: d => d.exercise.e2, color: '#3b82f6', width: 1 },
+        ], { yMin: 0, yMax: 1.5, fixed: false,
+             rightSeries: [
+                 { key: d => d.exercise.heartRate, color: '#ef4444', width: 1.5 }
+             ],
+             rightYMin: 40, rightYMax: 180, rightLabel: 'bpm'
+        });
+    }
+
+    /**
+     * drawGraph — Tegner en enkelt subgraf med multiple linjer.
+     *
+     * Features:
+     * - Foldbar: springer over sammenklappede sektioner
+     * - Serie-toggle: springer over skjulte serier
+     * - Venstre + valgfri højre y-akse
+     * - BG-graf: grøn zone 4-10 mmol/L
+     * - Referencelinje (fx ISF baseline = 1.0)
+     * - Tidslabels kun på nederste SYNLIGE graf
+     *
+     * @param {string} graphKey - fx 'bg', 'iob', 'insulin-rates'
+     * @param {Array} visData - filtrerede datapunkter inden for tidsvinduet
+     * @param {Array} series - { key: function, color, width, dash? }
+     * @param {object} opts - { yMin, yMax, fixed, rightSeries, rightYMin, rightYMax, refLine }
+     */
+    function drawGraph(graphKey, visData, series, opts) {
+        const g = graphs[graphKey];
+        if (!g || !g.canvas) return;
+
+        // Spring over sammenklappede sektioner (canvas er display:none)
+        const section = g.canvas.closest('.graph-section');
+        if (section && section.classList.contains('collapsed')) return;
+
+        const canvas = g.canvas;
+        const ctx = g.ctx;
+        const rect = canvas.getBoundingClientRect();
+        // Spring over hvis canvas ikke er synlig (0×0 rect)
+        if (rect.width < 1 || rect.height < 1) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const w = rect.width;
+        const h = rect.height;
+
+        // Padding: matcher hovedgrafens proportioner.
+        // Find den nederste SYNLIGE graf for tidslabels
+        const isLastVisible = isLastVisibleGraph(graphKey);
+        const pad = { top: 4, right: 36, bottom: isLastVisible ? 18 : 4, left: 36 };
+        const gw = w - pad.left - pad.right;
+        const gh = h - pad.top - pad.bottom;
+        const chartRadius = 6;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // --- Clip til chart-area med runde hjørner ---
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(pad.left, pad.top, gw, gh, chartRadius);
+        ctx.clip();
+
+        // --- Auto-skalering af Y-akse ---
+        let yMax = opts.yMax || 1;
+        if (!opts.fixed) {
+            let dataMax = 0;
+            visData.forEach(d => {
+                series.forEach((s, i) => {
+                    if (isSeriesHidden(graphKey, String(i))) return;
+                    const val = s.key(d);
+                    if (val > dataMax) dataMax = val;
+                });
+            });
+            yMax = Math.max(opts.yMax || 0.1, dataMax * 1.2);
+        }
+        const yMin = opts.yMin || 0;
+        const yRange = yMax - yMin;
+        if (yRange <= 0) { ctx.restore(); return; }
+
+        // --- Tidsvindue ---
+        const tMax = visData[visData.length - 1].time.totalMinutes;
+        const tMin = tMax - viewWindowMinutes;
+        const tRange = viewWindowMinutes;
+
+        // --- BG-graf: grøn zone (4-10 mmol/L) ---
+        if (graphKey === 'bg') {
+            const y4  = pad.top + gh - ((4  - yMin) / yRange) * gh;
+            const y10 = pad.top + gh - ((10 - yMin) / yRange) * gh;
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
+            ctx.fillRect(pad.left, y10, gw, y4 - y10);
+            ctx.strokeStyle = 'rgba(34, 197, 94, 0.15)';
+            ctx.lineWidth = 0.5;
+            [4, 10].forEach(bg => {
+                const y = pad.top + gh - ((bg - yMin) / yRange) * gh;
+                ctx.beginPath();
+                ctx.moveTo(pad.left, y);
+                ctx.lineTo(pad.left + gw, y);
+                ctx.stroke();
+            });
+        }
+
+        // --- Referencelinje (fx ISF baseline = 1.0) ---
+        if (opts.refLine != null) {
+            const refY = pad.top + gh - ((opts.refLine - yMin) / yRange) * gh;
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, refY);
+            ctx.lineTo(pad.left + gw, refY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // --- Vertikale gridlinjer ---
+        const gridInterval = gridIntervals[viewWindowMinutes] || 60;
+        const firstTick = Math.ceil(tMin / gridInterval) * gridInterval;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+        ctx.lineWidth = 0.5;
+        for (let tick = firstTick; tick <= tMax; tick += gridInterval) {
+            const x = pad.left + ((tick - tMin) / tRange) * gw;
+            ctx.beginPath();
+            ctx.moveTo(x, pad.top);
+            ctx.lineTo(x, pad.top + gh);
+            ctx.stroke();
+        }
+
+        // --- Horisontale gridlinjer (Y-akse) + labels ---
+        const ySteps = 4;
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i <= ySteps; i++) {
+            const yVal = yMin + (yRange / ySteps) * i;
+            const yPx = pad.top + gh - (yVal - yMin) / yRange * gh;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, yPx);
+            ctx.lineTo(pad.left + gw, yPx);
+            ctx.stroke();
+        }
+
+        // --- Hjælpefunktion: tegn en serie-liste med given y-skala ---
+        const drawSeriesList = (seriesList, sYMin, sYRange, idPrefix) => {
+            seriesList.forEach((s, i) => {
+                const seriesId = (idPrefix || '') + String(i);
+                if (isSeriesHidden(graphKey, seriesId)) return;
+                ctx.strokeStyle = s.color;
+                ctx.lineWidth = s.width || 1;
+                ctx.setLineDash(s.dash || []);
+                ctx.beginPath();
+                let started = false;
+                visData.forEach(d => {
+                    const t = d.time.totalMinutes;
+                    const val = s.key(d);
+                    const x = pad.left + ((t - tMin) / tRange) * gw;
+                    const y = pad.top + gh - ((val - sYMin) / sYRange) * gh;
+                    const clampedY = Math.max(pad.top, Math.min(pad.top + gh, y));
+                    if (!started) {
+                        ctx.moveTo(x, clampedY);
+                        started = true;
+                    } else {
+                        ctx.lineTo(x, clampedY);
+                    }
+                });
+                ctx.stroke();
+                ctx.setLineDash([]);
+            });
+        };
+
+        // --- Tegn venstre-akse dataserier ---
+        drawSeriesList(series, yMin, yRange, '');
+
+        // --- Tegn højre-akse dataserier ---
+        const rSeries = opts.rightSeries || [];
+        let rYMin = opts.rightYMin || 0;
+        let rYMax = opts.rightYMax || 1;
+        if (rSeries.length > 0 && !opts.rightYMax) {
+            let rDataMax = 0;
+            visData.forEach(d => {
+                rSeries.forEach((s, i) => {
+                    if (isSeriesHidden(graphKey, 'r' + i)) return;
+                    const val = s.key(d);
+                    if (val > rDataMax) rDataMax = val;
+                });
+            });
+            rYMax = Math.max(rYMax, rDataMax * 1.2);
+        }
+        const rYRange = rYMax - rYMin;
+        if (rSeries.length > 0 && rYRange > 0) {
+            drawSeriesList(rSeries, rYMin, rYRange, 'r');
+        }
+
+        ctx.restore(); // Fjern clip
+
+        // --- Venstre Y-akse labels ---
+        ctx.fillStyle = 'rgba(190, 210, 235, 0.85)';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i <= ySteps; i++) {
+            const yVal = yMin + (yRange / ySteps) * i;
+            const yPx = pad.top + gh - (yVal - yMin) / yRange * gh;
+            ctx.fillText(yVal.toFixed(yVal >= 10 ? 0 : 1), pad.left - 3, yPx);
+        }
+
+        // --- Højre Y-akse labels ---
+        if (rSeries.length > 0 && rYRange > 0) {
+            ctx.fillStyle = rSeries[0].color + 'cc';
+            ctx.font = 'bold 10px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i <= ySteps; i++) {
+                const yVal = rYMin + (rYRange / ySteps) * i;
+                const yPx = pad.top + gh - (yVal - rYMin) / rYRange * gh;
+                ctx.fillText(Math.round(yVal), pad.left + gw + 3, yPx);
+            }
+        }
+
+        // --- Tidslabels: kun på nederste SYNLIGE graf ---
+        if (isLastVisible) {
+            ctx.fillStyle = 'rgba(190, 210, 235, 0.85)';
+            ctx.font = 'bold 10px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            for (let tick = firstTick; tick <= tMax; tick += gridInterval) {
+                const x = pad.left + ((tick - tMin) / tRange) * gw;
+                const timeInDay = ((tick % 1440) + 1440) % 1440;
+                const hh = String(Math.floor(timeInDay / 60)).padStart(2, '0');
+                const mm = String(Math.floor(timeInDay % 60)).padStart(2, '0');
+                ctx.fillText(`${hh}:${mm}`, x, pad.top + gh + 4);
+            }
+        }
+
+        // --- Chart border med runde hjørner ---
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(pad.left, pad.top, gw, gh, chartRadius);
+        ctx.stroke();
+    }
+
+    /**
+     * isLastVisibleGraph — Finder den nederste graf der IKKE er sammenklappet.
+     * Bruges til at bestemme hvilken graf der skal vise tidslabels.
+     */
+    function isLastVisibleGraph(graphKey) {
+        // Gennemgå graphOrder baglæns og find den første ikke-collapsed
+        for (let i = graphOrder.length - 1; i >= 0; i--) {
+            const key = graphOrder[i];
+            const section = document.querySelector(`.graph-section[data-graph="${key}"]`);
+            if (section && !section.classList.contains('collapsed')) {
+                return key === graphKey;
+            }
+        }
+        return false;
+    }
+
+    // Start
+    initGraphs();
+    requestAnimationFrame(tick);
+    </script>
+</body>
+</html>

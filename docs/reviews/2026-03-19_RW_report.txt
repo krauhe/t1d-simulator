@@ -1,0 +1,345 @@
+# KOMPLET FYSIOLOGISK REVIEW — T1D Simulator
+
+**Dato:** 2026-03-19
+**Reviewer:** T1D Physiology Reviewer (skill-baseret)
+**Scope:** Fuld model-review af alle subsystemer
+**Filer reviewet:**
+- `js/hovorka.js` (524 linjer)
+- `js/simulator.js` (2815 linjer)
+- `docs/MODEL-IMPLEMENTATION.md`
+- `docs/BG-SCIENCE.md`
+
+---
+
+## TRIN 0 — Discovery (identifikation af alle subsystemer)
+
+### Tilstandsvariable i Hovorka-modellen (13 stk, `hovorka.js`):
+D1, D2 (tarm), S1, S2 (insulin SC), Q1, Q2 (glukose), I (plasma insulin), x1, x2, x3 (insulin-effekt), C (CGM), E1, E2 (motion)
+
+### Extensions i Simulator (constructor + update):
+1. **Fedt-kompartmenter** (fatStomach, fatIntestine) — pizza-effekt
+2. **FFA-induceret insulinresistens** (ffaBlood, ffaResistanceFactor) — diaet-FFA
+3. **Protein-kompartmenter** (proteinStomach, proteinGut, aminoAcidsBlood, proteinGlucagonLevel)
+4. **Stresshormoner** (acuteStressLevel, chronicStressLevel)
+5. **Circadian kortisol** (dawn-faenomen)
+6. **Circadian ISF** (dognvariation i insulinfolsomhed)
+7. **HAAF** (hypoArea, counterRegFactor)
+8. **Lever-glykogenpool** (liverGlycogenGrams, glycogenReserve)
+9. **Ketonmodel** (ketoneLevel, ffaLipolysis) — NY FFA-drevet model
+10. **CGM-simulation** (stoj, drift, diskontinuiteter)
+11. **Sovnforstyrrelse** (lostSleepHoursTonight -> chronicStress)
+12. **Post-exercise ISF boost** (activeMotion[])
+13. **Vaegtbalance** (kcal ind/ud)
+
+---
+
+## TRIN 1+2 — Systematisk gennemgang
+
+---
+
+## [KRITISK] — Keton-model dokumentation er alvorligt foraeldet
+
+**Fil:** `docs/MODEL-IMPLEMENTATION.md`, linje 1343-1357
+**Subsystem:** Ketonmodel (sektion 11)
+**Problem:** Dokumentationen beskriver den **gamle** BG-drevne ketonmodel ("Ketones rise when BG > 12 AND IOB < 0.1"), men koden (`simulator.js` linje 2268-2378) implementerer en helt ny **FFA-drevet model** med lipolyse, CPT-1 gating, Michaelis-Menten clearance og renal excretion. Dokumentationen naevner ikke en eneste af de nye mekanismer eller parametre.
+
+Desuden siger `MODEL-IMPLEMENTATION.md` linje 1766-1768 i Limitations-sektionen stadig: *"The current model uses BG > 12 as a trigger, but ketogenesis is primarily driven by insulin levels"* — dette er nu netop hvad koden gor, men docs afspejler det ikke.
+
+**Evidens:**
+- Docs siger: "Ketone production: IOB < 0.1 AND BG > 12" (linje 1346-1351)
+- Kode: Bruger `plasmaInsulin` via Hill-funktion til lipolyse (LIPOLYSIS_EC50=5 mU/L) -> ffaLipolysis -> CPT-1 gating -> BHB. BG indgar IKKE i produktionen.
+- Docs siger: "Clearance half-life ~2 hours when insulin present" (linje 1353-1354)
+- Kode: Michaelis-Menten (Vmax=0.02, Km=2.0) + renal excretion (taerskel 0.5 mmol/L). Ingen halveringstid.
+- Docs clamp: "0.0-10.0 mmol/L" (linje 1356)
+- Kode clamp: "0.0-20.0 mmol/L" (linje 2377)
+
+**Forslag:** Omskriv sektion 11 i `MODEL-IMPLEMENTATION.md` fuldstaendigt. Den nuvaerende tekst er vildledende for enhver der prover at forsta modellen. Opdater ogsa limitations-sektionen (punkt 7).
+
+---
+
+## [KRITISK] — FFA-insulinresistens model mangler helt i MODEL-IMPLEMENTATION.md
+
+**Fil:** `docs/MODEL-IMPLEMENTATION.md` (hele dokumentet)
+**Subsystem:** FFA-induceret insulinresistens (ffaBlood, ffaResistanceFactor)
+**Problem:** Koden (`simulator.js` linje 270-294 og 1096-1118) implementerer en komplet FFA-insulinresistens model (fedt-absorption -> ffaBlood -> Hill-funktion -> ffaResistanceFactor -> currentISF-reduktion). Denne model er IKKE dokumenteret i MODEL-IMPLEMENTATION.md. Den naevnes ikke i extensions-tabellen, ikke i food-sektionen, og ikke som selvstaendig sektion.
+
+**Evidens:**
+- `simulator.js` linje 1112-1118: Hill-funktion med FFA_RESIST_MAX=0.42, FFA_EC50=8, FFA_HILL_N=2
+- `simulator.js` linje 718-719: `ffaResistanceFactor` divideres ind i currentISF
+- MODEL-IMPLEMENTATION.md: Ingen omtale af ffaBlood, ffaResistanceFactor, FFA_RESIST_MAX, Wolpert 2013 i forbindelse med ISF
+
+**Forslag:** Tilfoej ny sektion i MODEL-IMPLEMENTATION.md der beskriver FFA-modellen, dens parametre, Hill-funktionen, og koblingen til currentISF. Tilfoej ogsa til extensions-tabellen.
+
+---
+
+## [ADVARSEL] — Fedt-kompartment Euler-integration potentielt ustabil ved store tidsstep
+
+**Fil:** `simulator.js`, linje 1086-1091
+**Subsystem:** Fedt-kompartmenter
+**Problem:** Fedt-kompartmenterne opdateres med simpel Euler **udenfor** Hovorka-modellens substepping-loop. Hovorka-modellen subdeler til max 1 min per step (linje 1316-1322), men fedt/protein/FFA-kompartmenterne kores med `simulatedMinutesPassed` direkte.
+
+Ved hoj simuleringshastighed (speed=240) og et normalt frame-interval (~16ms):
+`simulatedMinutesPassed = 0.016 * 240 / 60 = 0.064 min` — dette er ok.
+
+Men ved et frame-drop (fx 500ms):
+`simulatedMinutesPassed = 0.5 * 240 / 60 = 2.0 min`
+
+Med `currentTauG = 40 min`: `fatStomach / 40 * 2.0` — dette er stadig under stabilitetstaersklen (dt < 2/|lambda|= 2*40 = 80 min).
+
+**Men** med `TAU_FAT_ABS = 150 min`: `fatIntestine / 150 * 2.0` — ogsa stabilt.
+Med `TAU_PROT_ABS = 90 min`: `proteinGut / 90 * 2.0` — stabilt.
+Med `AA_DECAY_RATE = ln(2)/60 ~ 0.01155 min^-1`: `aminoAcidsBlood * 0.01155 * 2.0` — stabilt.
+
+**Konklusion:** Ved normal brug er dette stabilt. Men ved ekstreme frame-drops (>5 sek) kan `simulatedMinutesPassed` blive >20 min, og da kan `fatStomach / currentTauG * 20` overshoot for lav currentTauG. Risk er lav men reel.
+
+**Forslag:** Overvej at inkludere fedt/protein-kompartmenterne i substepping-loopen. Alternativt: clamp `simulatedMinutesPassed` til max 5 min og smid resten.
+
+---
+
+## [ADVARSEL] — exerciseKetoneBoost kan blive negativt
+
+**Fil:** `simulator.js`, linje 2361
+**Subsystem:** Ketonmodel — clearance
+**Problem:** Formlen `exerciseKetoneBoost = 1.0 + (this.smoothHeartRate - 60) / 120` antager at `smoothHeartRate >= 60`. Men afslapning har `hrTarget` ned til 52 bpm (linje 120). Med `smoothHeartRate = 52`:
+`exerciseKetoneBoost = 1.0 + (52 - 60) / 120 = 1.0 - 0.067 = 0.933`
+
+Den efterfolgende `Math.max(1.0, exerciseKetoneBoost)` (linje 2362) clamper dette til 1.0, sa der sker ingen skade. **Men** formlen bruger den hardcodede vaerdi 60 i stedet for `this.hovorka.HR_base`. Hvis nogen aendrer HR_base (fx til 55 for en atlet), vil formlen ikke folge med.
+
+**Evidens:**
+- Linje 2361: `(this.smoothHeartRate - 60)` — hardcodet 60
+- Hovorka constructor linje 122: `this.HR_base = options.HR_base || 60`
+- `Math.max(1.0, ...)` pa linje 2362 forhindrer faktisk skade
+
+**Forslag:** Erstat `60` med `this.hovorka.HR_base` for konsistens: `1.0 + (this.smoothHeartRate - this.hovorka.HR_base) / 120`.
+
+---
+
+## [ADVARSEL] — Lipolyse EC50 i kommentar vs. kode-parameter inkonsistens
+
+**Fil:** `simulator.js`, linje 382-387
+**Subsystem:** Ketonmodel — lipolyse
+**Problem:** Kommentaren (linje 382) siger *"Lipolyse har den LAVESTE EC50 af alle insulin-processer (~30-50 pmol/L = 4-7 mU/L)"*, og parameteren `LIPOLYSIS_EC50 = 5`. Kommentaren i linje 387 siger *"(Rizza 1981)"*. Men kommentaren i linje 2277-2278 siger *"EC50 ~10 mU/L — laveste af alle insulin-processer"*. Disse to kommentarer er i modstrid: 5 mU/L vs. 10 mU/L.
+
+**Evidens:**
+- Linje 386: `this.LIPOLYSIS_EC50 = 5;` — koden bruger 5 mU/L
+- Linje 2277: Kommentar siger "EC50 ~10 mU/L"
+- Den faktiske parameter-vaerdi er 5, som matcher Rizza 1981-referencen bedst
+
+**Forslag:** Ret kommentaren pa linje 2277-2278 til at sige "EC50 ~5 mU/L" for at matche den faktiske parametervaerdi.
+
+---
+
+## [ADVARSEL] — DKA game-over er stadig tidsbaseret, ikke keton-baseret
+
+**Fil:** `simulator.js`, linje 2619-2662
+**Subsystem:** DKA / Game Over
+**Problem:** Koden har nu en sofistikeret FFA-drevet ketonmodel der producerer realistiske BHB-niveauer. Men game-over for DKA er STADIG baseret pa den gamle tidsbaserede model (6+12 timer ved BG>12 + insulinmangel). Ketonmodellens output (`this.ketoneLevel`) bruges KUN i game-over-popup-teksten (`ketones: this.ketoneLevel.toFixed(1)`) men driver IKKE game-over-triggeren.
+
+**Fysiologisk problem:** En spiller kan have BHB > 5 mmol/L (livstruende DKA) og stadig ikke trigge game-over, hvis de tilfaeldigvis har haft et kort ojeblik med insulin inden for 8 timer. Omvendt kan en spiller do af "DKA" efter 18 timer selvom ketonerne er lave (fordi BG > 12 fra anden arsag end insulinmangel, fx massivt maltid).
+
+Koden naevner dette som TODO (linje 2634-2638), men det er en vaesentlig modelinkonsistens.
+
+**Forslag:** Kobl DKA game-over til `this.ketoneLevel` — fx advarsel ved BHB > 3.0 mmol/L, game-over ved BHB > 5.0 mmol/L vedvarende i >2 timer. Den tidsbaserede model kan bevares som supplement.
+
+---
+
+## [ADVARSEL] — Glycogen depletion dobbelt-taeller basal glycogenolysis
+
+**Fil:** `simulator.js`, linje 1952-1958 og 1269-1283
+**Subsystem:** Lever-glykogenpool + stressMultiplier
+**Problem:** I `updateGlycogenReserve()` (linje 1958) traekkes basal glycogenolysis fra poolen:
+```
+basalGlycogenolysis_gPerMin = EGP_0 * 0.5 * 0.180
+```
+Men i stressMultiplier-beregningen (linje 1282) bruges `glycogenBaseline = 0.5 * glycogenReserve` til at skalere den basale glycogenolysis-del af EGP. Naar glycogenReserve < 1.0 (poolen er under 15g), falder glycogenBaseline -> lavere stressMultiplier -> lavere EGP.
+
+**Men**: `updateGlycogenReserve` traekker *altid* `basalGlycogenolysis_gPerMin` fra poolen med fuld rate, uanset om `glycogenReserve` allerede har reduceret EGP-bidraget. Der er altsa en asymmetri: glukose-outputtet til blodet reduceres via stressMultiplier, men glycogen-forbruget fra poolen reduceres IKKE tilsvarende.
+
+**Konsekvens:** Glycogen-poolen tommes hurtigere end den burde. Ved glycogenReserve = 0.5 leverer modellen kun 50% af basal glycogenolysis til blodet, men traekker stadig 100% fra poolen. Netto: glykogen forsvinder "uden at glukose opstar" — energi-ubalance.
+
+**Forslag:** Skaler basalGlycogenolysis_gPerMin med glycogenReserve:
+```javascript
+const actualBasalGlycogenolysis = basalGlycogenolysis_gPerMin * this.glycogenReserve;
+```
+Tilsvarende for stressEGP_gPerMin. Alternativt: beregn glycogen-forbruget baglaens fra det faktiske EGP i Hovorka-modellen.
+
+---
+
+## [ADVARSEL] — stressMultiplier baseline aendrer sig ved glycogen-depletion men steady-state initialisering antager fuld glycogen
+
+**Fil:** `simulator.js`, linje 1282-1290 og `hovorka.js` linje 184
+**Subsystem:** stressMultiplier + steady-state
+**Problem:** Ved steady-state initialisering (linje 184 i hovorka.js) saettes `stressMultiplier = 1.0`. Men i normal drift (linje 1282-1283) er stressMultiplier = `glycogenBaseline + gngBaseline = 0.5 * glycogenReserve + 0.5`. Ved fuld glycogen (reserve=1.0) er dette 0.5 + 0.5 = 1.0 — matcher. Men ved delvist tom glycogen (fx reserve=0.5 efter langvarig motion) er baseline 0.75, ikke 1.0. Insulin-parametre er kalibreret for baseline=1.0.
+
+**Konsekvens:** Efter glycogen-depletion sker en permanent reduktion i EGP-baseline der ligner et fald i leverproduktion. Dette er fysiologisk korrekt — men det kan give uventet lav BG efter langvarig motion + faste, fordi Hovorka's x3-effekt (kalibreret mod EGP med stressMultiplier=1.0) nu er "for kraftig" relativt til den reducerede baseline.
+
+**Vurdering:** Dette er sandsynligvis en **bevidst designbeslutning** (glycogen-depletion SKAL saenke EGP), men effekten kan vaere staerkere end tilsigtet.
+
+**Forslag:** Dokumenter denne interaktion tydeligt. Overvej om der bor vaere en undergraense for stressMultiplier-baseline (fx minimum 0.7 = minimum 30% glycogenolysis uanset poolstorrelse).
+
+---
+
+## [NOTE] — Post-exercise sensitivity boost bruger max() i stedet for summering
+
+**Fil:** `simulator.js`, linje 694
+**Subsystem:** Post-exercise ISF
+**Problem:** Ved multiple overlappende motionssessions tager koden `Math.max(sensitivityIncreaseFactor, 1 + currentIncrease)` — dvs. kun den staerkeste boost gaelder. Fysiologisk er det korrekt at to motionssessions ikke giver dobbelt ISF-boost (der er et loft for GLUT4-translokation og kapillarisering). Men det er tvivlsomt om effekterne er helt non-additive.
+
+**Konklusion:** Acceptabel forenkling. `max()` er konservativt og undgar urealistisk stacking.
+
+---
+
+## [NOTE] — Docs extension-tabel siger "Post-exercise ISF: Exponential decay" men koden siger "linear" i kommentaren
+
+**Fil:** `docs/MODEL-IMPLEMENTATION.md` linje 191; `simulator.js` linje 688-691
+**Subsystem:** Post-exercise ISF boost
+**Problem:** MODEL-IMPLEMENTATION.md linje 191 siger korrekt "Exponential decay, t1/2 = 3-5 hours". Men simulator.js linje 660-661 siger i kommentaren *"Fader lineaert fra max til 1.0"*. Koden selv (linje 690) bruger `Math.pow(0.5, timeAfterExercise / halfLife)` — det er eksponentielt henfald. Kommentaren er foraeldet.
+
+**Forslag:** Ret kommentaren i simulator.js til "Eksponentielt henfald" (matcher den faktiske kode og docs).
+
+---
+
+## [NOTE] — MODEL-IMPLEMENTATION.md extensions-tabel siger dawn amplitude 0.15, men kode-kommentar siger basis 0.3
+
+**Fil:** `docs/MODEL-IMPLEMENTATION.md` linje 188; `simulator.js` linje 515
+**Subsystem:** Dawn-faenomen
+**Problem:** Extensions-tabellen i MODEL-IMPLEMENTATION.md siger "Sine curve, peak 08:00, amplitude 0.15". Constructor (linje 515) initialiserer `_dawnAmplitude = gaussRand(0.3, 0.06)`. Men `regenerateDawn()` (linje 763) bruger mean 0.15 med note om at amplitude er "reduceret fra 0.30 til 0.15".
+
+Forklaringen er at constructoren genererer initial dawn med 0.3 (dag 1 bruger det gamle mean), men fra dag 2+ genererer `regenerateDawn()` med mean 0.15. Dag 1 har altsa dobbelt dawn-amplitude vs. efterfolgende dage.
+
+**Evidens:**
+- Constructor linje 515: `this.gaussRand(0.3, 0.06)` — mean 0.3
+- regenerateDawn() linje 763: `this.gaussRand(0.15, 0.03)` — mean 0.15
+- Dag 1: constructoren korer, `_dawnDay = 1`, dawn er aldrig regenereret -> amplitude ~0.30
+- Dag 2+: `regenerateDawn()` korer -> amplitude ~0.15
+
+**Konsekvens:** Dag 1 har ~dobbelt sa kraftig dawn-effekt som efterfolgende dage. Sandsynligvis en forglemmelse fra da amplituden blev halveret.
+
+**Forslag:** Ret constructor linje 515 til `this.gaussRand(0.15, 0.03)` for at matche `regenerateDawn()`.
+
+---
+
+## [NOTE] — Keton-model: LIPOLYSIS_MAX hardcodet vs. potentielt vaegt-afhaengig
+
+**Fil:** `simulator.js`, linje 385
+**Subsystem:** Ketonmodel
+**Problem:** `LIPOLYSIS_MAX = 0.09` er en konstant uafhaengig af kropsvaegt. Fysiologisk er fedtvaevsvolumen og dermed lipolyse-kapaciteten proportional med kropsmasse. En 50 kg patient og en 100 kg patient har identisk lipolyse-rate.
+
+**Vurdering:** For en paedagogisk simulator er dette en acceptabel forenkling. Lipolyse-raten er kalibreret mod kliniske BHB-niveauer, og patientens vaegt aendrer sig minimalt i spillet.
+
+**Konklusion:** Acceptabel forenkling. Dokumenter blot at den ikke er vaegtskaleret.
+
+---
+
+## [OK] — Hovorka ODE-systemet: enheder, koblinger, stabilitet
+
+Hovorka-modellen (`hovorka.js`) er korrekt implementeret med konsistente enheder:
+- Q1 [mmol], V_G [L] -> G [mmol/L] OK
+- S1, S2 [mU], tau_I [min] -> U_I [mU/min] OK
+- carbRate [mmol/min] med A_G=0.8 OK
+- EGP formel `EGP_0 * max(0, stressMultiplier - x3)` — fysiologisk forbedret vs. original Hovorka OK
+- Renal clearance taerskel 9 mmol/L (korrekt vs. Python-kodens 14) OK
+- CGM forsinkelses-ODE `dC = ka_int * (G - C)` — korrekt forsteordens lavpasfilter OK
+- Clamping af alle tilstandsvariable >= 0 med Q1 minimum ved BG=0.5 OK
+- Substepping med maxStepSize=1.0 min i simulator.js OK
+- pulsFaktor korrekt koblet til insulin-absorption (begge led i S1/S2-ODEer) OK
+
+---
+
+## [OK] — Protein-glucagon model: enheder, timing, dose-respons
+
+Protein-kompartmenterne er korrekt implementeret:
+- proteinStomach -> proteinGut (tauG, delt med kulhydrater -> pizza-effekt pavirker ogsa protein) OK
+- proteinGut -> aminoAcidsBlood (tauProtAbs=90 min) OK
+- Hill-funktion: `maxGlucagon * AA^n / (EC50^n + AA^n)` med EC50=8, n=2, max=0.25 OK
+- Glycogen-afhaengighed: `0.5 + 0.5 * glycogenReserve` OK
+- Integration via stressMultiplier -> Hovorka EGP OK
+- Timing matcher Paterson 2016 (onset ~60-90 min, peak ~150-180 min) OK
+- Dokumentation matcher kode i MODEL-IMPLEMENTATION.md OK
+
+---
+
+## [OK] — FFA-insulinresistens model: mekanismer og parametre
+
+FFA-modellen i koden er fysiologisk fornuftig:
+- Kaskade: fatIntestine -> absorberet -> ffaBlood -> Hill -> ffaResistanceFactor OK
+- Hill med EC50=8, n=2, max=0.42 (Wolpert 2013: 60g fedt -> 42% mere insulin) OK
+- Clearance halveringstid 180 min OK
+- Integration via `currentISF / ffaResistanceFactor` OK
+- Separat fra diaet-FFA (ffaBlood) og lipolyse-FFA (ffaLipolysis) OK
+
+**Eneste problem:** Mangler dokumentation (se KRITISK finding ovenfor).
+
+---
+
+## [OK] — HAAF-model: mekanisme og parametre
+
+- Areal-baseret skade-akkumulering under BG < 3.0 OK
+- Eksponentiel recovery med t1/2 = 3 sim-dage OK
+- Sigmoid mapping via `0.3 + 0.7 * exp(-hypoArea/30)` OK
+- counterRegFactor reducerer stress-tilfojelse ved hypo OK
+- Dokumentation matcher kode OK
+
+---
+
+## [OK] — Circadian ISF-model
+
+- Cosinus-interpolation mellem kontrolpunkter OK
+- Morgen-nadir 0.70 ved kl 08:00 -> 43% mere insulin nodvendigt OK
+- Aften-peak 1.20 ved kl 19:00 OK
+- Korrekt koblet til Hovorka via `setISFModifier(currentISF / this.ISF)` OK
+- Kombination med dawn HGP-stigning giver realistisk morgen-effekt OK
+
+---
+
+## [OK] — CGM-simulation
+
+- Interstitiel forsinkelse via Hovorka ODE (ka_int=0.073, tau ca. 14 min) OK
+- Proportional Gaussisk stoj (2.5-4% af BG) OK
+- Sinusbolge-drift (4-8 timer, 0.3-0.7 mmol/L) OK
+- Diskontinuiteter (~0.7/dag) OK
+- 5-minutters update-interval (som rigtige CGM-sensorer) OK
+- Clamp til 2.2-30.0 mmol/L OK
+
+---
+
+## TRIN 3 — Testscenarie-forslag
+
+### Scenarie 1: Ketonmodel steady-state
+- Normal basal insulin -> plasmaI ~8-12 mU/L -> BHB bor stabilisere < 0.3 mmol/L
+- Verificer: lipolyseRate bor vaere lav, cpt1Activity bor vaere lav
+
+### Scenarie 2: Pumpesvigt (ketonmodel)
+- Stop al insulin ved t=0, BG stiger frit
+- BHB bor na ~2.0 ved 4 timer, ~3.5 ved 8 timer
+- DKA game-over bor trigge (via den tidsbaserede model, da keton-triggeren mangler)
+
+### Scenarie 3: Pizza-scenarie (FFA-resistens)
+- Giv 60g kulhydrat + 40g fedt + korrekt bolus
+- BG bor peake en gang (kulhydrater, ~60 min), vende tilbage, og derefter stige igen (FFA-resistens, ~4-5 timer)
+
+### Scenarie 4: Glycogen-depletion
+- Kor 90 min intens cardio (10 kcal/min) uden mad
+- Glycogen bor falde markant (~38 g/time fra motion alene)
+- Efterfolgende hypo -> Somogyi-respons bor vaere svagere pga. lavt glycogen
+
+### Scenarie 5: Dawn dag 1 vs. dag 2
+- Mal morgen-BG stigning dag 1 (amplitude ~0.30) vs. dag 2 (amplitude ~0.15)
+- Dag 1 bor have markant kraftigere dawn
+
+---
+
+## Opsummering
+
+| Prioritet   | Antal | Oversigt |
+|-------------|-------|----------|
+| **KRITISK** | 2     | Keton-docs foraeldet; FFA-resistens udokumenteret |
+| **ADVARSEL**| 5     | exerciseKetoneBoost hardcodet; lipolyse EC50-kommentar; DKA ikke keton-baseret; glycogen dobbelt-taelling; fedt-Euler stabilitet |
+| **NOTE**    | 4     | Post-ex kommentar; dawn amplitude dag 1; lipolyse ikke vaegtskaleret; extensions-tabel |
+| **OK**      | 6     | Hovorka ODE; protein-model; FFA-mekanisme; HAAF; circadian ISF; CGM |
+
+De to KRITISKE fund handler begge om **dokumentation**: koden er korrekt implementeret, men `MODEL-IMPLEMENTATION.md` matcher ikke koden for keton-modellen og FFA-insulinresistens. Enhver der laeser dokumentationen vil fa et forkert billede af modellen.
+
+Den vigtigste **kodefejl** er glycogen-poolens dobbelt-taelling (ADVARSEL), som medforer at glycogen udtommes hurtigere end fysiologisk berettiget. Den naestvigstigste er at DKA game-over ikke er koblet til ketonmodellens output, hvilket gor den sofistikerede ketonmodel paedagogisk underudnyttet.
+
+Dawn-amplituden pa dag 1 (0.30 vs. 0.15 efterfolgende) er sandsynligvis en forglemmelse fra en halvering der blev lavet i `regenerateDawn()` men ikke i constructoren.

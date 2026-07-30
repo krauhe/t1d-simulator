@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 526 658.002" width="526" height="658.002" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>Insulin pharmacokinetics — core Hovorka 2004 model</title>
+  <defs>
+    <marker id="arrow-7dd3fc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 306.2 136.001 L 306.2 154.001" fill="none" stroke="#7dd3fc" stroke-width="2" marker-end="url(#arrow-7dd3fc)" data-edge-id="e0" data-from="__ext_in_0" data-to="S1"/>
+    <path d="M 306.2 206.001 L 306.2 271.001" fill="none" stroke="#7dd3fc" stroke-width="2" marker-end="url(#arrow-7dd3fc)" data-edge-id="e1" data-from="S1" data-to="S2"/>
+    <path d="M 306.2 323.001 L 306.2 388.001" fill="none" stroke="#7dd3fc" stroke-width="2" marker-end="url(#arrow-7dd3fc)" data-edge-id="e2" data-from="S2" data-to="I"/>
+    <path d="M 364.60 446.08 L 487.40 492.50 L 487.40 625.00" fill="none" stroke="#7dd3fc" stroke-width="2" marker-end="url(#arrow-7dd3fc)" data-edge-id="e3" data-from="I" data-to="__ext_out_1"/>
+    <path d="M 247.80 441.83 L 81.80 492.50 L 81.80 525.00" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e4" data-from="I" data-to="x1"/>
+    <path d="M 262.09999999999997 460.001 L 262.09999999999997 525.001" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e5" data-from="I" data-to="x2"/>
+    <path d="M 341.79999999999995 460.001 L 341.79999999999995 525.001" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e6" data-from="I" data-to="x3"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="S1">
+      <rect x="240.60" y="154.00" width="131.2" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2"/>
+      <text x="306.20" y="174.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">SC rapid stage 1</text>
+      <text x="306.20" y="192.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">S1</text>
+    </g>
+    <g class="node" data-node-id="S2">
+      <rect x="240.60" y="271.00" width="131.2" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2"/>
+      <text x="306.20" y="291.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">SC rapid stage 2</text>
+      <text x="306.20" y="309.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">S2</text>
+    </g>
+    <g class="node" data-node-id="I">
+      <rect x="247.80" y="388.00" width="116.8" height="72" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2"/>
+      <text x="306.20" y="410.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Plasma insulin</text>
+      <text x="306.20" y="428.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">I</text>
+      <text x="306.20" y="449.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">mU/L</text>
+    </g>
+    <g class="node" data-node-id="x1">
+      <rect x="36.80" y="525.00" width="90" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="81.80" y="545.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Transport</text>
+      <text x="81.80" y="563.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">x1</text>
+    </g>
+    <g class="node" data-node-id="x2">
+      <rect x="186.40" y="525.00" width="90" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="231.40" y="545.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Disposal</text>
+      <text x="231.40" y="563.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">x2</text>
+    </g>
+    <g class="node" data-node-id="x3">
+      <rect x="319.00" y="525.00" width="124" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="381.00" y="545.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">EGP suppression</text>
+      <text x="381.00" y="563.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">x3</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0-ext">
+      <rect x="218.40" y="114.00" width="175.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="306.20" y="127.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">injection (rapid bolus)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1">
+      <rect x="279.60" y="229.50" width="53.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="306.20" y="243.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">S1/τ_I</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2">
+      <rect x="258.00" y="346.50" width="96.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="306.20" y="360.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">U_I = S2/τ_I</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3">
+      <rect x="460.80" y="484.11" width="53.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="487.40" y="498.01" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">ke · I</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3-ext">
+      <rect x="421.20" y="629.00" width="132.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="487.40" y="642.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">urine / clearance</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4">
+      <rect x="79.46" y="462.91" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="149.26" y="476.81" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">kb1 · I − ka1 · x1</text>
+    </g>
+    <g class="edge-label" data-edge-id="e5">
+      <rect x="192.30" y="483.50" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="262.10" y="497.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">kb2 · I − ka2 · x2</text>
+    </g>
+    <g class="edge-label" data-edge-id="e6">
+      <rect x="272.00" y="483.50" width="139.60" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="341.80" y="497.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">kb3 · I − ka3 · x3</text>
+    </g>
+  </g>
+</svg>

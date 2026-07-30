@@ -1,0 +1,268 @@
+﻿LEVELS - PROSA
+Genereret: 2026-04-30
+
+STATUS: Historisk planmateriale - ikke kilde til aktuel spillertekst.
+De aktive kilder er js/levels.js, js/i18n.js og js/guide-data.js.
+Ny tekst skal følge docs/INTENDED-PURPOSE.md og handle om faste, fiktive karakterer.
+
+Kort oversigt over hver bane: titel, læringsmål, udfordring, tips.
+Alle baner starter kl. 00:00 med BG 6.0 mmol/L (med mindre andet noteres).
+Detaljerede tekniske felter står i level-templates.txt.
+
+Informationen skal bruges som inspiration til at udforme pre game pop up.  
+med bane beskrivelse, in game tips, samt udfordringerne og succes kriterierne. 
+
+
+===============================================================================
+BANE 1 - BASAL INSULIN
+===============================================================================
+
+Læringsmål:
+  Lær at give basal insulin og bruge menuerne i bunden af skærmen.
+  Brug hastighedskontrollen (< >) til at speede op når der ikke sker noget.
+  Forstå at uden basal insulin frigives glukose og ketoner fra leveren.
+
+
+Udfordring:
+  Tag din basal insulin igennem 3 døgn. Brug snaks fra T1D-kittet hvis du falder for lavt. 
+
+  udover alm gave over kriterier: så hvis man ikke har taget min ½ af den anbefalede insulin mængde før sidste go nat tid. 
+
+Tips:
+  - Anbefalet basal-dosis står på insulin-menuen.
+  - Prøv at tage hele dosis om morgenen, om aftenen, eller halvt på hver
+    af tidspunkterne. Hvilken strategi giver flest points?
+  - Undgå natlige interventioner - de stresser kroppen.
+  -fysiologi mode kan hjælpe dig med at lære om de ting du normalt ikke kan vide
+  - godt at være mellem 4 og 10.
+
+===============================================================================
+BANE 2 - DAWN-EFFEKTEN
+===============================================================================
+
+Læringsmål:
+  Forstå morgen-stigningen i BG som skyldes kortisol-frigivelse (dawn).
+  Lær at korrigere med rapid-bolus om morgenen.
+  Bliv introduceret til ISF (Insulin Sensitivity Factor): hvor meget 1E
+  rapid sænker BG (mmol/L per enhed).
+  Lær om usikkerhed, forskellige start og styrke 
+
+Udfordring:
+   Brug rapid-bolus om morgenen til at neutralisere effekten.
+
+   gameover ud over alm  kriterier: Brug rapid insulin min 3 gange før sidste go nat tid
+
+Tips:
+  - Tag rapid-bolus når du står op for at modvirke dawn.
+  - Husk stadig din basal-dosis.
+  - Undgå insulin om natten - dårlig søvn giver øget insulinbehov dagen
+    efter.
+  - ISF varierer over døgnet - dawn er det mest markante eksempel.
+
+
+===============================================================================
+BANE 3 - HURTIGE KULHYDRATER
+===============================================================================
+
+Læringsmål:
+  Lær ICR-konceptet (Insulin-to-Carb Ratio): hvor mange gram kulhydrat
+  1E rapid dækker. Sukker er let at forholde sig til fordi det optages
+  hurtigt og forudsigeligt.
+  Med rapid insulin er der risiko for hypo. hav frugtsukker og Glucagon ved hånden.  
+
+Udfordring:
+  Spis minimum 50 g sukker per dagen og kompenser med rapid-bolus.
+  Hold BG i målzonen.
+
+Tips:
+  - Tag bolus FØR du spiser sukkeret - rapid har 10-15 min onset.
+  - kulhydrat som smager sødt optages hurtigt
+  -væske optages hurtigere end fast 
+  - Har du selv diabetes din ICR under person profilen, så spillet ligner mere din egen situation.
+  - Tager du for meget insulin så juster med flere hurtige kulhydrater
+  - Er det alvorligt brug glucagon 
+
+===============================================================================
+BANE 4 - BOLUS TIL MÅLTIDER
+===============================================================================
+
+Læringsmål:
+  Bolus til rigtige måltider (kun alm. måltidsrække og snaks aktive).
+  Forskellige retter (inkl. fx pizza) har forskellige optags-profiler.
+  Forstå kalorieforbruget — 3 retter alene dækker IKKE et 70kg-døgn (~2200
+  kcal/dag). Suppler med snaks fra adjustments-rækken.
+
+Udfordring:
+  Spis mindst 3 gange om dagen og dæk dit kalorieforbrug via alm. retter
+  + snaks. Kompenser med rapid-bolus.
+
+
+Tips:
+  - Tag bolus FØR måltidet.
+  - del bolus op i flere
+  - Pizza og fede retter giver forsinket BG-stigning - vær opmærksom 2-4
+    timer efter.
+  - Bolus-størrelse beregnes ud fra ICR x kulhydrater.
+  -tag ekstra pgf. fedt og protein
+  -Det er svært spil banen flere gange op optimer
+
+===============================================================================
+BANE 5 - low carb
+===============================================================================
+
+Læringsmål:
+Low carb giver mindre og langsommere BG stining ifht. energien som de indeholder 
+
+Udfordring:
+spis måltider til at dække dit kalorie forbrug via low carb
+disable sports og alm. retter
+
+Tips:
+-bolus ikke efter carb, men prøv dig frem 
+-tag boluse senere end ved carb, evt under eller efter maden ved lavt BG
+-Undgå sen low carb mad (BG stiger igennem natten)
+
+===============================================================================
+BANE 6 - Buffet
+===============================================================================
+
+Læringsmål:
+Lær at håndtere flere typer mad   
+ 
+Udfordring:
+?  
+
+Tips:
+ det er svært spil banen igenem igen og forbeder din præstation
+
+
+
+===============================================================================
+BANE 7 - HVERDAGSAKTIVITET
+===============================================================================
+
+Læringsmål:
+  Hverdagsaktivitet (gåtur, ærinder, havearbejde, yoga) er et reelt
+  værktøj til at styre BG. Forskellige typer virker forskelligt:
+  - Cardio (gå, cykling) sænker BG via muskeloptag.
+  - Styrke (bære, lette løft) kan give kort BG-stigning fra
+    stresshormoner.
+  - Afslapning (yoga, vejrtrækning) sænker stress og forbedrer
+    BG-kontrol indirekte.
+
+Udfordring:
+  Vær aktiv mindst 2 timer per dag (alle 3 dage). Intensiteten er
+  låst til "Lav" - dette er hverdag, ikke træning.
+
+Tips:
+  - Brug aktivitet strategisk når BG er let forhøjet.
+  - Selv let styrke kan give kort BG-stigning.
+  - Afslapning sænker stress.
+  - Stop-knappen i aktivitets-overlay'et stopper en aktivitet manuelt.
+
+Idé til senere - tids-baserede krav:
+  Mulig udvidelse: tilføj krav om at være aktiv i specifikke
+  tids-vinduer ("vær aktiv mellem kl 11-14" eller "30 min aktivitet
+  før kl 9") for at simulere en realistisk hverdagsstruktur. Kræver
+  ny objective-type.
+
+
+===============================================================================
+BANE 8 - SPORT
+===============================================================================
+
+Læringsmål:
+  Rigtig sport (cardio, styrke, blandet) i alle intensiteter.
+  - Cardio (løb, cykling) sænker BG hurtigt og kraftigt.
+  - Styrke kan give BG-stigning under træning (katekolaminer) og
+    øget insulinfølsomhed efter (e2-effekt) i timer/døgn.
+  - Brug motion strategisk efter aktuel BG.
+
+Udfordring:
+  Gennemfør sport og kompenser korrekt med mad og insulin. Hold BG
+  i målzonen uden hypo både under og efter træning.
+
+Tips:
+  - Spis 15-30 g hurtige kulhydrater før cardio.
+  - Risiko for sen hypo i timer efter cardio.
+  - Reducer evt. næste bolus med 25-50% efter hård træning.
+  - Forvent BG-stigning på 1-3 mmol/L under styrketræning.
+  - Insulinfølsomheden er forhøjet i timer/døgn efter styrke.
+
+
+===============================================================================
+BANE 9 - SYGDOM OG STRESS
+===============================================================================
+
+Læringsmål:
+  Sygdom, feber og kronisk stress øger insulinresistensen markant.
+  Insulinbehovet kan stige 30-100% i ~12 timer (eller mere ved
+  alvorlig sygdom). Lær at justere basal og bolus op.
+
+Udfordring:
+  Klar et døgn med sygdom/feber. Juster insulin-doser op for at
+  modvirke insulinresistensen.
+
+Tips:
+  - Sygdom øger insulinbehov - juster basal og bolus op.
+  - Tjek BG og ketoner oftere ved sygdom.
+  - Drik væske for at modvirke dehydrering.
+  - Selv mild forkølelse kan påvirke BG.
+
+
+===============================================================================
+BANE 10 - UFORUDSETE EVENTS
+===============================================================================
+
+Læringsmål:
+  Virkelighedens kaos. Du har lært mekanikkerne; her testes om du
+  kan reagere på det uventede.
+
+Udfordring:
+  Klar dagen igennem på trods af et tilfældigt event per døgn.
+  Events trækkes fra listen af events som modellen allerede understøtter:
+  - Dårlig søvn (kronisk stress dagen efter)
+  - CGM-uregelmæssigheder (drift, spring, kortvarigt udfald)
+  - Sen til bussen (30 min uplanlagt høj-intensitets cardio -
+    akut stress)
+  - (Sygdom dækkes af bane 9, så denne bane fokuserer på de
+    øvrige tre.)
+
+Tips:
+  - Stol på fingerstik når CGM-grafen ser mistænkelig ud.
+  - Dårlig søvn øger dit insulinbehov - juster basal/bolus op.
+  - Akut stress fra hård aktivitet kan give kortvarig BG-stigning.
+
+
+===============================================================================
+GENERELT
+===============================================================================
+
+  Progression: hver bane bygger oven på den foregående.
+  Stjerne-rating drives af TIR (Time In Range, 4-10 mmol/L) - krævende
+  for 3 stjerner men opnåelig.
+
+  Spilleren skal aldrig føle sig "fanget" - mulighed for at give op og
+  vælge en anden bane.
+
+  Skjulte anti-snyd deadlines (game-over-mekanik):
+  Flere baner har et skjult krav om at noget skal gøres FØR sidste go-nat,
+  så spilleren ikke bare faster/sidder på hænderne indtil baneslut og
+  redder TIR via inaktivitet. Kravene vises IKKE i intro/tips - kun ved
+  game-over som forklaring: "Du tog ikke nok basal", "Du spiste ikke
+  nok kalorier", osv.
+    Bane 1:  >= halv basal-dosis givet før sidste go-nat
+    Bane 2:  >= 3 rapid-bolus givet før sidste go-nat
+    Bane 3:  >= 50 g sukker spist + dækket af bolus
+    Bane 4:  kalorier dækket via alm. retter før sidste go-nat
+    Bane 5:  kalorier dækket via low-carb før sidste go-nat
+    Bane 6:  kalorier dækket (frit valg) før sidste go-nat
+    Bane 7:  >= 2 timer aktivitet per dag (lav intensitet)
+    Bane 8:  motion-handling udført før sidste go-nat
+    Bane 9:  insulin-justering ved sygdom (krav TBD)
+    Bane 10: håndtér event korrekt (krav TBD)
+
+  Glucagon:
+  Findes i T1D-kittet i alle baner med kit enabled. En tip i bane 3
+  forklarer brugen ved alvorlig hypo.
+

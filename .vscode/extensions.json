@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "anthropic.claude-code",
+    "ritwickdey.LiveServer",
+    "simonsiefke.svg-preview",
+    "kisstkondoros.vscode-gutter-preview",
+    "yzhang.markdown-all-in-one",
+    "streetsidesoftware.code-spell-checker",
+    "streetsidesoftware.code-spell-checker-danish",
+    "dbaeumer.vscode-eslint",
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    "esbenp.prettier-vscode",
+    "christian-kohler.path-intellisense",
+    "aaron-bond.better-comments"
+  ]
+}

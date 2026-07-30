@@ -1,0 +1,77 @@
+﻿Genereret: 2026-06-13
+Stemme: Peter (qhEux886xDKbOdF7jkFP)
+Model: eleven_multilingual_v2
+Sprog: da, language_code=da
+
+Workflow notes:
+- Use UTF-8 scriptblock execution on Windows PowerShell 5:
+  $script = [IO.File]::ReadAllText('.\tools\generate-tour-audio.ps1', [Text.Encoding]::UTF8); $block = [scriptblock]::Create($script); & $block -Language da -Only 07
+- Do not run the script with plain powershell -File on this machine. Dry-run showed mojibake in Danish text, which would risk sending damaged text to ElevenLabs.
+- Best Danish text pattern so far: use normal Danish spelling with æ, ø, å in the actual TTS text, and use digits for all numbers, for example 1, 2, 3, 15, 30, 60 instead of written-out number words. This seemed more stable than latinized ae/oe/aa or fully written-out numbers.
+
+Procedure for future sessions:
+- Generate only one file at a time with -Only. Never run full -Language da without -Only.
+- Use the full filename for 09-food-meals.mp3 and 09-food-lowcarb.mp3. The prefix -Only 09 matches both files.
+- First dry-run the exact file and check that Danish æ, ø, å are intact.
+- Use UTF-8 scriptblock execution, not plain powershell -File:
+  $script = [IO.File]::ReadAllText('.\tools\generate-tour-audio.ps1', [Text.Encoding]::UTF8); $block = [scriptblock]::Create($script); & $block -Language da -Only 08
+- For Danish TTS text, use real æ, ø, å. Do not use latinized ae/oe/aa.
+- Use digits for all numbers in Danish TTS text: 1, 2, 3, 15 minutes, 30 minutes, 60 minutes.
+- If a heading repeats the first spoken sentence, omit the heading from the TTS text.
+- After generation, mark the file REVIEW until the user has listened. Mark OK only after explicit approval.
+Fil                          Stab  Sim   Style  Status    Noter
+---                          ----  ----  -----  ------    -----
+00-overview.mp3              0.34  0.78  0.85   REVIEW    Genindspillet 2026-07-30, 215711 bytes. Nyt kort formålsafsnit; afventer lytning. Exact filter: -Language da -Only 00-overview.mp3.
+01-graph.mp3                 0.34  0.78  0.85   OK        Tekst aendret: "x" -> "points per time"
+02-graph-daynight.mp3        0.34  0.78  0.85   OK
+02-cgm.mp3                   0.34  0.78  0.85   OK        v2 valgt (v1 daarlig IOB-udtale)
+04b-profilebutton.mp3        0.34  0.78  0.85   OK
+03-profile.mp3               0.34  0.78  0.85   OK
+04-insulin.mp3               0.34  0.78  0.85   OK
+05-basal.mp3                 0.34  0.78  0.85   OK        Tekst rettet: "vurderer bedst" + fjernet insulintype-afhaengighed
+06-fast.mp3                  0.34  0.78  0.85   OK        Tekst forkortet + cifre i stedet for talord
+07-food.mp3                  0.34  0.78  0.85   OK        v2 approved 2026-06-13, 112475 bytes. UTF-8 scriptblock worked; plain -File failed dry-run encoding.
+08-food-sugars.mp3           0.34  0.78  0.85   OK        v1 approved 2026-06-13, 228249 bytes. UTF-8 scriptblock used; generated alone with -Only 08.
+09-food-meals.mp3            0.34  0.78  0.85   OK        v1 approved 2026-06-13, 211949 bytes. Generated alone with full filename -Only 09-food-meals.mp3.
+09-food-lowcarb.mp3          0.34  0.78  0.85   OK        v1 approved 2026-06-13, 458963 bytes. Generated alone with full filename -Only 09-food-lowcarb.mp3.
+10b-activityoverview.mp3     0.34  0.78  0.85   OK        v2 approved 2026-06-13, 76948 bytes. Heading omitted because it repeated first sentence.
+10-activity.mp3              0.34  0.78  0.85   OK        v1 approved 2026-06-13, 435557 bytes. Used digits for 15, 30, 60. Generated alone with full filename -Only 10-activity.mp3.
+11b-kitoverview.mp3          0.34  0.78  0.85   OK        v1 approved 2026-06-13, 84889 bytes. Heading omitted because it repeated first sentence.
+11-kit.mp3                   0.34  0.78  0.85   OK        v2 approved 2026-06-13, 483204 bytes. Regenerated on request. Generated alone with full filename -Only 11-kit.mp3.
+12b-timecontrols.mp3         0.34  0.78  0.85   OK        v2 approved 2026-06-13, 281330 bytes. Text rewritten with concrete pause/speed behavior and sleep example.
+13-physiology.mp3            0.34  0.78  0.85   OK        v3 approved 2026-06-13, 339844 bytes. Regenerated on request from same v2 text.
+13b-settings.mp3             0.34  0.78  0.85   OK        v1 approved 2026-06-13, 151345 bytes. Heading repetition removed (Settings-knappen...).
+14-learn.mp3                 0.34  0.78  0.85   OK        v1 approved 2026-06-13, 176422 bytes. Repeated undervejs wording removed.
+15-ready.mp3                 0.34  0.78  0.85   OK        v1 approved 2026-06-13, 180184 bytes.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

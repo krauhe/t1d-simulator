@@ -1,0 +1,7 @@
+interface:
+  display_name: "Science Reviewer"
+  short_description: "Løft BG-SCIENCE til review-niveau"
+  default_prompt: "Use $science-reviewer to improve a BG-SCIENCE.md section with scientific references."
+
+policy:
+  allow_implicit_invocation: true

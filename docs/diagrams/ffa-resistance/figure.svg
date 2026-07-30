@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 569.5071428571428 952.002" width="569.5071428571428" height="952.002" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <title>Dietary fat → FFA-induced insulin resistance (Wolpert 2013)</title>
+  <defs>
+    <marker id="arrow-f59e0b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b"/></marker>
+    <marker id="arrow-7dd3fc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/></marker>
+  </defs>
+  <g class="edges">
+    <path d="M 237.9535714285714 136.001 L 237.9535714285714 154.001" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-f59e0b)" data-edge-id="e0" data-from="__ext_in_0" data-to="stomach"/>
+    <path d="M 237.9535714285714 226.001 L 237.9535714285714 291.001" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-f59e0b)" data-edge-id="e1" data-from="stomach" data-to="intestine"/>
+    <path d="M 162.90446428571425 363.001 L 162.90446428571425 428.001" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-f59e0b)" data-edge-id="e2" data-from="intestine" data-to="ffa"/>
+    <path d="M 315.17 355.05 L 426.51 395.50 L 426.51 464.00 L 426.51 532.50 L 426.51 591.00 L 426.51 649.50 L 426.51 718.00 L 426.51 786.50 L 426.51 819.00" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f59e0b)" data-edge-id="e3" data-from="intestine" data-to="tau"/>
+    <path d="M 78.59 500.00 L 49.40 532.50 L 49.40 591.00 L 49.40 649.50 L 49.40 718.00 L 49.40 786.50 L 49.40 919.00" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-f59e0b)" data-edge-id="e4" data-from="ffa" data-to="__ext_out_1"/>
+    <path d="M 115.73482142857141 500.001 L 115.73482142857141 565.001" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f59e0b)" data-edge-id="e5" data-from="ffa" data-to="hill"/>
+    <path d="M 172.4535714285714 617.001 L 172.4535714285714 682.001" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-f59e0b)" data-edge-id="e6" data-from="hill" data-to="isf"/>
+    <path d="M 172.4535714285714 754.001 L 172.4535714285714 819.001" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-7dd3fc)" data-edge-id="e7" data-from="isf" data-to="kb"/>
+  </g>
+  <g class="nodes">
+    <g class="node" data-node-id="stomach">
+      <rect x="172.27" y="154.00" width="131.35714285714283" height="72" rx="10" ry="10" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="2"/>
+      <text x="237.95" y="176.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Stomach</text>
+      <text x="237.95" y="194.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">fatStomach</text>
+      <text x="237.95" y="215.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">g fat</text>
+    </g>
+    <g class="node" data-node-id="intestine">
+      <rect x="160.74" y="291.00" width="154.42857142857142" height="72" rx="10" ry="10" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="2"/>
+      <text x="237.95" y="313.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Intestine</text>
+      <text x="237.95" y="331.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">fatIntestine</text>
+      <text x="237.95" y="352.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">τFatAbs ≈ 150 min</text>
+    </g>
+    <g class="node" data-node-id="ffa">
+      <rect x="56.78" y="428.00" width="108.28571428571428" height="72" rx="10" ry="10" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="2"/>
+      <text x="110.93" y="450.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Plasma FFA</text>
+      <text x="110.93" y="468.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">ffaBlood</text>
+      <text x="110.93" y="489.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">t½ ≈ 180 min</text>
+    </g>
+    <g class="node" data-node-id="hill">
+      <rect x="66.40" y="565.00" width="212.10714285714283" height="52" rx="10" ry="10" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="172.45" y="585.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Hill resistance</text>
+      <text x="172.45" y="603.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">FFAⁿ/(EC50ⁿ+FFAⁿ)</text>
+    </g>
+    <g class="node" data-node-id="isf">
+      <rect x="89.47" y="682.00" width="165.9642857142857" height="72" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="172.45" y="704.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Effective ISF</text>
+      <text x="172.45" y="722.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">ISF/ffaResist</text>
+      <text x="172.45" y="743.40" text-anchor="middle" font-size="12" font-weight="400" fill="#475569">up to −42 %</text>
+    </g>
+    <g class="node" data-node-id="kb">
+      <rect x="106.77" y="819.00" width="131.35714285714283" height="52" rx="10" ry="10" fill="rgba(125, 211, 252, 0.2)" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="172.45" y="839.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">kb1, kb2, kb3</text>
+      <text x="172.45" y="857.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">x1, x2, x3</text>
+    </g>
+    <g class="node" data-node-id="tau">
+      <rect x="353.71" y="819.00" width="145.6" height="52" rx="10" ry="10" fill="rgba(74, 222, 128, 0.2)" stroke="#4ade80" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="426.51" y="839.40" text-anchor="middle" font-size="14" font-weight="600" fill="#0d1526">Carb absorption τG</text>
+      <text x="426.51" y="857.40" text-anchor="middle" font-size="17" font-weight="700" fill="#0d1526">+ fatDelay</text>
+    </g>
+  </g>
+  <g class="edge-labels">
+    <g class="edge-label" data-edge-id="e0-ext">
+      <rect x="182.55" y="114.00" width="110.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="237.95" y="127.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">fat meal (F g)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e1">
+      <rect x="218.55" y="249.50" width="38.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="237.95" y="263.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">1/τG</text>
+    </g>
+    <g class="edge-label" data-edge-id="e2">
+      <rect x="125.50" y="386.50" width="74.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="162.90" y="400.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">1/τFatAbs</text>
+    </g>
+    <g class="edge-label" data-edge-id="e3">
+      <rect x="295.51" y="539.02" width="262.00" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="426.51" y="552.92" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">fatDelay = 18·ln(1+fatIntestine/10)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4">
+      <rect x="12.00" y="694.91" width="74.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="49.40" y="708.81" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">k_FFA·ffa</text>
+    </g>
+    <g class="edge-label" data-edge-id="e4-ext">
+      <rect x="-114.00" y="923.00" width="326.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="49.40" y="936.90" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">oxidation / re-esterification (t½ ≈ 180 min)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e5">
+      <rect x="49.53" y="523.50" width="132.40" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="115.73" y="537.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">saturable binding</text>
+    </g>
+    <g class="edge-label" data-edge-id="e6">
+      <rect x="117.05" y="640.50" width="110.80" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="172.45" y="654.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">÷ (1 + 0.42·H)</text>
+    </g>
+    <g class="edge-label" data-edge-id="e7">
+      <rect x="109.85" y="777.50" width="125.20" height="18.00" rx="4" ry="4" fill="#ffffff" fill-opacity="0.92"/>
+      <text x="172.45" y="791.40" text-anchor="middle" font-size="14" font-weight="500" fill="#1e293b">scales each tick</text>
+    </g>
+  </g>
+</svg>

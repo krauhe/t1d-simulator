@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hovorka 2004 insulin subsystem (extended) — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Hovorka 2004 insulin subsystem (extended) — absorption, action, and EGP regulation</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="Hovorka 2004 insulin subsystem (extended)">
+    </object>
+  </div>
+  <p class="scope">Insulin pharmacokinetics and action subsystem of the Hovorka 2004 glucose-insulin model (Hovorka et al., <em>Physiol Meas</em> 25:905-920, 2004), with two simulator-specific extensions. <strong>Core Hovorka structure:</strong> a two-stage subcutaneous absorption cascade (S1 → S2) feeds plasma insulin I, which drives three effect compartments x1 (transport), x2 (peripheral disposal), and x3 (EGP suppression). <strong>Extensions specific to this simulator:</strong> (1) a parallel basal shadow cascade S1b → S2b with fixed τ_Ib = 55 min that decouples basal absorption from bolus-specific τ_I variability; (2) a stressMultiplier term in the EGP equation (EGP = EGP₀ · max(0, stressMultiplier − x3)) that sums glycogen, gluconeogenesis, acute-stress, chronic-stress, dawn, and protein-glucagon contributions. Each kb_i is dynamically scaled by the ISF modifier (circadian × post-exercise × vasodilatation / insulin-resistance), so all three actions strengthen or weaken together with current insulin sensitivity.</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">S1</td><td class="def">rapid (bolus) SC depot — first absorption stage (mU)</td></tr>
+        <tr><td class="symbol">S2</td><td class="def">rapid (bolus) SC depot — second absorption stage (mU)</td></tr>
+        <tr><td class="symbol">S1b</td><td class="def">basal (long-acting) SC depot — first absorption stage (mU); shadow cascade with fixed τ = 55 min</td></tr>
+        <tr><td class="symbol">S2b</td><td class="def">basal (long-acting) SC depot — second absorption stage (mU)</td></tr>
+        <tr><td class="symbol">I</td><td class="def">plasma insulin concentration (mU/L)</td></tr>
+        <tr><td class="symbol">x1</td><td class="def">insulin effect on transport (Q1 → Q2)</td></tr>
+        <tr><td class="symbol">x2</td><td class="def">insulin effect on disposal (Q2 oxidation)</td></tr>
+        <tr><td class="symbol">x3</td><td class="def">insulin effect on EGP suppression</td></tr>
+        <tr><td class="symbol">Q1</td><td class="def">plasma glucose pool — receives EGP from liver, exchanges with peripheral tissues</td></tr>
+        <tr><td class="symbol">Q2</td><td class="def">peripheral (intracellular) glucose pool — site of insulin-mediated disposal</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">U_I</td><td class="def">rapid absorption rate from S2 to plasma — formula: S2·pulseFactor/τ_I</td></tr>
+        <tr><td class="symbol">U_Ib</td><td class="def">basal absorption rate from S2b to plasma — formula: S2b·pulseFactor/τ_Ib</td></tr>
+        <tr><td class="symbol">EGP</td><td class="def">endogenous glucose production = EGP₀ · max(0, stress − x3)</td></tr>
+        <tr><td class="symbol">τ_I</td><td class="def">rapid time constant (mean 55 min, CV ~25 % per injection)</td></tr>
+        <tr><td class="symbol">τ_Ib</td><td class="def">basal time constant (fixed 55 min — decoupled from bolus τ_I variability)</td></tr>
+        <tr><td class="symbol">pulseFactor</td><td class="def">heart-rate-dependent SC absorption multiplier — 1.0 at rest, ~1.5 at HR 120; multiplies all four SC cascade rates</td></tr>
+        <tr><td class="symbol">k_e</td><td class="def">plasma insulin elimination rate constant (urine + hepatic clearance)</td></tr>
+        <tr><td class="symbol">kb1, kb2, kb3</td><td class="def">build-up rate constants for the three effect compartments — scaled each tick by ISF modifier</td></tr>
+        <tr><td class="symbol">ka1, ka2, ka3</td><td class="def">decay rate constants for the three effect compartments</td></tr>
+        <tr><td class="symbol">stress</td><td class="def">stress multiplier (≥ 1) = glycogenBaseline + gngBaseline + acute + chronic + dawn + protein-glucagon</td></tr>
+        <tr><td class="symbol">EGP₀</td><td class="def">basal hepatic glucose production (~0.0161 × weight mmol/min, T1D level)</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

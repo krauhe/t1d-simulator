@@ -1,0 +1,91 @@
+# Videnskabelige artikler — ophavsretligt beskyttede, synces via Dropbox
+# Kun SOURCES.md (referencelisten med DOI-links) trackes i Git
+docs/references/*.pdf
+docs/references/*.html
+
+# Wishlist over relevante artikler bag paywall — vedligeholdes lokalt af science-reviewer-skillen
+docs/references/_paywalled-wishlist.txt
+
+# Lokale Claude Code settings
+.claude/settings.local.json
+.claude/settings.local*
+.claude/scheduled_tasks.lock
+.claude/worktrees/
+.claude/launch.json
+.claude/hooks/
+
+# Lokale Claude/Codex runtime-data og sessionsartefakter
+.codex/
+.playwright-mcp/
+
+# Lokale Claude skills der synces via Dropbox. Codex' projekt-skills bor i
+# .agents/skills/ og skal versionsstyres i Git.
+.claude/skills/facebook-post/
+.claude/skills/playwright-test/
+.claude/skills/review/
+.claude/skills/science-reviewer/
+# Regulatorisk reviewer-skill — holdes lokal indtil RØDE features er rettet
+# (selv-inkriminerende i et offentligt repo, jf. docs/REGULATORY.md)
+.claude/skills/t1d-regulatory-reviewer/
+
+# Developer input (screenshots/videoer brugeren deler med Claude)
+developer input/
+
+# Sociale opslag, UI-mockups og lokale screenshots synces via Dropbox
+facebook posts/
+mockups/
+presentations/
+Reach out/
+Video/
+video/
+/*.png
+
+# Gamle filer og arbejdsnotater (arkiv — bevares lokalt, ikke i git)
+old/
+fysiologisk-review.md
+# Gamle review*.txt-filer i projektroden — nye reviews ligger i docs/reviews/
+review*.txt
+
+# Playwright test-outputs (kan være store og er kun snapshot fra én session)
+tests/playwright/
+tests/*.tmp.*
+tests/playwright-report/
+tests/playwright-results/
+
+# Lokale npm-afhængigheder til Playwright E2E-tests
+node_modules/
+
+# Lokal portable Node.exe til at køre tests/simulation.test.js
+# (downloades med scripts/install-node.ps1 eller manuelt — gitignored fordi
+# det er en 90 MB binær der varierer per OS)
+tests/.bin/
+
+# Dropbox sync-konflikter (skal flyttes til old/dropbox-conflicts/ ved opdagelse)
+*modstridende kopi*
+
+# Dropbox/editor crash-artefakter (PID + hash suffix, fx CLAUDE.md.tmp.10968.e9c812f05ee1)
+*.tmp.*
+
+# Lokale planlægningsfiler (genereret af Claude, ikke til git)
+TODO.txt
+ISSUES.txt
+
+# Regulatorisk vidensbase — holdes lokal indtil de RØDE features er rettet.
+# Filen opregner eksplicit hvilke features der ligner medicinsk udstyr og er
+# derfor selv-inkriminerende i et offentligt repo. Spores først når vi er i mål.
+docs/REGULATORY.md
+# Formålserklæringen er offentlig og versionsstyret, så README, bidragydere og
+# reviewere kan se den fælles designgrænse. Regulatoriske risikologge forbliver lokale.
+docs/reviews/*regulatory*
+
+# Lokal launcher til udviklerlabbet — aktiverer fri sandkasse/editor og gemmer
+# rå modelparametre under separate ddDeveloper*-nøgler. Holdes lokal, så
+# launcheren aldrig følger med i den offentlige build. Se game.js.
+editor.local.html
+
+# Lokal Dropbox sync-håndtering
+.dropboxignore
+
+# Tips-templates til level-planlægning (arbejdsdokument)
+levels/tips-templates.txt
+tests/.ketone-top.json

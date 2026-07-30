@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stress hormone system — two-layer counterregulation (Cryer 2013) — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Stress hormone system — two-layer counterregulation (Cryer 2013)</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="Stress hormone system — two-layer counterregulation (Cryer 2013)">
+    </object>
+  </div>
+  <p class="scope">Simulator implementation of two-tier glucose counterregulation as described in Cryer 2013 (Cryer PE, <em>J Clin Invest</em> 123:1403-1405, 2013). <strong>Layer 1 — acute:</strong> catecholamine- and glucagon-driven glycogenolysis (t½ ≈ 60 min, T1D cap 0.4 vs ~5.0 in healthy individuals due to absent glucagon response; Cryer 2013 Table 1). <strong>Layer 2 — chronic:</strong> cortisol-mediated gluconeogenesis upregulation from sleep loss and illness (t½ ≈ 12 h). A HAAF gate (Hypoglycemia-Associated Autonomic Failure) attenuates acuteStress when repeated hypoglycemia accumulates, modeled after the Cryer 2013 hierarchy. Both layers converge with circadian cortisol, protein-glucagon, and the glycogen-dependent baseline onto a unified stressMultiplier; the liver then computes EGP = EGP0 · max(0, stressMultiplier − x3). Acute stress simultaneously depletes the hepatic glycogen pool, so prolonged counterregulation raises GNG compensation while glycogenolysis capacity falls.</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">acuteStress</td><td class="def">rapid catecholamine + glucagon response — driven by hypoglycemia (Somogyi) and anaerobic exercise; t½ ≈ 60 min, capped at 0.4 in T1D</td></tr>
+        <tr><td class="symbol">chronicStress</td><td class="def">sustained cortisol elevation — driven by sleep loss (+0.06 per lost hour) and illness; t½ ≈ 12 h</td></tr>
+        <tr><td class="symbol">counterRegFactor</td><td class="def">HAAF gate: 0.3 + 0.7 · exp(-hypoArea / 30) — scales acuteStress down when repeated hypoglycemia accumulates</td></tr>
+        <tr><td class="symbol">glycogenReserve</td><td class="def">hepatic glycogen reserve as fraction 0–1 of the nominal 90 g pool; depleted by acuteStress, replenished at rest</td></tr>
+        <tr><td class="symbol">stressMultiplier</td><td class="def">unified hepatic drive >= 1; sum of glycogenBaseline, gngBaseline, effectiveAcuteStress, chronicStress, circadianCortisol, proteinGlucagon</td></tr>
+        <tr><td class="symbol">EGP = EGP0 · max(0, s − x3)</td><td class="def">hepatic glucose production rate; EGP0 = basal rate (~0.0161 × weight mmol/min for T1D); s = stressMultiplier; x3 = insulin EGP-suppression effect</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">0.5·R + (0.5 + 0.25·(1−R))</td><td class="def">glycogen-dependent EGP baseline: glycogenBaseline = 0.5·R + gngBaseline; gngBaseline = 0.5 + 0.25·(1−R) compensates falling glycogen via gluconeogenesis (Petersen 2004)</td></tr>
+        <tr><td class="symbol">effectiveAcuteStress</td><td class="def">acuteStress · (0.6·R + 0.4) — glycogen-permissive weighting: 60 % from glycogenolysis, 40 % floor from sympathetic activation</td></tr>
+        <tr><td class="symbol">counterRegFactor</td><td class="def">HAAF-attenuated scale factor applied to acuteStress before summation into stressMultiplier</td></tr>
+        <tr><td class="symbol">+ 0.06 · h_lost</td><td class="def">chronicStress accumulation rate: +0.06 per hour of sleep below target</td></tr>
+        <tr><td class="symbol">circadianCortisol</td><td class="def">dawn-phenomenon cortisol component: sine wave, peak 08:00, amplitude ≈ 0.15</td></tr>
+        <tr><td class="symbol">proteinGlucagon</td><td class="def">amino-acid Hill-function glucagon response from the protein-glucagon pathway</td></tr>
+        <tr><td class="symbol">EGP</td><td class="def">computed hepatic glucose output — flows into plasma glucose pool Q1</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

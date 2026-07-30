@@ -1,0 +1,44 @@
+{
+  "type": "compartment-diagram",
+  "title": "Glucose subsystem — Hovorka 2004 two-compartment model",
+  "direction": "top-to-bottom",
+  "compartments": [
+    { "id": "gut",   "label": "Gut",         "var": "D2",      "color": "carb",   "type": "external" },
+    { "id": "liver", "label": "Liver",       "var": "EGP",     "color": "liver",  "type": "external" },
+    { "id": "Q1",    "label": "Plasma glucose", "var": "Q1",   "unit": "BG = Q1/V_G",  "color": "glucose", "type": "plasma" },
+    { "id": "Q2",    "label": "Peripheral glucose", "var": "Q2", "unit": "muscle + adipose", "color": "glucose", "type": "tissue" },
+    { "id": "brain", "label": "Brain + RBC", "var": "F01c",    "color": "brain",  "type": "external", "rank": "max" },
+    { "id": "kidney","label": "Kidney",      "var": "F_R",     "unit": "if BG > 9 mmol/L", "color": "kidney", "type": "external", "rank": "max" },
+    { "id": "muscleEx", "label": "Muscle (contraction)", "var": "β·E1", "color": "muscle", "type": "external", "rank": "max" },
+    { "id": "x1",    "label": "Insulin effect (transport)", "var": "x1", "color": "insulin-fast", "type": "effect" },
+    { "id": "x2",    "label": "Insulin effect (disposal)",  "var": "x2", "color": "insulin-fast", "type": "effect" }
+  ],
+  "flows": [
+    { "from": "gut",   "to": "Q1", "label": "U_G",  "kind": "mass" },
+    { "from": "liver", "to": "Q1", "label": "EGP",  "kind": "mass" },
+    { "from": "Q1", "to": "brain",  "label": "F01c", "kind": "mass" },
+    { "from": "Q1", "to": "kidney", "label": "F_R",  "kind": "mass" },
+    { "from": "Q1", "to": "Q2", "label": "x1·Q1", "kind": "mass" },
+    { "from": "Q2", "to": "Q1", "label": "k12·Q2",    "kind": "mass" },
+    { "from": "Q2", "to": "muscleEx", "label": "β·E1", "kind": "mass" },
+    { "from": "x1", "to": "Q1", "label": "transport", "kind": "signal" },
+    { "from": "x2", "to": "Q2", "label": "disposal",  "kind": "signal" }
+  ],
+  "caption": {
+    "scope": "Two-compartment glucose distribution model from Hovorka et al. (Physiol Meas 25:905-920, 2004), extended with one contraction-mediated uptake flux. Plasma glucose Q1 receives gut absorption U_G and hepatic glucose production EGP, exchanges with peripheral Q2 through x1-driven transport and passive k12 backflow, and is cleared by F01c and renal excretion F_R. Q2 loses glucose through x2-driven disposal and the adapted Resalat flux β·E1; delayed exercise sensitivity changes the upstream EC50 of x1 and x2 rather than adding another multiplier here.",
+    "variables": [
+      { "symbol": "Q1",          "category": "compartment", "definition": "plasma glucose (mmol); blood glucose BG = Q1 / V_G" },
+      { "symbol": "Q2",          "category": "compartment", "definition": "peripheral (intracellular) glucose (mmol) — muscle and adipose tissue" },
+      { "symbol": "x1",          "category": "compartment", "definition": "insulin effect on Q1→Q2 transport (dimensionless, driven by plasma insulin I)" },
+      { "symbol": "x2",          "category": "compartment", "definition": "insulin effect on Q2 disposal (dimensionless, driven by plasma insulin I)" },
+      { "symbol": "D2",          "category": "compartment", "definition": "gut compartment delivering glucose to plasma (see carb-absorption sub-model)" },
+      { "symbol": "EGP",         "category": "compartment", "definition": "hepatic glucose production rate sourced from the insulin-action / EGP regulation sub-model" },
+      { "symbol": "F01c",        "category": "compartment", "definition": "insulin-independent obligate glucose use (brain ~110 g/day plus red blood cells); approximately 0.0097 × weight mmol/min" },
+      { "symbol": "F_R",         "category": "compartment", "definition": "renal glucose excretion when BG exceeds the renal threshold of approximately 9 mmol/L" },
+      { "symbol": "β·E1",        "category": "compartment", "definition": "contraction-mediated muscle glucose uptake during exercise; E1 already contains normalized heart-rate and activity-type input" },
+      { "symbol": "U_G",         "category": "flow",        "definition": "glucose appearance from gut absorption (mmol/min); rate = D2 · A_G / τG" },
+      { "symbol": "k12",         "category": "flow",        "definition": "rate constant for Q2→Q1 backflow (min⁻¹)" },
+      { "symbol": "V_G",         "category": "flow",        "definition": "glucose distribution volume (L) ≈ 0.16 × weight; converts Q1 from mmol to mmol/L for BG display" }
+    ]
+  }
+}

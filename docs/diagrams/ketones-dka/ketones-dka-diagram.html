@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ketone &amp; DKA model — FFA-driven, two-gate ketogenesis (Cahill / Kitabchi) — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Ketone &amp; DKA model — FFA-driven, two-gate ketogenesis (Cahill / Kitabchi)</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="Ketone &amp; DKA model — FFA-driven, two-gate ketogenesis">
+    </object>
+  </div>
+  <p class="scope">FFA-driven ketogenesis and DKA acidosis model implemented in the T1D simulator, structured after the ketone physiology described in Cahill Jr GF, <em>N Engl J Med</em> 282:668-675 (1970) for the two-gate ketogenesis pathway, and DKA severity criteria from Kitabchi et al., <em>Diabetes Care</em> 32:1335-1343 (2009). Plasma insulin I suppresses ketone production at two sequential gates: (1) the lipolysis gate — insulin inhibits hormone-sensitive lipase (HSL) via a Hill function (EC50 = 8 mU/L, n = 3), reducing FFA release from adipose; (2) the CPT-1 gate — insulin raises malonyl-CoA via acetyl-CoA carboxylase (ACC), blocking carnitine palmitoyltransferase-1 and preventing mitochondrial FFA import (EC50 = 8 mU/L, n = 4). Both gates must be open for ketone production: BHB production rate = LIPOLYSIS_MAX * lipolysisGate * ffaLipolysis * cpt1Activity * k_BHB. BHB is removed by Michaelis-Menten oxidation in muscle and brain (exercise-boosted) and by renal excretion above 0.5 mmol/L. Acidosis load accumulates above BHB 3.0 mmol/L with a smoothstep insulin gate that prevents nutritional ketosis from triggering DKA; game over fires when acidosisLoad reaches 600.</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">I</td><td class="def">plasma insulin concentration (mU/L) — master suppressor of both ketogenic gates</td></tr>
+        <tr><td class="symbol">ffaLipolysis</td><td class="def">FFA pool released from adipose lipolysis (mmol/L equivalent); separate from dietary ffaBlood; t½ approx 60 min via oxidation and re-esterification</td></tr>
+        <tr><td class="symbol">BHB</td><td class="def">plasma beta-hydroxybutyrate (mmol/L); clamped to 0–20 range; dominant circulating ketone body</td></tr>
+        <tr><td class="symbol">MM clearance</td><td class="def">Michaelis-Menten oxidation sink representing muscle and brain BHB uptake; Vmax = 0.02, Km = 2.0; multiplied by (1 + max(0, deltaHR/120)) during exercise</td></tr>
+        <tr><td class="symbol">MM excretion</td><td class="def">renal ketone excretion sink; active above BHB 0.5 mmol/L threshold; BHB_RENAL_VMAX = 0.005/min, Km = 2.0</td></tr>
+        <tr><td class="symbol">acidosisLoad</td><td class="def">running acidosis accumulator (dimensionless); driven by BHB excess above 3.0 mmol/L; recovers with t½ = 45 min when BHB falls below threshold</td></tr>
+        <tr><td class="symbol">load ≥ 600</td><td class="def">DKA game-over compartment; triggered when acidosisLoad reaches 600, representing severe metabolic acidosis per Kitabchi 2009 criteria</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">LIPOLYSIS_MAX</td><td class="def">maximum lipolysis flux constant (mmol/L/min at I = 0)</td></tr>
+        <tr><td class="symbol">EC50ⁿ / (EC50ⁿ + Iⁿ)</td><td class="def">Hill suppression term for HSL gate: EC50 = 8 mU/L, n = 3; equals 1.0 at I = 0, approaches 0 at high insulin</td></tr>
+        <tr><td class="symbol">1 − supp · Iⁿ / (EC50ⁿ + Iⁿ)</td><td class="def">Hill suppression term for CPT-1 gate: EC50 = 8 mU/L, n = 4; nearly binary — 1.0 at I = 0, approx 0.05 at basal insulin levels</td></tr>
+        <tr><td class="symbol">k_ffa</td><td class="def">first-order FFA clearance rate constant; t½ = ln(2)/k_ffa approx 60 min; represents combined oxidation and re-esterification</td></tr>
+        <tr><td class="symbol">× CPT-1 · k_BHB</td><td class="def">net BHB production rate per unit FFA: product of cpt1Activity and BHB_PROD_RATE constant; both gates must be open for nonzero flux</td></tr>
+        <tr><td class="symbol">BASE·excess + ACCEL·excess²</td><td class="def">acidosis accumulation rate; excess = BHB − 3.0 when BHB &gt; 3.0; ACCEL term provides progressive acceleration mimicking pH drop kinetics from Kitabchi 2009</td></tr>
+        <tr><td class="symbol">smoothstep gate</td><td class="def">insulin-based gate on acidosis accumulation: 0 when insulin suppression ≤ 0.3, 1 when ≥ 0.5; prevents nutritional ketosis (insulin-sufficient fasting) from triggering DKA</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

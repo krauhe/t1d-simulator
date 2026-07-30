@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup 2 — Forbedret mad-panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================
+           MOCKUP 2: MAD-PANEL REDESIGN
+
+           Nøgleforbedringer:
+           1. Visuelt grupperet i 3 kategorier med labels
+           2. "Hurtig energi" fremhævet med farvet kant (hypo-korrektion)
+           3. Makro-bar er større og mere aflæselig
+           4. "Lav selv" er en tydelig sekundær knap
+           5. Hover-tooltip er forbedret med bedre layout
+           ============================================================ */
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0d1526;
+            color: #f5f8fc;
+            font-family: 'Inter', system-ui, sans-serif;
+            font-variant-numeric: tabular-nums;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .mockup-label {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            width: 100%;
+            margin-bottom: 30px;
+            border-radius: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+        .mockup-label span { opacity: 0.8; font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+        :root {
+            --bg: #0d1526;
+            --bg-card: rgba(20, 29, 47, 0.97);
+            --bg-glass: rgba(20, 29, 47, 0.5);
+            --bg-elevated: rgba(255, 255, 255, 0.07);
+            --bg-hover: rgba(255, 255, 255, 0.14);
+            --text-1: #f5f8fc;
+            --text-2: #c4d5e8;
+            --text-3: #8fa8c8;
+            --border-s: rgba(147, 197, 253, 0.12);
+            --border-m: rgba(147, 197, 253, 0.20);
+            --green: #4ade80;
+            --red: #ef4444;
+            --orange: #fb923c;
+            --yellow: #fde047;
+            --amber: #f59e0b;
+            --blue: #60a5fa;
+            --macro-carb: #4ade80;
+            --macro-protein: #60a5fa;
+            --macro-fat: #f59e0b;
+            --radius: 12px;
+        }
+
+        .panels-row {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 40px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .panel-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .panel-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-3);
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+        .panel-title.before { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+        .panel-title.after { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+
+        /* === Fælles panel-styling === */
+        .food-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-m);
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 30px rgba(234, 179, 8, 0.15), 0 0 60px rgba(234, 179, 8, 0.08);
+        }
+
+        /* === NUVÆRENDE: Flad 5×3 grid === */
+        .food-grid-old {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+
+        .chip-old {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-s);
+            border-radius: 10px;
+            padding: 8px 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            min-width: 72px;
+        }
+        .chip-old:hover { background: var(--bg-hover); transform: translateY(-2px); }
+        .chip-old .emoji { font-size: 22px; }
+        .chip-old .name { font-size: 10px; color: var(--text-2); font-weight: 600; }
+        .chip-old .weight { font-size: 8px; color: var(--text-3); }
+        .chip-old .macro-bar-old {
+            display: flex;
+            width: 100%;
+            height: 2px;
+            border-radius: 1px;
+            overflow: hidden;
+            margin-top: 2px;
+        }
+        .chip-old .mb-c { background: var(--macro-carb); }
+        .chip-old .mb-p { background: var(--macro-protein); }
+        .chip-old .mb-f { background: var(--macro-fat); }
+        .chip-old .key {
+            font-size: 8px;
+            color: var(--text-3);
+            opacity: 0.45;
+            font-weight: 700;
+        }
+
+        /* === FORBEDRET: Grupperet layout === */
+        .food-panel-new {
+            max-width: 500px;
+        }
+
+        .food-group {
+            margin-bottom: 14px;
+        }
+        .food-group:last-child { margin-bottom: 0; }
+
+        .group-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+        }
+        .group-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-3);
+        }
+        .group-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border-s);
+        }
+
+        /* Gruppe-specifik accent */
+        .food-group.emergency .group-label { color: var(--red); }
+        .food-group.emergency .group-line { background: rgba(239, 68, 68, 0.25); }
+        .food-group.everyday .group-label { color: var(--amber); }
+        .food-group.protein-fat .group-label { color: var(--blue); }
+
+        .food-grid-new {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 8px;
+        }
+
+        .chip-new {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-s);
+            border-radius: 12px;
+            padding: 10px 8px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+        }
+        .chip-new:hover {
+            background: var(--bg-hover);
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .chip-new .emoji { font-size: 26px; }
+        .chip-new .name { font-size: 11px; color: var(--text-1); font-weight: 600; }
+        .chip-new .weight { font-size: 9px; color: var(--text-3); }
+
+        /* Forbedret makro-bar: højere, med micro-labels */
+        .macro-bar-new {
+            display: flex;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+        .mb-c { background: var(--macro-carb); }
+        .mb-p { background: var(--macro-protein); }
+        .mb-f { background: var(--macro-fat); }
+
+        /* Makro-tekst under bar */
+        .macro-text {
+            display: flex;
+            gap: 6px;
+            font-size: 8px;
+            color: var(--text-3);
+            margin-top: 2px;
+        }
+        .macro-text .mc { color: var(--macro-carb); }
+        .macro-text .mp { color: var(--macro-protein); }
+        .macro-text .mf { color: var(--macro-fat); }
+
+        .chip-new .key {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            font-size: 8px;
+            color: var(--text-3);
+            opacity: 0.4;
+            font-weight: 700;
+        }
+
+        /* Emergency chips: rød kant og subtil rød glow */
+        .food-group.emergency .chip-new {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        .food-group.emergency .chip-new:hover {
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.15);
+        }
+
+        /* "Pizza-effekt" badge */
+        .pizza-badge {
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            background: var(--amber);
+            color: #000;
+            font-size: 7px;
+            font-weight: 800;
+            padding: 1px 4px;
+            border-radius: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Lav selv knap */
+        .custom-food-btn {
+            width: 100%;
+            margin-top: 12px;
+            background: var(--bg-elevated);
+            border: 1px dashed var(--border-m);
+            border-radius: 12px;
+            color: var(--text-2);
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .custom-food-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-1);
+            border-color: var(--amber);
+        }
+        .custom-food-btn .key-badge {
+            font-size: 9px;
+            background: var(--bg-elevated);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-3);
+        }
+
+        /* Annotation */
+        .annotations {
+            max-width: 1200px;
+            width: 100%;
+            margin-top: 30px;
+        }
+        .annotation {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 16px;
+            margin: 8px 0;
+            background: rgba(74, 222, 128, 0.08);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 10px;
+            font-size: 12px;
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+        .annotation strong { color: #4ade80; }
+
+        /* Legende */
+        .macro-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="mockup-label">
+        Mockup 2: Mad-panel redesign <span>— Grupperet layout, hypo-korrektion fremhævet, bedre makro-aflæselighed</span>
+    </div>
+
+    <div class="panels-row">
+        <!-- === NUVÆRENDE === -->
+        <div class="panel-wrapper">
+            <div class="panel-title before">Nuværende</div>
+            <div class="food-panel" style="max-width: 420px;">
+                <div class="food-grid-old">
+                    <div class="chip-old"><span class="emoji">&#x1F355;</span><span class="name">Pizza</span><span class="weight">150g</span><div class="macro-bar-old"><span class="mb-c" style="flex:55"></span><span class="mb-p" style="flex:20"></span><span class="mb-f" style="flex:25"></span></div><span class="key">Q</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F35D;</span><span class="name">Pasta</span><span class="weight">300g</span><div class="macro-bar-old"><span class="mb-c" style="flex:50"></span><span class="mb-p" style="flex:10"></span><span class="mb-f" style="flex:5"></span></div><span class="key">W</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F370;</span><span class="name">Lagkage</span><span class="weight">150g</span><div class="macro-bar-old"><span class="mb-c" style="flex:60"></span><span class="mb-p" style="flex:5"></span><span class="mb-f" style="flex:25"></span></div><span class="key">E</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F366;</span><span class="name">Is</span><span class="weight">130g</span><div class="macro-bar-old"><span class="mb-c" style="flex:25"></span><span class="mb-p" style="flex:3"></span><span class="mb-f" style="flex:12"></span></div><span class="key">R</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F36B;</span><span class="name">Chokolade</span><span class="weight">60g</span><div class="macro-bar-old"><span class="mb-c" style="flex:30"></span><span class="mb-p" style="flex:3"></span><span class="mb-f" style="flex:15"></span></div><span class="key">T</span></div>
+
+                    <div class="chip-old"><span class="emoji">&#x1F35E;</span><span class="name">Brød</span><span class="weight">80g</span><div class="macro-bar-old"><span class="mb-c" style="flex:25"></span><span class="mb-p" style="flex:8"></span><span class="mb-f" style="flex:3"></span></div><span class="key">A</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F963;</span><span class="name">Havregryn</span><span class="weight">250g</span><div class="macro-bar-old"><span class="mb-c" style="flex:30"></span><span class="mb-p" style="flex:8"></span><span class="mb-f" style="flex:2"></span></div><span class="key">S</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F357;</span><span class="name">Kylling</span><span class="weight">150g</span><div class="macro-bar-old"><span class="mb-p" style="flex:30"></span><span class="mb-f" style="flex:15"></span></div><span class="key">D</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F9C0;</span><span class="name">Ost</span><span class="weight">50g</span><div class="macro-bar-old"><span class="mb-p" style="flex:13"></span><span class="mb-f" style="flex:15"></span></div><span class="key">F</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F951;</span><span class="name">Avocado</span><span class="weight">80g</span><div class="macro-bar-old"><span class="mb-c" style="flex:5"></span><span class="mb-p" style="flex:5"></span><span class="mb-f" style="flex:25"></span></div><span class="key">G</span></div>
+
+                    <div class="chip-old"><span class="emoji">&#x25FB;&#xFE0F;</span><span class="name">Druesukker</span><span class="weight">3g</span><div class="macro-bar-old"><span class="mb-c" style="flex:1"></span></div><span class="key">Z</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F34E;</span><span class="name">Æble</span><span class="weight">180g</span><div class="macro-bar-old"><span class="mb-c" style="flex:1"></span></div><span class="key">X</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F9C3;</span><span class="name">Juice</span><span class="weight">250ml</span><div class="macro-bar-old"><span class="mb-c" style="flex:1"></span></div><span class="key">C</span></div>
+                    <div class="chip-old"><span class="emoji">&#x1F957;</span><span class="name">Salat</span><span class="weight">200g</span><div class="macro-bar-old"><span class="mb-c" style="flex:5"></span><span class="mb-p" style="flex:2"></span><span class="mb-f" style="flex:1"></span></div><span class="key">V</span></div>
+                    <div class="chip-old" style="border-style:dashed;"><span class="emoji">&#x1F372;</span><span class="name">Lav selv</span><span class="key">B</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- === FORBEDRET === -->
+        <div class="panel-wrapper">
+            <div class="panel-title after">Forslag</div>
+            <div class="food-panel food-panel-new">
+                <!-- Gruppe 1: Hurtig energi / Hypo-korrektion -->
+                <div class="food-group emergency">
+                    <div class="group-header">
+                        <span class="group-label">&#x26A1; Hurtig energi</span>
+                        <div class="group-line"></div>
+                    </div>
+                    <div class="food-grid-new">
+                        <div class="chip-new">
+                            <span class="key">Z</span>
+                            <span class="emoji">&#x25FB;&#xFE0F;</span>
+                            <span class="name">Druesukker</span>
+                            <span class="weight">3g ren glukose</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:1"></span></div>
+                            <div class="macro-text"><span class="mc">3g K</span></div>
+                        </div>
+                        <div class="chip-new">
+                            <span class="key">X</span>
+                            <span class="emoji">&#x1F9C3;</span>
+                            <span class="name">Juice</span>
+                            <span class="weight">250 ml</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:1"></span></div>
+                            <div class="macro-text"><span class="mc">25g K</span></div>
+                        </div>
+                        <div class="chip-new">
+                            <span class="key">C</span>
+                            <span class="emoji">&#x1F34E;</span>
+                            <span class="name">Æble</span>
+                            <span class="weight">180g</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:1"></span></div>
+                            <div class="macro-text"><span class="mc">20g K</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gruppe 2: Hverdagsmad (kulhydrat-domineret) -->
+                <div class="food-group everyday">
+                    <div class="group-header">
+                        <span class="group-label">&#x1F37D;&#xFE0F; Hverdagsmad</span>
+                        <div class="group-line"></div>
+                    </div>
+                    <div class="food-grid-new">
+                        <div class="chip-new">
+                            <span class="key">Q</span>
+                            <span class="pizza-badge">FEDT!</span>
+                            <span class="emoji">&#x1F355;</span>
+                            <span class="name">Pizza</span>
+                            <span class="weight">150g</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:55"></span><span class="mb-p" style="flex:20"></span><span class="mb-f" style="flex:25"></span></div>
+                            <div class="macro-text"><span class="mc">55K</span> <span class="mp">20P</span> <span class="mf">25F</span></div>
+                        </div>
+                        <div class="chip-new">
+                            <span class="key">W</span>
+                            <span class="emoji">&#x1F35D;</span>
+                            <span class="name">Pasta</span>
+                            <span class="weight">300g</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:50"></span><span class="mb-p" style="flex:10"></span><span class="mb-f" style="flex:5"></span></div>
+                            <div class="macro-text"><span class="mc">50K</span> <span class="mp">10P</span> <span class="mf">5F</span></div>
+                        </div>
+                        <div class="chip-new">
+                            <span class="key">A</span>
+                            <span class="emoji">&#x1F35E;</span>
+                            <span class="name">Brød</span>
+                            <span class="weight">80g</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:25"></span><span class="mb-p" style="flex:8"></span><span class="mb-f" style="flex:3"></span></div>
+                            <div class="macro-text"><span class="mc">25K</span> <span class="mp">8P</span> <span class="mf">3F</span></div>
+                        </div>
+                        <div class="chip-new">
+                            <span class="key">S</span>
+                            <span class="emoji">&#x1F963;</span>
+                            <span class="name">Havregryn</span>
+                            <span class="weight">250g</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:30"></span><span class="mb-p" style="flex:8"></span><span class="mb-f" style="flex:2"></span></div>
+                            <div class="macro-text"><span class="mc">30K</span> <span class="mp">8P</span> <span class="mf">2F</span></div>
+                        </div>
+                        <div class="chip-new">
+                            <span class="key">E</span>
+                            <span class="pizza-badge">FEDT!</span>
+                            <span class="emoji">&#x1F370;</span>
+                            <span class="name">Lagkage</span>
+                            <span class="weight">150g</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:60"></span><span class="mb-p" style="flex:5"></span><span class="mb-f" style="flex:25"></span></div>
+                            <div class="macro-text"><span class="mc">60K</span> <span class="mp">5P</span> <span class="mf">25F</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gruppe 3: Protein & fedt domineret -->
+                <div class="food-group protein-fat">
+                    <div class="group-header">
+                        <span class="group-label">&#x1F969; Protein &amp; fedt</span>
+                        <div class="group-line"></div>
+                    </div>
+                    <div class="food-grid-new">
+                        <div class="chip-new">
+                            <span class="key">D</span>
+                            <span class="emoji">&#x1F357;</span>
+                            <span class="name">Kylling</span>
+                            <span class="weight">150g</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:2"></span><span class="mb-p" style="flex:30"></span><span class="mb-f" style="flex:15"></span></div>
+                            <div class="macro-text"><span class="mc">2K</span> <span class="mp">30P</span> <span class="mf">15F</span></div>
+                        </div>
+                        <div class="chip-new">
+                            <span class="key">F</span>
+                            <span class="emoji">&#x1F9C0;</span>
+                            <span class="name">Ost</span>
+                            <span class="weight">50g</span>
+                            <div class="macro-bar-new"><span class="mb-p" style="flex:13"></span><span class="mb-f" style="flex:15"></span></div>
+                            <div class="macro-text"><span class="mp">13P</span> <span class="mf">15F</span></div>
+                        </div>
+                        <div class="chip-new">
+                            <span class="key">G</span>
+                            <span class="emoji">&#x1F951;</span>
+                            <span class="name">Avocado</span>
+                            <span class="weight">80g</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:5"></span><span class="mb-p" style="flex:5"></span><span class="mb-f" style="flex:25"></span></div>
+                            <div class="macro-text"><span class="mc">5K</span> <span class="mp">5P</span> <span class="mf">25F</span></div>
+                        </div>
+                        <div class="chip-new">
+                            <span class="key">V</span>
+                            <span class="emoji">&#x1F957;</span>
+                            <span class="name">Salat</span>
+                            <span class="weight">200g</span>
+                            <div class="macro-bar-new"><span class="mb-c" style="flex:5"></span><span class="mb-p" style="flex:2"></span><span class="mb-f" style="flex:1"></span></div>
+                            <div class="macro-text"><span class="mc">5K</span> <span class="mp">2P</span> <span class="mf">1F</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Makro-legende -->
+                <div class="macro-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--macro-carb)"></div> <span style="color:var(--text-3); font-size:10px;">Kulhydrat</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--macro-protein)"></div> <span style="color:var(--text-3); font-size:10px;">Protein</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--macro-fat)"></div> <span style="color:var(--text-3); font-size:10px;">Fedt</span></div>
+                </div>
+
+                <!-- Lav selv: tydelig sekundær knap -->
+                <button class="custom-food-btn">
+                    &#x1F372; Lav selv <span class="key-badge">B</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annotationer -->
+    <div class="annotations">
+        <div class="annotation">
+            <strong>1. Gruppering giver mening</strong> — "Hurtig energi" er fremhævet med rød kant fordi det er hypo-korrektion. Brugeren finder det hurtigt under stress.
+        </div>
+        <div class="annotation">
+            <strong>2. "FEDT!" badge</strong> — Markerer mad med høj fedt-andel der giver pizza-effekt (forsinket absorption + FFA-resistens). Pædagogisk vigtig advarsel.
+        </div>
+        <div class="annotation">
+            <strong>3. Makro-tekst (55K 20P 25F)</strong> — Større og med farver matcher makro-baren. Lettere at aflæse end den nuværende 2px bar alene.
+        </div>
+        <div class="annotation">
+            <strong>4. "Lav selv" som separat knap</strong> — Visuelt adskilt fra presets. Dashed border signalerer "custom/anden handling". Nemmere at finde.
+        </div>
+    </div>
+</body>
+</html>

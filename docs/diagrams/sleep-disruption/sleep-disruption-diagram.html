@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sleep disruption model — nighttime interventions, chronic stress, and dawn amplification — diagram</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+      font-size: 17px;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #111827; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure object, .figure svg, .figure img {
+      max-width: 100%; height: auto;
+    }
+    .scope {
+      font-style: italic; font-size: 1.1rem; color: #374151;
+      margin: 1rem 0 1.5rem;
+    }
+    h2 { font-size: 1.3rem; color: #111827; margin: 1.5rem 0 0.5rem; }
+    .var-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .var-grid h3 {
+      font-size: 1.1rem; color: #111827; margin: 0 0 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb;
+    }
+    table.var-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    table.var-table td {
+      padding: 0.45rem 0.5rem; vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.var-table td.symbol {
+      font-family: 'Cambria Math', 'Latin Modern Math', serif;
+      font-weight: 700; white-space: nowrap; color: #111827;
+      width: 1%;
+    }
+    table.var-table td.def { color: #374151; }
+    hr.thin { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+    @media (max-width: 720px) {
+      .var-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Sleep disruption model — nighttime interventions, chronic stress, and dawn amplification</h1>
+  <div class="figure">
+    <object type="image/svg+xml" data="figure.svg">
+      <img src="validation.png" alt="Sleep disruption model diagram">
+    </object>
+  </div>
+  <p class="scope">Sleep disruption model showing how nighttime interventions are converted into metabolic effects. Actions between 22:00 and 07:00 create a new awakening only if more than 30 minutes have passed since the previous one. Each awakening adds a normally distributed sleep-loss increment to <code>lostSleepHoursTonight</code>. At 07:00, <code>applySleepDebt()</code> converts accumulated sleep loss into <code>_pendingChronicStress</code> with <code>stressBoost = min(0.30, lostSleepHoursTonight * 0.06)</code>. The pending pool drains into <code>chronicStressLevel</code> with τ ≈ 30 min; <code>chronicStressLevel</code> then decays with t½ = 12 h. Lost sleep also amplifies the morning dawn amplitude by 12% per lost hour, while chronic stress adds up to 30% dawn amplification per unit stress and increases <code>insulinResistanceFactor</code> by <code>0.5 * chronicStressLevel</code>.</p>
+  <hr class="thin">
+  <h2>Variables</h2>
+  <div class="var-grid">
+    <div>
+      <h3>Compartment variables (boxes)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">22:00-07:00</td><td class="def">nighttime window where game actions can disrupt the character's sleep.</td></tr>
+        <tr><td class="symbol">&gt;30 min</td><td class="def">awakening gate; repeated actions within 30 minutes count as the same waking period.</td></tr>
+        <tr><td class="symbol">lostSleepHoursTonight</td><td class="def">accumulated sleep loss for the current night, measured in hours.</td></tr>
+        <tr><td class="symbol">07:00 once/day</td><td class="def">morning conversion gate that runs <code>applySleepDebt()</code> once per day.</td></tr>
+        <tr><td class="symbol">_pendingChronicStress</td><td class="def">capped pending stress pool from sleep loss; maximum addition from one night is 0.30.</td></tr>
+        <tr><td class="symbol">chronicStressLevel</td><td class="def">slow cortisol-like stress state; decays with t½ = 12 h.</td></tr>
+        <tr><td class="symbol">circadianKortisolNiveau</td><td class="def">dawn-phenomenon signal that raises hepatic glucose output in the morning.</td></tr>
+        <tr><td class="symbol">insulinResistanceFactor</td><td class="def">direct stress-related insulin resistance; computed as 1 + 0.5 · chronicStressLevel.</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Flow variables (arrows + their parameters)</h3>
+      <table class="var-table">
+        <tr><td class="symbol">new event if &gt;30 min</td><td class="def">creates a new sleep-disruption event only outside the 30-minute merge window.</td></tr>
+        <tr><td class="symbol">clamp(N)</td><td class="def">sleep loss per awakening: clamp(N(1.0, 0.3), 0.3, 1.8) hours.</td></tr>
+        <tr><td class="symbol">12%/h</td><td class="def">direct dawn-amplitude amplification per lost sleep hour before the morning reset.</td></tr>
+        <tr><td class="symbol">applySleepDebt()</td><td class="def">morning routine that converts sleep loss into pending chronic stress and resets the sleep-loss counter.</td></tr>
+        <tr><td class="symbol">min(0.30, h·0.06)</td><td class="def">sleep-to-stress conversion; 0.06 stress per lost hour, capped at 0.30 per night.</td></tr>
+        <tr><td class="symbol">τ ≈ 30 min</td><td class="def">pending-stress drain time constant, smoothing the transition into chronic stress.</td></tr>
+        <tr><td class="symbol">+30%</td><td class="def">dawn-amplitude amplification per unit chronicStressLevel.</td></tr>
+        <tr><td class="symbol">+50% IR</td><td class="def">direct insulin-resistance factor increase per unit chronicStressLevel.</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
