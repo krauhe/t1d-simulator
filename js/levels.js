@@ -147,7 +147,7 @@ const CAMPAIGN_LEVELS = [
             {
                 id: 'obj_level1_complete',
                 type: 'survive',
-                descriptionKey: 'campaign.obj.complete3Days',
+                descriptionKey: 'campaign.level1.obj.complete',
             },
         ],
 
@@ -370,7 +370,7 @@ const CAMPAIGN_LEVELS = [
             {
                 id: 'obj_level2_complete',
                 type: 'survive',
-                descriptionKey: 'campaign.obj.complete3Days',
+                descriptionKey: 'campaign.level2.obj.complete',
             },
         ],
 
@@ -638,7 +638,7 @@ const CAMPAIGN_LEVELS = [
             {
                 id: 'obj_level4_meals_complete',
                 type: 'survive',
-                descriptionKey: 'campaign.obj.complete3Days',
+                descriptionKey: 'campaign.level4_meals.obj.complete',
             },
             {
                 id: 'obj_level4_meals_kcal',
@@ -738,7 +738,7 @@ const CAMPAIGN_LEVELS = [
             {
                 id: 'obj_level5_complete',
                 type: 'survive',
-                descriptionKey: 'campaign.obj.complete3Days',
+                descriptionKey: 'campaign.level4.obj.complete',
             },
             {
                 id: 'eat_enough',
@@ -884,12 +884,12 @@ const CAMPAIGN_LEVELS = [
             {
                 id: 'obj_level6_complete',
                 type: 'survive',
-                descriptionKey: 'campaign.obj.complete3Days',
+                descriptionKey: 'campaign.level6_buffet.obj.complete',
             },
             {
                 id: 'eat_enough',
                 type: 'minCalories',
-                descriptionKey: 'campaign.obj.positiveCalorieFood',
+                descriptionKey: 'campaign.level6_buffet.obj.eat',
             },
         ],
 
@@ -959,12 +959,12 @@ const CAMPAIGN_LEVELS = [
             {
                 id: 'obj_level7_complete',
                 type: 'survive',
-                descriptionKey: 'campaign.obj.complete3Days',
+                descriptionKey: 'campaign.level7.obj.complete',
             },
             {
                 id: 'eat_enough',
                 type: 'minCalories',
-                descriptionKey: 'campaign.obj.positiveCalorieFood',
+                descriptionKey: 'campaign.level7.obj.eat',
             },
             {
                 id: 'obj_level7_activity',
@@ -1084,12 +1084,12 @@ const CAMPAIGN_LEVELS = [
             {
                 id: 'obj_level8_complete',
                 type: 'survive',
-                descriptionKey: 'campaign.obj.complete3Days',
+                descriptionKey: 'campaign.level8.obj.complete',
             },
             {
                 id: 'obj_level8_kcal',
                 type: 'minCalories',
-                descriptionKey: 'campaign.obj.positiveCalorieFood',
+                descriptionKey: 'campaign.level8.obj.eat',
             },
             {
                 id: 'obj_level8_hard_exercise',
@@ -1182,6 +1182,7 @@ const CAMPAIGN_LEVELS = [
                 type: 'acuteStress',
                 timeMinutes: 10 * 60 + 30,   // Day 1 at 10:30
                 amount: 0.30,
+                lockInInsights: true,
                 messageKey: 'campaign.level9.tip.stressEvent',
                 priority: 2,
             },
@@ -1190,6 +1191,7 @@ const CAMPAIGN_LEVELS = [
                 type: 'chronicStress',
                 timeMinutes: 1440 + 7 * 60,  // Day 2 at 07:00
                 amount: 0.40,
+                lockInInsights: true,
                 messageKey: 'campaign.level9.tip.illnessEvent',
                 priority: 2,
             },
@@ -1198,6 +1200,7 @@ const CAMPAIGN_LEVELS = [
         markers: [
             {
                 type: 'interval',
+                sourceEventId: 'level9_important_test',
                 startMinutes: 10 * 60 + 30,
                 endMinutes: 12 * 60,      // Day 1 10:30-12:00
                 icon: 'assets/icons/app/event-note.png',
@@ -1207,12 +1210,17 @@ const CAMPAIGN_LEVELS = [
                 labelColor: 'rgba(251, 191, 36, 0.95)',
                 labelFontSize: 13,
                 labelWeight: '700',
+                persistAfterPast: true,
+                pastAlpha: 0.55,
             },
             {
                 type: 'info',
+                sourceEventId: 'level9_illness',
                 timeMinutes: 1440 + 7 * 60,
                 icon: 'assets/icons/app/event-illness.png',
                 labelKey: 'campaign.level9.marker.illness',
+                persistAfterPast: true,
+                pastAlpha: 0.8,
             },
         ],
 
@@ -1220,12 +1228,12 @@ const CAMPAIGN_LEVELS = [
             {
                 id: 'obj_level9_complete',
                 type: 'survive',
-                descriptionKey: 'campaign.obj.complete3Days',
+                descriptionKey: 'campaign.level9.obj.complete',
             },
             {
                 id: 'obj_level9_kcal',
                 type: 'minCalories',
-                descriptionKey: 'campaign.obj.positiveCalorieFood',
+                descriptionKey: 'campaign.level9.obj.eat',
             },
         ],
 

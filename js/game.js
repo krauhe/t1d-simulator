@@ -149,6 +149,16 @@ function isGameModeEnabled(mode) {
         && (typeof descriptor.enabled !== 'function' || descriptor.enabled());
 }
 
+// Insights er et statisk værktøj efter en spillet bane, ikke en valgmulighed på
+// startskærmen og ikke en realtids-simulation.
+function isStaticMode(mode = currentGameMode) {
+    return mode === 'insights';
+}
+
+// Den aktive kampagne beholdes urørt i hukommelsen, mens Insights bruger den
+// fælles graf og dock. Kun de delte render-arrays skal kopieres og gendannes.
+let insightsReturnState = null;
+
 function startGame(mode = 'campaign') {
     if (!isGameModeEnabled(mode)) {
         console.warn(`startGame: mode "${mode}" er ikke tilgængelig i denne runtime`);
@@ -209,6 +219,7 @@ function startGameWithProfile(profile, mode = 'campaign') {
 
     // Store the selected mode globally so UI functions can access it
     currentGameMode = mode;
+    document.body.dataset.gameMode = mode;
 
     // A4b: refresh the character header in the BG panel so it reflects the
     // character chosen for this round.
@@ -325,6 +336,8 @@ function startGameWithProfile(profile, mode = 'campaign') {
     startButton.setAttribute('data-i18n', 'ui.btn.stop');
     startButton.setAttribute('data-i18n-title', 'ui.title.stop');
     startButton.classList.add('game-running');
+    document.body.classList.add('game-active');
+    document.body.classList.remove('mode-editor', 'mode-insights');
     // Profile button remains active during game — opens in read-only mode
 
     // (#12) Set the sound button to the correct initial icon
@@ -360,6 +373,199 @@ function startGameWithProfile(profile, mode = 'campaign') {
 
 
 // =============================================================================
+// startInsights — åbn en karakterbundet kopi af det spillede forløb
+// =============================================================================
+function startInsights(scenario) {
+    if (typeof Editor === 'undefined' || !scenario || scenario.format !== 't1d-insights') {
+        console.error('startInsights: et gyldigt Insights-forløb mangler');
+        return false;
+    }
+
+    currentGameMode = 'insights';
+    document.body.dataset.gameMode = 'insights';
+    document.body.classList.remove('game-active');
+    document.body.classList.add('mode-editor', 'mode-insights');
+
+    if (typeof exitGameOverView === 'function') exitGameOverView();
+    const existingPopup = document.querySelector('.popup-overlay');
+    if (existingPopup) existingPopup.remove();
+
+    const modeName = document.getElementById('gameModeName');
+    const capsuleCampaignHeader = document.getElementById('capsuleCampaignHeader');
+    const dayTotalEl = document.getElementById('dayTotalDisplay');
+    const campaignInfoBtn = document.getElementById('campaignInfoBtn');
+    if (modeName) { modeName.textContent = t('insights.mode'); modeName.style.display = ''; }
+    if (capsuleCampaignHeader) capsuleCampaignHeader.style.display = 'none';
+    if (dayTotalEl) { dayTotalEl.textContent = ''; dayTotalEl.style.display = 'none'; }
+    if (campaignInfoBtn) campaignInfoBtn.style.display = 'none';
+
+    // Den fælles dock forventer et game-lignende objekt. Facaden oversætter dens
+    // handlinger til hændelser på markørens valgte tidspunkt.
+    game = Editor.facade;
+    isPaused = true;
+    cgmDataPoints = [];
+    trueBgPoints = [];
+    physiologyDataPoints = [];
+    if (typeof updateCgmCharacter === 'function') updateCgmCharacter();
+
+    const fxPanel = document.getElementById('physiology-effects');
+    if (fxPanel) fxPanel.style.display = 'block';
+    _lastEffectsData = [];
+
+    const returnKey = scenario.sourceMode === 'boxchallenge' ? 'insights.return.box' : 'insights.return';
+    const returnTitleKey = scenario.sourceMode === 'boxchallenge' ? 'insights.return.box.title' : 'insights.return.title';
+    startButton.textContent = t(returnKey);
+    startButton.title = t(returnTitleKey);
+    startButton.setAttribute('data-i18n', returnKey);
+    startButton.setAttribute('data-i18n-title', returnTitleKey);
+    startButton.classList.remove('game-running');
+    startButton.classList.add('insights-return');
+
+    return Editor.init(scenario);
+}
+
+// Sæt det aktive spil på pause uden at nulstille Simulator-objektet. Editorens facade
+// overtager midlertidigt den globale `game`-reference og de delte graf-arrays.
+function suspendGameForInsights(scenario, wasPausedBeforePopup = isPaused) {
+    if (insightsReturnState || !['campaign', 'boxchallenge'].includes(currentGameMode) || !game) return false;
+
+    insightsReturnState = {
+        game,
+        mode: currentGameMode,
+        wasPaused: wasPausedBeforePopup,
+        cgmDataPoints: cgmDataPoints.slice(),
+        trueBgPoints: trueBgPoints.slice(),
+        physiologyDataPoints: physiologyDataPoints.slice(),
+        yAxisMax,
+        yAxisTarget,
+        yAxisShrinkTimer,
+        graphViewOverride
+    };
+
+    if (gameLoopIntervalId) {
+        cancelAnimationFrame(gameLoopIntervalId);
+        gameLoopIntervalId = null;
+    }
+    isPaused = true;
+
+    if (startInsights(scenario)) return true;
+    return returnFromInsights();
+}
+
+// Forlad den alternative kopi og fortsæt præcis det Simulator-objekt, som blev
+// sat på pause. Editorens ændringer overføres bevidst ikke til banen.
+function returnFromInsights() {
+    if (!insightsReturnState) return false;
+    const saved = insightsReturnState;
+    insightsReturnState = null;
+
+    if (gameLoopIntervalId) {
+        cancelAnimationFrame(gameLoopIntervalId);
+        gameLoopIntervalId = null;
+    }
+    if (typeof Editor !== 'undefined') Editor.destroy();
+
+    game = saved.game;
+    currentGameMode = saved.mode;
+    document.body.dataset.gameMode = saved.mode;
+    document.body.classList.remove('mode-editor', 'mode-insights');
+    document.body.classList.add('game-active');
+
+    cgmDataPoints = saved.cgmDataPoints;
+    trueBgPoints = saved.trueBgPoints;
+    physiologyDataPoints = saved.physiologyDataPoints;
+    yAxisMax = saved.yAxisMax;
+    yAxisTarget = saved.yAxisTarget;
+    yAxisShrinkTimer = saved.yAxisShrinkTimer;
+    graphViewOverride = saved.graphViewOverride;
+
+    const modeName = document.getElementById('gameModeName');
+    const capsuleCampaignHeader = document.getElementById('capsuleCampaignHeader');
+    const dayTotalEl = document.getElementById('dayTotalDisplay');
+    if (saved.mode === 'campaign') {
+        if (modeName) modeName.style.display = 'none';
+        if (capsuleCampaignHeader) capsuleCampaignHeader.style.display = '';
+    } else {
+        if (modeName) { modeName.textContent = 'Box Challenge'; modeName.style.display = ''; }
+        if (capsuleCampaignHeader) capsuleCampaignHeader.style.display = 'none';
+    }
+    if (dayTotalEl && saved.mode === 'campaign' && campaignEngine && campaignEngine.levelConfig) {
+        const totalDays = Math.round((campaignEngine.levelConfig.durationMinutes || 1440) / 1440);
+        dayTotalEl.textContent = '/' + totalDays;
+        dayTotalEl.style.display = '';
+    } else if (dayTotalEl) {
+        dayTotalEl.textContent = '';
+        dayTotalEl.style.display = 'none';
+    }
+
+    startButton.textContent = t('ui.btn.stop');
+    startButton.title = t('ui.title.stop');
+    startButton.setAttribute('data-i18n', 'ui.btn.stop');
+    startButton.setAttribute('data-i18n-title', 'ui.title.stop');
+    startButton.classList.remove('insights-return');
+    startButton.classList.add('game-running');
+
+    isPaused = saved.wasPaused;
+    if (typeof updateSpeedStepperUI === 'function') updateSpeedStepperUI();
+    if (typeof updateCgmCharacter === 'function') updateCgmCharacter();
+    if (typeof updateFoodChips === 'function') updateFoodChips();
+    if (typeof updateBasalPresetUI === 'function') updateBasalPresetUI();
+    if (saved.mode === 'campaign' && campaignEngine) campaignEngine.updateCampaignInfoBtn();
+    updateUI();
+    drawGraph();
+
+    lastFrameTime = performance.now();
+    gameLoopIntervalId = requestAnimationFrame(mainGameLoop);
+    return true;
+}
+
+
+// Åbn handlingerne fra Campaign eller Box Challenge i Insights. Forløbet
+// eksporteres før reset, så editoren får både karakter-id, handlinger og et muligt
+// midnats-snapshot af motoren. Der tilbydes ingen filimport eller tom tidslinje.
+function openPlayInInsights() {
+    if (!['campaign', 'boxchallenge'].includes(currentGameMode) || !game ||
+        typeof game.exportInsightsScenario !== 'function' || isStaticMode()) return false;
+    if (typeof game.hasMeaningfulInsightsCourse === 'function' &&
+        !game.hasMeaningfulInsightsCourse()) return false;
+    if (document.querySelector('.popup-overlay')) return false;
+
+    // Frys banen allerede mens spilleren tager stilling. Den særlige body-klasse
+    // skjuler den store pausegrafik bag modalvinduet; popupens mørke baggrund er
+    // i sig selv den tydelige markering af, at spillet venter.
+    const wasPaused = isPaused;
+    const isBoxChallenge = currentGameMode === 'boxchallenge';
+    document.body.classList.add('insights-confirm-open');
+    if (!isPaused) togglePause();
+
+    const { content, close } = createPopup({ contentClass: 'confirm-popup', maxWidth: '440px' });
+    content.innerHTML =
+        `<h2>${t('insights.open.title')}</h2>` +
+        `<p>${t(isBoxChallenge ? 'insights.open.body.box' : 'insights.open.body')}</p>` +
+        `<div class="popup-button-row">` +
+            `<button id="insightsOpenConfirm" class="popup-btn-primary">${t('insights.open.confirm')}</button>` +
+            `<button id="insightsOpenCancel" class="popup-btn-link">${t(isBoxChallenge ? 'insights.open.cancel.box' : 'insights.open.cancel')}</button>` +
+        `</div>`;
+    content.querySelector('#insightsOpenCancel').addEventListener('click', () => {
+        close();
+        document.body.classList.remove('insights-confirm-open');
+        if (!wasPaused && game && isPaused && !game.isGameOver) togglePause();
+    });
+    content.querySelector('#insightsOpenConfirm').addEventListener('click', () => {
+        const lockedEvents = currentGameMode === 'campaign' && campaignEngine &&
+            typeof campaignEngine.getInsightsLockedEvents === 'function'
+            ? campaignEngine.getInsightsLockedEvents(game)
+            : [];
+        const scenario = game.exportInsightsScenario({ lockedEvents });
+        close();
+        document.body.classList.remove('insights-confirm-open');
+        suspendGameForInsights(scenario, wasPaused);
+    });
+    return true;
+}
+
+
+// =============================================================================
 // resetGame — Clean up everything and return to the initial state
 // =============================================================================
 //
@@ -370,6 +576,14 @@ function startGameWithProfile(profile, mode = 'campaign') {
 function resetGame() {
     // Stop the animation loop
     if (gameLoopIntervalId) { cancelAnimationFrame(gameLoopIntervalId); gameLoopIntervalId = null; }
+
+    // Insights har egne pointer-events og DOM-elementer, som skal fjernes før den
+    // fælles game-facade nulstilles.
+    if (isStaticMode()) {
+        if (typeof Editor !== 'undefined') Editor.destroy();
+        document.body.classList.remove('mode-editor', 'mode-insights');
+    }
+    insightsReturnState = null;
 
     // Reset the physiology dashboard (clear buffer so it does not show stale data)
     if (physiologyWindow && !physiologyWindow.closed) {
@@ -427,6 +641,10 @@ function resetGame() {
     startButton.setAttribute('data-i18n', 'ui.btn.start');
     startButton.setAttribute('data-i18n-title', 'ui.title.start');
     startButton.classList.remove('game-running');
+    startButton.classList.remove('insights-return');
+    document.body.classList.remove('insights-confirm-open');
+    document.body.classList.remove('game-active');
+    delete document.body.dataset.gameMode;
     // Profile button — no btn-inactive to remove (always active, read-only during game)
 
     // Clear floating labels (DOM elements from finger-prick/ketone-stick readings)

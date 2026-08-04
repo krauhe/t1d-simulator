@@ -476,12 +476,11 @@ const WelcomeTour = (() => {
         overlay.innerHTML = `
             <article class="popup-content welcome-tour-popup">
                 <div class="welcome-tour-character">
-                    <img src="${characterAssetForTour('intro')}" alt="${activeCharacterForTour().name}">
+                    <img src="assets/characters/welcome-group.png" alt="${escapeHtml(t('welcomeTour.groupAlt'))}">
+                    <p class="welcome-tour-lead">${escapeHtml(t('welcomeTour.lead'))}</p>
                 </div>
                 <div class="welcome-tour-content">
-                    <p class="welcome-tour-eyebrow">${escapeHtml(t('welcomeTour.eyebrow'))}</p>
                     <h2>${escapeHtml(t('welcomeTour.title'))}</h2>
-                    <p class="welcome-tour-lead">${escapeHtml(t('welcomeTour.lead'))}</p>
 
                     <div class="welcome-tour-choice-grid">
                         <button class="welcome-tour-choice recommended" id="welcomeStartTourBtn" type="button">

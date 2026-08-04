@@ -1332,7 +1332,6 @@ function openProfileSheet() {
   var sub = document.getElementById('pfSub'); if (sub) sub.style.display = ro ? 'none' : '';
   var acts = document.querySelector('#sheet-profile .pf-actions'); if (acts) acts.style.display = ro ? 'none' : '';
   renderArchetypeCards(ro);
-  updateCharacterInfo();
 }
 
 // Render the character cards (selected one highlighted). Tapping a card selects it
@@ -1340,34 +1339,30 @@ function openProfileSheet() {
 function renderArchetypeCards(readOnly) {
   var box = document.getElementById('pfArchetypeCards');
   if (!box) return;
-  box.innerHTML = CHARACTERS.map(function (c) {
-    return '<button type="button" class="pf-archetype-card' + (c.id === _selectedCharacterId ? ' selected' : '') + '"'
-      + ' data-character-id="' + c.id + '"' + (readOnly ? ' disabled' : '') + '>'
-      + '<img class="pf-archetype-icon" src="../assets/icons/app/character-' + c.id + '.png" alt="" onerror="this.style.display=\'none\'">'
-      + '<span class="pf-archetype-name">' + c.name + '</span>'
-      + '</button>';
+  var bodyOrder = ['child', 'adult', 'large'];
+  box.innerHTML = bodyOrder.map(function (bodyId) {
+    var characters = CHARACTERS.filter(function (character) { return character.archetype === bodyId; });
+    var groupIsSelected = characters.some(function (character) { return character.id === _selectedCharacterId; });
+    var characterButtons = characters.map(function (character) {
+      return '<button type="button" class="pf-archetype-card' + (character.id === _selectedCharacterId ? ' selected' : '') + '"'
+        + ' data-character-id="' + character.id + '"' + (readOnly ? ' disabled' : '') + '>'
+        + '<img class="pf-archetype-icon" src="../assets/icons/app/character-' + character.id + '.png" alt="" onerror="this.style.display=\'none\'">'
+        + '<span class="pf-archetype-name">' + character.name + '</span>'
+        + '</button>';
+    }).join('');
+    return '<section class="pf-character-pair' + (groupIsSelected ? ' selected' : '') + '" data-archetype-id="' + bodyId + '">'
+      + '<div class="pf-character-pair-title">' + t('archetype.' + bodyId + '.name') + '</div>'
+      + '<div class="pf-character-pair-choices">' + characterButtons + '</div>'
+      + '</section>';
   }).join('');
   if (!readOnly) {
     box.querySelectorAll('.pf-archetype-card').forEach(function (card) {
       card.addEventListener('click', function () {
         _selectedCharacterId = card.getAttribute('data-character-id');
         renderArchetypeCards(false);
-        updateCharacterInfo();
       });
     });
   }
-}
-
-// Starting figure for the selected character. A throwaway Simulator derives the resting
-// burn exactly as the real game would. A5: the recommended basal number is no longer
-// surfaced — only the resting burn (calories) is shown.
-function updateCharacterInfo() {
-  var c = getCharacter(_selectedCharacterId);
-  var kcalEl = document.getElementById('pfKcal');
-  try {
-    var tmp = new Simulator({ weight: c.weight, icr: c.icr, isf: c.isf }, 'sandbox', {});
-    if (kcalEl) kcalEl.textContent = Math.round((tmp.restingKcalPerDay || 0) / 100) * 100;   // nearest 100, like desktop
-  } catch (e) { if (kcalEl) kcalEl.textContent = '--'; }
 }
 
 function saveProfile() {
@@ -2190,14 +2185,13 @@ function mobileApplyGating(gating) {
   setDisabled('.mdock-item.d-kit', actions.kit === false);
   setDisabled('.mdock-item.d-insulin', !fastAllowed && !basalAllowed);
 
-  // Insulin sheet: fast / basal sections + their labels/hints individually.
+  // Insulin sheet: fast / basal sections + their labels individually.
   setDisabled('.dp-insulin-basal', !basalAllowed);
   setDisabledAll('.dp-section-label', false);     // reset both labels first
   // Label order in the sheet: [0] = Basal, [1] = Fast.
   var labels = document.querySelectorAll('#sheet-insulin .dp-section-label');
   if (labels[0]) labels[0].classList.toggle('campaign-disabled', !basalAllowed);
   if (labels[1]) labels[1].classList.toggle('campaign-disabled', !fastAllowed);
-  setDisabled('.dp-basal-hint', !basalAllowed);
   setDisabled('.dp-insulin-fast', !fastAllowed);
   setDisabled('.dp-fast-hint', !fastAllowed);
   setDisabled('#sheet-insulin .dp-divider', !fastAllowed && !basalAllowed);
@@ -2434,11 +2428,6 @@ function refreshInsulinUI() {
   presetIds.forEach(function (id, index) {
     document.getElementById(id).textContent = presets[index];
   });
-
-  var character = getMobileActiveCharacter();
-  var trialRange = getBasalTrialRangeForCharacter(game.basalDose, character.archetype === 'child');
-  document.getElementById('basalTrialCharacter').textContent = character.name;
-  document.getElementById('basalTrialRange').textContent = trialRange.basalRangeMin + '–' + trialRange.basalRangeMax;
 
   var bs = document.getElementById('basalSlider');
   bs.max = getBasalControlCap(game.basalDose);

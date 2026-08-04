@@ -351,8 +351,6 @@ body{
 .dp-btn-compact{padding:11px 14px; font-size:13px; min-width:64px; white-space:nowrap; font-variant-numeric:tabular-nums;}
 .btn-blue{background:linear-gradient(135deg,#2563eb,#1d4ed8); box-shadow:0 4px 15px rgba(37,99,235,0.3);}
 .btn-teal{background:linear-gradient(135deg,#0d9488,#0f766e); box-shadow:0 4px 15px rgba(13,148,136,0.3);}
-.dp-basal-hint{font-size:11px; color:var(--text-muted); text-align:center; padding:8px 0 0;}
-.dp-basal-hint strong{color:var(--blue);}
 .dp-fast-hint{font-size:10px; color:var(--text-muted); text-align:center; padding:8px 0 0;}
 .dp-divider{height:1px; background:var(--border-subtle); margin:14px 0;}
 
@@ -437,23 +435,23 @@ button.sd-row:disabled .sd-row-icon-img{filter:grayscale(0.6);}
 .pf-input-text input{width:100%; text-align:left;}
 /* "Estimér fra vægt" button + weight-derived figures (mirrors the desktop profile). */
 .pf-estimate{width:100%; margin-top:14px; background:var(--bg-elevated); color:var(--text-secondary); border:1px solid var(--border-subtle);}
-.pf-calc{margin-top:14px; padding:10px 12px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md);}
-.pf-calc-row{display:flex; align-items:baseline; gap:8px; font-size:12px; color:var(--text-muted); padding:3px 0;}
-.pf-calc-row .pf-calc-label{flex:1;}
-.pf-calc-row strong{color:var(--blue); font-size:14px; font-variant-numeric:tabular-nums;}
-.pf-calc-row .pf-calc-unit{font-size:10px; color:var(--text-muted); flex-shrink:0;}
-/* Character selector (profile sheet, A4) — six characters in a PAIR-WISE grid (like
-   desktop): column-flow fills each column as a male/female pair, columns run small ->
-   large (child / adult / large). Green border/tint when chosen. */
-/* Body-type column headers (Barn/Voksen/Kraftig) aligned to the card grid's three
-   columns — same repeat(3,1fr) + column-gap + side margins so labels sit over columns. */
-.pf-archetype-headers{display:grid; grid-template-columns:repeat(3,1fr); column-gap:10px; margin:8px 2px 0;}
-.pf-archetype-headers span{text-align:center; font-size:10px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--text-muted);}
-.pf-archetype-cards{display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); grid-auto-flow:column; row-gap:6px; column-gap:10px; margin:6px 2px 0;}
-.pf-archetype-card{display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; border:1px solid rgba(147,197,253,0.20); border-radius:var(--radius-md); background:var(--bg-elevated); color:var(--text-secondary); font:inherit; cursor:pointer;}
+/* Karaktervælger: tre tydelige kropsgrupper med to personer i hver. På den smalle
+   skærm ligger grupperne under hinanden; den valgte gruppe og person fremhæves. */
+.pf-archetype-cards{display:flex; flex-direction:column; gap:7px; margin:8px 2px 0;}
+.pf-character-pair{display:grid; grid-template-columns:88px minmax(0,1fr); align-items:center; gap:8px; padding:7px; border:1px solid var(--border-subtle); border-radius:var(--radius-lg); background:rgba(255,255,255,0.025); opacity:0.62; transition:opacity 0.2s ease,border-color 0.2s ease,background 0.2s ease,box-shadow 0.2s ease;}
+.pf-character-pair.selected{opacity:1; border-color:var(--green); background:rgba(var(--green-rgb),0.09); box-shadow:0 0 0 1px rgba(var(--green-rgb),0.14);}
+.pf-character-pair-title{text-align:center; font-size:10px; font-weight:700; line-height:1.2; letter-spacing:0.04em; text-transform:uppercase; color:var(--text-muted);}
+.pf-character-pair.selected .pf-character-pair-title{color:var(--green);}
+.pf-character-pair-choices{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:2px; perspective:420px;}
+.pf-archetype-card{display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; padding:7px 4px; border:1px solid transparent; border-radius:var(--radius-md); background:transparent; color:var(--text-secondary); font:inherit; cursor:pointer; transition:opacity 0.2s ease,transform 0.2s ease,border-color 0.2s ease,background 0.2s ease;}
 .pf-archetype-card.selected{background:rgba(var(--green-rgb),0.15); border-color:var(--green); color:var(--green);}
+.pf-character-pair.selected .pf-archetype-card:not(.selected){opacity:0.68;}
 .pf-archetype-card:disabled{opacity:0.5;}
-.pf-archetype-icon{width:46px; height:46px; object-fit:contain;}
+.pf-archetype-icon{width:58px; height:58px; object-fit:contain; transform:translateZ(0); transform-origin:center bottom; transition:transform 0.28s ease,opacity 0.2s ease,filter 0.2s ease;}
+.pf-character-pair:has(.pf-archetype-card.selected) .pf-archetype-card:not(.selected) .pf-archetype-icon{transform:translateZ(-14px) scale(0.9); opacity:0.68; filter:saturate(0.82);}
+.pf-archetype-card.selected{position:relative; z-index:2;}
+.pf-archetype-card.selected .pf-archetype-icon{transform:translateY(-2px) translateZ(18px) scale(1.1);}
+.pf-character-pair.selected .pf-archetype-card:not(.selected) .pf-archetype-icon{transform:translateZ(-14px) scale(0.9); opacity:0.58; filter:saturate(0.78);}
 .pf-archetype-name{font-size:12px; font-weight:600;}
 .pf-actions{display:flex; gap:10px; align-items:center; margin-top:18px;}
 .pf-actions .pf-save{flex:1; margin-top:0;}
@@ -610,6 +608,7 @@ html.welcome-off #startScreen{display:none;}
 .cr-pts-total{border-top:1px solid var(--border-subtle); margin-top:4px; padding-top:7px; font-weight:700;}
 .cr-pts-total .cr-pts-label{color:var(--text-primary); font-weight:700;}
 .cr-pts-total .cr-pts-value{font-size:16px;}
+.cr-replay-prompt{margin:10px 0 0; color:var(--text-secondary); font-size:13px; line-height:1.4; text-align:center;}
 .cr-failed .cr-fail-body{font-size:14px; color:var(--text-secondary); margin:8px 0 12px; line-height:1.45;}
 .cr-failed .ci-obj-list{text-align:left;}
 .cr-buttons{display:flex; flex-direction:column; gap:8px; margin-top:18px;}

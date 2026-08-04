@@ -139,6 +139,13 @@ const tipSessionState = {
     // prevent two "general" tips (priority >= 3) from popping up simultaneously.
     // Acute tips (priority 1-2) bypass this rate-limit.
     _lastAnyTipShownAt: -Infinity,
+    // Afstand i virkelig tid forhindrer, at høj spilhastighed omdanner 30
+    // simulerede minutter til flere tips inden for få sekunder.
+    _lastAnyTipShownRealMs: -Infinity,
+    // Når ét almindeligt tip er synligt, får kun én kandidat en trængsels-
+    // lodtrækning for netop denne viste tilstand. Uden låsen ville spilløkken
+    // trække igen ved hvert billede, så 15% hurtigt blev næsten 100%.
+    _crowdingRollSignature: null,
     // Chance-roll tracker. Regular tips with chance < 1.0 roll once per
     // session; BG-event tips have a separate episode gate below.
     _chanceConsumed: {},
@@ -294,6 +301,50 @@ function _fadeLowerPriorityTipsForUrgentTip(sim) {
 // prevents global UI hints from clustering in the first few hours.
 const TIP_MIN_SPACING_SIM_MIN = 90;
 
+// Tiprytmen skal også fungere ved høj spilhastighed, hvor mange simulerede
+// minutter kan passere på få sekunder. Almindelige tips får derfor mindst 6
+// sekunders afstand i virkelig tid. Hvis ét tip allerede er synligt, har den
+// næste kandidat kun 15% af sin normale mulighed; ved to synlige tips stoppes
+// nye almindelige tips helt. Prioritet 1 er akutte beskeder og er undtaget.
+const TIP_MIN_SPACING_REAL_MS = 6000;
+const TIP_SECOND_VISIBLE_CHANCE = 0.15;
+
+function _tipRealNowMs() {
+    return (typeof performance !== 'undefined' && performance.now)
+        ? performance.now()
+        : Date.now();
+}
+
+function _tipPassesCrowdingGate(tip, sim) {
+    const priority = tip.priority !== undefined ? tip.priority : 5;
+    if (priority === 1) return true;
+
+    const nowRealMs = _tipRealNowMs();
+    if ((nowRealMs - tipSessionState._lastAnyTipShownRealMs) < TIP_MIN_SPACING_REAL_MS) {
+        return false;
+    }
+
+    const visibleTips = (sim && Array.isArray(sim.graphMessages))
+        ? sim.graphMessages.filter(message =>
+            (message.isGameTip || message.isTutorialTip)
+            && !message._fadingOut
+        )
+        : [];
+
+    if (visibleTips.length === 0) {
+        tipSessionState._crowdingRollSignature = null;
+        return true;
+    }
+    if (visibleTips.length >= 2) return false;
+
+    const visible = visibleTips[0];
+    const signature = `${visible.id || 'tip'}:${visible.createdAt || 0}`;
+    if (tipSessionState._crowdingRollSignature === signature) return false;
+
+    tipSessionState._crowdingRollSignature = signature;
+    return Math.random() < TIP_SECOND_VISIBLE_CHANCE;
+}
+
 
 // =============================================================================
 // CAMPAIGN EVENT DIRECTOR — Randomised events for harder levels
@@ -327,6 +378,10 @@ class CampaignEventDirector {
         const usedTemplateIds = new Set();
         const categoryCounts = {};
         const plannedTimes = [];
+        // Obligatoriske hændelser tæller med i den daglige kvote. Ellers ville
+        // fx bane 10's obligatoriske sensorsvigt komme oven i de planlagte
+        // 2 + 3 + 2 hændelser og give otte hændelser i alt.
+        const plannedCountByDay = {};
         const minSpacing = cfg.minSpacingMinutes || 180;
 
         (cfg.requiredTemplates || []).forEach((templateId, idx) => {
@@ -339,6 +394,7 @@ class CampaignEventDirector {
             if (!planned) return;
 
             plannedTimes.push(planned.timeMinutes);
+            plannedCountByDay[planned.day] = (plannedCountByDay[planned.day] || 0) + 1;
             if (template.oncePerLevel) usedTemplateIds.add(template.id);
             const category = template.category || 'default';
             categoryCounts[category] = (categoryCounts[category] || 0) + 1;
@@ -350,7 +406,8 @@ class CampaignEventDirector {
 
         (cfg.dayPlans || []).forEach(dayPlan => {
             const day = dayPlan.day || 0;
-            const count = dayPlan.count || 0;
+            const dailyQuota = dayPlan.count || 0;
+            const count = Math.max(0, dailyQuota - (plannedCountByDay[day] || 0));
 
             for (let slot = 0; slot < count; slot++) {
                 const planned = this._choosePlannedEvent({
@@ -479,6 +536,7 @@ class CampaignEventDirector {
         return template.markers.map((markerDef, idx) => {
             const marker = _clonePlain(markerDef);
             marker.id = `${event.id}_marker_${idx + 1}`;
+            marker.sourceEventId = event.id;
 
             if (marker.type === 'interval') {
                 const start = timeMinutes + (marker.startOffsetMinutes || 0);
@@ -1526,11 +1584,6 @@ class CampaignCore {
         const character = typeof getActiveCharacter === 'function'
             ? getActiveCharacter()
             : { id: 'erik', name: 'Erik' };
-        const basalTrialRange = getBasalTrialRangeForCharacter(
-            game && game.basalDose,
-            character.archetype === 'child'
-        );
-
         return {
             kind: 'intro',
             isReopen,
@@ -1547,8 +1600,6 @@ class CampaignCore {
             textVars: Object.assign(bgVars(), {
                 icr: Math.round((game && game.ICR) || 10),
                 characterName: character.name,
-                basalRangeMin: basalTrialRange.basalRangeMin,
-                basalRangeMax: basalTrialRange.basalRangeMax,
             }),
         };
     }
@@ -1679,6 +1730,47 @@ class CampaignCore {
             if (marker.revealTimeMinutes === undefined) return true;
             return game.totalSimMinutes >= this.levelStartSimTime + marker.revealTimeMinutes;
         });
+    }
+
+    // Returnér de fysiologiske banehændelser, som skal genafspilles låst i
+    // Hvad Nu Hvis. De er en del af banens situation - ikke spillerens valg - og
+    // må derfor hverken kunne flyttes, slettes eller varieres i editoren.
+    getInsightsLockedEvents(sim) {
+        const game = sim || this._game();
+        if (!game || !this.levelConfig) return [];
+
+        const supportedTypes = new Set(['acuteStress', 'chronicStress']);
+        const scheduledEvents = this.resolvedScheduledEvents || this.levelConfig.scheduledEvents || [];
+        const markers = this.resolvedTimelineMarkers || this.levelConfig.markers || [];
+
+        return scheduledEvents
+            .filter(event => event && event.lockInInsights === true &&
+                supportedTypes.has(event.type) && this.scheduledEventsFired.has(event.id))
+            .map(event => {
+                const absoluteEventTime = this.levelStartSimTime + event.timeMinutes;
+                const linkedMarker = markers.find(marker => marker.sourceEventId === event.id);
+                let marker = null;
+
+                if (linkedMarker) {
+                    marker = _clonePlain(linkedMarker);
+                    if (marker.type === 'interval') {
+                        marker.startMin = this.levelStartSimTime + marker.startMinutes;
+                        marker.endMin = this.levelStartSimTime + marker.endMinutes;
+                        delete marker.startMinutes;
+                        delete marker.endMinutes;
+                    } else {
+                        marker.timeMin = this.levelStartSimTime + marker.timeMinutes;
+                        delete marker.timeMinutes;
+                    }
+                }
+
+                return {
+                    t: absoluteEventTime,
+                    kind: event.type,
+                    amount: event.amount,
+                    marker
+                };
+            });
     }
 
 
@@ -2124,6 +2216,11 @@ function _tipShouldShow(tip, sim, ctx) {
         && tipSessionState._tipsShownToday >= MAX_GENERAL_TIPS_PER_SIM_DAY
         && !firstEducationPending) return false;
 
+    // Hold grafen læsbar ved alle spilhastigheder. Reglen ligger efter de faste
+    // betingelser, så kun en kandidat, der ellers kunne vises, bruger den ene
+    // trængselslodtrækning for den aktuelle synlige tiptilstand.
+    if (triggered && !_tipPassesCrowdingGate(tip, sim)) return false;
+
     // Chance-roll (optional, default 100%). Last gate, so we don't "spend" the
     // roll on tips that couldn't show anyway (cooldown, condition, etc.).
     if (triggered && !_rollTipChance(tip)) triggered = false;
@@ -2226,6 +2323,7 @@ function _tipCommitShown(tip, sim, ctx) {
     tipSessionState._tipsShownCounter++;
     tipSessionState._tipsShownToday++;
     tipSessionState._lastAnyTipShownAt = sim.totalSimMinutes;
+    tipSessionState._lastAnyTipShownRealMs = _tipRealNowMs();
 
     if (sim && sim.graphMessages && typeof t === 'function') {
         // Basaltippet fortæller om noget spilleren kan kontrollere: tiden siden

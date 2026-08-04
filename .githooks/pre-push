@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+# Stop et offentligt push, hvis versionshistorikken ikke beskriver udgivelsen.
+set -eu
+
+if [ -x "tests/.bin/node.exe" ]; then
+    NODE="tests/.bin/node.exe"
+else
+    NODE="node"
+fi
+
+"$NODE" tests/check-version-history.js
+"$NODE" tests/check-intended-purpose-text.js

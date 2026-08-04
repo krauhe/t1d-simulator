@@ -530,8 +530,10 @@ function setCharacterPortraitCrossfade(portrait, src, mood, characterName, immed
     if (immediate || !activeLayer.getAttribute('src')) {
         layers.forEach((layer, index) => {
             layer.classList.toggle('is-visible', index === 0);
-            if (index === 0) layer.src = src;
-            else layer.removeAttribute('src');
+            // Begge lag får et gyldigt billede. Hvis det skjulte lag stadig er
+            // midt i en 4-sekunders overgang, undgår vi dermed et kort glimt af
+            // browserens ikon for et manglende billede.
+            layer.src = src;
         });
         portrait.dataset.activeLayer = '0';
         portrait.dataset.currentSrc = src;

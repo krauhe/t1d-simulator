@@ -2808,11 +2808,11 @@ body {
 }
 
 .welcome-tour-popup {
-    width: min(940px, 92vw);
-    max-width: 940px;
+    width: min(1100px, 94vw);
+    max-width: 1100px;
     min-height: 520px;
     display: grid;
-    grid-template-columns: minmax(300px, 1.05fr) minmax(340px, 1.1fr);
+    grid-template-columns: minmax(460px, 1.35fr) minmax(340px, 1fr);
     gap: 16px;
     padding: 28px 30px 24px;
     overflow: visible;
@@ -2822,19 +2822,48 @@ body {
     position: relative;
     min-height: 480px;
     display: flex;
-    align-items: stretch;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
+    gap: 10px;
     overflow: visible;
 }
 
 .welcome-tour-character img {
-    width: auto;
-    height: 100%;
+    width: 100%;
+    height: auto;
     max-width: 100%;
-    min-height: 460px;
+    max-height: 460px;
     object-fit: contain;
     object-position: bottom center;
     filter: drop-shadow(0 28px 40px rgba(0, 0, 0, 0.42));
+}
+
+.welcome-tour-character .welcome-tour-lead {
+    max-width: 500px;
+    margin: 0;
+    text-align: center;
+}
+
+@media (max-width: 940px) {
+    .welcome-tour-popup {
+        grid-template-columns: 1fr;
+        width: min(680px, 94vw);
+        min-height: auto;
+        max-height: 94vh;
+        overflow-y: auto;
+    }
+
+    .welcome-tour-character {
+        min-height: 170px;
+        max-height: 260px;
+        align-items: flex-end;
+    }
+
+    .welcome-tour-character img {
+        width: min(620px, 90vw);
+        max-height: 210px;
+    }
 }
 
 .welcome-tour-content {
@@ -2842,25 +2871,6 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-}
-
-/* The "WELCOME" heading is red like the titles in all other popups.
-   .welcome-tour-popup-prefix ensures we win over .popup-content p. */
-.welcome-tour-popup .welcome-tour-eyebrow {
-    margin: 0 0 5px;
-    color: var(--red);
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.welcome-tour-popup h2 {
-    margin: 0 0 12px;
-    color: var(--text-primary);
-    text-align: left;
-    font-size: 1.45rem;
-    line-height: 1.16;
 }
 
 .welcome-tour-lead,
@@ -3725,21 +3735,15 @@ body {
 
     .welcome-tour-character {
         min-height: 150px;
-        max-height: 190px;
+        max-height: 220px;
         align-items: flex-end;
     }
 
     .welcome-tour-character img {
-        width: min(210px, 60vw);
-        max-height: 210px;
+        width: min(520px, 90vw);
+        max-height: 170px;
     }
 
-    .welcome-tour-popup h2 {
-        font-size: 1.25rem;
-        text-align: center;
-    }
-
-    .welcome-tour-eyebrow,
     .welcome-tour-lead,
     .welcome-tour-compact {
         text-align: center;
@@ -4956,6 +4960,118 @@ body {
     color: var(--text-primary);
 }
 
+/* De seks personer vises som tre egentlige pargrupper. Det gør kropsprofilen
+   (barn, voksen eller kraftig voksen) til første visuelle valg og personen til
+   det andet. Reglerne ligger efter den ældre kort-grid, så samme komponent kan
+   bruges i både startvælgeren og den selvstændige karakter-popup. */
+.archetype-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: none;
+    grid-auto-flow: row;
+    gap: 12px;
+}
+.character-pair {
+    min-width: 0;
+    padding: 9px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.025);
+    opacity: 0.62;
+    transition: opacity 0.2s ease, border-color 0.2s ease,
+                background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.character-pair:hover,
+.character-pair.selected {
+    opacity: 1;
+}
+.character-pair.selected {
+    transform: translateY(-3px);
+    border-color: var(--accent-secondary, #7dd3fc);
+    background: rgba(125, 211, 252, 0.08);
+    box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.18),
+                0 10px 24px rgba(0, 0, 0, 0.28);
+}
+.character-pair-title {
+    min-height: 20px;
+    margin: 0 0 7px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.78em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.character-pair.selected .character-pair-title {
+    color: var(--accent-secondary, #7dd3fc);
+}
+.character-pair-choices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px;
+    perspective: 420px;
+}
+.archetype-cards .character-pair .archetype-card {
+    min-width: 0;
+    min-height: 104px;
+    gap: 6px;
+    padding: 9px 4px;
+    border-width: 1px;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    transition: transform 0.2s var(--bounce), opacity 0.2s ease,
+                border-color 0.2s ease, background 0.2s ease;
+}
+.archetype-cards .character-pair .archetype-card:hover:not([disabled]) {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(125, 211, 252, 0.45);
+    box-shadow: none;
+}
+.archetype-cards .character-pair .archetype-card.selected {
+    background: rgba(125, 211, 252, 0.12);
+    border-color: var(--accent-secondary, #7dd3fc);
+    box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.18);
+}
+.character-pair.selected .archetype-card:not(.selected) {
+    opacity: 0.68;
+}
+.character-pair .archetype-icon-img {
+    width: 76px;
+    height: 76px;
+    transform: translateZ(0);
+    transform-origin: center bottom;
+    transition: transform 0.28s var(--bounce), opacity 0.2s ease,
+                filter 0.2s ease;
+}
+.character-pair .archetype-card.selected .archetype-icon-img {
+    transform: translateY(-3px) translateZ(14px) scale(1.08);
+}
+
+.character-pair:has(.archetype-card.selected) .archetype-card:not(.selected) .archetype-icon-img {
+    transform: translateZ(-14px) scale(0.9);
+    opacity: 0.68;
+    filter: saturate(0.82);
+}
+
+/* Parret fungerer som en lille 3D-karrusel. Figuren under musen træder tydeligt
+   frem foran makkeren, mens den anden bliver mindre markant. På touch giver den
+   valgte karakter den samme fornemmelse via reglen ovenfor. */
+.character-pair:has(.archetype-card:hover) .archetype-card:not(:hover) .archetype-icon-img {
+    transform: translateZ(-18px) scale(0.86);
+    opacity: 0.52;
+    filter: saturate(0.72);
+}
+.character-pair .archetype-card:hover:not([disabled]) {
+    z-index: 2;
+}
+.character-pair .archetype-card:first-child:hover:not([disabled]) .archetype-icon-img {
+    transform: translateY(-3px) translateZ(16px) rotateY(5deg) scale(1.06);
+}
+.character-pair .archetype-card:last-child:hover:not([disabled]) .archetype-icon-img {
+    transform: translateY(-3px) translateZ(16px) rotateY(-5deg) scale(1.06);
+}
+
 /* Portion label next to the weight input */
 .profile-portion-label {
     font-size: var(--font-ui-sm);
@@ -5116,18 +5232,6 @@ body {
 .preset-chip-custom:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.4);
-}
-
-/* --- #3: Basal dose hint --- */
-.dp-basal-hint {
-    font-size: var(--font-ui);
-    color: var(--text-muted);
-    text-align: center;
-    padding: 4px 0;
-    cursor: help;
-}
-.dp-basal-hint strong {
-    color: var(--blue);
 }
 
 /* --- Rapid insulin hint (press 1-9) --- */
@@ -5553,7 +5657,9 @@ body {
    ============================================================================= */
 
 .mode-select-popup {
-    max-width: 580px;
+    /* De brede voksenfigurer skal kunne træde frem uden at gå ud over deres
+       personkort. Den ekstra bredde bruges kun vandret og giver ikke mere scroll. */
+    max-width: 650px;
     text-align: center;
     padding: 14px 20px;
 }
@@ -5654,25 +5760,31 @@ body {
 }
 .mode-character-section .archetype-cards {
     margin-top: 4px;
-    row-gap: 6px;
-    column-gap: 12px;
+    gap: 7px;
 }
 .mode-character-section .archetype-col-headers {
     column-gap: 12px;
     margin-bottom: 4px;
 }
 .mode-character-section .archetype-cards .archetype-card {
-    min-height: 92px;
+    min-height: 108px;
     gap: 4px;
-    padding: 7px 6px;
+    padding: 5px 3px;
 }
 .mode-character-section .archetype-icon-img {
-    width: 54px;
-    height: 54px;
+    width: 80px;
+    height: 80px;
+    /* Bevar lidt luft til kortets sidekanter, også når vinduet bliver smallere.
+       Figuren kan fortsat skaleres frem ved hover/valg uden at blive klippet. */
+    max-width: calc(100% - 4px);
 }
-.mode-character-section .profile-calculated {
-    margin-top: 6px;
-    padding: 6px 8px;
+.mode-character-section .character-pair {
+    padding: 7px;
+}
+.mode-character-section .character-pair-title {
+    min-height: 17px;
+    margin-bottom: 4px;
+    font-size: 0.7em;
 }
 .mode-select-popup .popup-button-container {
     margin-top: 10px;
@@ -6603,6 +6715,13 @@ body {
     padding: 3px 0;
     color: #e2e8f0;
 }
+
+.campaign-replay-prompt {
+    margin: 10px 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    text-align: center;
+}
 .campaign-obj-done li {
     color: #4ade80;
 }
@@ -7389,4 +7508,434 @@ body {
 
 .viewport-popup button.viewport-popup-primary:hover {
     background: linear-gradient(180deg, #1ea283, #13735c);
+}
+
+
+/* =============================================================================
+   SCENARIO EDITOR MODE — body.mode-editor scopes what is shown, plus the editor's
+   own controls (toolbar, scroll, event popup). Reuses the game's glass tokens.
+   ============================================================================= */
+
+/* Hide game-only controls in editor mode (static tool — no sim speed,
+   pause, sim clock, lives). The game's stats fragment (TIR/avg.) and points badge ARE
+   reused (whole-period values), so the bottom capsule stays familiar; only the
+   "nu"-CGM hero is replaced by the editor's top-right BS-tablet (BG/IOB/COB at the
+   cursor). The mode line shows "Scenarie editor" (like the game shows its mode
+   name); only day-points are hidden so the points badge shows a single whole-sim
+   Total. */
+body.mode-editor #speedStepper,        /* sim speed + pause */
+body.mode-editor #statsWeightRow,      /* calorie balance — not relevant in editor */
+body.mode-editor #fingerprickButton,   /* measurement — meaningless in deterministic editor */
+body.mode-editor #ketoneTestButton,    /* measurement — the curve is the visible truth */
+body.mode-editor #pointsOverlay #dayPointsDisplay {  /* kun whole-sim Total — ingen dag-points */
+    display: none !important;
+}
+/* The top bar is a grid (1fr auto 1fr). When .top-status (sim clock+speed, center)
+   is display:none in the editor, .top-right auto-places in column 2 and ends up in
+   the middle of the bar. Force it back to column 3 (right 1fr) so Physiology/Settings
+   sit all the way to the right as in the game. */
+body.mode-editor .top-right { grid-column: 3; }
+/* Points badge: show only whole-sim Total in editor (label + number). */
+/* Editor points badge: number large with "points" as small caption below
+   (instead of "Total" word beside it) — stacked vertically. */
+body.mode-editor #pointsOverlay .points-line { display: flex !important; flex-direction: column; gap: 0; }
+body.mode-editor #pointsOverlay #normoPointsLabel { display: none !important; }
+body.mode-editor #pointsOverlay #normoPointsWeighting { display: none !important; }
+body.mode-editor #pointsOverlay .points-caption { display: block !important; }
+
+/* Hvad Nu Hvis sammenligner forløb uden at rangordne dem med en pointsum.
+   Panelet bliver stående som en genkendelig del af bundlinjen, men vises med
+   samme afdæmpede udtryk som andre deaktiverede kontroller. */
+body.mode-editor #pointsOverlay {
+    filter: grayscale(1);
+    opacity: 0.42;
+    pointer-events: none;
+}
+
+/* Editor menu: a top-bar button (in .top-right next to Physiology/Settings) that
+   opens a dropdown with the scenario actions — deliberately NOT on the points
+   capsule. Hidden outside editor mode. The button is a plain .top-btn so it has
+   the same neutral layout as the other top-bar buttons (matching Physiology's
+   38px height); only the dropdown reuses the settings-dropdown look. */
+.top-editor-wrapper { position: relative; display: none; }
+body.mode-editor .top-editor-wrapper,
+body.game-active .top-editor-wrapper { display: inline-flex; align-items: center; }
+.editor-menu-btn {
+    min-height: 38px;
+}
+.editor-menu-btn .mode-developer-badge {
+    position: static;
+    margin-left: 6px;
+    font-size: 0.62em;
+}
+/* "Åbn i editor" vises mens et spil kører. DEV-badget sidder derfor direkte
+   på handlingen, så det også er tydeligt når dropdownen vises i screenshots. */
+.editor-action-label-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.editor-action-developer-badge {
+    position: static;
+    flex: 0 0 auto;
+    font-size: 0.56em;
+}
+.editor-dropdown { min-width: 280px; }
+/* Mode-scoped menu items: editor actions only in the editor, the "save play as
+   scenario" action only during a live game. (mode-editor and game-active are
+   mutually exclusive, so the two rules never hide everything at once.) */
+body:not(.mode-editor) .et-item-editor { display: none; }
+body:not(.game-active) .et-item-game { display: none; }
+/* Editor mode: an open-ended ("åben", runs until Stop) activity makes no sense on a
+   static timeline — the editor always places a fixed-duration session. Hide the open
+   duration chip so the activity panel shows just the 15/30/60 min presets. */
+body.mode-editor .duration-chip[data-duration="open"] { display: none; }
+/* Action rows are <button>s wearing the sd-row look — strip native chrome and
+   left-align so they read like a normal app menu. */
+.sd-row.sd-action {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+}
+/* Editor toolbar: glass pill at the top of the graph area with period selector (24/48/72)
+   and the BS tablet (time + BG + IOB + COB at the cursor — reuses the info-pill look
+   from the game's CGM hero). Whole-sim TIR/avg. + points live in the bottom capsule bar. */
+.editor-toolbar {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    z-index: 14;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 7px 12px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-medium);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+/* BS-tablet: the editor's inspection readout, styled like the game's CGM hero
+   (big BG number + IOB/COB info-pills) so it feels native. */
+.editor-toolbar .et-bs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 12px;
+    border-left: 1px solid var(--border-medium);
+}
+.editor-toolbar .et-bs-time { font-size: 0.78em; color: var(--text-muted); }
+.editor-toolbar .et-bs-bg { font-size: 1.15em; font-weight: var(--font-weight-value); }
+.editor-toolbar .et-bs-unit { font-size: 0.62em; color: var(--text-muted); margin-left: -4px; }
+.editor-toolbar .et-bs-pill { font-size: 0.72em; }
+
+/* Vandret rulning vises kun, når det spillede forløb plus 6 timers
+   fremskrivning er længere end det døgn, grafen kan vise ad gangen. */
+.editor-scrollbar {
+    position: absolute;
+    left: 64px;
+    right: 20px;
+    bottom: 6px;
+    height: 9px;
+    z-index: 14;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    cursor: pointer;
+    touch-action: none;
+}
+.editor-scroll-thumb {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    min-width: 24px;
+    background: rgba(125, 211, 252, 0.5);
+    border: 1px solid rgba(125, 211, 252, 0.35);
+    border-radius: 999px;
+    cursor: grab;
+    transition: background 0.15s;
+    touch-action: none;
+}
+.editor-scroll-thumb:hover { background: rgba(125, 211, 252, 0.72); }
+.editor-scroll-thumb:active { cursor: grabbing; background: rgba(125, 211, 252, 0.85); }
+
+/* Shorten warning: small confirmation dialog over the graph area (glass look). */
+/* Editor confirm/notice — matches the game's standard popup design (.popup-overlay
+   + .popup-content card + .popup-btn-primary), just scoped inside the editor graph
+   area instead of full-screen. */
+.editor-confirm-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+.editor-confirm {
+    max-width: 360px;
+    margin: 16px;
+    padding: 24px 28px;
+    border-radius: var(--radius-xl);
+    background: #1a2332;                              /* solid card, like .popup-content */
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-lg), 0 0 60px rgba(96, 165, 250, 0.1);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+    animation: popup-pop 0.4s ease-out forwards;
+}
+.editor-confirm .ec-msg {
+    font-size: 1.0em;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin-bottom: 22px;
+}
+.editor-confirm .ec-actions { display: flex; gap: 16px; justify-content: center; }
+/* Affirmative (Continue / OK) — the game's blue primary button. */
+.editor-confirm .ec-yes {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    padding: 9px 22px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.2s ease;
+}
+.editor-confirm .ec-yes:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: translateY(-1px); }
+/* Cancel — neutral secondary. */
+.editor-confirm .ec-cancel {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-medium);
+    padding: 9px 22px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: var(--font-weight-value);
+    transition: all 0.2s ease;
+}
+.editor-confirm .ec-cancel:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); }
+
+/* Event-edit popup: small glass panel at a marker (dose/carb/duration + delete). */
+.editor-event-pop {
+    position: absolute;
+    z-index: 30;
+    width: 220px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-medium);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+}
+.editor-event-pop .eep-head { font-size: 0.86em; font-weight: var(--font-weight-value); margin-bottom: 10px; }
+.editor-event-pop .eep-time { color: var(--cyan); }
+.editor-event-pop .dose-stepper { width: fit-content; margin: 0 auto 9px; }
+.editor-event-pop .eep-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.editor-event-pop .eep-row label { font-size: 0.76em; color: var(--text-muted); min-width: 64px; }
+/* min-width:0 lets the range input shrink below its default min size so the value
+   readout stays INSIDE the panel (a range input otherwise forces the row too wide). */
+.editor-event-pop .eep-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--cyan); }
+.editor-event-pop .eep-val { font-size: 0.78em; min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+/* Meal edit: food-chip-style info block (icon + kcal + macro bar + C/P/F grams). */
+.editor-event-pop .eep-food { margin-bottom: 10px; }
+/* Placed-meal popup shows the dish as the SAME orange chip as the food menu.
+   .preset-chip already supplies the orange background/border; the base column
+   layout is scoped to .dp-food-presets, so replicate it here for the popup chip. */
+.editor-event-pop .preset-chip.eep-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: default;
+    width: 150px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+.editor-event-pop .preset-chip.eep-chip:hover {
+    transform: none;
+    background: var(--yellow-dim);
+    border-color: rgba(234, 179, 8, 0.12);
+    box-shadow: none;
+}
+.editor-event-pop .eep-chip .pc-emoji {
+    width: 42px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+}
+.editor-event-pop .eep-chip .pc-name {
+    font-size: var(--font-ui-sm);
+    color: var(--text-muted);
+    margin-top: 3px;
+    line-height: 1.2;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+}
+.editor-event-pop .eep-chip .pc-macro-wrapper { width: 100%; }
+.editor-event-pop .eep-chip .pc-macro-bar { margin: 4px 0 0 0; }
+/* Activity popup chip: the activity icon + name + an intensity/kcal-burned line.
+   The chip is tinted with the activity's own colour inline (overrides the amber). */
+.editor-event-pop .eep-chip-activity { padding-bottom: 7px; }
+/* Insulin popup chip: syringe icon + name + an action-profile / estimated-drop line.
+   Tinted with the insulin's own colour inline (teal rapid / blue basal), reusing the
+   activity chip's meta layout (.eep-act-meta / -int / -kcal). */
+.editor-event-pop .eep-chip-insulin { padding-bottom: 7px; }
+.editor-event-pop .eep-act-meta {
+    display: flex; gap: 10px; justify-content: center; align-items: baseline;
+    margin-top: 4px; font-size: var(--font-ui-sm); font-variant-numeric: tabular-nums;
+}
+.editor-event-pop .eep-act-int { font-weight: var(--font-weight-value); }
+.editor-event-pop .eep-act-kcal { color: var(--text-muted); }
+/* Action buttons: icon-only (custom event-info icons) in one centred row, with a
+   title tooltip for clarity. Icon-only keeps the row compact, so the long
+   "Variationer" label no longer needs to fit as text. */
+.editor-event-pop .eep-actions { display: flex; gap: 12px; justify-content: center; align-items: center; }
+.editor-event-pop .eep-icon-btn {
+    padding: 3px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    line-height: 0;
+    transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+}
+.editor-event-pop .eep-icon-btn img { width: 42px; height: 42px; display: block; }
+.editor-event-pop .eep-icon-btn:hover { transform: translateY(-2px) scale(1.06); filter: brightness(1.12); }
+.editor-event-pop .eep-icon-btn:active { transform: scale(0.96); }
+/* Active what-if: cyan ring + glow so the toggled state reads at a glance. */
+.editor-event-pop .eep-sweep-on {
+    box-shadow: 0 0 0 2px var(--cyan, #22d3ee), 0 0 12px rgba(34, 211, 238, 0.55);
+}
+
+/* What-if dimension picker — a small glass popover anchored to the what-if button,
+   reusing the event-popup look. Lets the user pick which axis to explore (the
+   event's quantity vs. its time) before the sweep starts. */
+.editor-sweep-menu {
+    position: absolute;
+    z-index: 31;
+    min-width: 150px;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-medium);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.editor-sweep-menu .esm-head {
+    font-size: 0.78em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+    text-align: center;
+}
+.editor-sweep-menu .esm-chip {
+    appearance: none;
+    border: 1px solid var(--border-medium);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.84em;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.12s, border-color 0.12s, transform 0.08s;
+}
+.editor-sweep-menu .esm-chip:hover { background: rgba(34, 211, 238, 0.12); border-color: var(--cyan, #22d3ee); }
+.editor-sweep-menu .esm-chip:active { transform: scale(0.97); }
+.editor-sweep-menu .esm-chip.esm-on {
+    border-color: var(--cyan, #22d3ee);
+    box-shadow: 0 0 0 1px var(--cyan, #22d3ee) inset;
+    color: var(--cyan, #22d3ee);
+}
+
+/* Floating "close what-if" button — a red ✕ icon (cyan-rimmed, matching the sweep
+   accent) anchored next to the active sweep's labels, so closing the what-if is one
+   obvious tap by its own results (no need to reopen the event popup). Centred on its
+   anchor via the -50%/-50% translate; the PNG carries its own glow, so the button is
+   a transparent wrapper. Comfortable touch target for tablets. */
+.editor-sweep-close {
+    position: absolute;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    transform: translate(-50%, -50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.9;   /* mute the colour a touch */
+    transition: transform 0.08s, opacity 0.12s;
+}
+.editor-sweep-close img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+}
+.editor-sweep-close:hover { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+.editor-sweep-close:active { transform: translate(-50%, -50%) scale(0.92); }
+
+/* =============================================================================
+   INSIGHTS - fælles adgang til fysiologi og karakterbundet forløbsudforskning
+   ============================================================================= */
+.top-insights-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.insights-menu-btn {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: var(--radius-md);
+}
+
+.insights-dropdown {
+    min-width: 310px;
+}
+
+/* Udforskning åbnes kun fra et aktivt spil i Campaign eller Box Challenge.
+   Startskærmen og selve Insights-visningen viser derfor kun fysiologi-punktet. */
+body:not(.game-active) .insights-explore-action,
+body:not([data-game-mode="campaign"]):not([data-game-mode="boxchallenge"]) .insights-explore-action {
+    display: none;
+}
+
+.insights-explore-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+}
+
+#physiologyToggle.active {
+    background: rgba(217, 119, 6, 0.22);
+    color: #fff;
+}
+
+#physiologyToggle.active .sd-row-label {
+    color: var(--accent-gold);
+}
+
+@media (max-width: 768px) {
+    .insights-menu-btn { padding: 0 10px; }
+    .insights-dropdown { min-width: 0; }
 }

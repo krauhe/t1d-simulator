@@ -2528,6 +2528,10 @@ test('loseLife: liv mistes ved boks-kollision (3→2)', () => {
     sim.loseLife('box');
     assert(sim.lives === 2, `Efter boks-kollision: forventede 2 liv, fik ${sim.lives}`);
     assert(!sim.isGameOver, `Bør IKKE være game over med 2 liv`);
+    assert(sim.boxChallengeIncidents.length === 1 &&
+        sim.boxChallengeIncidents[0].cause === 'box' &&
+        sim.boxChallengeIncidents[0].t === sim.totalSimMinutes,
+        'Boks-kollisionen skal gemmes som et tidsfast Insights-livstab');
 });
 
 test('loseLife: game over ved 0 liv', () => {
@@ -4160,6 +4164,129 @@ test('MODULE 8 — stress off does not freeze non-stress liver-glycogen flows', 
 
     assert(e.liverGlycogenGrams < start - 5,
         `Exercise must still drain liver glycogen with stress off (${start.toFixed(1)} -> ${e.liverGlycogenGrams.toFixed(1)} g)`);
+});
+
+// =============================================================================
+// INSIGHTS: karakterbundet eksport af et spillet forløb
+// =============================================================================
+
+test('Insights er låst indtil spillerens første handling', () => {
+    const untouched = new Simulator({ characterId: 'oscar' });
+    untouched.totalSimMinutes = 0;
+    assert(!untouched.hasMeaningfulInsightsCourse(),
+        'Et tomt forløb ved banestart må ikke kunne åbnes i Insights');
+
+    untouched.totalSimMinutes = 24 * 60;
+    assert(!untouched.hasMeaningfulInsightsCourse(),
+        'Tid alene må ikke åbne en editor uden et valg at sammenligne');
+
+    const acted = new Simulator({ characterId: 'oscar' });
+    acted.totalSimMinutes = 0;
+    acted.addFastInsulin(1);
+    assert(acted.hasMeaningfulInsightsCourse(),
+        'En spillerhandling skal åbne Insights med det samme');
+});
+
+test('Insights-eksport indeholder kun karakter-id, handlinger og spillet BG-reference', () => {
+    const sim = new Simulator({ characterId: 'oscar', weight: 35, isf: 5, icr: 15 });
+    sim.totalSimMinutes = 30;
+    sim.bgHistoryForStats = [
+        { time: 0, cgmBG: 5.6, trueBG: 5.5 },
+        { time: 5, cgmBG: 5.7, trueBG: 5.55 },
+        { time: 30, cgmBG: 5.8, trueBG: 5.7 }
+    ];
+    sim.addFastInsulin(1);
+
+    const scenario = sim.exportInsightsScenario();
+    assert(scenario.format === 't1d-insights', 'Eksporten skal bruge Insights-formatet');
+    assert(scenario.characterId === 'oscar', 'Den faste karakter-id skal bevares');
+    assert(scenario.playedUntilMin === 30,
+        'Insights skal markere det præcise minut, hvor banen blev sat på pause');
+    assert(scenario.events.length === 1 && scenario.events[0].kind === 'bolus',
+        'Spillerens hurtiginsulin skal eksporteres som én handling');
+    assert(scenario.sourceBg.length === 3 && scenario.sourceBg[2].t === 30,
+        'Kun den faktisk spillede BG-reference frem til åbningstidspunktet skal følge med');
+    assert(!Object.prototype.hasOwnProperty.call(scenario, 'weight') &&
+        !Object.prototype.hasOwnProperty.call(scenario, 'isf') &&
+        !Object.prototype.hasOwnProperty.call(scenario, 'icr'),
+        'Rå vægt-, ISF- og ICR-værdier må ikke indgå i kontrakten');
+});
+
+test('Box Challenge eksporterer kasser separat som låst Insights-geometri', () => {
+    const sim = new Simulator({ characterId: 'erik' }, 'boxchallenge');
+    sim.totalSimMinutes = 150;
+    sim.boxes = [{
+        dayNumber: 1, startMinute: 120, endMinute: 180,
+        bgMin: 5.0, bgMax: 6.5, skewBG: 0.4, hit: true
+    }];
+    sim.boxChallengeIncidents = [{ t: 140, cause: 'box', bg: 5.8 }];
+    sim.addFastInsulin(1);
+
+    const scenario = sim.exportInsightsScenario();
+    assert(scenario.sourceMode === 'boxchallenge',
+        'Insights skal bevare, at forløbet kommer fra Box Challenge');
+    assert(scenario.lockedBoxes.length === 1,
+        'Den synlige Box Challenge-kasse skal følge med til Insights');
+    assert(scenario.lockedBoxes[0].startMin === 120 && scenario.lockedBoxes[0].endMin === 180,
+        'Kassens tidsplacering skal bevares');
+    assert(scenario.lockedBoxes[0].bgMin === 5.0 && scenario.lockedBoxes[0].bgMax === 6.5 &&
+        scenario.lockedBoxes[0].skewBG === 0.4,
+        'Kassens form og blodsukkerinterval skal bevares');
+    assert(!scenario.events.some(event => event.kind === 'box'),
+        'Kasser må ikke eksporteres som redigerbare handlinger');
+    assert(scenario.sourceIncidents.length === 1 &&
+        scenario.sourceIncidents[0].t === 140 &&
+        scenario.sourceIncidents[0].cause === 'box' &&
+        scenario.sourceIncidents[0].bg === 5.8,
+        'Boks-hit skal eksporteres separat med præcist tidspunkt og BG');
+});
+
+test('Akut stress påvirker leverresponsen uden at ændre eISF direkte', () => {
+    const engine = createEngine({ weight: 70, isf: 3.0, icr: 10 }, { seed: 90210 });
+    const isfBefore = engine.currentISF;
+
+    engine.addAcuteStress(0.30);
+
+    assert(Math.abs(engine.currentISF - isfBefore) < 1e-12,
+        'Akut stress må ikke sænke eISF; bane 9 bruger leverresponsen til dag-1-hændelsen');
+    assert(engine.acuteStressLevel === 0.30,
+        'Den akutte stresshændelse skal stadig aktivere stressresponsen');
+
+    engine.addChronicStress(0.40);
+    engine.updateStressHormones(30);
+    assert(engine.currentISF < isfBefore,
+        'Langvarig stress skal derimod sænke eISF, når pending-puljen er bygget op');
+});
+
+test('Banehændelser eksporteres separat og låst til Hvad Nu Hvis', () => {
+    const sim = new Simulator({ characterId: 'olivia' }, 'campaign');
+    sim.totalSimMinutes = 14 * 60;
+    sim.addFastInsulin(1);
+
+    const scenario = sim.exportInsightsScenario({
+        lockedEvents: [{
+            t: 10 * 60 + 30,
+            kind: 'acuteStress',
+            amount: 0.30,
+            marker: {
+                type: 'interval',
+                startMin: 10 * 60 + 30,
+                endMin: 12 * 60,
+                labelKey: 'campaign.level9.marker.test'
+            }
+        }]
+    });
+
+    assert(scenario.lockedEvents.length === 1,
+        'Den udløste stresshændelse skal følge med til Hvad Nu Hvis');
+    assert(scenario.lockedEvents[0].kind === 'acuteStress' &&
+        scenario.lockedEvents[0].t === 10 * 60 + 30,
+        'Stresshændelsens type og tidspunkt skal bevares');
+    assert(scenario.lockedEvents[0].marker.startMin === 10 * 60 + 30 &&
+        scenario.lockedEvents[0].marker.endMin === 12 * 60,
+        'Den historiske intervalmarkering skal følge samme tidslinje');
+    assert(!scenario.events.some(event => event.kind === 'acuteStress'),
+        'Stresshændelsen må ikke optræde blandt spillerens redigerbare handlinger');
 });
 
 // =============================================================================

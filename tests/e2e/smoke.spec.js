@@ -205,7 +205,7 @@ test.describe('T1D Simulator smoke', () => {
         expect(plan.levelId).toBe('level10_unpredictable_day');
         expect(plan.objectiveTypes).toEqual(['survive', 'minCalories']);
         expect(plan.resolvedEvents.length).toBeGreaterThanOrEqual(6);
-        expect(plan.resolvedEvents.length).toBeLessThanOrEqual(9);
+        expect(plan.resolvedEvents.length).toBeLessThanOrEqual(7);
         expect(plan.resolvedEvents.every(evt => evt.eventStyle === true)).toBe(true);
         expect(plan.resolvedMarkers.length).toBeGreaterThanOrEqual(plan.resolvedEvents.length);
         expect(plan.resolvedMarkers.some(marker => Number.isFinite(marker.revealTimeMinutes))).toBe(true);

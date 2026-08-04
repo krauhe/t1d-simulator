@@ -43,7 +43,7 @@
     <!-- Favicon: simpel BG-kurve i teal -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23181c24'/><polyline points='4,22 10,18 14,10 18,20 22,14 28,16' fill='none' stroke='%2300e5a0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <!-- Stylesheet med CSS-variabler for tema-skifte -->
-    <link rel="stylesheet" href="style.css?v=0.9.114">
+    <link rel="stylesheet" href="style.css?v=0.9.115">
     <!-- Fonts: Inter til generel UI, Orbitron til CGM hero-tal (sci-fi look) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
     <!-- Tone.js: Web Audio framework for lydeffekter (CDN, pinned version) -->
@@ -141,9 +141,30 @@
 
             <!-- Højre: settings + fullscreen + hamburger -->
             <div class="top-right">
-                <button class="top-btn physiology-btn" id="physiologyToggle" data-i18n-title="ui.title.physiology" title="Vis fysiologiske kræfter bag blodsukkeret (score gemmes ikke)">
-                    <span data-i18n="ui.btn.physiology">Fysiologi</span>
-                </button>
+                <!-- Insights samler de to læringsvisninger. "Hvad Nu Hvis"
+                     vises kun under en aktiv Campaign eller Box Challenge og kan
+                     derfor aldrig starte som en tom eller frit personaliserbar editor. -->
+                <div class="top-insights-wrapper" id="insightsMenuWrapper">
+                    <button class="top-btn insights-menu-btn" id="insightsMenuButton" data-i18n-title="insights.menu.title" title="Fysiologi og Hvad Nu Hvis">
+                        <span data-i18n="insights.menu.label">Insights</span>
+                    </button>
+                    <div class="settings-dropdown insights-dropdown" id="insightsDropdown">
+                        <button type="button" class="sd-row sd-action" id="physiologyToggle">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-physiology.png" alt=""></span>
+                            <span class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="insights.menu.physiology">Fysiologi</span>
+                                <span class="sd-row-help" data-i18n="insights.menu.physiology.help">Se de processer, der påvirker karakterens blodsukker.</span>
+                            </span>
+                        </button>
+                        <button type="button" class="sd-row sd-action insights-explore-action" id="insightsExploreButton">
+                            <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/action-replay.png" alt=""></span>
+                            <span class="sd-row-content">
+                                <span class="sd-row-label" data-i18n="insights.menu.explore">Hvad Nu Hvis</span>
+                                <span class="sd-row-help" data-i18n="insights.menu.explore.help">Prøv andre handlinger for karakteren.</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
                 <div class="top-settings-wrapper" id="topSettingsWrapper">
                     <button class="top-btn settings-btn" id="topSettingsButton" data-i18n-title="settings.title" title="Indstillinger">
                         <span data-i18n="settings.label">Settings</span>
@@ -1102,42 +1123,36 @@
          opdateres og translated-from versionen bumpes.
          showHelpPopup() i ui.js henter indholdet herfra.
          =================================================================== -->
-    <!-- help-version-da: translated-from-en 2026-07-30-v4 -->
+    <!-- help-version-da: translated-from-en 2026-07-31-v8 -->
     <template id="help-content-da">
         <div class="brand-group" style="align-self:center; margin-bottom:14px;">
             <div class="brand">T1D SIMULATOR</div>
             <div class="brand-slogan">Prøv. Lær. Gentag.</div>
         </div>
 
-        <p style="margin: 0 0 14px;">
-          <strong><img class="help-inline-icon" src="assets/icons/app/event-note.png" alt=""> Om simulatoren:</strong>
-          T1D Simulator er et læringsspil om, hvad der påvirker blodsukkeret. Du hjælper
-          faste, fiktive karakterer. Spillet bruger ikke personlige behandlingsdata,
-          beregner ikke insulindoser til virkelige personer og er ikke beregnet som
-          grundlag for behandling.
-        </p>
+        <details class="help-section">
+          <summary>Om simulatoren</summary>
+          <p>
+            T1D Simulator er et læringsspil om type 1-diabetes (T1D) og blodsukker. Du
+            hjælper en af seks fiktive karakterer og udforsker, hvordan mad, insulin,
+            aktivitet, søvn og stress påvirker blodsukkeret. Prøv, lær og gentag.
+          </p>
+        </details>
 
         <details class="help-section">
-          <summary>Om projektet</summary>
+          <summary>Baggrunden</summary>
           <p>
-            Jeg fik konstateret T1D i februar 2025. Mængden af ny viden og de mange
-            faktorer, der påvirker blodsukkeret, gav mig idéen til T1D Simulator.
+            Jeg fik konstateret T1D i februar 2025 og oplevede, hvor svært det var at få
+            overblik over de mange ting, der påvirker blodsukkeret. Derfor begyndte jeg
+            at udvikle T1D Simulator.
           </p>
           <p>
-            Målet er at gøre blodsukkerfysiologi lettere at forstå. Du hjælper faste,
-            fiktive karakterer, får hurtig feedback og kan prøve forskellige valg igen.
+            Målet er at gøre viden om T1D og blodsukker spændende og let tilgængelig for
+            alle — især nydiagnosticerede og pårørende. Spillet gør tør fysiologi og
+            forskningsresultater interaktive, så fænomenerne bliver lettere at se,
+            huske og forstå.
           </p>
-          <p>
-            Spillet viser generelle fænomener som mad, insulin, aktivitet, søvn og
-            stress. Det bruger ikke personlige behandlingsdata og forsøger ikke at
-            forudsige, hvordan en virkelig person reagerer.
-          </p>
-          <p>
-            Simulationen bygger på videnskabelig litteratur og en forenklet model.
-            Den er lavet til læring om sammenhænge og tidsforløb — ikke til at beregne
-            behandling for en bestemt person.
-          </p>
-          <p style="text-align: right; color: var(--text-muted); font-style: italic;">— Kristian Rauhe Harreby, apr. 2026</p>
+          <p style="text-align: right; color: var(--text-muted); font-style: italic;">— Kristian Rauhe Harreby, 31. juli 2026</p>
         </details>
 
         <details class="help-section">
@@ -1167,12 +1182,12 @@
         <details class="help-section">
           <summary>Hvordan spilles spillet</summary>
 
-          <p>Intro-touren viser dig rundt på skærmen; spilguiden forklarer fysiologien og strategien i dybden.</p>
+          <p>Velkomstskærmen giver adgang til intro-touren; spilguiden forklarer fysiologien og strategien i dybden.</p>
 
           <div class="help-guide-link-row">
-            <button type="button" class="guide-link-btn" data-start-welcome-tour="intro">
+            <button type="button" class="guide-link-btn" data-show-welcome-tour>
               <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
-              <span class="guide-link-label">T1D Intro Tour</span>
+              <span class="guide-link-label">Velkomst og intro-tour</span>
             </button>
             <button type="button" class="guide-link-btn" data-guide-section="overview">
               <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
@@ -1183,7 +1198,7 @@
 
         <details class="help-section">
           <summary>Fysiologisk modellering</summary>
-          <p>Simulatoren er bygget på publicerede fysiologiske modeller og videnskabelig litteratur; den samlede simulator er ikke undersøgt for klinisk ydeevne.</p>
+          <p>Simulatoren bygger på publicerede fysiologiske modeller og videnskabelig litteratur. Dokumentation og modelkontroller findes her:</p>
           <ul>
             <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/BG-SCIENCE.md" target="_blank" style="color: var(--blue);">Videnskabelig oversigt</a> — Alle faktorer der påvirker blodsukker ved T1D.</li>
             <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md" target="_blank" style="color: var(--blue);">Modelimplementering</a> — Hovorka-modellen, insulin, motion, stresshormoner m.m.</li>
@@ -1197,9 +1212,7 @@
         <!-- ============================================================= -->
         <details class="help-section">
           <summary>Udvikling</summary>
-          <p style="background: rgba(255, 165, 0, 0.15); border: 1px solid rgba(255, 165, 0, 0.4); border-radius: var(--radius-md, 10px); padding: 10px 14px; font-size: 13px; margin-bottom: 12px;">
-            <img class="help-inline-icon" src="assets/icons/app/settings-debug.png" alt=""> <strong>Under udvikling</strong> — Simulatoren er i tidlig udvikling. Funktioner kan ændres eller forsvinde uden varsel. De fysiologiske modeller forbedres løbende, og den samlede simulator er ikke undersøgt for klinisk ydeevne.
-          </p>
+          <p>T1D Simulator udvikles løbende. De nyeste ændringer for spillere står nedenfor.</p>
 
           <!-- ========== VERSION HISTORY ========== -->
           <div id="version-history-da" data-version-history-lang="da"></div>
@@ -1258,43 +1271,36 @@
          Engelsk er primær for hjælp-tekst. Når denne ændres, bump versionen
          og opdatér den danske template til at matche.
          =================================================================== -->
-    <!-- help-version-en: 2026-07-30-v4 -->
+    <!-- help-version-en: 2026-07-31-v8 -->
     <template id="help-content-en">
         <div class="brand-group" style="align-self:center; margin-bottom:14px;">
             <div class="brand">T1D SIMULATOR</div>
             <div class="brand-slogan">Try. Learn. Repeat.</div>
         </div>
 
-        <p style="margin: 0 0 14px;">
-          <strong><img class="help-inline-icon" src="assets/icons/app/event-note.png" alt=""> About the simulator:</strong>
-          T1D Simulator is a learning game about factors that affect blood glucose. You
-          help fixed, fictional characters. The game does not use personal treatment
-          data, calculate insulin doses for real people, or provide a basis for treatment
-          decisions.
-        </p>
+        <details class="help-section">
+          <summary>About the simulator</summary>
+          <p>
+            T1D Simulator is a learning game about type 1 diabetes (T1D) and blood sugar.
+            You help one of six fictional characters and explore how food, insulin,
+            activity, sleep and stress affect blood sugar. Try, learn and repeat.
+          </p>
+        </details>
 
         <details class="help-section">
-          <summary>About the Project</summary>
+          <summary>Background</summary>
           <p>
-            I was diagnosed with T1D in February 2025. The amount of new knowledge and
-            the many factors that affect blood glucose inspired T1D Simulator.
+            I was diagnosed with T1D in February 2025 and experienced how difficult it
+            was to get an overview of the many things that affect blood sugar. That led
+            me to start developing T1D Simulator.
           </p>
           <p>
-            The goal is to make blood glucose physiology easier to understand. You help
-            fixed, fictional characters, receive immediate feedback, and can try different
-            choices again.
+            The goal is to make knowledge about T1D and blood sugar engaging and easily
+            accessible to everyone — especially newly diagnosed people and those close
+            to them. The game makes dry physiology and research findings interactive, so
+            the phenomena become easier to see, remember and understand.
           </p>
-          <p>
-            The game demonstrates general phenomena involving food, insulin, activity,
-            sleep, and stress. It does not use personal treatment data or attempt to
-            predict how a real person will respond.
-          </p>
-          <p>
-            The simulation is based on scientific literature and a simplified model.
-            It is designed for learning about relationships and timescales — not for
-            calculating treatment for a particular person.
-          </p>
-          <p style="text-align: right; color: var(--text-muted); font-style: italic;">— Kristian Rauhe Harreby, Apr 2026</p>
+          <p style="text-align: right; color: var(--text-muted); font-style: italic;">— Kristian Rauhe Harreby, 31 July 2026</p>
         </details>
 
         <details class="help-section">
@@ -1324,12 +1330,12 @@
         <details class="help-section">
           <summary>How to Play</summary>
 
-          <p>The intro tour shows you around the screen; the game guide explains the physiology and strategy in depth.</p>
+          <p>The welcome screen gives access to the intro tour; the game guide explains the physiology and strategy in depth.</p>
 
           <div class="help-guide-link-row">
-            <button type="button" class="guide-link-btn" data-start-welcome-tour="intro">
+            <button type="button" class="guide-link-btn" data-show-welcome-tour>
               <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
-              <span class="guide-link-label">T1D Intro Tour</span>
+              <span class="guide-link-label">Welcome and intro tour</span>
             </button>
             <button type="button" class="guide-link-btn" data-guide-section="overview">
               <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
@@ -1340,7 +1346,7 @@
 
         <details class="help-section">
           <summary>Physiological modelling</summary>
-          <p>The simulator is built on published physiological models and scientific literature; the complete simulator has not been evaluated for clinical performance.</p>
+          <p>The simulator is based on published physiological models and scientific literature. Documentation and model checks are available here:</p>
           <ul>
             <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/BG-SCIENCE.md" target="_blank" style="color: var(--blue);">Scientific overview</a> — All factors affecting blood sugar in T1D.</li>
             <li><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md" target="_blank" style="color: var(--blue);">Model implementation</a> — The Hovorka model, insulin, exercise, stress hormones, etc.</li>
@@ -1354,9 +1360,7 @@
         <!-- ============================================================= -->
         <details class="help-section">
           <summary>Development</summary>
-          <p style="background: rgba(255, 165, 0, 0.15); border: 1px solid rgba(255, 165, 0, 0.4); border-radius: var(--radius-md, 10px); padding: 10px 14px; font-size: 13px; margin-bottom: 12px;">
-            <img class="help-inline-icon" src="assets/icons/app/settings-debug.png" alt=""> <strong>Under Construction</strong> — This simulator is in early development. Features may change or disappear without notice. The physiological models are continuously being improved, and the complete simulator has not been evaluated for clinical performance.
-          </p>
+          <p>T1D Simulator is developed continuously. The latest player-facing changes are listed below.</p>
 
           <!-- ========== VERSION HISTORY ========== -->
           <div id="version-history-en" data-version-history-lang="en"></div>
@@ -1413,24 +1417,25 @@
     <!-- ===================================================================
          SCRIPT LOADING ORDER — Kritisk! Filerne deler globalt scope.
          =================================================================== -->
-<script src="js/sounds.js?v=0.9.114"></script>
-<script src="js/i18n.js?v=0.9.114"></script>
-<script src="js/dose-controls.js?v=0.9.114"></script>
-<script src="js/guide-data.js?v=0.9.114"></script>
-<script src="js/version-data.js?v=0.9.114"></script>
-<script src="js/levels.js?v=0.9.114"></script>
-<script src="js/archetypes.js?v=0.9.114"></script>
-<script src="js/symptoms.js?v=0.9.114"></script>
-<script src="js/foods.js?v=0.9.114"></script>
-<script src="js/hovorka.js?v=0.9.114"></script>
-<script src="js/physiology-engine.js?v=0.9.114"></script>
-<script src="js/simulator.js?v=0.9.114"></script>
-<script src="js/graph-renderer.js?v=0.9.114"></script>
-<script src="js/ui.js?v=0.9.114"></script>
-<script src="js/game.js?v=0.9.114"></script>
-<script src="js/campaign-core.js?v=0.9.114"></script>
-<script src="js/campaign.js?v=0.9.114"></script>
-<script src="js/welcome-tour.js?v=0.9.114"></script>
-<script src="js/main.js?v=0.9.114"></script>
+<script src="js/sounds.js?v=0.9.115"></script>
+<script src="js/i18n.js?v=0.9.115"></script>
+<script src="js/dose-controls.js?v=0.9.115"></script>
+<script src="js/guide-data.js?v=0.9.115"></script>
+<script src="js/version-data.js?v=0.9.115"></script>
+<script src="js/levels.js?v=0.9.115"></script>
+<script src="js/archetypes.js?v=0.9.115"></script>
+<script src="js/symptoms.js?v=0.9.115"></script>
+<script src="js/foods.js?v=0.9.115"></script>
+<script src="js/hovorka.js?v=0.9.115"></script>
+<script src="js/physiology-engine.js?v=0.9.115"></script>
+<script src="js/simulator.js?v=0.9.115"></script>
+<script src="js/graph-renderer.js?v=0.9.115"></script>
+<script src="js/ui.js?v=0.9.115"></script>
+<script src="js/editor.js?v=0.9.115"></script>
+<script src="js/game.js?v=0.9.115"></script>
+<script src="js/campaign-core.js?v=0.9.115"></script>
+<script src="js/campaign.js?v=0.9.115"></script>
+<script src="js/welcome-tour.js?v=0.9.115"></script>
+<script src="js/main.js?v=0.9.115"></script>
 </body>
 </html>

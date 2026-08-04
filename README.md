@@ -4,7 +4,7 @@
 
 ![Status: Under Construction](https://img.shields.io/badge/Status-Under%20Construction%20🚧-orange?style=for-the-badge)
 
-> **This project is in early development.** Features may change, break, or disappear without notice. The physiological models are continuously being improved, and the complete simulator has not been evaluated for clinical performance.
+> **This project is developed continuously.** Features, physiological mechanisms and model checks are expanded over time.
 
 T1D Simulator is an educational game about type 1 diabetes glucose physiology. The player helps fixed fictional characters by choosing insulin, food and activity, then observes how the characters' blood glucose responds. Rapid feedback makes physiological patterns easier to explore and compare across fixed fictional scenarios.
 
@@ -273,9 +273,11 @@ Copyright © 2025–2026 Kristian R. Harreby
 
 T1D Simulator is a learning game about factors that affect blood glucose in type 1 diabetes. The public game uses fixed fictional characters and does not accept personal treatment data.
 
-It is not intended to diagnose, monitor, predict, or guide treatment for any individual, and it must not be used to calculate or adjust a real person's insulin dose. The simulation is a simplified population model, not an individual predictor, and the complete simulator has not been evaluated for clinical performance.
+It is not intended to diagnose, monitor, predict, or guide treatment for any individual, and it must not be used to calculate or adjust a real person's insulin dose. The simulation uses a simplified population model to demonstrate general physiological patterns in fixed fictional characters.
 
-The complete scope and the boundary between the public game and the open model engine are described in [Intended Purpose](docs/INTENDED-PURPOSE.md). Unrestricted scenario-authoring tools are maintained separately and are not distributed with this repository.
+The public **What If** view can be opened from a played Campaign or Box Challenge course. It keeps the selected fixed character, lets the player compare alternative game actions within the played period, and simulates up to six additional hours. It accepts no personal parameters, identifies no preferred alternative, has no public import/export, and leaves the paused game unchanged.
+
+The complete scope and the boundary between the public game, restricted What If view and open model engine are described in [Intended Purpose](docs/INTENDED-PURPOSE.md). Unrestricted developer controls are not part of the public runtime interface.
 
 The authors accept no liability for harm resulting from use or misuse of this software.
 

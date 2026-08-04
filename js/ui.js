@@ -926,7 +926,8 @@ function drawGraph() {
     //   3. Pulsating opacity to catch the eye
     // Drawn as the last background element so it sits above zones
     // and watermark, but below data lines (data is drawn afterwards in drawGraph).
-    if (typeof isPaused !== 'undefined' && isPaused && game && !game.isGameOver) {
+    if (view.isLive && !document.body.classList.contains('insights-confirm-open') &&
+        typeof isPaused !== 'undefined' && isPaused && game && !game.isGameOver) {
         graphCtx.save();
         // 1. Subtle dim over the entire chart area — makes it visually clear that
         //    the game has stopped without hiding the graph.
@@ -971,6 +972,22 @@ function drawGraph() {
         graphCtx.fillText('PAUSE', cx, cy + barH / 2 + 14);
 
         graphCtx.restore();
+    }
+
+    // Insights kan overtage Box Challenge-kasser som låst scenariegeometri.
+    // Hooket ligger her, så kasserne - ligesom i det aktive spil - tegnes under
+    // blodsukkerkurver og handlingsmarkører.
+    if (!view.isLive && typeof Editor !== 'undefined' && Editor.drawLockedBoxes) {
+        Editor.drawLockedBoxes(graphCtx, {
+            padding, graphWidth, graphHeight, bgToY, timeToX,
+            startMin: currentDayStartMinutes, widthMin: totalMinutesInView
+        });
+    }
+    if (!view.isLive && typeof Editor !== 'undefined' && Editor.drawLockedEvents) {
+        Editor.drawLockedEvents(graphCtx, {
+            padding, graphWidth, graphHeight, bgToY, timeToX,
+            startMin: currentDayStartMinutes, widthMin: totalMinutesInView
+        });
     }
 
     // --- Box Challenge: draw obstacle boxes in the chart area ---
@@ -2021,7 +2038,7 @@ function drawGraph() {
     //   - Point marker (type: 'action'/'info'): dashed line + icon at a single time
     //   - Interval marker (type: 'interval'): coloured band between start and end
     // Both fade out after the time/interval has passed.
-    if (typeof campaignEngine !== 'undefined' && campaignEngine && campaignEngine.levelActive) {
+    if (view.isLive && typeof campaignEngine !== 'undefined' && campaignEngine && campaignEngine.levelActive) {
         const markers = campaignEngine.getTimelineMarkers(game);
         markers.forEach(marker => {
 
@@ -2446,6 +2463,19 @@ function drawGraph() {
     // Used for finger pricks and ketone tests — game-style visual feedback.
     // Uses real time (performance.now) for smooth animation independent of sim speed.
     renderFloatingLabels(padding, graphWidth, graphHeight, range, currentDayStartMinutes, totalMinutesInView, bgToY);
+
+    // Insights-overlay: den stiplede referencekurve, redigerbare hændelser og
+    // inspektionsmarkøren tegnes oven på den fælles graf med præcis samme akser.
+    // Kun Insights sætter en ikke-live graphViewOverride, så almindeligt gameplay
+    // berøres ikke af denne gren.
+    if (!view.isLive && typeof Editor !== 'undefined' && Editor.drawOverlay) {
+        Editor.drawOverlay(graphCtx, {
+            padding, graphWidth, graphHeight, bgToY, timeToX,
+            startMin: currentDayStartMinutes, widthMin: totalMinutesInView, viewEndMin,
+            activityBandY, bandScale, anyBandsActive, carbBandVisible,
+            yAxisMin, yAxisMax
+        });
+    }
 
 }
 
@@ -3002,12 +3032,23 @@ function formatVersionDate(dateString, lang) {
 }
 
 /**
+ * formatVersionMonth — Month label for the compact, grouped part of history.
+ */
+function formatVersionMonth(monthString, lang) {
+    const [year, month] = String(monthString || '').split('-').map(Number);
+    if (!year || !month || month < 1 || month > 12) return monthString || '';
+    const daMonths = ['Januar', 'Februar', 'Marts', 'April', 'Maj', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'December'];
+    const enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${lang === 'da' ? daMonths[month - 1] : enMonths[month - 1]} ${year}`;
+}
+
+/**
  * renderVersionHistory — Build the help popup's version history from js/version-data.js.
  */
 function renderVersionHistory(container, versionInfo, lang) {
     if (!container) return;
     const history = Array.isArray(versionInfo.history) ? versionInfo.history : [];
-    const featuresLabel = lang === 'da' ? 'Features:' : 'Features:';
+    const featuresLabel = lang === 'da' ? 'Nyt:' : 'Highlights:';
     const fixesLabel = lang === 'da' ? 'Vigtige bugfixes:' : 'Key bug fixes:';
     const unavailable = lang === 'da'
         ? 'Versionshistorikken kunne ikke indlæses.'
@@ -3023,14 +3064,16 @@ function renderVersionHistory(container, versionInfo, lang) {
     const htmlParts = [];
     const compactLines = [];
 
-    history.forEach(entry => {
+    history.forEach((entry, index) => {
         const version = escapeHtml(entry.version || '');
         const date = escapeHtml(entry.date || '');
         const features = entry.features && Array.isArray(entry.features[lang]) ? entry.features[lang] : [];
         const fixes = entry.fixes && Array.isArray(entry.fixes[lang]) ? entry.fixes[lang] : [];
         const summary = entry.summary && entry.summary[lang] ? entry.summary[lang] : '';
 
-        if (features.length || fixes.length) {
+        // Kun de to nyeste offentlige udgivelser vises med punktlister. Resten
+        // er bevidst samlet pr. måned, så Hjælp ikke bliver en teknisk changelog.
+        if (index < 2 && (features.length || fixes.length)) {
             htmlParts.push(`<p><strong style="font-size: 15px;">v${version} — ${date}</strong></p>`);
             if (features.length) {
                 htmlParts.push(`<p style="font-size: 13px;"><em>${featuresLabel}</em></p>`);
@@ -3040,6 +3083,8 @@ function renderVersionHistory(container, versionInfo, lang) {
                 htmlParts.push(`<p style="font-size: 13px;"><em>${fixesLabel}</em></p>`);
                 htmlParts.push(`<ul style="font-size: 13px;">${fixes.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`);
             }
+        } else if (entry.month && summary) {
+            compactLines.push(`<strong>${escapeHtml(formatVersionMonth(entry.month, lang))}</strong> — ${escapeHtml(summary)}`);
         } else if (summary) {
             compactLines.push(`<strong>v${version}</strong> (${escapeHtml(formatVersionDate(entry.date, lang))}) — ${escapeHtml(summary)}`);
         }
@@ -3276,19 +3321,20 @@ document.addEventListener('click', (event) => {
     showGuidePopup(guideButton.dataset.guideSection || 'overview');
 });
 
-// The help popup can start the same onboarding tour as the welcome screen.
-// The popup is closed first so the tour starts on the clean simulator surface.
+// Hjælp-popupen åbner velkomstskærmen, så spilleren får samme indgang til
+// intro-touren som ved opstart. Det undgår et omvendt flow, hvor en direkte
+// startet tour først viser velkomsten, når rundturen afsluttes.
 document.addEventListener('click', (event) => {
-    const tourButton = event.target.closest('[data-start-welcome-tour]');
-    if (!tourButton) return;
+    const welcomeButton = event.target.closest('[data-show-welcome-tour]');
+    if (!welcomeButton) return;
     event.preventDefault();
     event.stopPropagation();
 
-    const popup = tourButton.closest('.popup-overlay');
+    const popup = welcomeButton.closest('.popup-overlay');
     if (popup) popup.remove();
 
-    if (typeof WelcomeTour !== 'undefined' && typeof WelcomeTour.startTour === 'function') {
-        WelcomeTour.startTour(tourButton.dataset.startWelcomeTour || 'intro');
+    if (typeof WelcomeTour !== 'undefined' && typeof WelcomeTour.show === 'function') {
+        WelcomeTour.show({ force: true });
     }
 });
 
@@ -3365,7 +3411,6 @@ function showDisclaimerPopup(onAccept) {
 
     // Title
     const h2 = document.createElement('h2');
-    h2.style.color = 'var(--blue)';
     h2.textContent = t('disclaimer.title');
     content.appendChild(h2);
 
@@ -3439,6 +3484,33 @@ function buildModeCardsHtml(group) {
                 </button>`).join('');
 }
 
+// buildCharacterPairCardsHtml — samler de seks faste karakterer i tre tydelige
+// kropsgrupper. Hver gruppe indeholder de to karakterer, der deler modelprofil,
+// så spilleren først aflæser Barn / Voksen / Kraftig voksen og derefter personen.
+// Den valgte gruppe og karakter får hver sin markering i CSS'en.
+function buildCharacterPairCardsHtml(selectedCharacterId, disabled) {
+    const bodyOrder = ['child', 'adult', 'large'];
+
+    return bodyOrder.map(bodyId => {
+        const characters = CHARACTERS.filter(character => character.archetype === bodyId);
+        const groupIsSelected = characters.some(character => character.id === selectedCharacterId);
+        const characterButtons = characters.map(character => `
+            <button type="button" class="archetype-card${character.id === selectedCharacterId ? ' selected' : ''}"
+                    data-character-id="${character.id}" ${disabled ? 'disabled' : ''}>
+                <img class="archetype-icon-img" src="assets/icons/app/character-${character.id}.png" alt="" onerror="this.style.display='none'">
+                <span class="archetype-name">${character.name}</span>
+            </button>
+        `).join('');
+
+        return `
+            <section class="character-pair${groupIsSelected ? ' selected' : ''}" data-archetype-id="${bodyId}">
+                <div class="character-pair-title">${t(`archetype.${bodyId}.name`)}</div>
+                <div class="character-pair-choices">${characterButtons}</div>
+            </section>
+        `;
+    }).join('');
+}
+
 function showModeSelectionPopup(onSelect, options = {}) {
     const { overlay, content } = createPopup({ contentClass: 'mode-select-popup' });
 
@@ -3451,21 +3523,7 @@ function showModeSelectionPopup(onSelect, options = {}) {
     content.innerHTML = `
         <div class="mode-character-section">
             <div class="mode-group-label">${t('profile.character')}</div>
-            <!-- Body-type column headers (child / adult / large) so the three picker
-                 columns are explicitly labelled, not only implied by icon size. -->
-            <div class="archetype-col-headers">
-                <span>${t('character.col.child')}</span>
-                <span>${t('character.col.adult')}</span>
-                <span>${t('character.col.large')}</span>
-            </div>
             <div class="archetype-cards" id="modeCharacterCards"></div>
-            <div class="profile-calculated">
-                <div class="profile-calc-row">
-                    <span class="label">${t('profile.restingKcal')}</span>
-                    <span class="value" id="modeCharacterKcal">--</span>
-                    <span class="unit">${t('stats.unit.kcalPerDay')}</span>
-                </div>
-            </div>
         </div>
         <div class="mode-group mode-group-play">
             <div class="mode-group-label">${t('mode.group.play')}</div>
@@ -3476,33 +3534,16 @@ function showModeSelectionPopup(onSelect, options = {}) {
 
     // --- Character grid: same cards/visuals as the standalone picker ---
     const cardsContainer = content.querySelector('#modeCharacterCards');
-    const kcalDisplay = content.querySelector('#modeCharacterKcal');
     function renderCharacterCards() {
-        cardsContainer.innerHTML = CHARACTERS.map(c => `
-            <button type="button" class="archetype-card${c.id === selectedCharacterId ? ' selected' : ''}" data-character-id="${c.id}">
-                <img class="archetype-icon-img" src="assets/icons/app/character-${c.id}.png" alt="" onerror="this.style.display='none'">
-                <span class="archetype-name">${c.name}</span>
-            </button>
-        `).join('');
+        cardsContainer.innerHTML = buildCharacterPairCardsHtml(selectedCharacterId, false);
         cardsContainer.querySelectorAll('.archetype-card').forEach(card => {
             card.addEventListener('click', () => {
                 selectedCharacterId = card.getAttribute('data-character-id');
                 renderCharacterCards();
-                updateCharacterKcal();
             });
         });
     }
-    function updateCharacterKcal() {
-        const c = getCharacter(selectedCharacterId);
-        try {
-            const tmp = new Simulator({ weight: c.weight, icr: c.icr, isf: c.isf }, 'sandbox', {});
-            kcalDisplay.textContent = Math.round((tmp.restingKcalPerDay || 0) / 100) * 100;
-        } catch (e) {
-            kcalDisplay.textContent = '--';
-        }
-    }
     renderCharacterCards();
-    updateCharacterKcal();
 
     // Click handlers for the active cards
     content.querySelectorAll('.mode-card:not([disabled])').forEach(card => {
@@ -4532,26 +4573,7 @@ function showProfilePopup(options) {
             <!-- Character selector (A4): pick one of the six fixed characters to play
                  instead of typing body weight / ISF / ICR. Reuses .mode-card visuals. -->
             <div class="profile-field">
-                <!-- Body-type column headers (child / adult / large) so the three picker
-                     columns are explicitly labelled, not only implied by icon size. -->
-                <div class="archetype-col-headers">
-                    <span>${t('character.col.child')}</span>
-                    <span>${t('character.col.adult')}</span>
-                    <span>${t('character.col.large')}</span>
-                </div>
                 <div class="archetype-cards" id="profileArchetypeCards"></div>
-            </div>
-
-            <!-- Starting figure for the chosen character: the resting burn that drives
-                 the calorie balance. A5: no recommended-basal number is shown — that
-                 read as a basal dosing recommendation. The character still starts in
-                 steady state; the player just isn't handed a dose. -->
-            <div class="profile-calculated">
-                <div class="profile-calc-row">
-                    <span class="label">${t('profile.restingKcal')}</span>
-                    <span class="value" id="profileKcal">--</span>
-                    <span class="unit">${t('stats.unit.kcalPerDay')}</span>
-                </div>
             </div>
         </div>
 
@@ -4574,51 +4596,26 @@ function showProfilePopup(options) {
         }
     });
 
-    // References to the character cards and the starting-figure display. Read-only
-    // mode (profile opened during a live game): the cards render disabled, since
-    // changing the character would restart the run.
+    // Reference til karakterkortene. I læsetilstand under et aktivt spil er
+    // kortene låst, fordi et karakterskift ellers ville kræve en genstart.
     const cardsContainer = document.getElementById('profileArchetypeCards');
-    const kcalDisplay = document.getElementById('profileKcal');
     const saveButton = document.getElementById('profileSaveButton');
 
     // Render the character cards (selected one highlighted). Clicking a card selects
     // it and refreshes the starting figures. Cards are disabled in read-only mode.
     function renderCards() {
-        cardsContainer.innerHTML = CHARACTERS.map(c => `
-            <button type="button" class="archetype-card${c.id === selectedCharacterId ? ' selected' : ''}" data-character-id="${c.id}" ${options.readOnly ? 'disabled' : ''}>
-                <img class="archetype-icon-img" src="assets/icons/app/character-${c.id}.png" alt="" onerror="this.style.display='none'">
-                <span class="archetype-name">${c.name}</span>
-            </button>
-        `).join('');
+        cardsContainer.innerHTML = buildCharacterPairCardsHtml(selectedCharacterId, options.readOnly);
         if (!options.readOnly) {
             cardsContainer.querySelectorAll('.archetype-card').forEach(card => {
                 card.addEventListener('click', () => {
                     selectedCharacterId = card.getAttribute('data-character-id');
                     renderCards();
-                    updateCharacterInfo();
                 });
             });
         }
     }
 
-    // Starting figure for the selected character. A throwaway Simulator derives the
-    // resting burn exactly as the real game would. A5: the recommended basal number
-    // is no longer surfaced — only the resting burn (calories) is shown.
-    function updateCharacterInfo() {
-        const c = getCharacter(selectedCharacterId);
-        try {
-            // A5: only the resting burn is shown (calories, not insulin dosing).
-            // basalDose is still computed inside the engine to self-init steady
-            // state, but it is no longer surfaced as a recommended number.
-            const tmp = new Simulator({ weight: c.weight, icr: c.icr, isf: c.isf }, 'sandbox', {});
-            kcalDisplay.textContent = Math.round((tmp.restingKcalPerDay || 0) / 100) * 100;
-        } catch (e) {
-            kcalDisplay.textContent = '--';
-        }
-    }
-
     renderCards();
-    updateCharacterInfo();
 
     // Helper: collect the chosen profile (selected character only). A4: no player
     // name here — the name is a highscore signature now, entered at game over.
@@ -4638,7 +4635,6 @@ function showProfilePopup(options) {
         resetButton.addEventListener('click', () => {
             selectedCharacterId = DEFAULT_CHARACTER_ID;
             renderCards();
-            updateCharacterInfo();
         });
     }
 

@@ -976,18 +976,30 @@ function triggerGlucagonSOS() {
 // STOP CONFIRMATION — "Are you sure?" popup when the player clicks Stop
 // =============================================================================
 function showStopConfirmPopup() {
+    // I Insights betyder topknappen "Tilbage til banen". Her er intet at
+    // bekræfte: den alternative kopi kasseres, og den pausede bane fortsætter.
+    if (currentGameMode === 'insights') {
+        returnFromInsights();
+        return;
+    }
+
     // Pause the game while the popup is shown
     const wasPaused = isPaused;
     if (!isPaused) togglePause();
+
+    const isInsightsView = currentGameMode === 'insights';
+    const stopTitle = isInsightsView ? t('insights.stop.title') : t('stop.title');
+    const stopMessage = isInsightsView ? t('insights.stop.message') : t('stop.message');
+    const stopYes = isInsightsView ? t('insights.stop.yes') : t('stop.yes');
 
     const overlay = document.createElement('div');
     overlay.className = 'popup-overlay';
     overlay.innerHTML = `
         <div class="popup-content" style="text-align:center; max-width:380px;">
-            <h2 style="color: var(--red); font-size: 1.4em;">${t('stop.title')}</h2>
-            <p style="margin: 16px 0;">${t('stop.message')}</p>
+            <h2 style="color: var(--red); font-size: 1.4em;">${stopTitle}</h2>
+            <p style="margin: 16px 0;">${stopMessage}</p>
             <div style="display:flex; gap:12px; justify-content:center; margin-top:20px;">
-                <button id="stopConfirmYes" style="background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 4px 15px rgba(220,38,38,0.3);">${t('stop.yes')}</button>
+                <button id="stopConfirmYes" style="background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 4px 15px rgba(220,38,38,0.3);">${stopYes}</button>
                 <button id="stopConfirmNo" style="background: linear-gradient(135deg, #374151, #1f2937); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">${t('stop.cancel')}</button>
             </div>
         </div>
@@ -1476,10 +1488,48 @@ function initializeApp() {
 
     // --- Language switcher is handled in the SETTINGS DROPDOWN section below ---
 
-    // --- Physiology button (top bar) — enables/disables the entire physiology package ---
+    // --- Insights-menu: fysiologi + karakterbundet udforskning af aktiv bane ---
+    const insightsMenuBtn = document.getElementById('insightsMenuButton');
+    const insightsDropdown = document.getElementById('insightsDropdown');
+    const insightsExploreBtn = document.getElementById('insightsExploreButton');
+    if (insightsMenuBtn && insightsDropdown) {
+        insightsMenuBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (insightsExploreBtn && game) {
+                const supportedMode = currentGameMode === 'campaign' || currentGameMode === 'boxchallenge';
+                const canExplore = supportedMode && (typeof game.hasMeaningfulInsightsCourse !== 'function'
+                    || game.hasMeaningfulInsightsCourse());
+                const help = insightsExploreBtn.querySelector('.sd-row-help');
+                insightsExploreBtn.disabled = !canExplore;
+                if (help) {
+                    const key = canExplore ? 'insights.menu.explore.help' : 'insights.menu.explore.wait';
+                    help.setAttribute('data-i18n', key);
+                    help.textContent = t(key);
+                }
+            }
+            const settings = document.getElementById('settingsDropdown');
+            const mobile = document.getElementById('mobileMenu');
+            if (settings) settings.classList.remove('visible');
+            if (mobile) mobile.classList.remove('visible');
+            const wasVisible = insightsDropdown.classList.contains('visible');
+            insightsDropdown.classList.toggle('visible');
+            if (typeof playSound === 'function') playSound(wasVisible ? 'menuClose' : 'menuOpen');
+        });
+        insightsDropdown.addEventListener('click', event => event.stopPropagation());
+        document.addEventListener('click', () => insightsDropdown.classList.remove('visible'));
+    }
+    if (insightsExploreBtn) {
+        insightsExploreBtn.addEventListener('click', () => {
+            if (insightsDropdown) insightsDropdown.classList.remove('visible');
+            if (typeof openPlayInInsights === 'function') openPlayInInsights();
+        });
+    }
+
+    // --- Physiology row — enables/disables the entire physiology package ---
     const physiologyBtn = document.getElementById('physiologyToggle');
     if (physiologyBtn) {
         physiologyBtn.addEventListener('click', () => {
+            if (insightsDropdown) insightsDropdown.classList.remove('visible');
             const isActive = physiologyBtn.classList.contains('active');
             if (!isActive && !trainingModeUsedThisSession) {
                 // Physiology mode provides extra information, so the player must
@@ -1505,6 +1555,8 @@ function initializeApp() {
             // Close settings dropdown if it is open
             const sd = document.getElementById('settingsDropdown');
             if (sd) sd.classList.remove('visible');
+            const insights = document.getElementById('insightsDropdown');
+            if (insights) insights.classList.remove('visible');
             mobileMenu.classList.toggle('visible');
             if (mobileMenu.classList.contains('visible')) {
                 const rect = hamburgerBtn.getBoundingClientRect();
@@ -1737,7 +1789,14 @@ function initializeApp() {
         if (success) {
             const typeDef = AKTIVITETSTYPER[selectedActivityType];
             flyIconToGraph(typeDef.icon, 'dock-panel-motion');
-            showActivityActive(selectedActivityType, intensitet, duration);
+            // I Hvad Nu Hvis er aktiviteten en fast handling på tidslinjen - den
+            // kører ikke live. Derfor må den fælles aktivitets-overlay med timer og
+            // Stop-knap ikke åbnes. Facaden har med vilje ingen activeAktivitet.
+            if (typeof isStaticMode === 'function' && isStaticMode()) {
+                hideActivityActive();
+            } else {
+                showActivityActive(selectedActivityType, intensitet, duration);
+            }
         }
     }
 
@@ -1757,14 +1816,16 @@ function initializeApp() {
     document.getElementById('stopActivityButton').addEventListener('click', () => {
         if (game && game.activeAktivitet) {
             game.stopAktivitet();
-            hideActivityActive();
         }
+        // Ryd også et eventuelt forældet overlay. Det gør Stop robust, selv hvis
+        // en tidligere UI-tilstand ikke længere har en aktiv modelaktivitet.
+        hideActivityActive();
     });
     document.getElementById('stopActivityOverlayButton').addEventListener('click', () => {
         if (game && game.activeAktivitet) {
             game.stopAktivitet();
-            hideActivityActive();
         }
+        hideActivityActive();
     });
 
     // --- Diabetes kit: dextrose tablets, tests and glucagon ---
@@ -1994,6 +2055,8 @@ function initializeApp() {
             // Close hamburger menu if it is open
             const mm = document.getElementById('mobileMenu');
             if (mm) mm.classList.remove('visible');
+            const insights = document.getElementById('insightsDropdown');
+            if (insights) insights.classList.remove('visible');
             const isVisible = settingsDropdown.classList.contains('visible');
             settingsDropdown.classList.toggle('visible');
             // Synchronise toggles on open

@@ -121,14 +121,12 @@ function desktopApplyDockGating(gating) {
         const fastSection = insulinPanel.querySelector('.dp-insulin-fast');
         const basalSection = insulinPanel.querySelector('.dp-insulin-basal');
         const fastHint = insulinPanel.querySelector('.dp-fast-hint');
-        const basalHint = insulinPanel.querySelector('.dp-basal-hint');
         const basalLabel = insulinPanel.querySelectorAll('.dp-section-label')[0]; // Basal label (first)
         const fastLabel = insulinPanel.querySelectorAll('.dp-section-label')[1];  // Fast label (second)
         const divider = insulinPanel.querySelector('.dp-divider');
         if (fastSection) fastSection.classList.toggle('campaign-disabled', !fastAllowed);
         if (basalSection) basalSection.classList.toggle('campaign-disabled', !basalAllowed);
         if (fastHint) fastHint.classList.toggle('campaign-disabled', !fastAllowed);
-        if (basalHint) basalHint.classList.toggle('campaign-disabled', !basalAllowed);
         if (fastLabel) fastLabel.classList.toggle('campaign-disabled', !fastAllowed);
         if (basalLabel) basalLabel.classList.toggle('campaign-disabled', !fastAllowed);
         if (divider) divider.classList.toggle('campaign-disabled', !fastAllowed);
@@ -256,8 +254,7 @@ function desktopShowEventPopup(descriptor) {
 // --- Level intro popup ---
 // descriptor: { kind:'intro', isReopen, character, level:{number,titleKey,
 //   descriptionKey}, objectives:[{id,descriptionKey,completed}],
-//   guideSections:string[], textVars:{icr, characterName, basalRangeMin,
-//   basalRangeMax} }
+//   guideSections:string[], textVars:{icr, characterName} }
 function desktopShowLevelIntroPopup(descriptor) {
     if (!descriptor) return;
     const isReopen = !!descriptor.isReopen;
@@ -433,6 +430,7 @@ function desktopShowLevelCompletePopup(descriptor) {
                 <span class="campaign-pts-value" data-target="${total.toFixed(1)}">0.0</span>
             </div>
         </div>
+        <p class="campaign-replay-prompt">${t('campaign.replayPrompt')}</p>
         ${descriptor.scoreBlocked
             ? `<p class="go-save-result">${t('ui.physiology.scoreNotSaved')}</p>`
             : `<div class="go-save-form campaign-save-form">

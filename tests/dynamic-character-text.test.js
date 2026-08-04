@@ -107,7 +107,6 @@ for (const character of CHARACTERS) {
 // skal derfor være tom, så Erik ikke blinker frem for en anden valgt karakter.
 const mobileHtml = fs.readFileSync(MOBILE_HTML_PATH, 'utf8');
 const dynamicMobileIds = [
-    'basalTrialCharacter',
     'goCharacterCaption',
     'ciCharacterCaption',
     'crCharacterCaption',

@@ -109,13 +109,14 @@ Codex skal behandle denne fil som den primære arbejdsaftale for fremtidige sess
 - **Ved hvert git push:** bump patch-nummeret (Z+1) og opdatér datoen i `js/version-data.js`. Versionsspring skal være små og gradvise: `0.8.0 → 0.8.1 → 0.8.2 → ...`. Major-bump (Y: `0.8 → 0.9`) kun ved meget store milepæle (ny spiltilstand, fundamental arkitekturændring).
 - Ved hvert git push skal `?v=`-cacheversionerne for lokale CSS- og JavaScript-filer i `index.html` og `mobile/index.html` matche versionsnummeret uden `-beta`.
 - Logoet i top-baren viser version + dato som tooltip (mouse-over).
-- **Version history** i hjælp-popup'en renderes fra `APP_VERSION_INFO.history` i `js/version-data.js`. Ved hvert minor-bump (Y+1): tilføj ny version-blok øverst i `history` med:
+- **Offentlig udgivelsesbeskrivelse ved hvert push:** Før en version pushes til det offentlige repository, skal dagens spiller-vendte beskrivelse oprettes eller opdateres øverst i `APP_VERSION_INFO.history`. Hvis der pushes flere gange samme dag, opdateres den eksisterende post - der må kun være én post pr. dato. Postens `version` skal altid følge den version, der faktisk pushes.
+- **Version history** i hjælp-popup'en renderes fra `APP_VERSION_INFO.history` i `js/version-data.js`. En offentlig udgivelsespost indeholder:
   - Overskrift: `vX.Y.Z-beta — YYYY-MM-DD`
   - *Features:* — de vigtigste nye funktioner
   - *Vigtige bugfixes:* / *Key bug fixes:* — kun de mest synlige/kritiske rettelser
 - Skriv kun versionshistorik som er interessant for spillere/brugere: nye baner, nye værktøjer, bedre feedback, tydelige gameplay-ændringer og vigtige bugfixes. Drop interne ændringer, små label-omdøbninger, refaktoreringer, dokumentationsarbejde og detaljer man må formode at de fleste vil finde kedelige, medmindre de direkte ændrer brugeroplevelsen.
-- Patch-bumps (Z+1) samles under næste minor-version.
-- **Komprimering af ældre versioner:** Behold fuld detalje (features + bugfixes lister) på de 3 nyeste minor-versioner. Ældre versioner komprimeres til én linje hver: `<strong>vX.Y.Z</strong> (dato) — kort opsummering`. Dette holder historikken i hjælp-popup'en overskuelig. Fuld historik er altid tilgængelig på GitHub.
+- **Komprimering af ældre versioner:** Behold kun punktlister på de 2 nyeste offentlige udgivelsesdage. Alt ældre samles til én kort `summary` pr. kalendermåned (`month: 'YYYY-MM'`). Fuld Git-historik findes i repositoryet.
+- Repoets pre-push-hook kører `tests/check-version-history.js` og blokerer et push, hvis dagens versionspost mangler, datoer gentages, eller mere end de 2 nyeste poster har punktlister.
 - **Model-udvidelses-listen i hjælp-popup'en** ("Udvidelser af modellen" / "Model extensions" i `index.html`): hvert punkt = max én linje (kort sætning + kort kilde i parentes). Kun de SIDSTE TO punkter må være flerlinje med formler/tal. Engelsk er primær — synk dansk. (Se HTML-kommentaren ved listen.)
 
 ### Sprog og tegnsætning

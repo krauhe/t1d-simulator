@@ -2,10 +2,10 @@
 // PUBLIC-RELEASE-BOUNDARY.TEST.JS - Kontrol af den offentlige udgivelsesgrænse
 // =============================================================================
 //
-// Testen beskytter den aftalte opdeling mellem den offentlige læringsapp og det
-// separate, private udviklerlaboratorium. Den undersøger Git-indekset frem for
-// filsystemet, fordi private, gitignorede filer gerne må ligge i ejerens lokale
-// arbejdsmappe uden at blive en del af den offentlige udgivelse.
+// Testen beskytter grænsen mellem den offentlige læringsapp, den begrænsede
+// Hvad Nu Hvis-visning og lokale udviklerværktøjer. Hvad Nu Hvis-koden er en del
+// af den offentlige app, men dens offentlige API må kun åbne et allerede spillet
+// forløb for en fast karakter. Fil-, profil- og eksportfunktioner må ikke udstilles.
 // =============================================================================
 
 'use strict';
@@ -39,7 +39,6 @@ const trackedFiles = new Set(
 
 const privateOnlyPaths = [
     'editor.local.html',
-    'js/editor.js',
     'tests/editor-gate.test.js',
     'docs/REGULATORY.md',
     'docs/scenario-editor-plan.md',
@@ -51,24 +50,43 @@ for (const file of privateOnlyPaths) {
     check(!trackedFiles.has(file), `${file} er ikke tracket i den offentlige udgivelse`);
 }
 
-const trackedPrivateAssets = [...trackedFiles].filter(file =>
-    /^assets\/icons\/app\/(?:editor-|mode-sandbox|mode-scenario-editor)/.test(file)
-);
-check(trackedPrivateAssets.length === 0, 'editor- og sandkasse-assets er ikke tracket offentligt');
-
 const indexSource = read('index.html');
-check(!/js\/editor\.js/i.test(indexSource), 'den offentlige side indlæser ikke editor-kode');
-check(!/editorMenuWrapper|ddDeveloperEnabled|ddDeveloperProfile/.test(indexSource), 'den offentlige HTML har ingen udviklerindgange');
+check(/js\/editor\.js/i.test(indexSource), 'den offentlige side indlæser den begrænsede Hvad Nu Hvis-kode');
+check(!/ddDeveloperEnabled|ddDeveloperProfile|editor\.local\.html/.test(indexSource),
+    'den offentlige HTML har ingen udviklerprofil eller lokal editor-indgang');
 
 const gameSource = read('js/game.js');
-check(!/^\s*(?:sandbox|editor)\s*:/m.test(gameSource), 'GAME_MODES registrerer kun offentlige tilstande');
-check(!/startEditor|isEditorEnabled|isDeveloperModeEnabled|LOCAL_DEVELOPER/.test(gameSource), 'game.js har ingen udvikler-startveje');
+check(!/^\s*(?:sandbox|editor)\s*:/m.test(gameSource), 'GAME_MODES registrerer kun de to offentlige spiltilstande');
+check(/mode === 'insights'/.test(gameSource), 'Hvad Nu Hvis er en statisk visning og ikke en tredje spiltilstand');
+check(!/isDeveloperModeEnabled|LOCAL_DEVELOPER/.test(gameSource), 'game.js har ingen udvikler-startvej');
 
 const mainSource = read('js/main.js');
-check(!/editorMenuButton|window\.Editor|ddDeveloper/.test(mainSource), 'main.js binder ingen editor-kontroller');
+check(!/ddDeveloperEnabled|ddDeveloperProfile|LOCAL_DEVELOPER/.test(mainSource),
+    'main.js binder ingen udviklerprofil eller lokal udviklertilstand');
 
 const simulatorSource = read('js/simulator.js');
-check(!/exportScenario|scenarioLog|_recordScenarioEvent|engineSnapshots/.test(simulatorSource), 'den offentlige facade eksporterer ikke frie scenarier');
+const exportStart = simulatorSource.indexOf('exportInsightsScenario(');
+const exportEnd = simulatorSource.indexOf('\n    }', exportStart);
+const exportBody = exportStart >= 0 && exportEnd > exportStart
+    ? simulatorSource.slice(exportStart, exportEnd)
+    : '';
+check(exportBody.includes("format: 't1d-insights'") && exportBody.includes('characterId: this.characterId'),
+    'spillet eksporterer kun den faste karakter-id til Hvad Nu Hvis-kontrakten');
+check(!/\b(?:weight|isf|icr)\s*:/.test(exportBody),
+    'Hvad Nu Hvis-kontrakten indeholder ikke vægt, ISF eller ICR');
+check(exportBody.includes("['acuteStress', 'chronicStress'].includes(event.kind)") &&
+    exportBody.includes('Number.isFinite(event.t)') &&
+    exportBody.includes('Number.isFinite(event.amount)'),
+    'låste banehændelser er begrænset til faste stress-events med gyldig tid og styrke');
+
+const editorSource = read('js/editor.js');
+check(/const FUTURE_MIN = 360/.test(editorSource), 'Hvad Nu Hvis viser højst seks timer efter pausepunktet');
+check(/profile = characterToProfile\(characterId\)/.test(editorSource),
+    'Hvad Nu Hvis slår altid modelprofilen op fra den faste karakter-id');
+const publicApiStart = editorSource.lastIndexOf('// Det offentlige API');
+const publicApi = publicApiStart >= 0 ? editorSource.slice(publicApiStart) : '';
+check(publicApiStart >= 0 && !/\b(?:saveScenario|loadScenarioData|openScenario|newScenario|printScenario|serializeScenario)\b/.test(publicApi),
+    'Hvad Nu Hvis-API udstiller ikke fil-, ny-, gem-, print- eller profilfunktioner');
 
 if (failures > 0) {
     console.error(`\n${failures} offentlig udgivelsesgrænse-kontrol(ler) fejlede.`);

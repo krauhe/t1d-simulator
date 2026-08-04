@@ -203,6 +203,13 @@ class Simulator {
     // @param {number} profile.isf      - Insulin Sensitivity Factor in mmol/L per E (default: 3.0)
     // =========================================================================
     constructor(profile = {}, gameMode = 'sandbox', options = {}) {
+        // Den offentlige Insights-visning gemmer kun den faste karakters id. De
+        // fysiologiske værdier slås fortsat op i archetypes.js og kan ikke ændres
+        // gennem det scenarie, som sendes videre fra en spillet bane.
+        const fallbackCharacterId = (typeof DEFAULT_CHARACTER_ID !== 'undefined')
+            ? DEFAULT_CHARACTER_ID
+            : 'erik';
+        this.characterId = profile.characterId || fallbackCharacterId;
         // --- Physiology engine (slice S1) ---
         // Simulator is the facade; the physiological core lives in PhysiologyEngine
         // (js/physiology-engine.js). For now the engine owns the seeded RNG source
@@ -578,6 +585,21 @@ class Simulator {
         // --- Statistics and history ---
         this.bgHistoryForStats = [];   // BG history for TIR/TITR/average calculations
         this.logHistory = [];          // Event log (food, insulin, exercise) for display
+
+        // Handlinger udført i den aktuelle bane, gemt i Insights-format. Loggen
+        // indeholder kun handlinger rettet mod den valgte fiktive karakter.
+        this.scenarioLog = [];
+
+        // Livstab i Box Challenge gemmes separat fra spillerens handlinger. De
+        // eksporteres som låste markeringer på Insights-referencekurven, så et
+        // boks-hit eller et fysiologisk livstab fortsat kan ses efter respawn.
+        this.boxChallengeIncidents = [];
+
+        // Midnats-snapshots gør det muligt at fortsætte fra den fysiologiske
+        // tilstand, som banen faktisk nåede frem til. Bufferen dækker højst de
+        // 72 timer, som Insights-visningen kan vise.
+        this.engineSnapshots = [];
+        this._lastSnapshotDay = null;
 
         // --- Daily max points tracking ---
         // Tracks the highest points score the player reaches per day.
@@ -1668,6 +1690,17 @@ class Simulator {
     _postStep(simulatedMinutesPassed) {
         const currentHour = Math.floor(this.timeInMinutes / 60);
 
+        // Gem en reproducerbar starttilstand ved midnat. Insights bruger det
+        // tidligste snapshot inden for sit vindue og viser dermed fortsættelsen
+        // af den spillede bane i stedet for en ny, tom modeldag.
+        if (this._lastSnapshotDay === null) {
+            this._lastSnapshotDay = this.day;
+            if (this.timeInMinutes < 30) this._captureEngineSnapshot();
+        } else if (this.day !== this._lastSnapshotDay) {
+            this._lastSnapshotDay = this.day;
+            this._captureEngineSnapshot();
+        }
+
         // =====================================================================
         // STEEP DROP WARNING — Alert when BG is falling dangerously fast
         // =====================================================================
@@ -2042,7 +2075,137 @@ class Simulator {
             }
         );
         this._flushEngineEvents();
+        if (accepted) {
+            this._recordScenarioEvent({
+                kind: 'meal', carbs, protein, fat,
+                weight: foodWeight, carbType, eatTimeMin: eatTime, icon
+            });
+        }
         return accepted;
+    }
+
+    // Tilføj én spillerhandling til det karakterbundne Insights-forløb.
+    _recordScenarioEvent(partial) {
+        this.scenarioLog.push(Object.assign({ t: this.totalSimMinutes }, partial));
+    }
+
+    // Insights sammenligner spillerens valg med alternativer. Derfor åbnes det
+    // først efter den første handling. Handlingen kan bagefter slettes i Insights,
+    // hvis spilleren vil sammenligne med et forløb helt uden handlingen.
+    hasMeaningfulInsightsCourse() {
+        return this.scenarioLog.length > 0;
+    }
+
+    // Byg det interne scenarie, som Insights kan åbne. Kontrakten indeholder
+    // kun characterId; rå ISF-, ICR- og vægtværdier følger aldrig med.
+    exportInsightsScenario(options = {}) {
+        const MAX_WINDOW_MIN = 72 * 60;
+        const now = this.totalSimMinutes;
+        const candidates = this.engineSnapshots.filter(snapshot =>
+            now - snapshot.atMin <= MAX_WINDOW_MIN && snapshot.timeOfDay < 30);
+        const startSnapshot = candidates.length ? candidates[0] : null;
+        const windowStartMin = startSnapshot ? startSnapshot.atMin : Math.max(0, now - MAX_WINDOW_MIN);
+        const spanMin = now - windowStartMin;
+
+        const events = this.scenarioLog
+            .filter(event => event.t >= windowStartMin && event.t <= now)
+            .map(event => {
+                const { _openEnded, ...clean } = event;
+                clean.t = event.t - windowStartMin;
+                if (clean.kind === 'activity' && !(clean.durationMin > 0)) clean.durationMin = 60;
+                return clean;
+            });
+
+        const scenario = {
+            format: 't1d-insights',
+            version: 1,
+            characterId: this.characterId,
+            sourceMode: this.gameMode,
+            levelNumber: this.levelConfig?.number || null,
+            // Grænsen forbinder Insights med den pausede bane. Handlinger må kun
+            // ændres frem til dette minut; derefter vises kun konsekvenserne.
+            playedUntilMin: spanMin,
+            events,
+            // Faste fysiologiske banehændelser genafspilles i Hvad Nu Hvis, men
+            // holdes adskilt fra spillerens redigerbare handlinger. Tiderne og den
+            // eventuelle grafmarkering omsættes til samme lokale tidslinje.
+            lockedEvents: (Array.isArray(options.lockedEvents) ? options.lockedEvents : [])
+                .filter(event => event &&
+                    ['acuteStress', 'chronicStress'].includes(event.kind) &&
+                    Number.isFinite(event.t) && Number.isFinite(event.amount) &&
+                    event.t >= windowStartMin && event.t <= now)
+                .map(event => {
+                    const clean = {
+                        t: event.t - windowStartMin,
+                        kind: event.kind,
+                        amount: event.amount
+                    };
+                    if (event.marker) {
+                        const marker = Object.assign({}, event.marker);
+                        if (marker.type === 'interval') {
+                            marker.startMin -= windowStartMin;
+                            marker.endMin -= windowStartMin;
+                        } else {
+                            marker.timeMin -= windowStartMin;
+                        }
+                        clean.marker = marker;
+                    }
+                    return clean;
+                }),
+            // Den stiplede reference er det faktisk spillede, simulerede forløb
+            // frem til åbningstidspunktet - ikke en ny forudsigelse af resten af dagen.
+            sourceBg: this.bgHistoryForStats
+                .filter(point => point.time >= windowStartMin && point.time <= now)
+                .map(point => ({
+                    t: point.time - windowStartMin,
+                    bg: point.trueBG
+                })),
+            // Box Challenge-kasser er en del af det spillede scenarie, ikke
+            // redigerbare handlinger. De kopieres derfor separat med absolut tid
+            // omsat til Insights-tidslinjen. Editorens 6 timers fremskrivning
+            // afgør, hvilke kommende kasser der fortsat er synlige.
+            lockedBoxes: this.gameMode === 'boxchallenge'
+                ? this.boxes
+                    .map(box => {
+                        const absoluteStart = (box.dayNumber - 1) * 1440 + box.startMinute;
+                        const absoluteEnd = (box.dayNumber - 1) * 1440 + box.endMinute;
+                        return {
+                            startMin: absoluteStart - windowStartMin,
+                            endMin: absoluteEnd - windowStartMin,
+                            bgMin: box.bgMin,
+                            bgMax: box.bgMax,
+                            skewBG: box.skewBG || 0,
+                            hit: !!box.hit
+                        };
+                    })
+                    .filter(box => box.endMin >= 0 && box.startMin <= spanMin + 360)
+                : [],
+            // Livstab hører til det faktisk spillede forløb og er derfor ikke
+            // redigerbare. BG-værdien gemmes før en eventuel respawn.
+            sourceIncidents: this.gameMode === 'boxchallenge'
+                ? this.boxChallengeIncidents
+                    .filter(incident => incident.t >= windowStartMin && incident.t <= now)
+                    .map(incident => ({
+                        t: incident.t - windowStartMin,
+                        cause: incident.cause,
+                        bg: incident.bg
+                    }))
+                : []
+        };
+        if (startSnapshot) scenario.engineState = startSnapshot.snap;
+        return scenario;
+    }
+
+    _captureEngineSnapshot() {
+        if (!this.engine || typeof this.engine.exportState !== 'function') return;
+        this.engineSnapshots.push({
+            atMin: this.totalSimMinutes,
+            timeOfDay: this.timeInMinutes,
+            snap: this.engine.exportState()
+        });
+        if (this.engineSnapshots.length > 5) {
+            this.engineSnapshots.splice(0, this.engineSnapshots.length - 5);
+        }
     }
 
     /**
@@ -2092,6 +2255,7 @@ class Simulator {
         // Night intervention is now handled by engine.addRapidInsulin itself (S9.8).
         this.engine.addRapidInsulin({ units: dose });
         this._flushEngineEvents();
+        this._recordScenarioEvent({ kind: 'bolus', units: dose });
     }
 
     /**
@@ -2115,6 +2279,7 @@ class Simulator {
         this._flushEngineEvents();
         // En ny spillerstyret basaldosis gør respawn-påmindelsen overflødig.
         if (!isSilent) this._boxRespawnBasalReminderPending = false;
+        if (!isSilent) this.scenarioLog.push({ kind: 'basal', t: injectionTime, units: dose });
     }
 
     /**
@@ -2495,6 +2660,12 @@ class Simulator {
             { type, intensity: intensitet, durationMin: varighed, typeDef }
         );
         this._flushEngineEvents();
+        if (started) {
+            this._recordScenarioEvent({
+                kind: 'activity', actType: type, intensity: intensitet,
+                durationMin: varighed || null, _openEnded: !varighed
+            });
+        }
         return started;
     }
 
@@ -2531,6 +2702,14 @@ class Simulator {
         if (!this.activeAktivitet) return;
         this.engine.stopActivity();
         this._flushEngineEvents();
+        for (let index = this.scenarioLog.length - 1; index >= 0; index--) {
+            const event = this.scenarioLog[index];
+            if (event.kind === 'activity' && event._openEnded) {
+                event.durationMin = Math.max(1, Math.round(this.totalSimMinutes - event.t));
+                delete event._openEnded;
+                break;
+            }
+        }
     }
 
     // Backwards-compatible wrapper — used by existing tests and possibly keyboard shortcuts
@@ -2864,6 +3043,7 @@ class Simulator {
         this._flushEngineEvents();
         this.glucagonUsedTime = this.totalSimMinutes;
         this.updateGlucagonStatus();
+        this._recordScenarioEvent({ kind: 'glucagon' });
     }
 
     /**
@@ -3671,6 +3851,18 @@ class Simulator {
         const preRespawnBG = this.trueBG;
         const preRespawnKetones = this.ketoneLevel;
         const preRespawnWeight = this.weightChangeKg;
+
+        // Gem det præcise livstab før fysiologien eventuelt nulstilles. Ved hypo
+        // bruges det laveste registrerede BG, fordi det er det relevante punkt
+        // på referencekurven; ved alle andre årsager bruges det aktuelle true BG.
+        const incidentBG = reason === 'hypo' && preRespawnLowestBG < Infinity
+            ? preRespawnLowestBG
+            : preRespawnBG;
+        this.boxChallengeIncidents.push({
+            t: this.totalSimMinutes,
+            cause: reason || 'box',
+            bg: incidentBG
+        });
 
         if (this.lives <= 0) {
             // Final game over — all lives used.

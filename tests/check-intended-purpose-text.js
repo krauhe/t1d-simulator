@@ -25,11 +25,30 @@ const activeTextFiles = [
     'js/i18n.js',
     'js/guide-data.js',
     'js/levels.js',
+    'js/dose-controls.js',
+    'js/editor.js',
+    'js/game.js',
+    'js/main.js',
+    'js/simulator.js',
+    'mobile/mobile.js',
     'js/welcome-tour.js',
     'tools/generate-tour-audio.ps1',
     'docs/INTENDED-PURPOSE.md',
     'docs/MODEL-IMPLEMENTATION.md',
     'docs/MODEL-API.md',
+];
+
+const structuralChecks = [
+    {
+        files: ['js/dose-controls.js', 'js/campaign-core.js', 'js/campaign.js', 'mobile/index.html', 'mobile/mobile.js'],
+        pattern: /getBasalTrialRangeForCharacter|basalTrialRange|basalRangeMin|basalRangeMax/g,
+        reason: 'modelberegnet basalinterval må ikke findes i den offentlige brugerflade',
+    },
+    {
+        files: ['js/editor.js'],
+        pattern: /WHOLE-PERIOD SUMMARY \(the optimisation feedback\)/g,
+        reason: 'Hvad Nu Hvis må ikke beskrives som optimeringsfeedback',
+    },
 ];
 
 const forbiddenPatterns = [
@@ -38,6 +57,8 @@ const forbiddenPatterns = [
     { pattern: /clinically validated/gi, reason: 'påstand om klinisk validering' },
     { pattern: /clinically accurate/gi, reason: 'påstand om klinisk nøjagtighed' },
     { pattern: /klinisk valideret/gi, reason: 'påstand om klinisk validering' },
+    { pattern: /clinical performance/gi, reason: 'unødvendig klinisk framing i aktiv produkttekst' },
+    { pattern: /klinisk ydeevne/gi, reason: 'unødvendig klinisk framing i aktiv produkttekst' },
     { pattern: /your (?:current )?blood (?:sugar|glucose)/gi, reason: 'karakterens blodsukker gøres personligt' },
     { pattern: /(?:dit|dine) (?:aktuelle )?blodsukker(?:målinger)?/gi, reason: 'karakterens blodsukker gøres personligt' },
     { pattern: /your (?:basal )?dose/gi, reason: 'dosis gøres personlig' },
@@ -71,10 +92,28 @@ for (const relativePath of activeTextFiles) {
     }
 }
 
+for (const rule of structuralChecks) {
+    for (const relativePath of rule.files) {
+        const absolutePath = path.join(projectRoot, relativePath);
+        if (!fs.existsSync(absolutePath)) {
+            findings.push(`${relativePath}: filen mangler`);
+            continue;
+        }
+
+        const text = fs.readFileSync(absolutePath, 'utf8');
+        rule.pattern.lastIndex = 0;
+        for (const match of text.matchAll(rule.pattern)) {
+            findings.push(
+                `${relativePath}:${lineNumberAt(text, match.index)}: ${rule.reason}: "${match[0]}"`
+            );
+        }
+    }
+}
+
 if (findings.length > 0) {
     console.error('Intended-purpose tekstkontrol fejlede:');
     for (const finding of findings) console.error(`  - ${finding}`);
     process.exit(1);
 }
 
-console.log(`Intended-purpose tekstkontrol: OK (${activeTextFiles.length} aktive filer)`);
+console.log(`Intended-purpose tekstkontrol: OK (${activeTextFiles.length} aktive filer + strukturelle kontroller)`);
