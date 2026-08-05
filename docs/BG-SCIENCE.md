@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-07-23-v5 -->
+<!-- doc-version: 2026-08-05-v6 -->
 # Blood Glucose Regulation in Type 1 Diabetes — A Mechanistic and Clinical Reference
 
 ## Scope and rationale
@@ -1131,7 +1131,7 @@ Resistance exercise depletes muscle glycogen by approximately 24–40% of restin
 
 ---
 
-*Implementation: see [§Activity — Four Activity Types with Different Physiology in MODEL-IMPLEMENTATION.md](MODEL-IMPLEMENTATION.md#activity) for the simulator implementation. The simulator separates contraction-mediated uptake, exercise-specific hepatic glucose production, delayed insulin-mediated sensitivity, perfusion-dependent insulin absorption and muscle-glycogen turnover. Strength training has a 120-minute delay from exercise onset before its insulin-mediated sensitivity response develops. This keeps insulin-mediated utilization at baseline during a 45-minute bout and its first 45 minutes of recovery, consistent with Young et al. (2023); the exact delay is a conservative implementation choice rather than an identified molecular constant. The exercise-specific hepatic response is shared by all fictional characters; only the existing weight-based body scale changes. The absolute contraction flux is scaled around the 70 kg reference because the game has no independent lean-mass state. Plasma lactate and MCT1/MCT4 transport are not explicit states; their net hepatic contribution is aggregated in the exercise-specific hepatic-drive term. Prandial state and time of day affect the shared insulin and circadian physiology but are not resistance-specific parameters.*
+*Implementation: see [§Activity — Four Activity Types with Different Physiology in MODEL-IMPLEMENTATION.md](MODEL-IMPLEMENTATION.md#activity) for the simulator implementation. The simulator separates contraction-mediated uptake, exercise-specific hepatic glucose production, delayed insulin-mediated sensitivity, perfusion-dependent insulin absorption and muscle-glycogen turnover. Strength training uses a smooth fourth-order Hill latency gate with a 150-minute half-onset time for its insulin-mediated sensitivity response. This keeps the response near baseline during a 45-minute bout and early recovery, consistent with Young et al. (2023), while avoiding an unsupported biological switch at one exact minute. The half-onset time is a conservative implementation parameter rather than an identified molecular constant. The exercise-specific hepatic response is shared by all fictional characters; only the existing weight-based body scale changes. The absolute contraction flux is scaled around the 70 kg reference because the game has no independent lean-mass state. Plasma lactate and MCT1/MCT4 transport are not explicit states; their net hepatic contribution is aggregated in the exercise-specific hepatic-drive term. Prandial state and time of day affect the shared insulin and circadian physiology but are not resistance-specific parameters.*
 
 ---
 

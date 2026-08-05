@@ -4590,7 +4590,24 @@ body {
 }
 
 .guide-link-label {
+    display: block;
     line-height: 1.25;
+}
+
+/* Hjælp-popupens to genveje bruger samme mønster som andre menuer: en kort
+   titel med forklaringen direkte under den, så hver genvej forklarer sig selv. */
+.popup-content.help-popup .guide-link-text {
+    display: grid;
+    gap: 2px;
+    text-align: left;
+}
+
+.popup-content.help-popup .guide-link-copy {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.86em;
+    font-weight: 500;
+    line-height: 1.3;
 }
 
 .graph-tip-guide-link {
@@ -4680,7 +4697,9 @@ body {
 
 /* Profile popup: compact with stats-panel-like typography */
 .popup-content.profile-popup {
-    max-width: 420px;
+    /* Tre karakterpar kræver lidt mere bredde, så den valgte figur og dens
+       personramme kan være helt inde i kortet uden at overlappe makkeren. */
+    max-width: 540px;
     padding: 18px 24px;
 }
 
@@ -4832,17 +4851,6 @@ body {
     margin-top: 12px;
 }
 
-.profile-save-btn {
-    padding: 6px 18px !important;
-    font-size: var(--font-ui) !important;
-}
-.profile-reset-btn {
-    padding: 6px 18px !important;
-    font-size: var(--font-ui) !important;
-    background: linear-gradient(135deg, #374151, #1f2937) !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-}
-
 /* Estimation group: visually groups ICR + ISF + estimate button */
 .profile-estimate-group {
     border: 1px solid var(--border-subtle);
@@ -4973,9 +4981,9 @@ body {
 .character-pair {
     min-width: 0;
     padding: 9px;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid transparent;
     border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.025);
+    background: transparent;
     opacity: 0.62;
     transition: opacity 0.2s ease, border-color 0.2s ease,
                 background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
@@ -4985,11 +4993,15 @@ body {
     opacity: 1;
 }
 .character-pair.selected {
-    transform: translateY(-3px);
-    border-color: var(--accent-secondary, #7dd3fc);
-    background: rgba(125, 211, 252, 0.08);
-    box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.18),
-                0 10px 24px rgba(0, 0, 0, 0.28);
+    /* Fremhæv hele kropsgruppen med lys, men uden endnu en kontrastkant.
+       Den tydelige ramme hører kun til den valgte person nedenfor. */
+    transform: none;
+    border-color: transparent;
+    background: radial-gradient(ellipse at center 65%,
+                rgba(125, 211, 252, 0.16) 0%,
+                rgba(125, 211, 252, 0.05) 58%,
+                transparent 82%);
+    box-shadow: none;
 }
 .character-pair-title {
     min-height: 20px;
@@ -5045,7 +5057,13 @@ body {
                 filter 0.2s ease;
 }
 .character-pair .archetype-card.selected .archetype-icon-img {
-    transform: translateY(-3px) translateZ(14px) scale(1.08);
+    transform: translateY(-2px) translateZ(10px) scale(1.04);
+}
+
+/* I den selvstændige karakter-popup må figuren aldrig vokse ud gennem sin
+   egen valgramme. Startvælgeren har mere plads og beholder sin særskilte skala. */
+.profile-popup .character-pair .archetype-icon-img {
+    max-width: calc(100% - 8px);
 }
 
 .character-pair:has(.archetype-card.selected) .archetype-card:not(.selected) .archetype-icon-img {
@@ -7517,12 +7535,8 @@ body {
    ============================================================================= */
 
 /* Hide game-only controls in editor mode (static tool — no sim speed,
-   pause, sim clock, lives). The game's stats fragment (TIR/avg.) and points badge ARE
-   reused (whole-period values), so the bottom capsule stays familiar; only the
-   "nu"-CGM hero is replaced by the editor's top-right BS-tablet (BG/IOB/COB at the
-   cursor). The mode line shows "Scenarie editor" (like the game shows its mode
-   name); only day-points are hidden so the points badge shows a single whole-sim
-   Total. */
+   pause, sim clock, lives). Statistik- og pointspanelerne genbruges for at holde
+   bundlinjen familiær, men deres resultatmål neutraliseres i Hvad Nu Hvis. */
 body.mode-editor #speedStepper,        /* sim speed + pause */
 body.mode-editor #statsWeightRow,      /* calorie balance — not relevant in editor */
 body.mode-editor #fingerprickButton,   /* measurement — meaningless in deterministic editor */
@@ -7543,9 +7557,10 @@ body.mode-editor #pointsOverlay #normoPointsLabel { display: none !important; }
 body.mode-editor #pointsOverlay #normoPointsWeighting { display: none !important; }
 body.mode-editor #pointsOverlay .points-caption { display: block !important; }
 
-/* Hvad Nu Hvis sammenligner forløb uden at rangordne dem med en pointsum.
-   Panelet bliver stående som en genkendelig del af bundlinjen, men vises med
-   samme afdæmpede udtryk som andre deaktiverede kontroller. */
+/* Hvad Nu Hvis viser mulige forløb uden at rangordne dem med TIR,
+   gennemsnitsblodsukker eller points. Panelerne bliver stående som genkendelige
+   dele af bundlinjen, men deler samme afdæmpede, deaktiverede udtryk. */
+body.mode-editor #stats-fragment,
 body.mode-editor #pointsOverlay {
     filter: grayscale(1);
     opacity: 0.42;
@@ -7919,6 +7934,13 @@ body.mode-editor .duration-chip[data-duration="open"] { display: none; }
 body:not(.game-active) .insights-explore-action,
 body:not([data-game-mode="campaign"]):not([data-game-mode="boxchallenge"]) .insights-explore-action {
     display: none;
+}
+
+/* Intro-touren forklarer hele Indsigt-menuen før en bane er startet. Vis derfor
+   Hvad Nu Hvis-rækken som en passiv forhåndsvisning kun under dette tour-trin. */
+body.welcome-tour-insights-preview .insights-explore-action {
+    display: flex !important;
+    pointer-events: none;
 }
 
 .insights-explore-action:disabled {

@@ -189,50 +189,64 @@ const ENGINE_KCAL_PER_KG_WEIGHT = 7700;
 const ENGINE_EXERCISE_FAST_BASE_AMPLITUDE  = { Lav: 0.30, Medium: 0.80, Høj: 1.00 };
 const ENGINE_EXERCISE_FAST_TAU_ACTIVATION_MIN = 2;
 const ENGINE_EXERCISE_FAST_HALFLIFE_MIN    = 15;
-const ENGINE_EXERCISE_FAST_CUTOFF          = 0.005;
 const ENGINE_EXERCISE_EARLY_BASE_AMPLITUDE = { Lav: 0.10, Medium: 0.18, Høj: 0.30 };
 const ENGINE_EXERCISE_EARLY_TAU_BUILDUP_MIN = 30;
 const ENGINE_EXERCISE_EARLY_HALFLIFE_MIN    = 4 * 60;
-const ENGINE_EXERCISE_EARLY_CUTOFF         = 0.005;
 const ENGINE_EXERCISE_LATE_BASE_AMPLITUDE  = { Lav: 0.30, Medium: 0.50, Høj: 0.78 };
 const ENGINE_EXERCISE_LATE_TAU_BUILDUP_MIN = 30;
 const ENGINE_EXERCISE_LATE_HALFLIFE_MIN    = 18 * 60;
-const ENGINE_EXERCISE_LATE_CUTOFF          = 0.005;
+// Hill-eksponenten former den glatte latenstidskurve. n=4 holder styrke-PEIS
+// meget lille i det tidlige Young-vindue, men uden en fysiologisk kontakt ved
+// ét bestemt minut. Alder og onset-halvtid har begge enheden minutter, så
+// deres forhold og dermed Hill-faktoren er dimensionsløs.
+const ENGINE_EXERCISE_ONSET_HILL_N          = 4;
 const ENGINE_EXERCISE_SENS_CAP             = 2.5;
 // Post-exercise sensitivity cleanup cutoff: a hard 96 h lifetime bound (Mikines
 // 1988: undetectable at 5 days). Used by stopActivity (S8-A4). Engine-owned; the
 // former EXERCISE_SENSITIVITY_MAX_LIFETIME_MIN copy in simulator.js was removed.
 const ENGINE_EXERCISE_SENSITIVITY_MAX_LIFETIME_MIN = 96 * 60;
 
-// exerciseRectangularResponse — continuous response to an exercise bout with a
-// pure onset delay. The exercise stimulus is a rectangle from start to end. Its
-// delayed copy builds with buildTauMin; when the delayed end reaches the
-// response, the component decays with decayHalfLifeMin.
+// exerciseSensitivityOnsetGate — glat latenstidskurve uden en ren delay.
+// onsetHalfMin er tidspunktet, hvor gate=0,5; det er IKKE en startgrænse.
+// For n>1 er både værdien og hældningen 0 ved aktivitetens start. En værdi på
+// 0 betyder øjeblikkelig fuld gate (cardio), mens fx 120 min giver en gradvis
+// styrke-onset gennem det tidlige recovery-vindue.
+function exerciseSensitivityOnsetGate(ageMin, onsetHalfMin) {
+    if (!(ageMin > 0)) return 0;
+    if (!(onsetHalfMin > 0)) return 1;
+
+    const ageRatio = ageMin / onsetHalfMin;
+    const poweredRatio = Math.pow(ageRatio, ENGINE_EXERCISE_ONSET_HILL_N);
+    return poweredRatio / (1 + poweredRatio);
+}
+
+// exerciseRectangularResponse — continuous response to an exercise bout. The
+// exercise stimulus is a rectangle from start to end. Responsen bygges med
+// buildTauMin; efter afslutning henfalder den med decayHalfLifeMin. Den glatte
+// aktivitetstype-latens multipliceres separat via
+// exerciseSensitivityOnsetGate(), så denne funktion ikke indeholder en skjult
+// tidskontakt.
 //
 // This is deliberately a function of start time and duration, NOT of the stop
-// event. A 60 min strength bout with a 120 min delay therefore remains at zero
-// through the first recovery hour, then rises gradually. A three-hour bout
-// starts showing the delayed response while the exercise is still running. The
-// value is mathematically continuous at both real and delayed stop.
+// event. A three-hour bout can therefore develop sensitivity while exercise is
+// still running. The value is mathematically continuous at stop.
 function exerciseRectangularResponse(
     ageMin,
     durationMin,
-    delayMin,
     buildTauMin,
     decayHalfLifeMin
 ) {
-    const delayedAge = ageMin - Math.max(0, delayMin);
-    if (!(delayedAge > 0)) return 0;
+    if (!(ageMin > 0)) return 0;
 
     // null duration means that the activity is still running.
-    if (durationMin == null || delayedAge < durationMin) {
-        return 1 - Math.exp(-delayedAge / buildTauMin);
+    if (durationMin == null || ageMin < durationMin) {
+        return 1 - Math.exp(-ageMin / buildTauMin);
     }
 
     const peakAfterFullStimulus = 1 - Math.exp(-durationMin / buildTauMin);
-    const minutesAfterDelayedEnd = delayedAge - durationMin;
+    const minutesAfterEnd = ageMin - durationMin;
     return peakAfterFullStimulus *
-        Math.pow(0.5, minutesAfterDelayedEnd / decayHalfLifeMin);
+        Math.pow(0.5, minutesAfterEnd / decayHalfLifeMin);
 }
 
 // Hovorka reference ISF (S9.1). The Hovorka model's baseline insulin parameters yield
@@ -257,7 +271,7 @@ const ENGINE_DEFAULT_ACTIVITIES = {
         fastSensitivityScaling: 1.0,
         earlySensitivityScaling: 1.0,
         lateSensitivityScaling: 1.0,
-        insulinSensitivityDelayMin: 0,
+        insulinSensitivityOnsetHalfMin: 0,
         glycogenUseScaling: 1.0,
         hepaticDriveRate: { Lav: 0, Medium: 0, Høj: 0.005 },
         hepaticDriveCeiling: { Lav: 0, Medium: 0, Høj: 0.40 },
@@ -275,10 +289,10 @@ const ENGINE_DEFAULT_ACTIVITIES = {
         fastSensitivityScaling: 0.0,
         earlySensitivityScaling: 0.45,
         lateSensitivityScaling: 0.45,
-        // The delayed response starts 120 min after exercise onset. For a
-        // standard 60-min bout this keeps IMGU near baseline through the first
-        // recovery hour, matching Young et al.'s post-exercise window.
-        insulinSensitivityDelayMin: 120,
+        // Glat onset med halvtid 150 min fra start. Ved et 45-minutters pas er
+        // PEIS fortsat nær baseline gennem de første 30 minutters recovery,
+        // hvorefter den udvikles gradvist gennem 1-2 timers recovery.
+        insulinSensitivityOnsetHalfMin: 150,
         glycogenUseScaling: 0.90,
         // Fælles undervisningskalibrering: 1,25 x leverrespons, uden
         // individuelle responderprofiler eller ændring af PEIS.
@@ -293,7 +307,7 @@ const ENGINE_DEFAULT_ACTIVITIES = {
         fastSensitivityScaling: 0.85,
         earlySensitivityScaling: 0.85,
         lateSensitivityScaling: 0.85,
-        insulinSensitivityDelayMin: 10,
+        insulinSensitivityOnsetHalfMin: 10,
         glycogenUseScaling: 0.85,
         hepaticDriveRate: { Lav: 0.003, Medium: 0.006, Høj: 0.012 },
         hepaticDriveCeiling: { Lav: 0.20, Medium: 0.40, Høj: 0.65 },
@@ -306,7 +320,7 @@ const ENGINE_DEFAULT_ACTIVITIES = {
         fastSensitivityScaling: 0.0,
         earlySensitivityScaling: 0.0,
         lateSensitivityScaling: 0.0,
-        insulinSensitivityDelayMin: 0,
+        insulinSensitivityOnsetHalfMin: 0,
         glycogenUseScaling: 0.0,
         hepaticDriveRate: { Lav: 0, Medium: 0, Høj: 0 },
         hepaticDriveCeiling: { Lav: 0, Medium: 0, Høj: 0 },
@@ -2656,53 +2670,47 @@ class PhysiologyEngine {
                 Math.sqrt(exposureDuration / 60),
                 1.5
             );
-            const delayMin = motion.insulinSensitivityDelayMin || 0;
+            const onsetGate = exerciseSensitivityOnsetGate(
+                ageMin,
+                motion.insulinSensitivityOnsetHalfMin || 0
+            );
 
             const fastResponse = exerciseRectangularResponse(
                 ageMin,
                 motion.duration,
-                delayMin,
                 ENGINE_EXERCISE_FAST_TAU_ACTIVATION_MIN,
                 ENGINE_EXERCISE_FAST_HALFLIFE_MIN
             );
             const fastBoost =
                 (ENGINE_EXERCISE_FAST_BASE_AMPLITUDE[motion.intensity] || 0) *
-                fastSensitivityScale * durationFactor * fastResponse;
-            if (fastBoost > ENGINE_EXERCISE_FAST_CUTOFF) {
-                totalBoost += fastBoost;
-                componentTotals.fast += fastBoost;
-            }
+                fastSensitivityScale * durationFactor * fastResponse * onsetGate;
+            totalBoost += fastBoost;
+            componentTotals.fast += fastBoost;
 
             const earlyResponse = exerciseRectangularResponse(
                 ageMin,
                 motion.duration,
-                delayMin,
                 ENGINE_EXERCISE_EARLY_TAU_BUILDUP_MIN,
                 ENGINE_EXERCISE_EARLY_HALFLIFE_MIN
             );
             const earlyBoost =
                 (ENGINE_EXERCISE_EARLY_BASE_AMPLITUDE[motion.intensity] || 0) *
                 earlySensitivityScale * durationFactor * earlyResponse *
-                slowEmptyFactor;
-            if (earlyBoost > ENGINE_EXERCISE_EARLY_CUTOFF) {
-                totalBoost += earlyBoost;
-                componentTotals.early += earlyBoost;
-            }
+                slowEmptyFactor * onsetGate;
+            totalBoost += earlyBoost;
+            componentTotals.early += earlyBoost;
 
             const lateResponse = exerciseRectangularResponse(
                 ageMin,
                 motion.duration,
-                delayMin,
                 ENGINE_EXERCISE_LATE_TAU_BUILDUP_MIN,
                 ENGINE_EXERCISE_LATE_HALFLIFE_MIN
             );
             const lateBoost =
                 (ENGINE_EXERCISE_LATE_BASE_AMPLITUDE[motion.intensity] || 0) *
-                lateSensitivityScale * durationFactor * lateResponse;
-            if (lateBoost > ENGINE_EXERCISE_LATE_CUTOFF) {
-                totalBoost += lateBoost;
-                componentTotals.late += lateBoost;
-            }
+                lateSensitivityScale * durationFactor * lateResponse * onsetGate;
+            totalBoost += lateBoost;
+            componentTotals.late += lateBoost;
         });
 
         // Relaxation vasodilation is the only active-session modifier handled
@@ -3365,7 +3373,7 @@ class PhysiologyEngine {
             && Number.isFinite(typeDef.fastSensitivityScaling)
             && Number.isFinite(typeDef.earlySensitivityScaling)
             && Number.isFinite(typeDef.lateSensitivityScaling)
-            && Number.isFinite(typeDef.insulinSensitivityDelayMin)
+            && Number.isFinite(typeDef.insulinSensitivityOnsetHalfMin)
             && Number.isFinite(typeDef.glycogenUseScaling)
             && stressReductionValid
             && vasodilatationValid;
@@ -3427,7 +3435,7 @@ class PhysiologyEngine {
             fastSensitivityScaling: typeDef.fastSensitivityScaling,
             earlySensitivityScaling: typeDef.earlySensitivityScaling,
             lateSensitivityScaling: typeDef.lateSensitivityScaling,
-            insulinSensitivityDelayMin: typeDef.insulinSensitivityDelayMin,
+            insulinSensitivityOnsetHalfMin: typeDef.insulinSensitivityOnsetHalfMin,
             sensitivityEndTime: Infinity
         };
         this.activeMotion.push(sensitivitySession);
@@ -3459,7 +3467,6 @@ class PhysiologyEngine {
         sensitivitySession.duration = actualDuration;
         sensitivitySession.sensitivityEndTime =
             this.totalSimMinutes +
-            sensitivitySession.insulinSensitivityDelayMin +
             ENGINE_EXERCISE_SENSITIVITY_MAX_LIFETIME_MIN;
 
         // Prune expired sessions (older than sensitivityEndTime).

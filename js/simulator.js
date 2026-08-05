@@ -53,8 +53,8 @@
 //                    Relativ kontraktionsmedieret, insulin-uafhængig optagelse [0-1]
 //   fastSensitivityScaling / earlySensitivityScaling / lateSensitivityScaling:
 //                    Aktivitetsspecifik størrelse af hver PEIS-fase [0-1]
-//   insulinSensitivityDelayMin:
-//                    Ren tidsforsinkelse før motionsfølsomheden begynder [min]
+//   insulinSensitivityOnsetHalfMin:
+//                    Tid fra start til 50% af den glatte latenstidsgate [min]
 //   glycogenUseScaling:
 //                    Relativt bidrag fra muskelglykogen til energiforbruget [0-1]
 //   hepaticDriveRate:
@@ -89,7 +89,7 @@ const AKTIVITETSTYPER = {
         fastSensitivityScaling: 1.0,
         earlySensitivityScaling: 1.0,
         lateSensitivityScaling: 1.0,
-        insulinSensitivityDelayMin: 0,
+        insulinSensitivityOnsetHalfMin: 0,
         glycogenUseScaling: 1.0,
         // Stress: none at low/medium, mild at high (prolonged intense cardio)
         hepaticDriveRate: { Lav: 0, Medium: 0, Høj: 0.005 },
@@ -116,9 +116,9 @@ const AKTIVITETSTYPER = {
         fastSensitivityScaling: 0.0,
         earlySensitivityScaling: 0.45,
         lateSensitivityScaling: 0.45,
-        // 120 minutter fra start svarer ved et 60-minutters pas til, at den
-        // senere følsomhed først bygges op efter den første recovery-time.
-        insulinSensitivityDelayMin: 120,
+        // Den glatte latenstidsgate er halvvejs udviklet efter 150 minutter.
+        // Følsomheden er derfor meget lille tidligt uden at tænde brat.
+        insulinSensitivityOnsetHalfMin: 150,
         glycogenUseScaling: 0.90,
         // Medium giver ca. 1,04 mmol/L ekstra EGP-AUC over 45 minutter, så
         // leverproduktion og muskeloptag omtrent balancerer som hos Young et al.
@@ -144,7 +144,7 @@ const AKTIVITETSTYPER = {
         fastSensitivityScaling: 0.85,
         earlySensitivityScaling: 0.85,
         lateSensitivityScaling: 0.85,
-        insulinSensitivityDelayMin: 10,
+        insulinSensitivityOnsetHalfMin: 10,
         glycogenUseScaling: 0.85,
         // Moderate stress from intermittent sprints
         hepaticDriveRate: { Lav: 0.003, Medium: 0.006, Høj: 0.012 },
@@ -164,7 +164,7 @@ const AKTIVITETSTYPER = {
         fastSensitivityScaling: 0.0,
         earlySensitivityScaling: 0.0,
         lateSensitivityScaling: 0.0,
-        insulinSensitivityDelayMin: 0,
+        insulinSensitivityOnsetHalfMin: 0,
         glycogenUseScaling: 0.0,
         hepaticDriveRate: { Lav: 0, Medium: 0, Høj: 0 },
         hepaticDriveCeiling: { Lav: 0, Medium: 0, Høj: 0 },
@@ -959,6 +959,15 @@ class Simulator {
             this.muscleGlycogenGrams = this.muscleGlycogenCapacity * frac;
             this.muscleGlycogenReserve = frac;
         }
+
+        // Hvad Nu Hvis skal altid begynde fra den fysiologiske tilstand lige FØR
+        // spillerens første handling. Snapshot'et tages derfor først her, når
+        // karakter, start-BG, medbragt basal og øvrige banestartsforhold er helt
+        // initialiseret, men før spilleren kan give mad, insulin eller aktivitet.
+        // Dermed kan også en handling på banens første minut genafspilles, flyttes
+        // eller slettes uden allerede at være skjult inde i engineState.
+        this._lastSnapshotDay = this.day;
+        this._captureEngineSnapshot();
 
         // Add an initial CGM data point so the graph starts with a value.
         // Uses totalSimMinutes (not 0) — in campaign the start time can be e.g. 420 (07:00).

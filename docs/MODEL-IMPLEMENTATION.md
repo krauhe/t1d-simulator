@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-07-30-v11 -->
+<!-- doc-version: 2026-08-05-v12 -->
 # Physiological Model — T1D Simulator
 
 *This page is the technical documentation of the simulator's physiological engine.
@@ -1474,7 +1474,8 @@ whole-model insulin-dose-response issue.
 ### 💪 Strength training (anaerobic exercise)
 
 **Parameters:** contraction scaling = 0.55, fast/early/late sensitivity scaling
-= 0.0/0.45/0.45 with a 120-minute delay from exercise onset, glycogen-use
+= 0.0/0.45/0.45 with a smooth sensitivity-onset half-time of 150 minutes from
+exercise onset, glycogen-use
 scaling = 0.90, hepatic-drive
 rate = 0.010/0.020/0.03125 per minute and ceiling = 0.3125/0.75/1.25.
 
@@ -1509,10 +1510,10 @@ al. (2023) found that
 non-insulin-mediated glucose utilization increased during resistance exercise,
 whereas insulin-mediated utilization remained unchanged throughout the study,
 including the early recovery window. The fast sensitivity component is
-therefore disabled for strength. The smaller early and late components begin
-only after a 120-minute onset delay, so a conventional 45–60-minute session
-retains near-baseline insulin-mediated utilization through its first recovery
-hour.
+therefore disabled for strength. The smaller early and late components are
+multiplied by a smooth Hill latency gate. They are non-zero but remain near
+baseline during a conventional 45-minute session and its early recovery,
+rather than switching on at one exact minute.
 
 **Delayed BG drop:**
 After strength training, the hepatic drive declines with a 30-minute half-life.
@@ -1636,7 +1637,7 @@ Literature-linked activity checks are defined in
 TESTABLE separately; missing protocol states are not averaged into a single
 validation score.
 
-### Exercise insulin sensitivity — delayed three-component model
+### Exercise insulin sensitivity — smooth-onset three-component model
 
 Insulin-mediated sensitivity can improve both **during** and **after** exercise
 via mechanisms with different time constants. The model separates these into a
@@ -1652,27 +1653,48 @@ The three-component model replaces an earlier two-component model (fast +
 glycogen-coupled-only slow) which under-modeled the late-phase Mikines/Cartee
 phenomenon — see [`docs/reviews/2026-04-29_late-phase-peis-fix.md`](reviews/2026-04-29_late-phase-peis-fix.md).
 
+#### Shared activity-specific onset gate
+
+All three insulin-mediated components use the same dimensionless onset gate for
+their activity type:
+
+```
+ageRatio = age / insulinSensitivityOnsetHalfMin
+onsetGate = ageRatio^4 / (1 + ageRatio^4)
+```
+
+When `insulinSensitivityOnsetHalfMin = 0`, the gate is 1 immediately after
+activity starts. Otherwise the parameter is the age at which the gate reaches
+0.5; it is not a pure transport delay or a biological switch. The fourth-order
+Hill shape gives a zero value and zero initial slope while remaining smooth for
+all positive ages. Cardio uses 0 minutes, mixed activity uses 10 minutes and
+strength uses 150 minutes. For a 45-minute strength bout, this keeps the PEIS
+factor within 0.5% of baseline during exercise and within 1% after 30 minutes
+of recovery, while allowing a gradual response through the following 1–2 hours.
+
+Small component values are summed without a hard numerical cutoff. Session
+records are instead removed after their documented maximum lifetime. This
+prevents threshold-induced jumps in effective ISF.
+
 #### Fast component (acute insulin-mediated synergy)
 
-- Builds with `τ_activation = 2 min` after the activity-specific onset delay
-- Decays with `t½ = 15 min` after the delayed exercise stimulus ends
+- Builds with `τ_activation = 2 min` and is multiplied by the onset gate
+- Decays with `t½ = 15 min` after the exercise stimulus ends
 - Has a large, intensity-graded amplitude
 - Is deliberately separate from insulin-independent contraction uptake, which
   is represented by `β · E1` in `dQ2/dt`
 
 ```
-delayedAge = age - insulinSensitivityDelayMin
+While the stimulus is active:
+  fastResponse = 1 - exp(-age / 2)
 
-While the delayed stimulus is active:
-  fastResponse = 1 - exp(-delayedAge / 2)
-
-After the delayed stimulus ends:
+After the stimulus ends:
   fastResponse = (1 - exp(-duration / 2))
-                 · 0.5^((delayedAge - duration) / 15)
+                 · 0.5^((age - duration) / 15)
 
 fastBoost = A_fast · fastSensitivityScaling
             · min(sqrt(exposureDuration / 60), 1.5)
-            · fastResponse
+            · fastResponse · onsetGate
 ```
 
 The same continuous rectangular-response equation is used before and after the
@@ -1687,7 +1709,7 @@ amplitude.
 
 #### Early-slow component (PEIS — glycogen-permissive, Wojtaszewski 2000)
 
-- Builds over ~30 min after the activity-specific onset delay
+- Builds over ~30 min and is multiplied by the activity-specific onset gate
 - Decays with `t½ = 4 h`; its amplitude is also gated by the current empty
   fraction of the muscle-glycogen pool:
   `earlyBoost ∝ (1 - muscleGlycogenReserve)`
@@ -1701,8 +1723,8 @@ amplitude.
 earlyBoost = base_A_early(intensity)
              · earlySensitivityScaling
              · min(sqrt(exposureDuration / 60), 1.5)
-             · rectangularResponse(delay, build τ=30 min, decay t½=4 h)
-             · slowEmptyFactor
+             · rectangularResponse(build τ=30 min, decay t½=4 h)
+             · slowEmptyFactor · onsetGate
 
      slowEmptyFactor = 1 - muscleGlycogenReserve
 ```
@@ -1717,7 +1739,7 @@ Base amplitude `base_A_early`:
 
 #### Late-slow component (PEIS — AS160 phosphorylation, Mikines 1988)
 
-- Builds over ~30 min after the activity-specific onset delay
+- Builds over ~30 min and is multiplied by the activity-specific onset gate
 - Decays via fixed exponential with `t½ = 18 h` (Cartee 2015 mid-range 12–24 h)
 - Moderate amplitude, scales with sqrt(duration/60)
 - **Decoupled from glycogen pool** — represents AS160 (TBC1D4) phosphorylation
@@ -1730,7 +1752,8 @@ Base amplitude `base_A_early`:
 lateBoost = base_A_late(intensity)
             · lateSensitivityScaling
             · min(sqrt(exposureDuration / 60), 1.5)
-            · rectangularResponse(delay, build τ=30 min, decay t½=18 h)
+            · rectangularResponse(build τ=30 min, decay t½=18 h)
+            · onsetGate
 ```
 
 Base amplitude `base_A_late`:
@@ -1743,7 +1766,7 @@ Base amplitude `base_A_late`:
 
 #### Example: 60 min medium cardio (sensitivity scaling = 1.0, no CHO refeeding)
 
-The three responses begin during cardio because its delay is zero. At the stop
+The three responses begin during cardio because its onset half-time is zero. At the stop
 event all values remain continuous: the fast component then decays rapidly,
 the early component changes over hours and depends on glycogen repletion, and
 the late component persists longest. The combined multiplier is capped at
@@ -1820,19 +1843,21 @@ Each profile has one parameter per physiological responsibility:
 - `fastSensitivityScaling`, `earlySensitivityScaling` and
   `lateSensitivityScaling` independently affect their corresponding
   insulin-mediated sensitivity responses.
-- `insulinSensitivityDelayMin` shifts those three responses in time without
-  changing their amplitude.
+- `insulinSensitivityOnsetHalfMin` controls the shared smooth latency gate for
+  those three responses without changing their asymptotic amplitude.
 - `glycogenUseScaling` affects only exercise glycogen consumption.
 - `hepaticDriveRate` and `hepaticDriveCeiling` affect only the
   exercise-specific hepatic-output state.
 
-For strength exercise, zero fast scaling and the 120-minute onset delay
-implement the unchanged insulin-mediated utilization measured during and after
-the 45-minute clamp experiment by Young et al. (2023), while preserving a
-smaller delayed sensitivity response. The
+For strength exercise, zero fast scaling and the 150-minute onset half-time
+keep insulin-mediated utilization near baseline during the 45-minute clamp
+window measured by Young et al. (2023), while preserving a smaller sensitivity
+response that develops gradually through recovery. The
 response is a function of session start time and accumulated duration, not of
 the stop event. Automated event-boundary tests compare automatic and manual stop
-at 1, 5, 30, 45, 60, 180 and 240 minutes and require continuity.
+at 1, 5, 30, 45, 60, 180 and 240 minutes and require continuity. Additional
+tests compare value and finite-difference slope at minutes 119, 120 and 121 at
+multiple integration steps.
 
 #### Cleanup
 

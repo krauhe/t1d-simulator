@@ -80,11 +80,17 @@ const DEFAULT_SETTINGS = {
  * Returns an object with all settings (missing fields filled in with defaults).
  */
 function loadSettings() {
+    let loadedSettings = { ...DEFAULT_SETTINGS };
     try {
         const stored = localStorage.getItem(SETTINGS_KEY);
-        if (stored) return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+        if (stored) loadedSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
     } catch (e) { /* localStorage unavailable — use defaults */ }
-    return { ...DEFAULT_SETTINGS };
+
+    // Midlertidig sikkerhedsregel: Statistikfragmentet viser kaloriebalancen,
+    // som spilleren skal kunne se for at gennemføre baner med vægtmål. En ældre
+    // gemt `false` må derfor ikke skjule fragmentet ved næste indlæsning.
+    loadedSettings.showStatsFragment = true;
+    return loadedSettings;
 }
 
 /**

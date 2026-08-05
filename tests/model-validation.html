@@ -3988,7 +3988,8 @@ addSection(
     + 'automatic stop at 180 minutes to detect an artificial jump in post-exercise '
     + 'insulin sensitivity.',
 
-    'Exercise sensitivity should already develop while the activity is running. Stopping '
+    'Exercise sensitivity should develop gradually while the activity is running, without '
+    + 'an artificial onset at one exact minute. Stopping '
     + 'the session should freeze its completed duration, not switch on a new effect. The '
     + 'hepatic drive should then decay while the delayed sensitivity remains continuous.',
 
@@ -4028,10 +4029,12 @@ addSection(
             exercise.step(1);
             control.step(1);
             capture(minute);
+            // ISF gemmes hvert minut, så en kunstig onset eller cutoff ikke
+            // skjules af grafens ellers grovere femminutters sampling.
+            isfData.push({ time: minute, value: snapshots[minute].isf });
             if (minute % 5 === 0) {
                 exerciseBG.push({ time: minute, bg: exercise.trueBG });
                 controlBG.push({ time: minute, bg: control.trueBG });
-                isfData.push({ time: minute, value: snapshots[minute].isf });
             }
         }
 
@@ -4054,11 +4057,6 @@ addSection(
                 color: '#f59e0b',
                 fill: 'rgba(245, 158, 11, 0.08)'
             }],
-            annotations: [{
-                time: 120,
-                label: 'Delayed sensitivity begins',
-                color: '#06b6d4'
-            }],
             rightAxis: {
                 min: 2.5,
                 max: Math.ceil(maxISF * 2) / 2,
@@ -4078,21 +4076,29 @@ addSection(
             'Minute-level stop check'
         ]);
 
-        const checkpoints = [60, 120, 150, 179, 180, 181, 210, 360];
+        const checkpoints = [45, 75, 90, 120, 150, 179, 180, 181, 210, 360];
         resultDiv.innerHTML = `<table class="results-table">
             <tr><th>Minute from start</th><th>BG</th><th>Effective ISF</th><th>Hepatic drive</th><th>Activity active</th></tr>
             ${checkpoints.map(minute => `<tr><td>${minute}</td><td>${snapshots[minute].bg.toFixed(2)}</td><td>${snapshots[minute].isf.toFixed(3)}</td><td>${snapshots[minute].drive.toFixed(3)}</td><td>${snapshots[minute].active ? 'yes' : 'no'}</td></tr>`).join('')}
         </table>`;
 
-        // Strength has a documented 120-minute sensitivity delay. Check 150 min:
-        // the response must be present before the 180-minute session stops.
+        // Young et al. 2023: PEIS skal være nær baseline ved 45 min og efter
+        // 30 min recovery. Derefter skal den udvikles glat gennem den tidligere
+        // 120-minuttersgrænse og være tydelig før det lange pas stopper.
+        const earlyNearBaseline =
+            snapshots[45].isf <= control.currentISF * 1.005 &&
+            snapshots[75].isf <= control.currentISF * 1.02;
+        const gradualOnset =
+            snapshots[90].isf > snapshots[75].isf &&
+            snapshots[120].isf > snapshots[90].isf;
         const sensitivityDuring = snapshots[150].isf > control.currentISF;
         const stopJump = Math.abs(snapshots[181].isf - snapshots[179].isf);
         const continuousAtStop = stopJump < 0.05;
         const driveDecays = snapshots[210].drive < snapshots[180].drive;
         const sensitivityPersists = snapshots[210].isf > control.currentISF;
         conclusionDiv.innerHTML = `
-            <p class="${sensitivityDuring ? 'pass' : 'fail'}">${sensitivityDuring ? '✓' : '✕'} Increased sensitivity is already present during activity at 150 min, after the documented 120-minute delay and before the 180-minute stop.</p>
+            <p class="${earlyNearBaseline ? 'pass' : 'fail'}">${earlyNearBaseline ? '✓' : '✕'} Insulin-mediated sensitivity remains near baseline during the 45-minute Young window and early recovery.</p>
+            <p class="${gradualOnset && sensitivityDuring ? 'pass' : 'fail'}">${gradualOnset && sensitivityDuring ? '✓' : '✕'} Sensitivity develops gradually before and through minute 120, and is clearly present during the long session at 150 min.</p>
             <p class="${continuousAtStop ? 'pass' : 'fail'}">${continuousAtStop ? '✓' : '✕'} No stop-time switch: the 179→181 min ISF change is ${stopJump.toFixed(3)} mmol/L/U.</p>
             <p class="${driveDecays && sensitivityPersists ? 'pass' : 'fail'}">${driveDecays && sensitivityPersists ? '✓' : '✕'} After stopping, hepatic drive decays while delayed sensitivity remains above control.</p>
         `;

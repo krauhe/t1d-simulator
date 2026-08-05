@@ -1788,7 +1788,9 @@ function applyCampaignHeader() {
       dayTot.style.display = '';
     }
   } else {
-    modeEl.textContent = t('m.mode.sandbox');
+    // Den interne bootstrap-simulator er ikke en offentlig spiltilstand.
+    // Derfor viser topbaren intet tilstandsnavn uden for en aktiv kampagne.
+    modeEl.textContent = '';
     if (dayTot) dayTot.style.display = 'none';
   }
 }

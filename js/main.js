@@ -1205,8 +1205,8 @@ function showPhysiologyConfirmDialog(onConfirm, onContinueWithoutPhysiology = nu
         <h3 style="color: var(--accent-gold); margin-bottom: 12px;">${t('ui.physiology.confirm.title')}</h3>
         <p style="margin-bottom: 20px; line-height: 1.5;">${t('ui.physiology.confirm.body')}</p>
         <div style="display:flex; gap:10px; justify-content:center;">
-            <button class="profile-save-btn" id="physConfirmYes" style="background: linear-gradient(180deg, #d97706, #b45309);">${t('ui.physiology.confirm.yes')}</button>
-            <button class="profile-reset-btn" id="physConfirmNo">${t('ui.physiology.confirm.no')}</button>
+            <button class="popup-btn-primary" id="physConfirmYes">${t('ui.physiology.confirm.yes')}</button>
+            <button class="popup-btn-link" id="physConfirmNo">${t('ui.physiology.confirm.no')}</button>
         </div>
     `;
 
@@ -1357,10 +1357,15 @@ function initializeApp() {
     }
 
     function startFirstCampaignLevelFromWelcome() {
-        showDisclaimerBeforeGameStart('campaign', () => {
-            // campaignEngine is constructed at load time in campaign.js.
-            campaignEngine.loadLevel(0);
-            startGame('campaign');
+        // Velkomstskærmen vælger allerede tilstanden, men spilleren skal stadig
+        // vælge den fiktive karakter, før bane 1 starter. Genbrug den almindelige
+        // karaktervælger, så samme kort, lagring og visuelle mønster bruges overalt.
+        showProfilePopup({
+            onSave: () => showDisclaimerBeforeGameStart('campaign', () => {
+                // campaignEngine is constructed at load time in campaign.js.
+                campaignEngine.loadLevel(0);
+                startGame('campaign');
+            })
         });
     }
 

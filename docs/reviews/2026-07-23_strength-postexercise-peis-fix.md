@@ -1,5 +1,10 @@
 # Strength post-exercise sensitivity and glycogen-allocation decision
 
+> **Status update (2026-08-05):** The pure 120-minute strength delay documented
+> below has been superseded by a smooth fourth-order Hill latency gate with a
+> 150-minute half-onset time. Small PEIS components are now summed without hard
+> cutoffs. See `2026-08-05_strength-smooth-peis-onset-fix.md`.
+
 **Date:** 2026-07-23
 **Type:** Physiology calibration decision and post-mortem
 **Status:** Implemented locally; not yet committed

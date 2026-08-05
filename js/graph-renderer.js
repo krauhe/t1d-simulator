@@ -43,6 +43,60 @@ const CGM_TREND_LEVELS = [
     { min: -0.10, arrow: '↓', color: 'var(--orange)' },  // ↓ falling
     { min: -Infinity, arrow: '↓', color: 'var(--red)' }, // ↓ falling fast
 ];
+
+/**
+ * drawCurrentTimeMarker - tegn grafens fælles markør for det aktuelle tidspunkt.
+ *
+ * Både det levende spil og Hvad Nu Hvis bruger de samme mintgrønne trekanter
+ * og den samme bløde, ubrudte glød. På den måde betyder markøren altid
+ * "forløbet er nået hertil", uanset hvilken visning spilleren står i.
+ */
+function drawCurrentTimeMarker(context, markerX, padding, graphHeight) {
+    context.save();
+    const triangleHeight = 10;
+    const triangleHalfWidth = 8;
+    const mintRed = 134;
+    const mintGreen = 239;
+    const mintBlue = 172;
+    const triangleAlpha = 0.45;
+
+    // Øverste trekant peger ned mod grafen.
+    context.beginPath();
+    context.moveTo(markerX - triangleHalfWidth, padding.top);
+    context.lineTo(markerX + triangleHalfWidth, padding.top);
+    context.lineTo(markerX, padding.top + triangleHeight);
+    context.closePath();
+    context.fillStyle = `rgba(${mintRed}, ${mintGreen}, ${mintBlue}, ${triangleAlpha})`;
+    context.fill();
+
+    // Nederste trekant peger op mod grafen.
+    context.beginPath();
+    context.moveTo(markerX - triangleHalfWidth, padding.top + graphHeight);
+    context.lineTo(markerX + triangleHalfWidth, padding.top + graphHeight);
+    context.lineTo(markerX, padding.top + graphHeight - triangleHeight);
+    context.closePath();
+    context.fillStyle = `rgba(${mintRed}, ${mintGreen}, ${mintBlue}, ${triangleAlpha})`;
+    context.fill();
+
+    // En ubrudt linje med lodret fade forbinder de to trekantspidser.
+    const lineAlpha = 0.16;
+    const lineGradient = context.createLinearGradient(
+        0, padding.top + triangleHeight, 0, padding.top + graphHeight - triangleHeight
+    );
+    lineGradient.addColorStop(0, `rgba(${mintRed}, ${mintGreen}, ${mintBlue}, 0)`);
+    lineGradient.addColorStop(0.12, `rgba(${mintRed}, ${mintGreen}, ${mintBlue}, ${lineAlpha})`);
+    lineGradient.addColorStop(0.50, `rgba(${mintRed}, ${mintGreen}, ${mintBlue}, ${lineAlpha})`);
+    lineGradient.addColorStop(0.88, `rgba(${mintRed}, ${mintGreen}, ${mintBlue}, ${lineAlpha})`);
+    lineGradient.addColorStop(1, `rgba(${mintRed}, ${mintGreen}, ${mintBlue}, 0)`);
+    context.setLineDash([]);
+    context.strokeStyle = lineGradient;
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(markerX, padding.top + triangleHeight);
+    context.lineTo(markerX, padding.top + graphHeight - triangleHeight);
+    context.stroke();
+    context.restore();
+}
 function cgmTrendForRate(rate) {
     return CGM_TREND_LEVELS.find(l => rate > l.min);
 }

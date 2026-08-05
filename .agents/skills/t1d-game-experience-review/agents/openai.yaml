@@ -1,0 +1,4 @@
+interface:
+  display_name: "T1D Game Experience Review"
+  short_description: "Analyser onboarding, engagement og læringsflow"
+  default_prompt: "Brug $t1d-game-experience-review til at analysere simulatorens startflow og foreslå prioriterede, testbare forbedringer."

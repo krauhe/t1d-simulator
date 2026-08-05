@@ -544,7 +544,7 @@ const FAKE_ACTIVITY_TYPEDEF = {
     fastSensitivityScaling: 1.0,
     earlySensitivityScaling: 1.0,
     lateSensitivityScaling: 1.0,
-    insulinSensitivityDelayMin: 0,
+    insulinSensitivityOnsetHalfMin: 0,
     glycogenUseScaling: 1.0,
     hepaticDriveRate: { Lav: 0, Medium: 0, Høj: 0.02 },
     hepaticDriveCeiling: { Lav: 0, Medium: 0, Høj: 0.4 },

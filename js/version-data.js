@@ -15,9 +15,39 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.115-beta',
-    date: '2026-08-04',
+    version: '0.9.117-beta',
+    date: '2026-08-05',
     history: [
+        {
+            version: '0.9.117-beta',
+            date: '2026-08-05',
+            features: {
+                da: [
+                    'Velkomstturen forklarer nu de faste karakterer og viser tydeligt, hvem du hjælper.',
+                    'Styrketræningens påvirkning af insulinfølsomheden begynder nu gradvist under aktiviteten.'
+                ],
+                en: [
+                    'The welcome tour now explains the fixed characters and clearly shows who you are helping.',
+                    'The effect of strength training on insulin sensitivity now begins gradually during the activity.'
+                ]
+            },
+            fixes: {
+                da: [
+                    'Start af bane 1 fra velkomstskærmen åbner nu karaktervalget.',
+                    'Karaktervælgeren holder den valgte figur inden for rammen og bruger en roligere fremhævning.',
+                    'Hvad Nu Hvis kan nu ændre handlinger fra banens første minut og bruger spillets almindelige nu-markør.',
+                    'Offentlige menuer og tekster viser nu kun de tilgængelige spilfunktioner.',
+                    'Statistik og kaloriebalance er slået til ved start, men kan stadig slås fra i indstillingerne.'
+                ],
+                en: [
+                    'Starting level 1 from the welcome screen now opens character selection.',
+                    'The character picker keeps the selected figure inside its frame and uses a calmer highlight.',
+                    'What If can now change actions from the first minute of a level and uses the game\'s standard current-time marker.',
+                    'Public menus and text now show only the available game features.',
+                    'Statistics and calorie balance are enabled at startup but can still be turned off in Settings.'
+                ]
+            }
+        },
         {
             version: '0.9.115-beta',
             date: '2026-08-04',
@@ -45,19 +75,10 @@ const APP_VERSION_INFO = {
             }
         },
         {
-            version: '0.9.114-beta',
-            date: '2026-07-30',
-            features: {
-                da: [
-                    'Seks faste karakterer med dynamiske navne og stemninger gennem spillet.',
-                    'Baner, tips og velkomst er omskrevet med fokus på læring gennem karaktererne.',
-                    'Motion, søvn og modelkontroller er udbygget.'
-                ],
-                en: [
-                    'Six fixed characters with dynamic names and moods throughout the game.',
-                    'Levels, tips and the welcome flow now focus on learning through the characters.',
-                    'Exercise, sleep and model checks have been expanded.'
-                ]
+            month: '2026-07',
+            summary: {
+                da: 'Seks faste karakterer med dynamiske navne og stemninger, omskrevne baner og tips samt udbygget motion, søvn og modelkontrol.',
+                en: 'Six fixed characters with dynamic names and moods, rewritten levels and tips, plus expanded exercise, sleep and model checks.'
             }
         },
         {

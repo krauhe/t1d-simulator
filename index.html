@@ -43,7 +43,7 @@
     <!-- Favicon: simpel BG-kurve i teal -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23181c24'/><polyline points='4,22 10,18 14,10 18,20 22,14 28,16' fill='none' stroke='%2300e5a0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <!-- Stylesheet med CSS-variabler for tema-skifte -->
-    <link rel="stylesheet" href="style.css?v=0.9.115">
+    <link rel="stylesheet" href="style.css?v=0.9.117">
     <!-- Fonts: Inter til generel UI, Orbitron til CGM hero-tal (sci-fi look) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
     <!-- Tone.js: Web Audio framework for lydeffekter (CDN, pinned version) -->
@@ -145,14 +145,14 @@
                      vises kun under en aktiv Campaign eller Box Challenge og kan
                      derfor aldrig starte som en tom eller frit personaliserbar editor. -->
                 <div class="top-insights-wrapper" id="insightsMenuWrapper">
-                    <button class="top-btn insights-menu-btn" id="insightsMenuButton" data-i18n-title="insights.menu.title" title="Fysiologi og Hvad Nu Hvis">
+                    <button class="top-btn insights-menu-btn" id="insightsMenuButton" data-i18n-title="insights.menu.title" title="Fysiologi-visning og Hvad Nu Hvis">
                         <span data-i18n="insights.menu.label">Insights</span>
                     </button>
                     <div class="settings-dropdown insights-dropdown" id="insightsDropdown">
                         <button type="button" class="sd-row sd-action" id="physiologyToggle">
                             <span class="sd-row-icon"><img class="sd-row-icon-img" src="assets/icons/app/settings-physiology.png" alt=""></span>
                             <span class="sd-row-content">
-                                <span class="sd-row-label" data-i18n="insights.menu.physiology">Fysiologi</span>
+                                <span class="sd-row-label" data-i18n="insights.menu.physiology">Fysiologi-visning</span>
                                 <span class="sd-row-help" data-i18n="insights.menu.physiology.help">Se de processer, der påvirker karakterens blodsukker.</span>
                             </span>
                         </button>
@@ -1134,8 +1134,10 @@
           <summary>Om simulatoren</summary>
           <p>
             T1D Simulator er et læringsspil om type 1-diabetes (T1D) og blodsukker. Du
-            hjælper en af seks fiktive karakterer og udforsker, hvordan mad, insulin,
-            aktivitet, søvn og stress påvirker blodsukkeret. Prøv, lær og gentag.
+            hjælper en fast, fiktiv karakter og udforsker, hvordan mad,
+            insulin, aktivitet, søvn og stress påvirker karakterens simulerede blodsukker.
+            Spillet bruger ikke dine helbredsdata og giver ikke behandlingsvejledning
+            eller insulindoser til virkelige personer.
           </p>
         </details>
 
@@ -1182,16 +1184,20 @@
         <details class="help-section">
           <summary>Hvordan spilles spillet</summary>
 
-          <p>Velkomstskærmen giver adgang til intro-touren; spilguiden forklarer fysiologien og strategien i dybden.</p>
-
           <div class="help-guide-link-row">
             <button type="button" class="guide-link-btn" data-show-welcome-tour>
               <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
-              <span class="guide-link-label">Velkomst og intro-tour</span>
+              <span class="guide-link-text">
+                <span class="guide-link-label">Velkomst og intro-tour</span>
+                <span class="guide-link-copy">Start den korte rundtur i spillet.</span>
+              </span>
             </button>
             <button type="button" class="guide-link-btn" data-guide-section="overview">
               <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
-              <span class="guide-link-label">Spilguiden</span>
+              <span class="guide-link-text">
+                <span class="guide-link-label">Spilguiden</span>
+                <span class="guide-link-copy">Læs om spillets funktioner og blodsukkerfysiologi.</span>
+              </span>
             </button>
           </div>
         </details>
@@ -1253,7 +1259,7 @@
             <li><strong>FFA-resistens:</strong> Kostfedt hæver frie fedtsyrer der sænker insulinfølsomheden i timer, op til 42% (anden bølge). (Wolpert 2013)</li>
             <li><strong>Hjerne-energiunderskud:</strong> Svær hypoglykæmi (BG &lt;2.5) tømmer en hjerne-energireserve; vedvarende tømning giver game over.</li>
             <li><strong>Fedt-kompartmentmodel:</strong> Fedt i tarmen udløser CCK/GLP-1-feedback der bremser kulhydratabsorption (pizza-effekten, første bølge). (Smart 2013)</li>
-            <li><strong>Kulhydrat-type model:</strong> Madvarer kategoriseres efter chemical complexity (simple sukre vs stivelse), fiber og flydende/fast (pylorisk si). Mavesækken er én blandet tank hvor τG = (25 + (1-simpleFrac)×25) × (1 + 0.05×fiber) × retentionMod + fedt-delay, yderligere skaleret med hyperMod (højt BG bremser tømningen) og exerciseGEMod (motion bremser den). Cola tømmes på ~18 min, druesukker ~25 min, hvidt brød ~47 min, rugbrød ~59 min. Baseret på Marathe 2013, Wolever 2008, Schvarcz, Halland, Leiper 2001.</li>
+            <li><strong>Kulhydrat-type model:</strong> Kulhydrat-type, fiber og om maden er flydende eller fast påvirker, hvor hurtigt maven tømmes. I modellen virker cola og druesukker hurtigst, mens brød og mad med fedt virker langsommere. (Marathe 2013; Wolever 2008; Schvarcz; Halland; Leiper 2001)</li>
             <li><strong>Protein-glukagonmodel:</strong> Tre-kompartment aminosyre-absorption (mave → tarm → blod) der driver glukagon-stimuleret leverproduktion via Hill-funktion; erstatter den gamle 25%-kulhydrat-regel. Baseret på Paterson 2016, Fromentin 2013, Gannon 2013.</li>
           </ul>
 
@@ -1282,8 +1288,10 @@
           <summary>About the simulator</summary>
           <p>
             T1D Simulator is a learning game about type 1 diabetes (T1D) and blood sugar.
-            You help one of six fictional characters and explore how food, insulin,
-            activity, sleep and stress affect blood sugar. Try, learn and repeat.
+            You help a fixed, fictional character and explore how food,
+            insulin, activity, sleep and stress affect the character's simulated blood sugar.
+            The game does not use your health data and does not provide treatment
+            guidance or insulin doses for real people.
           </p>
         </details>
 
@@ -1330,16 +1338,20 @@
         <details class="help-section">
           <summary>How to Play</summary>
 
-          <p>The welcome screen gives access to the intro tour; the game guide explains the physiology and strategy in depth.</p>
-
           <div class="help-guide-link-row">
             <button type="button" class="guide-link-btn" data-show-welcome-tour>
               <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
-              <span class="guide-link-label">Welcome and intro tour</span>
+              <span class="guide-link-text">
+                <span class="guide-link-label">Welcome and intro tour</span>
+                <span class="guide-link-copy">Start the short tour of the game.</span>
+              </span>
             </button>
             <button type="button" class="guide-link-btn" data-guide-section="overview">
               <span class="guide-info-icon"><img src="assets/icons/app/event-note.png" alt=""></span>
-              <span class="guide-link-label">Game guide</span>
+              <span class="guide-link-text">
+                <span class="guide-link-label">Game guide</span>
+                <span class="guide-link-copy">Read about the game tools and blood glucose physiology.</span>
+              </span>
             </button>
           </div>
         </details>
@@ -1401,7 +1413,7 @@
             <li><strong>FFA insulin resistance:</strong> Dietary fat raises free fatty acids that cut insulin sensitivity for hours, up to 42% (second wave). (Wolpert 2013)</li>
             <li><strong>Brain energy deficit:</strong> Severe hypoglycaemia (BG &lt;2.5) drains a brain energy reserve; sustained depletion ends the game.</li>
             <li><strong>Fat compartment model:</strong> Intestinal fat triggers CCK/GLP-1 feedback that slows carb absorption (pizza effect, first wave). (Smart 2013)</li>
-            <li><strong>Carbohydrate type model:</strong> Foods are categorised by chemical complexity (simple sugars vs starch), fibre, and liquid/solid (pyloric sieve). The stomach is one mixed tank where τG = (25 + (1-simpleFrac)×25) × (1 + 0.05×fibre) × retentionMod + fat delay, further scaled by hyperMod (high BG slows emptying) and exerciseGEMod (exercise slows it). Cola empties in ~18 min, glucose tablets ~25 min, white bread ~47 min, rye bread ~59 min. Based on Marathe 2013, Wolever 2008, Schvarcz, Halland, Leiper 2001.</li>
+            <li><strong>Carbohydrate type model:</strong> Carbohydrate type, fibre, and whether food is liquid or solid affect how quickly the stomach empties. In the model, cola and glucose tablets act fastest, while bread and fatty food act more slowly. (Marathe 2013; Wolever 2008; Schvarcz; Halland; Leiper 2001)</li>
             <li><strong>Protein glucagon model:</strong> Three-compartment amino acid absorption (stomach → gut → blood) driving glucagon-stimulated hepatic glucose production via a Hill function; replaces the old 25% carb-equivalent rule. Based on Paterson 2016, Fromentin 2013, Gannon 2013.</li>
           </ul>
 
@@ -1417,25 +1429,25 @@
     <!-- ===================================================================
          SCRIPT LOADING ORDER — Kritisk! Filerne deler globalt scope.
          =================================================================== -->
-<script src="js/sounds.js?v=0.9.115"></script>
-<script src="js/i18n.js?v=0.9.115"></script>
-<script src="js/dose-controls.js?v=0.9.115"></script>
-<script src="js/guide-data.js?v=0.9.115"></script>
-<script src="js/version-data.js?v=0.9.115"></script>
-<script src="js/levels.js?v=0.9.115"></script>
-<script src="js/archetypes.js?v=0.9.115"></script>
-<script src="js/symptoms.js?v=0.9.115"></script>
-<script src="js/foods.js?v=0.9.115"></script>
-<script src="js/hovorka.js?v=0.9.115"></script>
-<script src="js/physiology-engine.js?v=0.9.115"></script>
-<script src="js/simulator.js?v=0.9.115"></script>
-<script src="js/graph-renderer.js?v=0.9.115"></script>
-<script src="js/ui.js?v=0.9.115"></script>
-<script src="js/editor.js?v=0.9.115"></script>
-<script src="js/game.js?v=0.9.115"></script>
-<script src="js/campaign-core.js?v=0.9.115"></script>
-<script src="js/campaign.js?v=0.9.115"></script>
-<script src="js/welcome-tour.js?v=0.9.115"></script>
-<script src="js/main.js?v=0.9.115"></script>
+<script src="js/sounds.js?v=0.9.117"></script>
+<script src="js/i18n.js?v=0.9.117"></script>
+<script src="js/dose-controls.js?v=0.9.117"></script>
+<script src="js/guide-data.js?v=0.9.117"></script>
+<script src="js/version-data.js?v=0.9.117"></script>
+<script src="js/levels.js?v=0.9.117"></script>
+<script src="js/archetypes.js?v=0.9.117"></script>
+<script src="js/symptoms.js?v=0.9.117"></script>
+<script src="js/foods.js?v=0.9.117"></script>
+<script src="js/hovorka.js?v=0.9.117"></script>
+<script src="js/physiology-engine.js?v=0.9.117"></script>
+<script src="js/simulator.js?v=0.9.117"></script>
+<script src="js/graph-renderer.js?v=0.9.117"></script>
+<script src="js/ui.js?v=0.9.117"></script>
+<script src="js/editor.js?v=0.9.117"></script>
+<script src="js/game.js?v=0.9.117"></script>
+<script src="js/campaign-core.js?v=0.9.117"></script>
+<script src="js/campaign.js?v=0.9.117"></script>
+<script src="js/welcome-tour.js?v=0.9.117"></script>
+<script src="js/main.js?v=0.9.117"></script>
 </body>
 </html>

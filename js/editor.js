@@ -1279,7 +1279,7 @@ const Editor = (function () {
     // sammenligner alternative kurver.
     drawSleepBubbles(octx, m);
     drawPlayedBoundary(octx, m);
-    // Den grå, stiplede reference viser det oprindeligt spillede forløb. Den
+    // Den afdæmpede, grå reference viser det oprindeligt spillede forløb. Den
     // aktuelle blå kurve tegnes fortsat af den fælles graf-renderer.
     drawSourceCurve(octx, m);
     drawSourceIncidentMarkers(octx, m);
@@ -1467,15 +1467,9 @@ const Editor = (function () {
       octx.fillRect(x, m.padding.top, right - x, m.graphHeight);
     }
 
-    octx.beginPath();
-    octx.moveTo(x, m.padding.top);
-    octx.lineTo(x, m.padding.top + m.graphHeight);
-    octx.setLineDash([]);
-    octx.lineWidth = 2;
-    octx.strokeStyle = 'rgba(34, 211, 238, 0.92)';
-    octx.shadowColor = 'rgba(34, 211, 238, 0.45)';
-    octx.shadowBlur = 8;
-    octx.stroke();
+    // Genbrug præcis samme nu-markør som i det levende spil. Markørens form og
+    // farve betyder derfor det samme begge steder: forløbet er nået hertil.
+    drawCurrentTimeMarker(octx, x, m.padding, m.graphHeight);
 
     const label = t(sourceMode === 'boxchallenge' ? 'editor.boundary.box.label' : 'editor.boundary.label');
     octx.shadowBlur = 0;
@@ -1516,11 +1510,13 @@ const Editor = (function () {
       if (!drawing) { octx.moveTo(x, y); drawing = true; }
       else octx.lineTo(x, y);
     }
-    octx.setLineDash([8, 7]);
-    octx.lineWidth = 2;
-    octx.strokeStyle = 'rgba(203, 213, 225, 0.78)';
-    octx.shadowColor = 'rgba(15, 23, 42, 0.75)';
-    octx.shadowBlur = 3;
+    // Referenceforløbet skal kunne genfindes uden at konkurrere med variationerne.
+    // En tynd, ubrudt grå linje er roligere end den tidligere lyse stipling.
+    octx.setLineDash([]);
+    octx.lineWidth = 1.4;
+    octx.strokeStyle = 'rgba(148, 163, 184, 0.38)';
+    octx.shadowColor = 'transparent';
+    octx.shadowBlur = 0;
     octx.stroke();
 
     octx.restore();
@@ -2006,13 +2002,10 @@ const Editor = (function () {
   function drawCursor(m) {
     if (cursorMin < viewStart || cursorMin > viewStart + viewSpanMin) return;
     const x = m.timeToX(cursorMin);
-    const yTop = m.padding.top, yBot = m.padding.top + m.graphHeight;
-    // Ved åbning står markøren præcis ved banens pausepunkt. Her er den cyan
-    // grænselinje forklaring nok; undlad en ekstra stiplet linje oven i den.
+    // Ved åbning står markøren præcis ved banens pausepunkt. Her tegner
+    // pausegrænsen allerede den fælles nu-markør, så den må ikke dubleres.
     if (Math.abs(cursorMin - playedUntilMin) > 0.5) {
-      ctx.strokeStyle = "rgba(125,211,252,0.8)"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
-      ctx.beginPath(); ctx.moveTo(x, yTop); ctx.lineTo(x, yBot); ctx.stroke();
-      ctx.setLineDash([]);
+      drawCurrentTimeMarker(ctx, x, m.padding, m.graphHeight);
     }
     // The cursor BG dot sits on the single curve, which is hidden in sweep mode
     // (5 variant curves instead) — so the dot would float on an invisible line.
@@ -2025,28 +2018,18 @@ const Editor = (function () {
   }
 
   // ===========================================================================
-  // WHOLE-PERIOD SUMMARY
+  // NEUTRAL SUMMARY
   // ===========================================================================
   function updateSummary() {
-    const n = frames.length;
-    if (!n) return;
-    let inT = 0, sum = 0;
-    for (let t = 0; t < n; t++) {
-      const b = frames[t] ? frames[t].bg : 5.5;
-      sum += b;
-      if (b >= 4 && b <= 10) inT++;
-    }
-    const tir = inT / n;
-    // Feed the game's own stats fragment + points badge with whole-period values,
-    // so the editor's bottom capsule looks exactly like the game's.
+    // Hvad Nu Hvis skal vise mulige forløb uden at rangordne dem med en samlet
+    // resultatmåling. TIR, gennemsnitsblodsukker og points neutraliseres derfor
+    // ens: de velkendte paneler bliver stående, men viser kun en tankestreg.
     const tirEl = document.getElementById('statsTirValue');
-    if (tirEl) { tirEl.textContent = Math.round(tir * 100) + '%'; tirEl.style.color = tir > 0.7 ? '#4ade80' : tir > 0.5 ? '#fbbf24' : '#ef4444'; }
+    if (tirEl) { tirEl.textContent = '—'; tirEl.style.color = ''; }
     const avgEl = document.getElementById('statsAvgBgValue');
-    if (avgEl) avgEl.textContent = displayBG(sum / n);   // honour mmol/L vs mg/dL
+    if (avgEl) { avgEl.textContent = '—'; avgEl.style.color = ''; }
     const ptsEl = document.getElementById('normoPointsDisplay');
     if (ptsEl) ptsEl.textContent = '—';
-    // (the "Total" label is shown via body.mode-editor CSS, not JS, so leaving the
-    //  editor doesn't leak an inline style onto the game's points badge.)
   }
 
   // ===========================================================================

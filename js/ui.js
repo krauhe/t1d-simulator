@@ -2201,48 +2201,7 @@ function drawGraph() {
     // the top and bottom graph edges. Between the tips: a soft vertical glow line
     // in the same style as the graph's horizontal boundary lines (fade gradient, low alpha).
     if (isCurrentDay) {
-        graphCtx.save();
-        const triH = 10;
-        const triW = 8;
-        const mr = 134, mg = 239, mb = 172; // mint — target zone colour
-        const triAlpha = 0.45;
-
-        // Top triangle: points DOWN
-        graphCtx.beginPath();
-        graphCtx.moveTo(nowX - triW, padding.top);
-        graphCtx.lineTo(nowX + triW, padding.top);
-        graphCtx.lineTo(nowX, padding.top + triH);
-        graphCtx.closePath();
-        graphCtx.fillStyle = `rgba(${mr}, ${mg}, ${mb}, ${triAlpha})`;
-        graphCtx.fill();
-
-        // Bottom triangle: points UP
-        graphCtx.beginPath();
-        graphCtx.moveTo(nowX - triW, padding.top + graphHeight);
-        graphCtx.lineTo(nowX + triW, padding.top + graphHeight);
-        graphCtx.lineTo(nowX, padding.top + graphHeight - triH);
-        graphCtx.closePath();
-        graphCtx.fillStyle = `rgba(${mr}, ${mg}, ${mb}, ${triAlpha})`;
-        graphCtx.fill();
-
-        // Soft glow line between the triangle tips (vertical fade gradient)
-        const lineAlpha = 0.16;
-        const lineGrad = graphCtx.createLinearGradient(
-            0, padding.top + triH, 0, padding.top + graphHeight - triH
-        );
-        lineGrad.addColorStop(0, `rgba(${mr}, ${mg}, ${mb}, 0)`);
-        lineGrad.addColorStop(0.12, `rgba(${mr}, ${mg}, ${mb}, ${lineAlpha})`);
-        lineGrad.addColorStop(0.50, `rgba(${mr}, ${mg}, ${mb}, ${lineAlpha})`);
-        lineGrad.addColorStop(0.88, `rgba(${mr}, ${mg}, ${mb}, ${lineAlpha})`);
-        lineGrad.addColorStop(1, `rgba(${mr}, ${mg}, ${mb}, 0)`);
-        graphCtx.strokeStyle = lineGrad;
-        graphCtx.lineWidth = 2;
-        graphCtx.beginPath();
-        graphCtx.moveTo(nowX, padding.top + triH);
-        graphCtx.lineTo(nowX, padding.top + graphHeight - triH);
-        graphCtx.stroke();
-
-        graphCtx.restore();
+        drawCurrentTimeMarker(graphCtx, nowX, padding, graphHeight);
     }
 
     // --- Temporary graph messages (reminders, warnings) ---
@@ -4545,6 +4504,7 @@ function updateCgmCharacterMood() {
 //
 // @param {object} options - Optional settings
 // @param {boolean} options.readOnly - Lock the picker while a game is running
+// @param {Function} options.onSave - Kør et efterfølgende startflow, når valget er gemt
 // =============================================================================
 function showProfilePopup(options) {
     options = options || {};
@@ -4578,8 +4538,7 @@ function showProfilePopup(options) {
         </div>
 
         <div class="popup-button-container" style="display:flex; gap:10px; justify-content:center;">
-            ${options.readOnly ? '' : `<button id="profileResetButton" class="profile-reset-btn">${t('profile.reset')}</button>`}
-            ${options.readOnly ? '' : `<button id="profileSaveButton" class="profile-save-btn">${t('profile.save')}</button>`}
+            ${options.readOnly ? '' : `<button id="profileSaveButton" class="popup-btn-primary">${t('profile.save')}</button>`}
         </div>
     `;
 
@@ -4628,16 +4587,6 @@ function showProfilePopup(options) {
         saveCharacterSelection(profile.characterId);
     }
 
-    // "Reset" button: back to the default character (keeps the typed name).
-    // Not rendered in read-only mode, so guard the reference.
-    const resetButton = document.getElementById('profileResetButton');
-    if (resetButton) {
-        resetButton.addEventListener('click', () => {
-            selectedCharacterId = DEFAULT_CHARACTER_ID;
-            renderCards();
-        });
-    }
-
     // Save button: persist the chosen character as the last-used default and refresh
     // the character display. Not rendered in read-only mode, so guard the reference.
     if (saveButton) {
@@ -4649,6 +4598,7 @@ function showProfilePopup(options) {
             if (typeof updateFoodChips === 'function') updateFoodChips();
             if (typeof updateCgmCharacter === 'function') updateCgmCharacter();
             document.body.removeChild(overlay);
+            if (typeof options.onSave === 'function') options.onSave(profile.characterId);
         });
     }
 }

@@ -21,13 +21,13 @@ Procedure for future sessions:
 - After generation, mark the file REVIEW until the user has listened. Mark OK only after explicit approval.
 Fil                          Stab  Sim   Style  Status    Noter
 ---                          ----  ----  -----  ------    -----
-00-overview.mp3              0.34  0.78  0.85   REVIEW    Genindspillet 2026-07-30, 215711 bytes. Nyt kort formålsafsnit; afventer lytning. Exact filter: -Language da -Only 00-overview.mp3.
+00-overview.mp3              0.34  0.78  0.85   OK        Godkendt 2026-08-05, 327306 bytes. Fjerner gentagelsen af T1D/type 1-diabetes og har særskilt afgrænsningsafsnit.
 01-graph.mp3                 0.34  0.78  0.85   OK        Tekst aendret: "x" -> "points per time"
 02-graph-daynight.mp3        0.34  0.78  0.85   OK
-02-cgm.mp3                   0.34  0.78  0.85   OK        v2 valgt (v1 daarlig IOB-udtale)
+02-cgm.mp3                   0.34  0.78  0.85   OK        Godkendt 2026-08-05, 296795 bytes. Spilkarakterens blodsukker og ingen gentaget IOB-forklaring.
 04b-profilebutton.mp3        0.34  0.78  0.85   OK
 03-profile.mp3               0.34  0.78  0.85   OK
-04-insulin.mp3               0.34  0.78  0.85   OK
+04-insulin.mp3               0.34  0.78  0.85   OK        Godkendt 2026-08-05, 117072 bytes. Spilkarakteren modtager basal- og hurtiginsulin.
 05-basal.mp3                 0.34  0.78  0.85   OK        Tekst rettet: "vurderer bedst" + fjernet insulintype-afhaengighed
 06-fast.mp3                  0.34  0.78  0.85   OK        Tekst forkortet + cifre i stedet for talord
 07-food.mp3                  0.34  0.78  0.85   OK        v2 approved 2026-06-13, 112475 bytes. UTF-8 scriptblock worked; plain -File failed dry-run encoding.
@@ -36,40 +36,15 @@ Fil                          Stab  Sim   Style  Status    Noter
 09-food-lowcarb.mp3          0.34  0.78  0.85   OK        v1 approved 2026-06-13, 458963 bytes. Generated alone with full filename -Only 09-food-lowcarb.mp3.
 10b-activityoverview.mp3     0.34  0.78  0.85   OK        v2 approved 2026-06-13, 76948 bytes. Heading omitted because it repeated first sentence.
 10-activity.mp3              0.34  0.78  0.85   OK        v1 approved 2026-06-13, 435557 bytes. Used digits for 15, 30, 60. Generated alone with full filename -Only 10-activity.mp3.
-11b-kitoverview.mp3          0.34  0.78  0.85   OK        v1 approved 2026-06-13, 84889 bytes. Heading omitted because it repeated first sentence.
-11-kit.mp3                   0.34  0.78  0.85   OK        v2 approved 2026-06-13, 483204 bytes. Regenerated on request. Generated alone with full filename -Only 11-kit.mp3.
-12b-timecontrols.mp3         0.34  0.78  0.85   OK        v2 approved 2026-06-13, 281330 bytes. Text rewritten with concrete pause/speed behavior and sleep example.
-13-physiology.mp3            0.34  0.78  0.85   OK        v3 approved 2026-06-13, 339844 bytes. Regenerated on request from same v2 text.
+11b-kitoverview.mp3          0.34  0.78  0.85   OK        Godkendt 2026-08-05, 70261 bytes. Kort introduktion til T1D Kit.
+11-kit.mp3                   0.34  0.78  0.85   OK        Godkendt 2026-08-05, 383730 bytes. Formulering med glukagonpen gav god udtale.
+12b-timecontrols.mp3         0.34  0.78  0.85   OK        Godkendt 2026-08-05, 313931 bytes. Tempoer skrevet som talord for klarere udtale.
+13-physiology.mp3            0.34  0.78  0.85   OK        Godkendt 2026-08-05, 188125 bytes. Indsigt samler Fysiologi-visning og Hvad Nu Hvis.
 13b-settings.mp3             0.34  0.78  0.85   OK        v1 approved 2026-06-13, 151345 bytes. Heading repetition removed (Settings-knappen...).
-14-learn.mp3                 0.34  0.78  0.85   OK        v1 approved 2026-06-13, 176422 bytes. Repeated undervejs wording removed.
+14-learn.mp3                 0.34  0.78  0.85   OK        Godkendt 2026-08-05, 131701 bytes. Guide-ikonet er til højre for tippet.
 15-ready.mp3                 0.34  0.78  0.85   OK        v1 approved 2026-06-13, 180184 bytes.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+03-character.mp3             0.34  0.78  0.85   OK        Godkendt 2026-08-05, 292197 bytes. Forklarer at spilleren hjælper den valgte karakter med stabilt blodsukker.
+05-basal.mp3                 0.34  0.78  0.85   REVIEW    Regenereret 2026-08-05, 306408 bytes. Observation af stigende eller faldende blodsukker. Exact filter: -Language da -Only 05-basal.mp3.
 
 
 

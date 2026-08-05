@@ -4,5 +4,13 @@ Model: eleven_multilingual_v2
 Language: en, language_code=en
 
 File                          Stability  Similarity  Style  Status  Notes
-00-overview.mp3              0.45       0.78        0.85   REVIEW  Regenerated 2026-07-30, 211949 bytes. New concise purpose overview; awaiting listening. Exact filter: -Language en -Only 00-overview.mp3.
-14-learn.mp3                 0.45       0.78        0.85   REVIEW  Regenerated 2026-07-23, 160122 bytes. Accepted temporarily despite imperfect audio; replacement is TODO 77. Exact filter: -Language en -Only 14-learn.mp3.
+00-overview.mp3              0.45       0.78        0.85   OK      Regenerated 2026-08-05, 286346 bytes. Updated purpose and intended-use text. Exact filter: -Language en -Only 00-overview.mp3.
+02-cgm.mp3                   0.45       0.78        0.85   OK      Regenerated 2026-08-05, 267955 bytes. Uses game character consistently. Exact filter: -Language en -Only 02-cgm.mp3.
+03-character.mp3             0.45       0.78        0.85   OK      Regenerated 2026-08-05, 263358 bytes. Updated fixed-character step. Exact filter: -Language en -Only 03-character.mp3.
+04-insulin.mp3               0.45       0.78        0.85   OK      Regenerated 2026-08-05, 122088 bytes. Uses game character consistently. Exact filter: -Language en -Only 04-insulin.mp3.
+11b-kitoverview.mp3          0.45       0.78        0.85   OK      Regenerated 2026-08-05, 66499 bytes. Short kit overview. Exact filter: -Language en -Only 11b-kitoverview.mp3.
+11-kit.mp3                   0.45       0.78        0.85   OK      Regenerated 2026-08-05, 376207 bytes. Updated kit explanation. Exact filter: -Language en -Only 11-kit.mp3.
+12b-timecontrols.mp3         0.45       0.78        0.85   OK      Regenerated 2026-08-05, 271717 bytes. Updated game-character wording. Exact filter: -Language en -Only 12b-timecontrols.mp3.
+13-physiology.mp3            0.45       0.78        0.85   OK      Regenerated 2026-08-05, 163048 bytes. Updated Insights wording. Exact filter: -Language en -Only 13-physiology.mp3.
+14-learn.mp3                 0.45       0.78        0.85   OK      Regenerated 2026-08-05, 133373 bytes. Updated tip location wording. Exact filter: -Language en -Only 14-learn.mp3.
+05-basal.mp3                 0.45       0.78        0.85   REVIEW  Regenerated 2026-08-05, 276733 bytes. Observes whether blood glucose rises or falls. Exact filter: -Language en -Only 05-basal.mp3.

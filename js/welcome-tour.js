@@ -175,10 +175,17 @@ const WelcomeTour = (() => {
                     audio: { da: 'sounds/tour/da/02-cgm.mp3', en: 'sounds/tour/en/02-cgm.mp3' },
                     durationMs: 9500
                 },
-                // Character is now chosen in the mode-selection start flow (and viewed via
-                // the BG-panel character), so the old "profile button" + "profile fields
-                // (weight/ICR/ISF)" tour steps were removed. A character-picker explainer
-                // may be added back later — deferred for now.
+                // Character: replaces the obsolete personal-profile explanation. The
+                // selected fixed character is visible beside the CGM value throughout play.
+                {
+                    target: '#cgmCharacter',
+                    keepRing: true,
+                    arrow: 'right',
+                    titleKey: 'welcomeTour.step.character.title',
+                    textKey: 'welcomeTour.step.character.text',
+                    audio: { da: 'sounds/tour/da/03-character.mp3', en: 'sounds/tour/en/03-character.mp3' },
+                    durationMs: 9000
+                },
                 // 3 — Insulin (overview): show the Mac-style menu icon first, before the panel opens.
                 {
                     target: '.dock-item.d-insulin',
@@ -314,10 +321,11 @@ const WelcomeTour = (() => {
                     audio: { da: 'sounds/tour/da/12b-timecontrols.mp3', en: 'sounds/tour/en/12b-timecontrols.mp3' },
                     durationMs: 7500
                 },
-                // 18 — Physiology mode: extra explanation layer on the graph
+                // Indsigt: vis begge avancerede læringsværktøjer samlet i menuen.
                 {
-                    target: '#physiologyToggle',
+                    target: '#insightsDropdown',
                     keepRing: true,
+                    openInsights: true,
                     arrow: 'bottom',
                     titleKey: 'welcomeTour.step.physiology.title',
                     textKey: 'welcomeTour.step.physiology.text',
@@ -374,9 +382,8 @@ const WelcomeTour = (() => {
         'sounds/tour/da/01-graph.mp3',
         'sounds/tour/da/02-graph-daynight.mp3',
         'sounds/tour/da/02-cgm.mp3',
-        'sounds/tour/da/03-profile.mp3',
+        'sounds/tour/da/03-character.mp3',
         'sounds/tour/da/04-insulin.mp3',
-        'sounds/tour/da/04b-profilebutton.mp3',
         'sounds/tour/da/05-basal.mp3',
         'sounds/tour/da/06-fast.mp3',
         'sounds/tour/da/07-food.mp3',
@@ -396,9 +403,8 @@ const WelcomeTour = (() => {
         'sounds/tour/en/01-graph.mp3',
         'sounds/tour/en/02-graph-daynight.mp3',
         'sounds/tour/en/02-cgm.mp3',
-        'sounds/tour/en/03-profile.mp3',
+        'sounds/tour/en/03-character.mp3',
         'sounds/tour/en/04-insulin.mp3',
-        'sounds/tour/en/04b-profilebutton.mp3',
         'sounds/tour/en/05-basal.mp3',
         'sounds/tour/en/06-fast.mp3',
         'sounds/tour/en/07-food.mp3',
@@ -825,6 +831,7 @@ const WelcomeTour = (() => {
         document.querySelectorAll('.dock-panel.visible').forEach(p => p.classList.remove('visible'));
         document.querySelectorAll('.dock-item.active').forEach(d => d.classList.remove('active'));
         closeTourSettings();
+        closeTourInsights();
     }
 
     function openTourSettings() {
@@ -842,10 +849,32 @@ const WelcomeTour = (() => {
         if (wrapper) wrapper.classList.remove('welcome-tour-raise');
     }
 
+    // Touren åbner Indsigt-menuen direkte, så fokusrammen omfatter både
+    // Fysiologi og Hvad Nu Hvis.
+    function openTourInsights() {
+        const dropdown = document.getElementById('insightsDropdown');
+        const wrapper = document.getElementById('insightsMenuWrapper');
+        if (!dropdown) return;
+        document.body.classList.add('welcome-tour-insights-preview');
+        dropdown.classList.add('visible', 'welcome-tour-raise');
+        if (wrapper) wrapper.classList.add('welcome-tour-raise');
+    }
+
+    function closeTourInsights() {
+        const dropdown = document.getElementById('insightsDropdown');
+        const wrapper = document.getElementById('insightsMenuWrapper');
+        document.body.classList.remove('welcome-tour-insights-preview');
+        if (dropdown) dropdown.classList.remove('visible', 'welcome-tour-raise');
+        if (wrapper) wrapper.classList.remove('welcome-tour-raise');
+    }
+
     function applyPanelState(step) {
         // Open the panel directly and keep focus on the content this step explains.
         // The earlier two-phase cursor animation was too distracting for an intro tour.
-        if (step.openSettings) {
+        if (step.openInsights) {
+            closeTourPanels();
+            openTourInsights();
+        } else if (step.openSettings) {
             closeTourPanels();
             openTourSettings();
         } else if (step.panel) {
@@ -895,7 +924,7 @@ const WelcomeTour = (() => {
             inp.style.opacity = '1';
         });
         tourProfileOverlay
-            .querySelectorAll('.profile-save-btn, .profile-reset-btn, #profileStartButton, .popup-close-btn')
+            .querySelectorAll('#profileSaveButton, #profileStartButton, .popup-close-btn')
             .forEach(btn => { btn.style.display = 'none'; });
 
         // The profile popup may change height/width when inputs and buttons are

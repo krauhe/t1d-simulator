@@ -1361,7 +1361,7 @@ test('60 min styrketræning fra steady state giver kalibrerede akutte BG-respons
     });
 });
 
-test('Styrke adskiller live glukoseoptag fra tidsforsinket insulinfølsomhed', () => {
+test('Styrke adskiller live glukoseoptag fra glat forsinket insulinfølsomhed', () => {
     const engine = createEngine({ weight: 70, isf: 3, icr: 10 }, {
         seed: 20260723,
         steadyState: true,
@@ -1375,7 +1375,8 @@ test('Styrke adskiller live glukoseoptag fra tidsforsinket insulinfølsomhed', (
     const baseISF = engine.currentISF;
 
     // Young et al. 2023: insulinmedieret optagelse var uændret under det
-    // 45-minutters styrkepas. Eftereffekten må derfor ikke være tændt endnu.
+    // 45-minutters styrkepas. Den glatte eftereffekt skal derfor stadig være
+    // så lille, at den ligger nær baseline i dette vindue.
     engine.startActivity({ type: 'styrke', intensity: 'Medium', durationMin: null });
     for (let minute = 0; minute < 45; minute++) engine.step(1);
     const isfDuring = engine.currentISF;
@@ -1389,8 +1390,8 @@ test('Styrke adskiller live glukoseoptag fra tidsforsinket insulinfølsomhed', (
     for (let minute = 0; minute < 90; minute++) engine.step(1);
     const isfTwoHoursLater = engine.currentISF;
 
-    assertInRange(livePeisFactor, 0.999, 1.001,
-        'Styrke må ikke tilføje insulinmedieret PEIS under selve passet');
+    assertInRange(livePeisFactor, 0.999, 1.005,
+        'Styrke skal holde insulinmedieret PEIS nær baseline under selve passet');
     assert(isfDuring <= baseISF * 1.01,
         `ISF under styrke (${isfDuring.toFixed(3)}) må ikke overstige baseline (${baseISF.toFixed(3)})`);
     assert(Math.abs(isfAfter - isfDuring) < 1e-12,
@@ -1663,7 +1664,7 @@ test('Fælles styrkerespons bevarer retning og størrelse på tværs af vægtpro
     });
 });
 
-test('Tre timers styrke udvikler forsinket følsomhed før stop uden stop-spring', () => {
+test('Tre timers styrke udvikler glat følsomhed før stop uden 120-minuttersknæk', () => {
     const engine = createExerciseCalibrationEngine();
     const baseISF = engine.currentISF;
     engine.startActivity({ type: 'styrke', intensity: 'Medium', durationMin: null });
@@ -1672,10 +1673,15 @@ test('Tre timers styrke udvikler forsinket følsomhed før stop uden stop-spring
     assert(engine.currentISF <= baseISF * 1.01,
         'Et 45-minutters styrkepas må endnu ikke have ekstra insulinmedieret følsomhed');
 
-    stepEngineMinutes(engine, 75); // 120 min fra start: ren delay-grænse
+    stepEngineMinutes(engine, 45); // 90 min fra start: onset er lille, men målbar
+    const isfAt90 = engine.currentISF;
+    assert(isfAt90 > baseISF,
+        'Den glatte styrke-onset skal være begyndt før den tidligere 120-minuttersgrænse');
+
+    stepEngineMinutes(engine, 30); // 120 min fra start: intet særligt event
     assert(engine.activeAktivitet !== null, 'Tre-timers sessionen skal stadig være aktiv');
-    assert(engine.currentISF <= baseISF * 1.01,
-        'Følsomheden må ikke springe ved delay-grænsen');
+    assert(engine.currentISF > isfAt90 && engine.currentISF < baseISF * 1.14,
+        'Følsomheden skal vokse gradvist gennem den tidligere delay-grænse');
 
     stepEngineMinutes(engine, 30); // 150 min fra start: responsen bygges under passet
     assert(engine.currentISF > baseISF * 1.15,
@@ -1687,6 +1693,36 @@ test('Tre timers styrke udvikler forsinket følsomhed før stop uden stop-spring
     const afterStop = engine.currentISF;
     assert(Math.abs(beforeStop - afterStop) < 1e-12,
         `Stop ved 180 min må ikke skabe spring: ${beforeStop} -> ${afterStop}`);
+});
+
+test('Styrke-ISF er værdi- og hældningskontinuert omkring den tidligere 120-minuttersgrænse', () => {
+    const runAtStep = stepMinutes => {
+        const engine = createExerciseCalibrationEngine();
+        engine.startActivity({ type: 'styrke', intensity: 'Medium', durationMin: null });
+        const samples = {};
+
+        [119, 120, 121].forEach(targetMinute => {
+            while (engine.totalSimMinutes + 1e-9 < targetMinute) {
+                engine.step(Math.min(stepMinutes, targetMinute - engine.totalSimMinutes));
+            }
+            samples[targetMinute] = engine.currentISF;
+        });
+        return samples;
+    };
+
+    const oneMinute = runAtStep(1);
+    const quarterMinute = runAtStep(0.25);
+    const riseBefore = oneMinute[120] - oneMinute[119];
+    const riseAfter = oneMinute[121] - oneMinute[120];
+
+    assert(riseBefore > 0 && riseAfter > 0,
+        'ISF skal allerede stige på begge sider af minut 120');
+    assert(Math.abs(riseAfter - riseBefore) < 0.05 * Math.max(riseBefore, riseAfter),
+        `Hældningen må ikke få et knæk ved minut 120 (${riseBefore} -> ${riseAfter})`);
+    [119, 120, 121].forEach(minute => {
+        assert(Math.abs(oneMinute[minute] - quarterMinute[minute]) < 1e-4,
+            `ISF ved minut ${minute} skal være timestep-stabil`);
+    });
 });
 
 test('Manuelt stop og auto-stop giver samme fysiologi ved alle varighedsgrænser', () => {
@@ -1731,7 +1767,7 @@ test('Ablation: optagelse, leverrespons, følsomhed og glykogen kan slås fra hv
         fastSensitivityScaling: 0,
         earlySensitivityScaling: 0,
         lateSensitivityScaling: 0,
-        insulinSensitivityDelayMin: 0,
+        insulinSensitivityOnsetHalfMin: 0,
         glycogenUseScaling: 0,
         hepaticDriveRate: { Medium: 0 },
         hepaticDriveCeiling: { Medium: 0 },
@@ -3183,7 +3219,7 @@ test('48h decay: 60 min high cardio — late phase persists (Mikines 1988 target
         `48h after 60min high cardio: ISF ratio vs control ${ratio.toFixed(3)} should be 1.08-1.50 (Mikines 1988)`);
 });
 
-test('120h decay: late-fase under cutoff ved 5 dage (Mikines 1988)', () => {
+test('120h decay: late-fase er under 1% ved 5 dage (Mikines 1988)', () => {
     // Direkte unit-test af late-decay-formlen uden full sim-update-loop
     // (som ville blive forstyrret af spil-logik som game-over checks).
     //
@@ -3208,9 +3244,10 @@ test('120h decay: late-fase under cutoff ved 5 dage (Mikines 1988)', () => {
     // Late-komponentens decay ved 120 t (t½=18t):
     //   A_late × 0.5^(120/18) = A_late × 0.0098
     //   A_late ≈ 0.502 (Cardio Høj 60 min) → late ved 120 t ≈ 0.0049
-    //   Det er UNDER EXERCISE_LATE_CUTOFF (0.005) — bidrager ikke.
-    // Fast er for længst dødt (t½=15min). Early=0 fordi pool er fuld.
-    // Total boost bør være < 1% — under cutoff og ikke detekterbart.
+    //   A_late ≈ 0.502 (Cardio Høj 60 min) → late ved 120 t ≈ 0.0049.
+    // Fast er for længst praktisk nul (t½=15min). Early=0 fordi pool er fuld.
+    // Total boost bør være < 1% og dermed ikke klinisk detekterbart. Små
+    // bidrag summeres nu uden en hård cutoff, så kurven forbliver kontinuert.
     const ratio = sim.currentISF / sim.ISF;
     assert(ratio < 1.05,
         `120h post 60min høj cardio: ISF ratio ${ratio.toFixed(3)} skal være <1.05 (Mikines: undetekterbar ved 5 dage)`);
@@ -4210,6 +4247,49 @@ test('Insights-eksport indeholder kun karakter-id, handlinger og spillet BG-refe
         !Object.prototype.hasOwnProperty.call(scenario, 'isf') &&
         !Object.prototype.hasOwnProperty.call(scenario, 'icr'),
         'Rå vægt-, ISF- og ICR-værdier må ikke indgå i kontrakten');
+});
+
+test('Hvad Nu Hvis bevarer første minuts mad, basal, bolus og aktivitet som redigerbare handlinger', () => {
+    const cases = [
+        {
+            label: 'mad',
+            expectedKind: 'meal',
+            act: sim => sim.addFood(20, 4, 2, 'X', 80, 'mixed', 5)
+        },
+        {
+            label: 'basal',
+            expectedKind: 'basal',
+            act: sim => sim.addLongInsulin(10)
+        },
+        {
+            label: 'bolus',
+            expectedKind: 'bolus',
+            act: sim => sim.addFastInsulin(1)
+        },
+        {
+            label: 'aktivitet',
+            expectedKind: 'activity',
+            act: sim => sim.startAktivitet('cardio', 'Medium', 30)
+        }
+    ];
+
+    cases.forEach(({ label, expectedKind, act }) => {
+        const sim = new Simulator({ characterId: 'erik' });
+        assert(sim.engineSnapshots.length === 1 && sim.engineSnapshots[0].atMin === 0,
+            `${label}: start-snapshot skal findes før spillerens første handling`);
+        const stateBeforeAction = JSON.stringify(sim.engineSnapshots[0].snap);
+
+        act(sim);
+        sim._tickPhysiology(1);
+
+        const scenario = sim.exportInsightsScenario();
+        assert(scenario.events.length === 1 && scenario.events[0].kind === expectedKind,
+            `${label}: handling ved minut 0 skal eksporteres som redigerbar Hvad Nu Hvis-hændelse`);
+        assert(scenario.events[0].t === 0,
+            `${label}: handlingen skal ligge på første minut i den lokale tidslinje`);
+        assert(JSON.stringify(scenario.engineState) === stateBeforeAction,
+            `${label}: start-snapshot må ikke mutere, når handlingen udføres`);
+    });
 });
 
 test('Box Challenge eksporterer kasser separat som låst Insights-geometri', () => {
