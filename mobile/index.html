@@ -39,7 +39,7 @@
      brand/logo font — used ONLY for the T1D SIMULATOR wordmark on the landing screen
      (same combined font request as the desktop shell so the brand renders identically). -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="mobile.css?v=0.9.117">
+    <link rel="stylesheet" href="mobile.css?v=0.9.118">
 <!-- Anti-flash: decide the welcome screen's visibility BEFORE <body> is parsed, so the
      landing can never paint even for one frame when it is turned off. This runs in the
      <head> (before #startScreen exists), so it sets a class on <html> that the already-
@@ -671,21 +671,21 @@
        global appSettings, so it must load before the model + mobile.js. -->
   <script>window.AUDIO_BASE_PATH = '../';</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
-<script src="../js/sounds.js?v=0.9.117"></script>
-<script src="../js/i18n.js?v=0.9.117"></script>
-<script src="../js/dose-controls.js?v=0.9.117"></script>
-<script src="../js/foods.js?v=0.9.117"></script>
-<script src="../js/hovorka.js?v=0.9.117"></script>
-<script src="../js/physiology-engine.js?v=0.9.117"></script>
-<script src="../js/graph-renderer.js?v=0.9.117"></script>
-<script src="../js/simulator.js?v=0.9.117"></script>
+<script src="../js/sounds.js?v=0.9.118"></script>
+<script src="../js/i18n.js?v=0.9.118"></script>
+<script src="../js/dose-controls.js?v=0.9.118"></script>
+<script src="../js/foods.js?v=0.9.118"></script>
+<script src="../js/hovorka.js?v=0.9.118"></script>
+<script src="../js/physiology-engine.js?v=0.9.118"></script>
+<script src="../js/graph-renderer.js?v=0.9.118"></script>
+<script src="../js/simulator.js?v=0.9.118"></script>
   <!-- Campaign data + shared DOM-free engine. levels.js (CAMPAIGN_LEVELS +
        GLOBAL_TIPS) must load before campaign-core.js; both before mobile.js so
        the mobile host can construct the engine. -->
-<script src="../js/levels.js?v=0.9.117"></script>
-<script src="../js/archetypes.js?v=0.9.117"></script>
-<script src="../js/symptoms.js?v=0.9.117"></script>
-<script src="../js/campaign-core.js?v=0.9.117"></script>
-<script src="mobile.js?v=0.9.117"></script>
+<script src="../js/levels.js?v=0.9.118"></script>
+<script src="../js/archetypes.js?v=0.9.118"></script>
+<script src="../js/symptoms.js?v=0.9.118"></script>
+<script src="../js/campaign-core.js?v=0.9.118"></script>
+<script src="mobile.js?v=0.9.118"></script>
 </body>
 </html>

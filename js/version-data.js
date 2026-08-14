@@ -15,9 +15,31 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.117-beta',
-    date: '2026-08-05',
+    version: '0.9.118-beta',
+    date: '2026-08-14',
     history: [
+        {
+            version: '0.9.118-beta',
+            date: '2026-08-14',
+            features: {
+                da: [
+                    'Modelvalideringssiden har nu delbare direkte links til hver test.',
+                    'En ny test sammenligner hurtige kulhydrater ved 10 g kulhydrat og viser modelrelative respons- og hastighedsindeks.'
+                ],
+                en: [
+                    'The model validation page now has shareable direct links to every test.',
+                    'A new test compares fast carbohydrates at 10 g carbohydrate and shows model-relative response and speed indices.'
+                ]
+            },
+            fixes: {
+                da: [
+                    'Madtestene bruger nu simulatorens aktuelle madikoner og maddata.'
+                ],
+                en: [
+                    'Food tests now use the simulator\'s current food icons and food data.'
+                ]
+            }
+        },
         {
             version: '0.9.117-beta',
             date: '2026-08-05',
@@ -49,29 +71,10 @@ const APP_VERSION_INFO = {
             }
         },
         {
-            version: '0.9.115-beta',
-            date: '2026-08-04',
-            features: {
-                da: [
-                    'Hvad Nu Hvis lader dig sætte banen på pause og afprøve andre handlinger for den valgte karakter.',
-                    'Insights samler fysiologi-visningen og Hvad Nu Hvis ét sted.',
-                    'Banehændelser og Box Challenge-kasser følger med som låste dele af det spillede forløb.'
-                ],
-                en: [
-                    'What If lets you pause a level and explore different actions for the selected character.',
-                    'Insights brings the physiology view and What If together in one place.',
-                    'Level events and Box Challenge obstacles carry over as locked parts of the played scenario.'
-                ]
-            },
-            fixes: {
-                da: [
-                    'Aktiviteter i Hvad Nu Hvis viser ikke længere et fastlåst Stop-panel.',
-                    'Grafmarkeringer, tips og karaktervalg er gjort tydeligere og mindre påtrængende.'
-                ],
-                en: [
-                    'Activities in What If no longer show a stuck Stop panel.',
-                    'Graph markers, tips and character selection are clearer and less intrusive.'
-                ]
+            month: '2026-08',
+            summary: {
+                da: 'Hvad Nu Hvis og Insights samlede alternative handlinger, fysiologi og låste banehændelser i én visning.',
+                en: 'What If and Insights brought alternative actions, physiology and locked level events together in one view.'
             }
         },
         {

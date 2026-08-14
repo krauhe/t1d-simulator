@@ -124,6 +124,40 @@ h3 { font-size: 14px; margin: 16px 0 4px 0; color: var(--muted); }
 .test-section .pass { color: var(--green); }
 .test-section .warn { color: var(--yellow); }
 .test-section .fail { color: var(--red); }
+.test-section { scroll-margin-top: 16px; }
+.test-section:target { border-color: var(--blue); }
+
+/* Testoverskrift med et delbart dybt link. Knappen er bevidst diskret, så
+   den ikke konkurrerer visuelt med testnummer og titel. */
+.section-heading-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 32px 0 6px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+.section-heading-row h2 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.copy-deep-link {
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 7px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+}
+.copy-deep-link:hover,
+.copy-deep-link:focus-visible { color: var(--text); border-color: var(--blue); }
+.legacy-section-anchor { position: absolute; }
 
 /* Canvas + legend-column side-om-side. canvas vokser fleksibelt (max 600px),
    legend-column har fast bredde til højre og indeholder legend + conditions. */
@@ -183,6 +217,15 @@ canvas {
     flex: 1;
     word-break: break-word;
     line-height: 1.35;
+}
+
+/* Madikoner genbruges direkte fra simulatorens aktuelle food-katalog. */
+.food-icon-inline {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    vertical-align: middle;
+    margin-right: 5px;
 }
 
 /* Conditions-blok: standardiseret beskrivelse af test-tilstande (model-test
@@ -945,6 +988,24 @@ function buildLegend(series) {
     }).join('');
 }
 
+/**
+ * Returnerer et kompakt <img>-element til tabeller og legends. FOODS bruger
+ * stier relativt til projektroden, mens denne testside ligger i tests/.
+ */
+function foodIconHtml(iconPath, alt = '') {
+    const src = iconPath.startsWith('../') ? iconPath : `../${iconPath}`;
+    return `<img class="food-icon-inline" src="${src}" alt="${alt}">`;
+}
+
+/**
+ * Henter en madvare fra det samme FOODS-katalog som spillet, så valideringssiden
+ * ikke driver væk fra de produktive makroer, carb-typer eller ikonstier.
+ */
+function validationFood(key, name) {
+    const food = FOODS[key];
+    return { key, name, ...food, iconHtml: foodIconHtml(food.icon, name) };
+}
+
 // =========================================================================
 // TEST SECTIONS — Each section tests one aspect of the model
 // =========================================================================
@@ -960,6 +1021,7 @@ let chapterCount = 0;
 // getElementById lookups stay stable.
 let currentChapterLetter = '';
 let chapterSectionCount = 0;
+const usedDeepLinkIds = new Set();
 
 // Queue for asynchronous execution. Tests are queued here and run one at a
 // time with requestAnimationFrame between each test, so the browser can update
@@ -1030,7 +1092,7 @@ function addChapter(title) {
  * The displayed number ("A.1", "F.4", …) comes from the per-chapter counter.
  * DOM IDs still use the globally unique sectionCount.
  */
-function addSection(title, intro, expected, testFn) {
+function addSection(title, intro, expected, testFn, requestedDeepLinkId = '') {
     sectionCount++;
     chapterSectionCount++;
     const num = sectionCount; // Frosset globalt nummer — bruges til DOM-ID'er
@@ -1038,15 +1100,37 @@ function addSection(title, intro, expected, testFn) {
         ? `${currentChapterLetter}.${chapterSectionCount}`
         : `${num}`;
 
+    // Et læsbart, stabilt hash-ID gør det muligt at dele et direkte link til
+    // testresultatet. Særligt vigtige tests kan få et eksplicit ID som femte
+    // argument; øvrige får et deterministisk ID afledt af titlen.
+    const titleBasedId = title.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/τ/g, 'tau')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    const baseDeepLinkId = requestedDeepLinkId || titleBasedId || `test-${num}`;
+    let deepLinkId = baseDeepLinkId;
+    let duplicateNumber = 2;
+    while (usedDeepLinkIds.has(deepLinkId)) {
+        deepLinkId = `${baseDeepLinkId}-${duplicateNumber++}`;
+    }
+    usedDeepLinkIds.add(deepLinkId);
+
     // Create the DOM structure immediately, so the layout is visible while running.
-    const sectionId = `section-${num}`;
+    const legacySectionId = `section-${num}`;
     const section = document.createElement('div');
     section.className = 'test-section';
-    section.id = sectionId;
+    section.id = deepLinkId;
+    section.dataset.sectionNumber = String(num);
     // Canvas + legend-column ligger side-om-side i en .chart-row flex-container.
     // Legend-column indeholder legend (øverst) + conditions-blok (nederst).
     // På mobil < 760px stacker de via media-query.
-    section.innerHTML = `<h2>${displayNum}. ${title}</h2>
+    section.innerHTML = `<span class="legacy-section-anchor" id="${legacySectionId}" aria-hidden="true"></span>
+        <div class="section-heading-row">
+            <h2>${displayNum}. ${title}</h2>
+            <button type="button" class="copy-deep-link" data-deep-link="${deepLinkId}" aria-label="Copy direct link to ${title}">Copy link</button>
+        </div>
         <p class="label">Description</p><p>${intro}</p>
         <p class="label">Expected result</p><p>${expected}</p>
         <div class="chart-row">
@@ -1065,12 +1149,42 @@ function addSection(title, intro, expected, testFn) {
     // TOC entry (indented under current chapter)
     const li = document.createElement('li');
     li.className = 'toc-section';
-    li.innerHTML = `<a href="#${sectionId}">${displayNum}. ${title}</a>`;
+    li.innerHTML = `<a href="#${deepLinkId}">${displayNum}. ${title}</a>`;
     tocList.appendChild(li);
 
     // Queue the test for asynchronous execution, handled by runTestQueue.
     testQueue.push({ num, title, testFn });
 }
+
+/**
+ * Kopierer sidens fulde URL med testens stabile hash. Clipboard API bruges på
+ * HTTPS/localhost; en skjult textarea er fallback ved direkte file://-åbning.
+ */
+async function copyTestDeepLink(button) {
+    const url = new URL(window.location.href);
+    url.hash = button.dataset.deepLink;
+    try {
+        await navigator.clipboard.writeText(url.href);
+    } catch (error) {
+        const textarea = document.createElement('textarea');
+        textarea.value = url.href;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+    }
+
+    const originalText = button.textContent;
+    button.textContent = 'Copied';
+    window.setTimeout(() => { button.textContent = originalText; }, 1400);
+}
+
+document.addEventListener('click', event => {
+    const button = event.target.closest('.copy-deep-link');
+    if (button) copyTestDeepLink(button);
+});
 
 /**
  * Collect BG and ketone data simultaneously.
@@ -2256,35 +2370,36 @@ addSection(
     }
 );
 
-// SECTION: Food presets — heavy meals (pizza effect)
+// SECTION: Food presets — meals (pizza effect)
 // -------------------------------------------------------------------------
-// Compares all 5 top-row foods: Pizza, Pasta, cake, ice cream, chocolate.
-// These are all high-carb meals, but varying fat content creates very
+// Sammenligner alle seks måltider i simulatorens aktuelle række 2.
+// Måltiderne har mange kulhydrater, men forskelligt fedtindhold skaber
 // different BG profiles due to delayed gastric emptying (τG) and
 // FFA-induced insulin resistance.
 addSection(
-    'Food presets — Heavy meals (pizza effect zone)',
-    'All 5 top-row foods given at 14:00 from BG=6.0. These are high-carb meals '
+    'Food presets — Meals (pizza effect zone)',
+    'All 6 current meal presets are given at 14:00 from BG=6.0. These are high-carb meals '
     + 'with varying fat content. Fat delays carb absorption (higher τG) and causes '
-    + 'FFA-induced insulin resistance hours later. Pizza and cake have the most fat. '
+    + 'FFA-induced insulin resistance hours later. Burger, pizza and cake have the most fat. '
     + 'X-axis shows clock time (meal at 14:00, observation window 14:00 - 22:00). '
     + 'Categorical colors — different food types are not variations of the same intervention.',
 
-    'Pizza (55/20/25) and cake (60/5/25): gentler initial slope and extended rise due to fat delay. '
+    'Pizza (55/20/25), burger (40/40/40) and cake (60/5/25): gentler initial slope and extended rise due to fat delay. '
     + 'Pasta (50/10/5): steep max slope (high carbs, low fat — fast absorption). '
-    + 'Chocolate (30/3/15) and ice cream (25/3/12): moderate slopes with mild fat delay. '
+    + 'Curry with rice and oatmeal use the whole-grain carb type and therefore absorb more slowly. '
     + 'Primary metric: max slope (dBG/dt) and time-to-max-slope — robust for broad, fat-delayed curves '
     + 'where peak-based metrics are fragile.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
         const foods = [
-            { name: '🍕 Pizza',     carbs: 55, protein: 20, fat: 25, emoji: '🍕' },
-            { name: '🍝 Pasta',     carbs: 50, protein: 10, fat: 5,  emoji: '🍝' },
-            { name: '🍰 Cake',      carbs: 60, protein: 5,  fat: 25, emoji: '🍰' },
-            { name: '🍦 Ice cream', carbs: 25, protein: 3,  fat: 12, emoji: '🍦' },
-            { name: '🍫 Chocolate', carbs: 30, protein: 3,  fat: 15, emoji: '🍫' },
+            validationFood('bollerIKarry', 'Curry & rice'),
+            validationFood('havregryn', 'Oatmeal'),
+            validationFood('burger', 'Burger'),
+            validationFood('pasta', 'Pasta'),
+            validationFood('pizza', 'Pizza'),
+            validationFood('lagkage', 'Cake'),
         ];
-        const foodColors = ['#ef4444', '#f59e0b', '#a855f7', '#06b6d4', '#8b5cf6'];
+        const foodColors = ['#06b6d4', '#eab308', '#22c55e', '#f59e0b', '#ef4444', '#a855f7'];
         const results = [];
         const allSeries = [];
 
@@ -2301,21 +2416,21 @@ addSection(
             await advanceTo(sim, 14 * 60);
             clampBG(sim, 6.0);
             const startBG = sim.trueBG;
-            sim.addFood(f.carbs, f.protein, f.fat);
+            sim.addFood(f.carbs, f.protein, f.fat, f.icon, f.weight, f.carbType, f.eatTimeMin);
             const data = await collectBG(sim, 8 * 60);
             const stats = bgStats(data);
             const { maxSlope, maxSlopeT } = computeMaxSlope(data);
             const tMaxSlope = maxSlopeT - 14 * 60;
             const rise = stats.peak - startBG;
             results.push({ ...f, startBG, peak: stats.peak, rise, maxSlope, tMaxSlope });
-            allSeries.push({ label: `${f.name} (${f.carbs}/${f.protein}/${f.fat})`, data, color: foodColors[i] });
+            allSeries.push({ label: `${f.iconHtml}${f.name} (${f.carbs}/${f.protein}/${f.fat})`, data, color: foodColors[i] });
         }
 
         drawChart(canvas, allSeries, { yMin: 2, yMax: 24, xLabel: 'Time of Day' });
         legendDiv.innerHTML = buildLegend(allSeries);
 
         let tableRows = results.map(r =>
-            `<tr><td>${r.name}</td><td>${r.carbs}/${r.protein}/${r.fat}</td><td>${r.peak.toFixed(1)}</td><td>+${r.rise.toFixed(1)}</td><td>${(r.maxSlope * 60).toFixed(2)}</td><td>${r.tMaxSlope.toFixed(0)} min</td></tr>`
+            `<tr><td>${r.iconHtml}${r.name}</td><td>${r.carbs}/${r.protein}/${r.fat}</td><td>${r.peak.toFixed(1)}</td><td>+${r.rise.toFixed(1)}</td><td>${(r.maxSlope * 60).toFixed(2)}</td><td>${r.tMaxSlope.toFixed(0)} min</td></tr>`
         ).join('');
         resultDiv.innerHTML = `<table class="results-table">
             <tr><th>Food</th><th>C/P/F (g)</th><th>Peak BG</th><th>Rise</th><th>Max slope<br>(mmol/L/h)</th><th>t @ max slope</th></tr>
@@ -2323,8 +2438,8 @@ addSection(
         </table>`;
 
         // Check: pasta (low fat) should have a steeper max slope than pizza (high fat).
-        const pizzaSlope = results.find(r => r.emoji === '🍕').maxSlope;
-        const pastaSlope = results.find(r => r.emoji === '🍝').maxSlope;
+        const pizzaSlope = results.find(r => r.key === 'pizza').maxSlope;
+        const pastaSlope = results.find(r => r.key === 'pasta').maxSlope;
         const pastaSteeper = pastaSlope > pizzaSlope;
         const monotonic = results.every(r => r.rise > 0);
         conclusionDiv.innerHTML = `
@@ -2333,29 +2448,28 @@ addSection(
     }
 );
 
-// SECTION: Food presets — everyday meals + protein/fat
+// SECTION: Food presets — low-carb foods + protein/fat
 // -------------------------------------------------------------------------
 addSection(
-    'Food presets — Everyday meals + protein/fat',
-    'All 5 middle-row foods given at 14:00 from BG=6.0. '
-    + 'These include everyday carb sources (bread, oatmeal) and protein/fat-dominant foods '
-    + '(chicken, cheese, avocado). Protein raises BG via glucagon→HGP, not direct glucose. '
+    'Food presets — Low-carb foods + protein/fat',
+    'All 6 current low-carb presets are given at 14:00 from BG=6.0. '
+    + 'Protein raises BG via glucagon→HGP, not direct glucose. '
     + 'X-axis shows clock time (meal at 14:00, observation window 14:00 - 22:00). '
     + 'Categorical colors — different food types are not variations of the same intervention.',
 
-    'Bread/oatmeal: moderate peaks from carbs. '
-    + 'Chicken/cheese: delayed, smaller BG rise from protein→glucagon (onset ~60-90 min). '
-    + 'Avocado: minimal BG impact (low carbs, no significant protein glucagon).',
+    'Egg, nuts and salad should have small effects. Composite meals with salmon, bacon or steak '
+    + 'should show a larger delayed protein/fat contribution despite containing few carbohydrates.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
         const foods = [
-            { name: '🍞 Bread',     carbs: 25, protein: 8,  fat: 3,  emoji: '🍞' },
-            { name: '🥣 Oatmeal',   carbs: 30, protein: 8,  fat: 2,  emoji: '🥣' },
-            { name: '🍗 Chicken',   carbs: 2,  protein: 30, fat: 15, emoji: '🍗' },
-            { name: '🧀 Cheese',    carbs: 0,  protein: 25, fat: 30, emoji: '🧀' },
-            { name: '🥑 Avocado',   carbs: 5,  protein: 5,  fat: 25, emoji: '🥑' },
+            validationFood('æg', 'Egg'),
+            validationFood('nødder', 'Nuts'),
+            validationFood('salat', 'Salad'),
+            validationFood('laksAvocado', 'Salmon & avocado'),
+            validationFood('ægBacon', 'Eggs & bacon'),
+            validationFood('bøfBearnaise', 'Steak & béarnaise'),
         ];
-        const foodColors = ['#f59e0b', '#eab308', '#22c55e', '#3b82f6', '#10b981'];
+        const foodColors = ['#eab308', '#a855f7', '#22c55e', '#06b6d4', '#f59e0b', '#ef4444'];
         const results = [];
         const allSeries = [];
 
@@ -2371,7 +2485,7 @@ addSection(
             await advanceTo(sim, 14 * 60);
             clampBG(sim, 6.0);
             const startBG = sim.trueBG;
-            sim.addFood(f.carbs, f.protein, f.fat);
+            sim.addFood(f.carbs, f.protein, f.fat, f.icon, f.weight, f.carbType, f.eatTimeMin);
             const data = await collectBG(sim, 8 * 60);
             const stats = bgStats(data);
             const peakIdx = data.findIndex(d => d.bg === stats.peak);
@@ -2379,7 +2493,7 @@ addSection(
             const rise = stats.peak - ctrlAtPeak;
             const peakMinAfterFood = stats.peakTime - 14 * 60;
             results.push({ ...f, startBG, peak: stats.peak, rise, peakMin: peakMinAfterFood });
-            allSeries.push({ label: `${f.name} (${f.carbs}/${f.protein}/${f.fat})`, data, color: foodColors[i] });
+            allSeries.push({ label: `${f.iconHtml}${f.name} (${f.carbs}/${f.protein}/${f.fat})`, data, color: foodColors[i] });
         }
 
         // Y-akse 0-24 deler skala med C.1/C.2/C.5 (post-prandial subgruppe — selvom denne
@@ -2388,92 +2502,167 @@ addSection(
         legendDiv.innerHTML = buildLegend(allSeries);
 
         let tableRows = results.map(r =>
-            `<tr><td>${r.name}</td><td>${r.carbs}/${r.protein}/${r.fat}</td><td>${r.peak.toFixed(1)}</td><td>+${r.rise.toFixed(1)}</td><td>${r.peakMin} min</td></tr>`
+            `<tr><td>${r.iconHtml}${r.name}</td><td>${r.carbs}/${r.protein}/${r.fat}</td><td>${r.peak.toFixed(1)}</td><td>+${r.rise.toFixed(1)}</td><td>${r.peakMin} min</td></tr>`
         ).join('');
         resultDiv.innerHTML = `<table class="results-table">
             <tr><th>Food</th><th>C/P/F (g)</th><th>Peak BG</th><th>Rise</th><th>Peak time</th></tr>
             ${tableRows}
         </table>`;
 
-        // Tjek: havregryn (30g KH) > ost (0g KH) i peak
-        const cerealRise = results.find(r => r.emoji === '🥣').rise;
-        const cheeseRise = results.find(r => r.emoji === '🧀').rise;
-        const avocadoRise = results.find(r => r.emoji === '🥑').rise;
+        const eggRise = results.find(r => r.key === 'æg').rise;
+        const steakRise = results.find(r => r.key === 'bøfBearnaise').rise;
+        const saladRise = results.find(r => r.key === 'salat').rise;
         conclusionDiv.innerHTML = `
-            <p class="${cerealRise > cheeseRise ? 'pass' : 'fail'}">${cerealRise > cheeseRise ? '✓' : '✗'} Oatmeal (30g carbs) rises more than cheese (0g carbs): +${cerealRise.toFixed(1)} vs +${cheeseRise.toFixed(1)}</p>
-            <p class="${cheeseRise > 0.3 ? 'pass' : 'fail'}">${cheeseRise > 0.3 ? '✓' : '✗'} Cheese (0g carbs, 25g protein) still raises BG via glucagon: +${cheeseRise.toFixed(1)} mmol/L</p>
-            <p class="${avocadoRise < cerealRise ? 'pass' : 'fail'}">${avocadoRise < cerealRise ? '✓' : '✗'} Avocado has minimal BG impact: +${avocadoRise.toFixed(1)} mmol/L</p>`;
+            <p class="${steakRise > eggRise ? 'pass' : 'fail'}">${steakRise > eggRise ? '✓' : '✗'} Steak & béarnaise has a larger delayed effect than one egg: +${steakRise.toFixed(1)} vs +${eggRise.toFixed(1)} mmol/L</p>
+            <p class="${saladRise < steakRise ? 'pass' : 'fail'}">${saladRise < steakRise ? '✓' : '✗'} Salad remains below the steak meal: +${saladRise.toFixed(1)} vs +${steakRise.toFixed(1)} mmol/L</p>`;
     }
 );
 
-// SECTION: Food presets — hypo correction & light foods
+// SECTION: Fast-carbohydrate presets — normalized to 10 g carbohydrate
 // -------------------------------------------------------------------------
 addSection(
-    'Food presets — Hypo correction & light foods',
-    'Bottom-row foods given at 14:00 from BG=3.5 (mild hypo). '
-    + 'Tests whether fast-acting carbs (dextrose, apple, juice) effectively rescue from hypo, '
-    + 'and whether salad has negligible impact. No bolus insulin given. '
-    + 'X-axis shows clock time (intervention at 14:00, observation window 14:00 - 18:00). '
-    + 'Egen y-skala (BG 1-14) fordi hypo-range er smal og denne lavere skala viser nadir + '
-    + 'rescue-trajektorie tydeligere end den post-prandiale 0-24 skala.',
+    'Fast-carbohydrate presets — 10g carbohydrate each',
+    'Compares four distinct model responses from the Fast carbs row: ordinary solid sugar, juice, '
+    + 'banana and chocolate. Candy is omitted because it is model-identical to solid sugar, and '
+    + 'cola is omitted because it is model-identical to juice. Each portion is scaled proportionally to exactly 10g carbohydrate; '
+    + 'protein, fat, total weight and eating time are scaled by the same factor. A no-food control '
+    + 'provides the baseline. No bolus is given. X-axis shows clock time (intervention at 14:00, '
+    + 'observation window 14:00 - 18:00).',
 
-    'Dextro (3g): tiny rescue (+~1 mmol/L). Apple (20g) and juice (25g): effective rescue, '
-    + 'BG should return above 4.0 within 30 min. Salad (5g): minimal effect.',
+    'Liquid sugar (juice) should rise earliest. Ordinary solid sugar should follow. '
+    + 'Banana and chocolate should produce broader responses because fruit fibre and chocolate fat '
+    + 'delay absorption compared with liquid sugar.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
+        const TARGET_CARBS = 10;
         const foods = [
-            { name: '◻️ Dextro',  carbs: 3,  protein: 0, fat: 0, emoji: '◻️' },
-            { name: '🍎 Apple',   carbs: 20, protein: 0, fat: 0, emoji: '🍎' },
-            { name: '🧃 Juice',   carbs: 25, protein: 0, fat: 0, emoji: '🧃' },
-            { name: '🥗 Salad',   carbs: 5,  protein: 2, fat: 1, emoji: '🥗' },
-        ];
-        // Dextro: hvid for at signalere "ren glukose" (og undgå kollision med CTRL_COLOR=#6b7280)
-        const foodColors = ['#e5e7eb', '#22c55e', '#f59e0b', '#67e8f9'];
+            validationFood('druesukker', 'Ordinary sugar'),
+            validationFood('juice', 'Juice'),
+            validationFood('banan', 'Banana'),
+            validationFood('chokolade', 'Chocolate'),
+        ].map(food => {
+            const scale = TARGET_CARBS / food.carbs;
+            return {
+                ...food,
+                originalCarbs: food.carbs,
+                carbs: TARGET_CARBS,
+                protein: food.protein * scale,
+                fat: food.fat * scale,
+                weight: food.weight * scale,
+                eatTimeMin: food.eatTimeMin * scale,
+                scale,
+            };
+        });
+        const foodColors = ['#e5e7eb', '#06b6d4', '#22c55e', '#ef4444'];
         const results = [];
         const allSeries = [];
 
         const simCtrl = createSim(DEFAULT_PROFILE);
         await advanceTo(simCtrl, 14 * 60);
-        clampBG(simCtrl, 3.5);
+        clampBG(simCtrl, 6.0);
         const ctrlData = await collectBG(simCtrl, 4 * 60);
-        allSeries.push({ label: 'Control (hypo, 0g)', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH });
+        allSeries.push({ label: 'Baseline — no food', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH });
 
         for (let i = 0; i < foods.length; i++) {
             const f = foods[i];
             const sim = createSim(DEFAULT_PROFILE);
             await advanceTo(sim, 14 * 60);
-            clampBG(sim, 3.5);
+            clampBG(sim, 6.0);
             const startBG = sim.trueBG;
-            sim.addFood(f.carbs, f.protein, f.fat);
+            sim.addFood(f.carbs, f.protein, f.fat, f.icon, f.weight, f.carbType, f.eatTimeMin);
             const data = await collectBG(sim, 4 * 60);
             const stats = bgStats(data);
-            // Tid til BG >= 4.0 (ud af hypo)
-            const rescuePoint = data.find(d => d.bg >= 4.0);
-            const rescueMin = rescuePoint ? rescuePoint.time - 14 * 60 : null;
-            results.push({ ...f, startBG, peak: stats.peak, rise: stats.peak - startBG, rescueMin });
-            allSeries.push({ label: `${f.name} (${f.carbs}g KH)`, data, color: foodColors[i] });
+            const peakIdx = data.findIndex(point => point.bg === stats.peak);
+            const ctrlAtPeak = peakIdx >= 0 && peakIdx < ctrlData.length
+                ? ctrlData[peakIdx].bg
+                : ctrlData[ctrlData.length - 1].bg;
+            const { maxSlope, maxSlopeT } = computeMaxSlope(data);
+            const tMaxSlope = maxSlopeT - 14 * 60;
+            const netPeakEffect = stats.peak - ctrlAtPeak;
+            results.push({ ...f, startBG, peak: stats.peak, ctrlAtPeak, netPeakEffect, maxSlope, tMaxSlope, data });
+            allSeries.push({ label: `${f.iconHtml}${f.name} (10g carbs)`, data, color: foodColors[i] });
         }
 
-        drawChart(canvas, allSeries, { yMin: 1, yMax: 14, xLabel: 'Time of Day' });
+        drawChart(canvas, allSeries, { yMin: 4, yMax: 18, xLabel: 'Time of Day' });
         legendDiv.innerHTML = buildLegend(allSeries);
 
+        // Modelbaseret GI-lignende mål: positiv 2-timers iAUC over den samtidige
+        // kontrolkurve. Almindeligt, fast sukker er reference = 100. Dette er et
+        // internt simulatorindeks og må ikke præsenteres som klinisk målt GI.
+        const incrementalAuc120 = data => {
+            const startTime = data[0].time;
+            const endTime = startTime + 120;
+            let area = 0;
+            for (let i = 1; i < data.length; i++) {
+                const previous = data[i - 1];
+                const current = data[i];
+                if (previous.time >= endTime) break;
+
+                const segmentEnd = Math.min(current.time, endTime);
+                const segmentFraction = (segmentEnd - previous.time) / (current.time - previous.time);
+                const previousEffect = Math.max(0, previous.bg - ctrlData[i - 1].bg);
+                const currentRawEffect = current.bg - ctrlData[i].bg;
+                const endEffect = Math.max(0,
+                    previousEffect + (currentRawEffect - previousEffect) * segmentFraction);
+                area += 0.5 * (previousEffect + endEffect) * (segmentEnd - previous.time);
+                if (current.time >= endTime) break;
+            }
+            return area;
+        };
+
+        results.forEach(result => { result.iauc120 = incrementalAuc120(result.data); });
+        const sugarReference = results.find(result => result.key === 'druesukker');
+        results.forEach(result => {
+            result.sugarResponseIndex = 100 * result.iauc120 / sugarReference.iauc120;
+            result.absorptionSpeedIndex = 100 * result.maxSlope / sugarReference.maxSlope;
+        });
+
         let tableRows = results.map(r =>
-            `<tr><td>${r.name}</td><td>${r.carbs}g</td><td>${r.peak.toFixed(1)}</td><td>+${r.rise.toFixed(1)}</td><td>${r.rescueMin != null ? r.rescueMin + ' min' : '—'}</td></tr>`
+            `<tr><td>${r.iconHtml}${r.name}</td><td>${r.weight.toFixed(1)}g</td>`
+            + `<td>${r.protein.toFixed(1)}/${r.fat.toFixed(1)}</td>`
+            + `<td>${r.sugarResponseIndex.toFixed(0)}</td>`
+            + `<td>${r.absorptionSpeedIndex.toFixed(0)}</td>`
+            + `<td>${r.peak.toFixed(1)}</td><td>+${r.netPeakEffect.toFixed(1)}</td>`
+            + `<td>${(r.maxSlope * 60).toFixed(2)}</td><td>${r.tMaxSlope.toFixed(0)} min</td></tr>`
         ).join('');
         resultDiv.innerHTML = `<table class="results-table">
-            <tr><th>Food</th><th>Carbs</th><th>Peak BG</th><th>Rise</th><th>Time to BG ≥ 4.0</th></tr>
+            <tr><th>Food</th><th>Portion</th><th>P/F (g)</th>`
+            + `<th>2h response index<br>(sugar=100)</th>`
+            + `<th>Speed index<br>(sugar=100)</th>`
+            + `<th>Peak BG</th><th>Net effect</th><th>Max slope<br>(mmol/L/h)</th><th>t @ max slope</th></tr>
             ${tableRows}
         </table>`;
 
-        const juiceRescue = results.find(r => r.emoji === '🧃').rescueMin;
-        const appleRescue = results.find(r => r.emoji === '🍎').rescueMin;
-        const saladRise = results.find(r => r.emoji === '🥗').rise;
-        const juiceRise = results.find(r => r.emoji === '🧃').rise;
+        // Gem den præcise browserberegning, så den kan genbruges til eksport/plottet i Codex.
+        window.fastCarbComparisonData = {
+            baseline: ctrlData,
+            foods: results.map(result => ({
+                key: result.key,
+                name: result.name,
+                icon: result.icon,
+                portion: result.weight,
+                protein: result.protein,
+                fat: result.fat,
+                peak: result.peak,
+                netPeakEffect: result.netPeakEffect,
+                iauc120: result.iauc120,
+                sugarResponseIndex: result.sugarResponseIndex,
+                absorptionSpeedIndex: result.absorptionSpeedIndex,
+                maxSlopePerHour: result.maxSlope * 60,
+                tMaxSlope: result.tMaxSlope,
+                data: result.data,
+            })),
+        };
+
+        const juiceSlopeTime = results.find(r => r.key === 'juice').tMaxSlope;
+        const chocolateSlopeTime = results.find(r => r.key === 'chokolade').tMaxSlope;
+        const liquidBeforeChocolate = juiceSlopeTime < chocolateSlopeTime;
         conclusionDiv.innerHTML = `
-            <p class="${juiceRescue != null && juiceRescue <= 45 ? 'pass' : 'fail'}">${juiceRescue != null && juiceRescue <= 45 ? '✓' : '✗'} Juice rescues from hypo within ${juiceRescue || '?'} min</p>
-            <p class="${appleRescue != null && appleRescue <= 45 ? 'pass' : 'fail'}">${appleRescue != null && appleRescue <= 45 ? '✓' : '✗'} Apple rescues from hypo within ${appleRescue || '?'} min</p>
-            <p class="${juiceRise > saladRise ? 'pass' : 'fail'}">${juiceRise > saladRise ? '✓' : '✗'} Juice (+${juiceRise.toFixed(1)}) raises BG more than salad (+${saladRise.toFixed(1)})</p>`;
-    }
+            <p class="${liquidBeforeChocolate ? 'pass' : 'fail'}">${liquidBeforeChocolate ? '✓' : '✗'} Juice reaches its steepest rise before chocolate: ${juiceSlopeTime.toFixed(0)} vs ${chocolateSlopeTime.toFixed(0)} min</p>
+            <p><strong>Model indices:</strong> 2h response index compares positive iAUC above the no-food control; speed index compares maximum BG slope. Ordinary solid sugar is 100 for both. These are simulator-relative measures, not clinically measured GI values.</p>
+            <p>All four interventions contain exactly 10g digestible carbohydrate; curve differences therefore come from carb type, scaled protein/fat, physical weight and eating time.</p>`;
+    },
+    'fast-carbs-10g'
 );
 
 // SECTION: Carb-type comparison — 25g pure carbs, 7 CARB_TYPES, 8h window
@@ -2536,14 +2725,14 @@ addSection(
         // and stomachRetentionWeight are comparable. Only CARB_TYPES parameters vary.
         // Ordered by expected τG (fastest first → slowest last).
         const foods = [
-            { name: 'liquid sugar (cola/juice)',     carbType: 'sukker_flydende', icon: '🥤', color: '#06b6d4' },
-            { name: 'solid sugar (glucose tabs)',    carbType: 'sukker_fast',     icon: '🍬', color: '#fbbf24' },
-            { name: 'fruit (apple/banana)',          carbType: 'frugt',           icon: '🍎', color: '#ef4444' },
-            { name: 'white flour (bread/pasta)',     carbType: 'hvidt_mel',       icon: '🍞', color: '#f97316' },
-            { name: 'mixed (default)',               carbType: 'mixed',           icon: '🍲', color: '#a855f7' },
-            { name: 'vegetable (salad/broccoli)',    carbType: 'grøntsag',        icon: '🥦', color: '#22c55e' },
-            { name: 'whole grain (rye bread)',       carbType: 'fuldkorn',        icon: '🌾', color: '#78350f' },
-        ];
+            { name: 'liquid sugar (cola/juice)',  carbType: 'sukker_flydende', icon: FOODS.cola.icon,          color: '#06b6d4' },
+            { name: 'solid sugar (glucose tabs)', carbType: 'sukker_fast',     icon: FOODS.druesukker.icon,    color: '#fbbf24' },
+            { name: 'fruit (banana)',              carbType: 'frugt',           icon: FOODS.banan.icon,          color: '#ef4444' },
+            { name: 'white flour (pasta)',         carbType: 'hvidt_mel',       icon: FOODS.pasta.icon,          color: '#f97316' },
+            { name: 'mixed (default)',             carbType: 'mixed',           icon: '../assets/icons/app/meal-plate.png', color: '#a855f7' },
+            { name: 'vegetable (salad)',           carbType: 'grøntsag',        icon: FOODS.salat.icon,          color: '#22c55e' },
+            { name: 'whole grain (oatmeal)',       carbType: 'fuldkorn',        icon: FOODS.havregryn.icon,      color: '#78350f' },
+        ].map(food => ({ ...food, iconHtml: foodIconHtml(food.icon, food.name) }));
 
         const results = [];
         const allSeries = [{ label: '0g control', data: ctrlData, color: CTRL_COLOR, dash: CTRL_DASH }];
@@ -2595,7 +2784,7 @@ addSection(
             // asymptotic curves.
             const tPeak   = stats.peakTime - 14 * 60;
             results.push({ ...f, tauG, peak: stats.peak, rise30, rise60, rise120, auc, tPeak, maxSlope, tMaxSlope });
-            allSeries.push({ label: `${f.icon} ${f.name} (τG=${tauG.toFixed(0)}m)`, data, color: f.color });
+            allSeries.push({ label: `${f.iconHtml}${f.name} (τG=${tauG.toFixed(0)}m)`, data, color: f.color });
         }
 
         // Y-akse 0-24 deler skala med C.1/C.2/C.3 (post-prandial subgruppe)
@@ -2604,7 +2793,7 @@ addSection(
 
         // Max slope is shown in mmol/L per hour (× 60), making the values readable.
         const tableRows = results.map(r =>
-            `<tr><td>${r.icon} ${r.name}</td>`
+            `<tr><td>${r.iconHtml}${r.name}</td>`
             + `<td>${r.tauG.toFixed(0)} min</td>`
             + `<td>+${r.rise30.toFixed(1)}</td>`
             + `<td>+${r.rise60.toFixed(1)}</td>`
@@ -2656,10 +2845,10 @@ addSection(
         const aucSpread = aucMax > 0 ? (aucMax - aucMin) / aucMax : 0;
         const aucTight = aucSpread < 0.35;
 
-        const tauGList   = results.map(r => `${r.icon} ${r.tauG.toFixed(0)}`).join(' ≤ ');
-        const slopeList  = results.map(r => `${r.icon} ${(r.maxSlope * 60).toFixed(2)}`).join(' > ');
-        const tSlopeList = results.map(r => `${r.icon} ${r.tMaxSlope.toFixed(0)}m`).join(' < ');
-        const aucList    = results.map(r => `${r.icon} ${r.auc.toFixed(0)}`).join(', ');
+        const tauGList   = results.map(r => `${r.name}: ${r.tauG.toFixed(0)}`).join(' ≤ ');
+        const slopeList  = results.map(r => `${r.name}: ${(r.maxSlope * 60).toFixed(2)}`).join(' > ');
+        const tSlopeList = results.map(r => `${r.name}: ${r.tMaxSlope.toFixed(0)}m`).join(' < ');
+        const aucList    = results.map(r => `${r.name}: ${r.auc.toFixed(0)}`).join(', ');
 
         conclusionDiv.innerHTML = `
             <p class="${tauGOrdered ? 'pass' : 'fail'}">${tauGOrdered ? '✓' : '✗'} τG non-decreasing: ${tauGList} min</p>
@@ -6236,6 +6425,19 @@ async function runTestQueue() {
     progressContainer.classList.add('done');
     document.getElementById('status').textContent = `${total} test sections completed.`;
 }
+
+// Dynamisk oprettede sektioner findes først efter at hele scriptet er evalueret.
+// Et eksplicit scroll sikrer derfor, at et indgående dybt link også virker ved
+// første sideindlæsning og ikke kun efter et klik i indholdsfortegnelsen.
+function scrollToCurrentDeepLink() {
+    if (!window.location.hash) return;
+    const targetId = decodeURIComponent(window.location.hash.slice(1));
+    const target = document.getElementById(targetId);
+    if (target) target.scrollIntoView({ block: 'start' });
+}
+
+window.addEventListener('hashchange', scrollToCurrentDeepLink);
+window.requestAnimationFrame(scrollToCurrentDeepLink);
 
 // Start asynchronous execution after all tests have been added to the queue.
 runTestQueue();
