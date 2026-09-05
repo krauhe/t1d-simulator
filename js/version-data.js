@@ -15,9 +15,21 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.118-beta',
-    date: '2026-08-14',
+    version: '0.9.119-beta',
+    date: '2026-09-05',
     history: [
+        {
+            version: '0.9.119-beta',
+            date: '2026-09-05',
+            fixes: {
+                da: [
+                    'Projektbeskrivelserne afgrænser nu de offentlige spiltilstande til Campaign og Box Challenge.'
+                ],
+                en: [
+                    'Project descriptions now define Campaign and Box Challenge as the public game modes.'
+                ]
+            }
+        },
         {
             version: '0.9.118-beta',
             date: '2026-08-14',
@@ -41,40 +53,10 @@ const APP_VERSION_INFO = {
             }
         },
         {
-            version: '0.9.117-beta',
-            date: '2026-08-05',
-            features: {
-                da: [
-                    'Velkomstturen forklarer nu de faste karakterer og viser tydeligt, hvem du hjælper.',
-                    'Styrketræningens påvirkning af insulinfølsomheden begynder nu gradvist under aktiviteten.'
-                ],
-                en: [
-                    'The welcome tour now explains the fixed characters and clearly shows who you are helping.',
-                    'The effect of strength training on insulin sensitivity now begins gradually during the activity.'
-                ]
-            },
-            fixes: {
-                da: [
-                    'Start af bane 1 fra velkomstskærmen åbner nu karaktervalget.',
-                    'Karaktervælgeren holder den valgte figur inden for rammen og bruger en roligere fremhævning.',
-                    'Hvad Nu Hvis kan nu ændre handlinger fra banens første minut og bruger spillets almindelige nu-markør.',
-                    'Offentlige menuer og tekster viser nu kun de tilgængelige spilfunktioner.',
-                    'Statistik og kaloriebalance er slået til ved start, men kan stadig slås fra i indstillingerne.'
-                ],
-                en: [
-                    'Starting level 1 from the welcome screen now opens character selection.',
-                    'The character picker keeps the selected figure inside its frame and uses a calmer highlight.',
-                    'What If can now change actions from the first minute of a level and uses the game\'s standard current-time marker.',
-                    'Public menus and text now show only the available game features.',
-                    'Statistics and calorie balance are enabled at startup but can still be turned off in Settings.'
-                ]
-            }
-        },
-        {
             month: '2026-08',
             summary: {
-                da: 'Hvad Nu Hvis og Insights samlede alternative handlinger, fysiologi og låste banehændelser i én visning.',
-                en: 'What If and Insights brought alternative actions, physiology and locked level events together in one view.'
+                da: 'Velkomstturen forklarede de faste karakterer, Hvad Nu Hvis og Insights samlede alternative handlinger og fysiologi, og styrketræningens påvirkning af insulinfølsomheden blev mere gradvis.',
+                en: 'The welcome tour introduced the fixed characters, What If and Insights brought alternative actions and physiology together, and the effect of strength training on insulin sensitivity became more gradual.'
             }
         },
         {

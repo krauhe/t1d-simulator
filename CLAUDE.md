@@ -23,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Variabelnavne skal være selvforklarende
 - **Kode-kommentarer skrives på engelsk** (hele projektet). Generelt princip: al tekst tiltænkt teknisk kyndige læsere er engelsk — kode-kommentarer + videnskabelige/tekniske docs (`BG-SCIENCE.md`, `MODEL-IMPLEMENTATION.md`, `MODEL-API.md`) + **git-commit-beskeder** (udvikler-vendte; repo'et er offentligt). Kun bruger-vendt spil-tekst (UI-strenge, popups, level-tekst, hjælp til patienter/børn) er dansk (med engelsk i18n-spejl). Ny kode skrives med engelske kommentarer; eksisterende danske kommentarer oversættes løbende. NB: fordi commit-beskeder nu er engelske, undgås også æøå-encoding-problemet i terminalen (ingen `git commit -F`-omvej nødvendig).
 - Kernemodel (ODE'er) i `js/hovorka.js`, al øvrig fysiologi og spilmekanik i `js/simulator.js`
-- Skriv kode der er nem at udvide (tænk fremad mod baner og sandkasse)
+- Skriv kode der er nem at udvide (tænk fremad mod baner og interne udviklerværktøjer)
 - **Familiært design:** Når noget nyt minder om noget eksisterende, brug ALTID samme designmønster, klasser og struktur — både visuelt OG funktionelt. Genopfind ikke hjulet — genbrug det velkendte. Hvis en komponent (pil, ikon, knap, panel, animation) allerede findes ét sted i UI'et, skal den samme komponent genbruges når tilsvarende funktionalitet tilføjes andetsteds. Eksempler: nye toggles skal bruge samme knap-stil som eksisterende toggles (lyd-ikonet), dropdown-pile skal matche pilene i fysiologi-panelet, nye popups skal bruge det eksisterende popup-mønster, glaseffekt-paneler skal bruge de samme CSS-variable osv.
 
 ### Ændringsregler
@@ -134,11 +134,9 @@ Sonnet til afgrænsede opgaver (klart output, eksplicit scope, self-contained br
 
 **T1D Simulator** er et læringsspil om blodsukkerfysiologi. Spilleren hjælper faste, fiktive karakterer og udforsker, hvordan mad, insulin, aktivitet, søvn og stress påvirker deres simulerede blodsukker. Spillet er ikke individuel vejledning og bruger ikke spillerens helbredsdata.
 
-Projektet har to spiltilstande:
-1. **Sandkasse** – fri leg, afprøv hypoteser uden konsekvenser
-2. **Campaign** – baner med realistiske hverdagsscenarier, objectives, stjerne-rating og neutrale tips
-
-Derudover: **Box Challenge** — daglig udfordring med forhindringer og 3 liv.
+Den offentlige app har to spiltilstande:
+1. **Campaign** – baner med realistiske hverdagsscenarier, objectives, stjerne-rating og neutrale tips
+2. **Box Challenge** — daglig udfordring med forhindringer og 3 liv
 
 ---
 
@@ -228,7 +226,7 @@ Appen følger et Model-View-Controller mønster:
 - **View:** `drawGraph()` tegner canvas-grafen; `updateUI()` opdaterer DOM-elementer. Begge i `js/ui.js`.
 - **Controller:** Event listeners i `js/main.js` håndterer brugerinterventioner (mad, insulin, motion) og spilkontrol.
 - **Campaign:** `CampaignEngine` (`js/campaign.js`) styrer level-progression, objectives, stjerne-rating, tips og karakterbaserede popupper. Level-definitioner i `js/levels.js`.
-- **Game modes:** `startGame(mode)` i `js/game.js` — modes: `sandbox` (fri leg), `campaign` (baner), `boxchallenge` (daglig udfordring).
+- **Offentlige game modes:** `startGame(mode)` i `js/game.js` — `campaign` (baner) og `boxchallenge` (daglig udfordring). Interne test-id'er er ikke offentlige spiltilstande.
 
 ---
 

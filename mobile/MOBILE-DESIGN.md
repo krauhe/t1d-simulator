@@ -82,9 +82,10 @@ Challenge: keep — a daily 3-life loop suits mobile; evaluate during build.
 
 ## 3. Scope: lean playable core
 
-Sandbox + campaign core loop fully playable on a phone: live BG graph, CGM reading,
-give insulin (bolus + basal), eat, exercise, day/time progression, speed control,
-star rating, neutral tips, game over. Deep/authoring features stay on desktop.
+Campaign and Box Challenge core loops fully playable on a phone: live BG graph,
+CGM reading, give insulin (bolus + basal), eat, exercise, day/time progression,
+speed control, star rating, neutral tips and game over. Deep/authoring features
+stay on desktop.
 
 ---
 
@@ -267,8 +268,8 @@ before the real shell lands.
     globals the engine expects (appSettings, cgmDataPoints/trueBgPoints/
     physiologyDataPoints, speedSelector, logEvent, MAX_GRAPH_POINTS_PER_DAY,
     KCAL_PER_KG_WEIGHT, + stubs for the unguarded DOM-element globals
-    normoPointsWeighting / pointsBadge / steepDropWarningDiv) and drives a sandbox
-    Simulator on a rAF loop. The HUD (BG/IOB/COB/clock/day/TIR/BSgns/Point/trend)
+    normoPointsWeighting / pointsBadge / steepDropWarningDiv) and drives an internal
+    simulator test run on a rAF loop. The HUD (BG/IOB/COB/clock/day/TIR/BSgns/Point/trend)
     and the 12h rolling graph are fed from LIVE state; dot colours + trend reuse the
     shared getBGZone/cgmTrendForRate. Speed control + pause drive
     game.simulationSpeed / isPaused. Added a PC-test frame (phone-sized box on a wide
@@ -290,7 +291,7 @@ before the real shell lands.
     `performKetoneTest` / `useGlucagon` / dextrose). Each action closes the sheet +
     refreshes the HUD. Verified in-browser: eat → COB↑, bolus → IOB↑, basal dose
     given, activity starts, fingerprick adds a measurement; no console errors.
-    **→ The sandbox lean core is now playable on mobile (PC test frame too).**
+    **→ The internal lean-core test harness is playable on mobile (PC test frame too).**
 - **Phase 3 — mode flow.** Mode select, campaign level select, game over + stars +
   character scenes — content reused, restyled as sheets.
 - **Phase 4 — onboarding.** Lightweight 3-card mobile intro (replaces the tour).

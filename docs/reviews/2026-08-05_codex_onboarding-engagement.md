@@ -36,7 +36,7 @@ Et realistisk første designmål er højst 3 nødvendige interaktioner fra page-
 7. Den normale Start-knap samler karakter og spiltilstand på én skærm, hvilket er et godt eksisterende mønster. Sidst brugte karakter er allerede forvalgt (js/main.js:1380-1387; js/ui.js:3473-3516).
 8. Campaign åbner derefter en banevælger, opretter spillet og viser en blokerende baneintro. Simulationen kører først, når spilleren trykker `Start bane` (js/ui.js:3519-3529; js/campaign.js:602-620 og 262-306).
 9. Den gemte Campaign-progress indeholder næste aktuelle bane, men velkomstgenvejen starter altid bane 1 (js/campaign-core.js:584-590 og 1503-1507; js/main.js:1359-1367).
-10. Det offentlige desktop-register indeholder kun Campaign og Box Challenge. Der er ingen offentlig klikvej til Sandkasse, selv om projektbeskrivelsen og dele af brugergrænsefladen stadig omtaler den (js/game.js:137-149 og 162-166).
+10. Det offentlige desktop-register indeholder kun Campaign og Box Challenge. Ældre projektbeskrivelser, som antydede en yderligere offentlig spiltilstand, var forældede og er blevet rettet (js/game.js:137-149 og 162-166).
 
 ### 1.2 Minimumsforløb til kørende gameplay
 
@@ -60,7 +60,7 @@ Tallene antager, at spilleren accepterer den forvalgte karakter. Et karaktersski
 4. Tilbagevendende spiller med velkomst aktiv, Campaign via normal Start: 5 interaktioner.
 5. Tilbagevendende spiller med velkomst fravalgt, Campaign: 4 interaktioner.
 6. Tilbagevendende spiller med velkomst fravalgt, Box Challenge: 2 interaktioner.
-7. Sandkasse: ingen offentlig vej.
+7. Interne udviklings- og testveje er ikke offentlige spiltilstande.
 
 Det mest belastende er ikke hvert enkelt klik. Det er, at spilleren skal forstå flere valg og skærme, før spillet har demonstreret sin værdi.
 
@@ -236,14 +236,11 @@ Et muligt første Campaign-loop kan være:
 
 Den præcise dosis og fysiologiske framing skal reviewes med `phys-reviewer`, før sådan et loop implementeres.
 
-### 3.5 Afklar Sandkasse som produktbeslutning
+### 3.5 Offentlig mode-afgrænsning
 
-Projektbeskrivelsen siger, at Sandkasse er en central spiltilstand, men det offentlige mode-register indeholder den ikke. Før et nyt startflow designes, bør der træffes en eksplicit beslutning:
+**STATUS: ✅ FIKSET (2026-08-24)**
 
-1. Genindfør Sandkasse som offentlig indgang og giv den en tydelig rolle i velkomsten.
-2. Eller behandl den som bevidst fjernet og opdatér tekster og planlægningsmateriale.
-
-Dette er ikke en lille UX-rettelse; det ændrer produktets informationsarkitektur.
+Den offentlige app tilbyder Campaign og Box Challenge. Interne udviklings- og testveje er ikke produktfunktioner og må ikke beskrives som valgmuligheder for spilleren. Denne afgrænsning skal bevares i startflow, dokumentation og fremtidige reviews.
 
 ## 4. Prioriteret handlingsplan
 
@@ -346,19 +343,18 @@ Log kun hændelsestype, anonym variant, mode, sprog og enhedstype. Log ikke simu
 5. T1D-spil til børn er et lille og heterogent forskningsfelt.
 6. Viden, self-efficacy, faktisk adfærd og klinisk glukosekontrol er forskellige udfald og må ikke blandes sammen.
 7. Anbefalingerne om adaptiv velkomst, hurtigstart og mikroudforing er designinferenser, der kræver test.
-8. Sandkassens status kræver en produktejerbeslutning.
+8. Den offentlige mode-afgrænsning er fastlagt til Campaign og Box Challenge.
 
 ## 8. Anbefalet næste beslutning
 
 Det bedste næste skridt er et lille designarbejde, ikke en stor implementering:
 
-1. Beslut om Sandkasse fortsat er en offentlig kerne-mode.
-2. Lav to HTML-mockups i projektets eksisterende visuelle sprog:
+1. Lav to HTML-mockups i projektets eksisterende visuelle sprog:
    - Adaptiv velkomst for ny spiller.
    - Adaptiv `Fortsæt`-velkomst for tilbagevendende spiller.
-3. Gennemgå mockups med 5-8 førstegangstestere og mål tid til valgt startvej, forståelse og oplevet pres.
-4. Implementér derefter kun den vindende startvej og ret de tre flowfejl.
-5. Brug en separat, godkendt opgave til det nye forudsig-observer-forklar-loop, fordi det kræver både game-design- og fysiologisk review.
+2. Gennemgå mockups med 5-8 førstegangstestere og mål tid til valgt startvej, forståelse og oplevet pres.
+3. Implementér derefter kun den vindende startvej og ret de tre flowfejl.
+4. Brug en separat, godkendt opgave til det nye forudsig-observer-forklar-loop, fordi det kræver både game-design- og fysiologisk review.
 
 <!-- pagebreak -->
 

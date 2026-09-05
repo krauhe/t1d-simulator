@@ -70,7 +70,7 @@ Codex skal behandle denne fil som den primære arbejdsaftale for fremtidige sess
 - Variabelnavne skal være selvforklarende
 - Skriv kommentarer på dansk
 - Kernemodel (ODE'er) i `js/hovorka.js`, al øvrig fysiologi og spilmekanik i `js/simulator.js`
-- Skriv kode der er nem at udvide (tænk fremad mod baner og sandkasse)
+- Skriv kode der er nem at udvide (tænk fremad mod baner og interne udviklerværktøjer)
 - **Familiært design:** Når noget nyt minder om noget eksisterende, brug ALTID samme designmønster, klasser og struktur — både visuelt OG funktionelt. Genopfind ikke hjulet — genbrug det velkendte. Hvis en komponent (pil, ikon, knap, panel, animation) allerede findes ét sted i UI'et, skal den samme komponent genbruges når tilsvarende funktionalitet tilføjes andetsteds. Eksempler: nye toggles skal bruge samme knap-stil som eksisterende toggles (lyd-ikonet), dropdown-pile skal matche pilene i fysiologi-panelet, nye popups skal bruge det eksisterende popup-mønster, glaseffekt-paneler skal bruge de samme CSS-variable osv.
 
 ### Ændringsregler
@@ -94,7 +94,8 @@ Codex skal behandle denne fil som den primære arbejdsaftale for fremtidige sess
   2. **Skriv den til `TODO.txt`** i projektroden (overskriver hver gang)
 - `TODO.txt` er IKKE tracket i git — den er kun til brugerens lokale planlægning mens Codex arbejder.
 - **Format:** Opdel i sektioner (KRITISK, HØJ PRIORITET, FREMTIDIGE FEATURES, FÆRDIGE). Inden for hver sektion: gruppér relaterede items sammen (fx alle audio-items efter hinanden, alle UI-items efter hinanden). Ét punkt per linje, kun nummer og kort beskrivelse.
-- **Færdige:** List kun numrene kommasepareret, ikke hver på sin linje.
+- **Tilføjelsesdato:** Alle nye todo-punkter skal umiddelbart efter nummeret have feltet `[Tilføjet: YYYY-MM-DD]`. Datoen må aldrig ændres ved senere omskrivning eller prioritering. Hvis et punkts scope udvides væsentligt, kan `[Udvidet: YYYY-MM-DD]` tilføjes uden at erstatte tilføjelsesdatoen. Gæt ikke på datoer for ældre punkter.
+- **Færdige:** List punkterne kommasepareret, ikke hver på sin linje. For alle fremtidige daterede punkter skal tilføjelsesdatoen bevares, og afslutningsdatoen tilføjes som `NN [tilføjet YYYY-MM-DD; færdig YYYY-MM-DD]`, så rækkefølgen kan sammenholdes med implementeringen. Ældre punkter med ukendt tilføjelsesdato må fortsat stå som kun nummer.
 - **Vertikal liste:** TODO-listen skal ALTID skrives som vertikal liste med linjeskift mellem hvert element — aldrig som inline/horisontal liste (undtagen færdige-numre).
 - **Dato i header:** `TODO.txt` skal altid have en `Genereret: YYYY-MM-DD` dato-linje i toppen (ligesom review-rapporterne).
 
@@ -225,11 +226,9 @@ For fysiologisk review, videnskabelig research, browser-test, diagrammer og Face
 
 **T1D Simulator** er et læringsspil om blodsukkerfysiologi. Spilleren hjælper faste, fiktive karakterer og udforsker, hvordan mad, insulin, aktivitet, søvn og stress påvirker deres simulerede blodsukker. Spillet er ikke individuel vejledning og bruger ikke spillerens helbredsdata.
 
-Projektet har to spiltilstande:
-1. **Sandkasse** – fri leg, afprøv hypoteser uden konsekvenser
-2. **Campaign** – baner med realistiske hverdagsscenarier, objectives, stjerne-rating og neutrale tips
-
-Derudover: **Box Challenge** — daglig udfordring med forhindringer og 3 liv.
+Den offentlige app har to spiltilstande:
+1. **Campaign** – baner med realistiske hverdagsscenarier, objectives, stjerne-rating og neutrale tips
+2. **Box Challenge** — daglig udfordring med forhindringer og 3 liv
 
 ---
 
@@ -355,7 +354,7 @@ Appen følger et Model-View-Controller mønster:
 - **View:** `drawGraph()` tegner canvas-grafen; `updateUI()` opdaterer DOM-elementer. Begge i `js/ui.js`.
 - **Controller:** Event listeners i `js/main.js` håndterer brugerinterventioner (mad, insulin, motion) og spilkontrol.
 - **Campaign:** `CampaignEngine` (`js/campaign.js`) styrer level-progression, objectives, stjerne-rating, tips og karakterbaserede popupper. Level-definitioner i `js/levels.js`.
-- **Game modes:** `startGame(mode)` i `js/game.js` — modes: `sandbox` (fri leg), `campaign` (baner), `boxchallenge` (daglig udfordring).
+- **Offentlige game modes:** `startGame(mode)` i `js/game.js` — `campaign` (baner) og `boxchallenge` (daglig udfordring). Interne test-id'er er ikke offentlige spiltilstande.
 
 ---
 
@@ -389,7 +388,7 @@ Game mechanics skal så vidt muligt baseres på modeller af de fysiske processer
 - ~~43. IOB-beregning inkl. plasma-insulin~~ ✅
 
 ### Basale forbedringer
-5. Sandkasse-tilstand med scenarier/forhindringer man kan aktivere
+5. Interne scenarie- og testværktøjer til udvikling
 
 ### Høj prioritet
 6. Non-lineær insulin dosis-respons (sigmoid/Hill-kurver)

@@ -6,6 +6,11 @@ docs/references/*.html
 # Wishlist over relevante artikler bag paywall — vedligeholdes lokalt af science-reviewer-skillen
 docs/references/_paywalled-wishlist.txt
 
+# Serious-game literature and review images - local research material synced via Dropbox.
+# The structured catalogue and SOURCES.md remain tracked under docs/game-literature/.
+docs/game-literature/references/
+docs/game-literature/screenshots/
+
 # Lokale Claude Code settings
 .claude/settings.local.json
 .claude/settings.local*
@@ -78,7 +83,7 @@ docs/REGULATORY.md
 # reviewere kan se den fælles designgrænse. Regulatoriske risikologge forbliver lokale.
 docs/reviews/*regulatory*
 
-# Lokal launcher til udviklerlabbet — aktiverer fri sandkasse/editor og gemmer
+# Lokal launcher til udviklerlabbet — aktiverer interne udviklerværktøjer og gemmer
 # rå modelparametre under separate ddDeveloper*-nøgler. Holdes lokal, så
 # launcheren aldrig følger med i den offentlige build. Se game.js.
 editor.local.html

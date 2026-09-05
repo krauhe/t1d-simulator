@@ -4089,9 +4089,8 @@ function showHighscorePopup() {
 
     // Active tab = current gameMode, but only if that mode is a currently-enabled
     // play mode (it has a visible tab). Otherwise fall back to the first enabled
-    // play mode — this keeps the default valid when a mode is hidden (e.g. the
-    // sandbox is currently off, so the old 'sandbox' default would show an empty
-    // table with no matching tab).
+    // play mode — this keeps the default valid when an internal or retired mode
+    // has no public tab and would otherwise show an empty table.
     const enabledPlayModes = Object.keys(GAME_MODES)
         .filter(key => GAME_MODES[key].group === 'play'
             && (typeof GAME_MODES[key].enabled !== 'function' || GAME_MODES[key].enabled()))
@@ -4216,8 +4215,8 @@ function showHighscorePopup() {
         const scores = loadHighscores(activeTab);
         // Tabs are driven by the GAME_MODES registry — the SAME source, order and icons as
         // the mode-selection picker (buildModeCardsHtml): play-group modes sorted by order,
-        // each gated by its optional enabled(). So the highscore tab order matches the mode
-        // picker (Campaign, Sandbox, Box Challenge) and uses the real mode PNG icons
+        // each gated by its optional enabled(). So the highscore tab order matches the
+        // public mode picker and uses the real mode PNG icons
         // instead of ad-hoc emoji.
         const hsTabsHtml = Object.keys(GAME_MODES)
             .map(key => ({ key, m: GAME_MODES[key] }))
