@@ -15,11 +15,11 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.120-beta',
+    version: '0.9.121-beta',
     date: '2026-09-15',
     history: [
         {
-            version: '0.9.120-beta',
+            version: '0.9.121-beta',
             date: '2026-09-15',
             features: {
                 da: [
@@ -34,11 +34,13 @@ const APP_VERSION_INFO = {
             fixes: {
                 da: [
                     'Tiplinks åbner de relevante guideafsnit, og indholdsfortegnelsen kan rulles på mindre skærme.',
-                    'Valget om at skjule statistik bliver gemt, mens kaloriebalancen fortsat vises, når banens mål kræver den.'
+                    'Valget om at skjule statistik bliver gemt, mens kaloriebalancen fortsat vises, når banens mål kræver den.',
+                    'Introen har opdateret tale om snacks og Settings på begge sprog. Oplæsningen følger nu kun det valgte sprog, og karakterteksten matcher lydmanuskriptet.'
                 ],
                 en: [
                     'Tip links open the relevant guide sections, and the table of contents scrolls on smaller screens.',
-                    'The choice to hide statistics is remembered, while calorie balance stays visible when required by the level goal.'
+                    'The choice to hide statistics is remembered, while calorie balance stays visible when required by the level goal.',
+                    'The intro has updated snack and Settings narration in both languages. Narration now follows only the selected language, and the character text matches the audio script.'
                 ]
             }
         },

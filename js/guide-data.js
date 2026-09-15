@@ -4,8 +4,8 @@
 // Guiden forklarer synlige handlinger og deres sammenhæng med blodsukkeret.
 // Afsnit og ikoner deles af indholdsfortegnelsen, tiplinks og baneintroer.
 // Engelsk er sync-reference; begge sprog følger samme afsnitsstruktur.
-// guide-en-version: 2026-09-06-v1
-// guide-da-translated-from-en: 2026-09-06-v1
+// guide-en-version: 2026-09-15-v1
+// guide-da-translated-from-en: 2026-09-15-v1
 // Præcise nøglekoblinger har forrang for generelle orddele i tipnøgler.
 // =============================================================================
 
@@ -59,7 +59,7 @@ const GUIDE_SECTIONS = [
     },
     {
         id: 'controls',
-        title: { en: "Speed, shortcuts and Insights", da: "Tempo, genveje og Insights" },
+        title: { en: "Speed, shortcuts and Insights", da: "Tempo, genveje og Indsigt" },
         body: {
             en: `
                 <p>The speed controls change how fast time passes. Slow down to choose an action, or speed up to follow longer-lasting effects. Pause gives you time to read.</p>
@@ -69,7 +69,7 @@ const GUIDE_SECTIONS = [
             da: `
                 <p>Hastighedskontrollen ændrer, hvor hurtigt tiden går. Sænk tempoet for at vælge en handling, eller skru op for at følge længerevarende virkninger. Pause giver tid til at læse.</p>
                 <p>På PC: <strong>Mellemrum</strong> starter eller pauser; <strong>← / →</strong> ændrer tempoet. <strong>Z</strong> åbner insulin, <strong>X</strong> mad, <strong>C</strong> motion og <strong>V</strong> T1D-kittet. <strong>Escape</strong> lukker panelet. Tasterne <strong>½ og 1–9</strong> giver karakteren det antal enheder hurtiginsulin under spillet.</p>
-                <p><strong>Insights → Fysiologi-visning</strong> viser blodsukkeret uden sensorstøj samt insulinvirkning, kulhydratoptag og ketoner. <strong>eISF</strong> viser den aktuelle insulinfølsomhed: højere værdi betyder kraftigere insulinvirkning. Ved brug af visningen gemmes banens points og stjerner ikke.</p>
+                <p><strong>Indsigt → Fysiologi-visning</strong> viser blodsukkeret uden sensorstøj samt insulinvirkning, kulhydratoptag og ketoner. <strong>eISF</strong> viser den aktuelle insulinfølsomhed: højere værdi betyder kraftigere insulinvirkning. Ved brug af visningen gemmes banens points og stjerner ikke.</p>
             `,
         },
     },
@@ -84,7 +84,7 @@ const GUIDE_SECTIONS = [
                 <p><strong>Back to level</strong> reopens the original game. Your changes do not carry back.</p>
             `,
             da: `
-                <p>Åbn <strong>Insights → Hvad Nu Hvis</strong> efter en handling i banen. Banen pauser. Du kan flytte, ændre, fjerne og tilføje handlinger inden for den spillede tid, stadig for samme karakter.</p>
+                <p>Åbn <strong>Indsigt → Hvad Nu Hvis</strong> efter en handling i banen. Banen pauser. Du kan flytte, ændre, fjerne og tilføje handlinger inden for den spillede tid, stadig for samme karakter.</p>
                 <p>Den grå stiplede linje viser det oprindelige blodsukker; den farvede viser ændringernes virkning. Efter <strong>Bane spillet hertil</strong> er der 6 gråtonede timer til at følge sene virkninger.</p>
                 <p>Kasser og faste banehændelser er låst. <strong>Variationer</strong> viser flere udgaver af en handling, fx forskellige tidspunkter. Points og resultatmål er slået fra.</p>
                 <p><strong>Tilbage til banen</strong> åbner det oprindelige spil igen. Ændringerne følger ikke med.</p>

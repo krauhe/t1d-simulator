@@ -37,14 +37,15 @@ Fil                          Stab  Sim   Style  Status    Noter
 10b-activityoverview.mp3     0.34  0.78  0.85   OK        v2 approved 2026-06-13, 76948 bytes. Heading omitted because it repeated first sentence.
 10-activity.mp3              0.34  0.78  0.85   OK        v1 approved 2026-06-13, 435557 bytes. Used digits for 15, 30, 60. Generated alone with full filename -Only 10-activity.mp3.
 11b-kitoverview.mp3          0.34  0.78  0.85   OK        Godkendt 2026-08-05, 70261 bytes. Kort introduktion til T1D Kit.
-11-kit.mp3                   0.34  0.78  0.85   OK        Godkendt 2026-08-05, 383730 bytes. Formulering med glukagonpen gav god udtale.
+11-kit.mp3                   0.34  0.78  0.85   REVIEW    Regenereret 2026-09-15, 284256 bytes. Forkortet til skærmteksten efter udtrykkelig manuskript- og API-godkendelse. VoiceId=qhEux886xDKbOdF7jkFP; ModelId=eleven_multilingual_v2; language_code=da; use_speaker_boost=true. Exact filter: -Language da -Only 11-kit.mp3. Afventer lyttevurdering. Tidligere optagelse: godkendt 2026-08-05, 383730 bytes, med glukagonpen.
 12b-timecontrols.mp3         0.34  0.78  0.85   OK        Godkendt 2026-08-05, 313931 bytes. Tempoer skrevet som talord for klarere udtale.
 13-physiology.mp3            0.34  0.78  0.85   OK        Godkendt 2026-08-05, 188125 bytes. Indsigt samler Fysiologi-visning og Hvad Nu Hvis.
-13b-settings.mp3             0.34  0.78  0.85   OK        v1 approved 2026-06-13, 151345 bytes. Heading repetition removed (Settings-knappen...).
+13b-settings.mp3             0.34  0.78  0.85   OK        Regenereret og godkendt 2026-09-15, 119998 bytes. Beskriver én fælles Tips-knap. VoiceId=qhEux886xDKbOdF7jkFP; ModelId=eleven_multilingual_v2; language_code=da; use_speaker_boost=true. Exact filter: -Language da -Only 13b-settings.mp3. Tidligere optagelse: godkendt 2026-06-13, 151345 bytes.
 14-learn.mp3                 0.34  0.78  0.85   OK        Godkendt 2026-08-05, 131701 bytes. Guide-ikonet er til højre for tippet.
 15-ready.mp3                 0.34  0.78  0.85   OK        v1 approved 2026-06-13, 180184 bytes.
 03-character.mp3             0.34  0.78  0.85   OK        Godkendt 2026-08-05, 292197 bytes. Forklarer at spilleren hjælper den valgte karakter med stabilt blodsukker.
-05-basal.mp3                 0.34  0.78  0.85   REVIEW    Regenereret 2026-08-05, 306408 bytes. Observation af stigende eller faldende blodsukker. Exact filter: -Language da -Only 05-basal.mp3.
+05-basal.mp3                 0.34  0.78  0.85   OK        Godkendt 2026-09-15. Regenereret 2026-08-05, 306408 bytes. Observation af stigende eller faldende blodsukker. Exact filter: -Language da -Only 05-basal.mp3.
+08-food-sugars.mp3           0.34  0.78  0.85   OK        Regenereret og godkendt 2026-09-15, 188125 bytes. Nyt snackmanuskript: juice, chokolade og caffè latte; ingen cola. VoiceId=qhEux886xDKbOdF7jkFP; ModelId=eleven_multilingual_v2; language_code=da; use_speaker_boost=true. Exact filter: -Language da -Only 08-food-sugars.mp3. Tilknyttet den danske intro; automatisk sprogskift er fjernet.
 
 
 

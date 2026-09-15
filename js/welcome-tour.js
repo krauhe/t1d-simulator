@@ -242,9 +242,8 @@ const WelcomeTour = (() => {
                     arrow: 'left',
                     titleKey: 'welcomeTour.step.foodSugars.title',
                     textKey: 'welcomeTour.step.foodSugars.text',
-                    // De gamle optagelser nævner sodavand. Brug tekst, indtil
-                    // de opdaterede manuskripter er godkendt og indspillet.
-                    audio: {},
+                    // Begge optagelser er godkendt og følger det nye snackkatalog.
+                    audio: { da: 'sounds/tour/da/08-food-sugars.mp3', en: 'sounds/tour/en/08-food-sugars.mp3' },
                     durationMs: 9500
                 },
                 // 9 — Food · Meals (middle row) — separate description
@@ -389,6 +388,7 @@ const WelcomeTour = (() => {
         'sounds/tour/da/05-basal.mp3',
         'sounds/tour/da/06-fast.mp3',
         'sounds/tour/da/07-food.mp3',
+        'sounds/tour/da/08-food-sugars.mp3',
         'sounds/tour/da/09-food-meals.mp3',
         'sounds/tour/da/09-food-lowcarb.mp3',
         'sounds/tour/da/10-activity.mp3',
@@ -409,6 +409,7 @@ const WelcomeTour = (() => {
         'sounds/tour/en/05-basal.mp3',
         'sounds/tour/en/06-fast.mp3',
         'sounds/tour/en/07-food.mp3',
+        'sounds/tour/en/08-food-sugars.mp3',
         'sounds/tour/en/09-food-meals.mp3',
         'sounds/tour/en/09-food-lowcarb.mp3',
         'sounds/tour/en/10-activity.mp3',
@@ -705,9 +706,9 @@ const WelcomeTour = (() => {
     function getAudioSource(step) {
         const sources = step.audio || {};
         const preferredLang = lang();
+        // Oplæsning skal følge det valgte sprog. Mangler en klar optagelse,
+        // bruges tekst alene; et andet sprog må aldrig vælges automatisk.
         if (TOUR_AUDIO_READY[preferredLang] && READY_TOUR_AUDIO_SOURCES.has(sources[preferredLang])) return sources[preferredLang];
-        if (TOUR_AUDIO_READY.en && READY_TOUR_AUDIO_SOURCES.has(sources.en)) return sources.en;
-        if (TOUR_AUDIO_READY.da && READY_TOUR_AUDIO_SOURCES.has(sources.da)) return sources.da;
         return null;
     }
 

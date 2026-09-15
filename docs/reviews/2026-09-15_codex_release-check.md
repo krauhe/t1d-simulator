@@ -1,4 +1,4 @@
-# Release verification: 0.9.120-beta
+# Release verification: 0.9.121-beta
 
 Generated: 2026-09-15
 
@@ -20,10 +20,15 @@ Local browser artifacts are in `tests/playwright/2026-09-15_release-food/` and `
 ## Intro and audio status
 
 1. The first tour step already introduces the learning game, fixed fictional characters and the effects of food, insulin, activity, sleep and stress. It also explains the absence of personal health-data input and individual treatment guidance. Danish and English overview recordings are marked OK in their generation logs.
-2. The Insights step opens the menu and explains Physiology view and What If. Both recordings are marked OK. The Danish narration/text says "Indsigt" while the actual button says "Insights"; this wording difference remains.
-3. The latest `05-basal.mp3` entries remain REVIEW in both languages. Older Danish OK entries do not establish approval of the newer replacement.
-4. `08-food-sugars.mp3` is disconnected in both languages because the old recordings mention cola. Updated text and scripts exist; the step currently uses text only.
-5. No paid audio call was made. The broader intro redesign remains separate work.
+2. The Insights step opens the menu and explains Physiology view and What If. Both recordings are marked OK. **✅ FIKSET (2026-09-15, local follow-up):** the Danish button and guide now say "Indsigt", matching the existing Danish intro and audio. English retains "Insights". No audio regeneration is needed for this label correction.
+3. **✅ FIKSET (2026-09-15, both languages):** the user explicitly approved the current Danish and English `05-basal.mp3` recordings individually; both latest generation-log entries are now OK.
+4. **✅ FIKSET (2026-09-15, audio follow-up):** the user individually approved the new Danish `08-food-sugars.mp3` (188125 bytes) and English replacement (189797 bytes). Both are marked OK and connected; TODO 48 is complete. **✅ FIKSET (2026-09-15, language selection):** at the user's request, audio now uses only the selected language; missing/unready recordings produce text-only steps instead of switching languages.
+5. No paid audio call was made during release preparation. The subsequent Danish and English snack recordings were each generated through one separately approved ElevenLabs call. The broader intro redesign remains separate work.
+6. **✅ FIKSET (2026-09-15, English guide audio):** the user explicitly reapproved the current `14-learn.mp3`. Retain this recording; the stale regeneration request in TODO 12 is closed.
+7. **✅ FIKSET (2026-09-15, character text/audio mismatch):** after the user reported differing text and speech, both character-step screen texts were aligned word-for-word with the existing `03-character.mp3` generation scripts, excluding the separately displayed heading and paragraph breaks. The previously approved recordings were retained; no paid audio call was needed.
+8. **⚠️ DELVIST (2026-09-15, kit narration):** the user requested shorter speech matching the screen text. Both `11-kit.mp3` scripts now match their screen text, with CGM spaced only for pronunciation. The Danish replacement was generated through one explicitly approved ElevenLabs call (284256 bytes) and is marked REVIEW pending listening approval. English paid-call approval, generation and listening approval remain pending.
+
+9. **✅ FIKSET (2026-09-15, Settings narration):** the user identified the obsolete distinction between level and general tips. Both screen texts and `13b-settings.mp3` scripts now describe one Tips switch. The Danish (119998 bytes) and English (131283 bytes) replacements were individually approved after listening and are marked OK.
 
 ## External-source access status
 
@@ -37,4 +42,4 @@ The five food-source URLs and both Frontiers URLs used in the changed material r
 
 ## Overall status
 
-Application checks passed. Remaining items are the separate mobile guide integration, reader testing, intro redesign, the audio/wording items above and incomplete external-source access verification. No new physiological calibration is included in this release.
+Application checks passed. Remaining items are Danish kit listening approval, English kit regeneration/approval, separate mobile guide integration, reader testing, intro redesign and incomplete external-source access verification. The Danish menu wording, character text alignment, basal/guide audio approvals and both new snack/Settings recordings are complete. The user requested publication with the kit follow-up status retained. No new physiological calibration is included in this release.
