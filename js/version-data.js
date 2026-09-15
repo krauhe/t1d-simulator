@@ -15,9 +15,33 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.119-beta',
-    date: '2026-09-05',
+    version: '0.9.120-beta',
+    date: '2026-09-15',
     history: [
+        {
+            version: '0.9.120-beta',
+            date: '2026-09-15',
+            features: {
+                da: [
+                    'Madpanelet har fået caffè latte, nye snackikoner og små portioner slik og chokolade på 6 g.',
+                    'Spilguiden er kortere og mere konkret på dansk og engelsk, med et nyt afsnit om Hvad Nu Hvis.'
+                ],
+                en: [
+                    'The food panel now includes caffè latte, new snack icons and small 6 g portions of candy and chocolate.',
+                    'The game guide is shorter and more concrete in Danish and English, with a new What If section.'
+                ]
+            },
+            fixes: {
+                da: [
+                    'Tiplinks åbner de relevante guideafsnit, og indholdsfortegnelsen kan rulles på mindre skærme.',
+                    'Valget om at skjule statistik bliver gemt, mens kaloriebalancen fortsat vises, når banens mål kræver den.'
+                ],
+                en: [
+                    'Tip links open the relevant guide sections, and the table of contents scrolls on smaller screens.',
+                    'The choice to hide statistics is remembered, while calorie balance stays visible when required by the level goal.'
+                ]
+            }
+        },
         {
             version: '0.9.119-beta',
             date: '2026-09-05',
@@ -31,32 +55,10 @@ const APP_VERSION_INFO = {
             }
         },
         {
-            version: '0.9.118-beta',
-            date: '2026-08-14',
-            features: {
-                da: [
-                    'Modelvalideringssiden har nu delbare direkte links til hver test.',
-                    'En ny test sammenligner hurtige kulhydrater ved 10 g kulhydrat og viser modelrelative respons- og hastighedsindeks.'
-                ],
-                en: [
-                    'The model validation page now has shareable direct links to every test.',
-                    'A new test compares fast carbohydrates at 10 g carbohydrate and shows model-relative response and speed indices.'
-                ]
-            },
-            fixes: {
-                da: [
-                    'Madtestene bruger nu simulatorens aktuelle madikoner og maddata.'
-                ],
-                en: [
-                    'Food tests now use the simulator\'s current food icons and food data.'
-                ]
-            }
-        },
-        {
             month: '2026-08',
             summary: {
-                da: 'Velkomstturen forklarede de faste karakterer, Hvad Nu Hvis og Insights samlede alternative handlinger og fysiologi, og styrketræningens påvirkning af insulinfølsomheden blev mere gradvis.',
-                en: 'The welcome tour introduced the fixed characters, What If and Insights brought alternative actions and physiology together, and the effect of strength training on insulin sensitivity became more gradual.'
+                da: 'Velkomstturen forklarede de faste karakterer, Insights samlede Hvad Nu Hvis og fysiologi, og styrketræningens påvirkning af insulinfølsomheden blev mere gradvis. Modelvalideringen fik delbare testlinks og en sammenligning af hurtige kulhydrater med aktuelle maddata og ikoner.',
+                en: 'The welcome tour introduced the fixed characters, Insights brought What If and physiology together, and strength training gained a more gradual effect on insulin sensitivity. Model validation gained shareable test links and a fast-carbohydrate comparison using current food data and icons.'
             }
         },
         {

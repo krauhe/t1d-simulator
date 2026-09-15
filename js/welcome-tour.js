@@ -242,7 +242,9 @@ const WelcomeTour = (() => {
                     arrow: 'left',
                     titleKey: 'welcomeTour.step.foodSugars.title',
                     textKey: 'welcomeTour.step.foodSugars.text',
-                    audio: { da: 'sounds/tour/da/08-food-sugars.mp3', en: 'sounds/tour/en/08-food-sugars.mp3' },
+                    // De gamle optagelser nævner sodavand. Brug tekst, indtil
+                    // de opdaterede manuskripter er godkendt og indspillet.
+                    audio: {},
                     durationMs: 9500
                 },
                 // 9 — Food · Meals (middle row) — separate description
@@ -387,7 +389,6 @@ const WelcomeTour = (() => {
         'sounds/tour/da/05-basal.mp3',
         'sounds/tour/da/06-fast.mp3',
         'sounds/tour/da/07-food.mp3',
-        'sounds/tour/da/08-food-sugars.mp3',
         'sounds/tour/da/09-food-meals.mp3',
         'sounds/tour/da/09-food-lowcarb.mp3',
         'sounds/tour/da/10-activity.mp3',
@@ -408,7 +409,6 @@ const WelcomeTour = (() => {
         'sounds/tour/en/05-basal.mp3',
         'sounds/tour/en/06-fast.mp3',
         'sounds/tour/en/07-food.mp3',
-        'sounds/tour/en/08-food-sugars.mp3',
         'sounds/tour/en/09-food-meals.mp3',
         'sounds/tour/en/09-food-lowcarb.mp3',
         'sounds/tour/en/10-activity.mp3',

@@ -1,7 +1,7 @@
 # Forslag til kortere Game Guide
 
 **Genereret:** 2026-07-31  
-**Status:** Kladde til fælles gennemgang - den aktive Game Guide er ikke ændret  
+**Status:** Historisk kladde. Erstattet af den implementerede tosprogede gennemgang 2026-09-06; se `2026-09-06_codex_game-guide-rewrite.md`.  
 **Sprog:** Dansk først; engelsk oversættes og synkroniseres efter godkendelse
 
 ## Retning

@@ -2383,6 +2383,9 @@ body {
     text-align: center;
     font-size: 9px;
 }
+/* Små portioner har decimaler. Giv fx 0,5 g plads, selv når proteinsegmentet
+   kun fylder en lille del af bjælken; tallene må ikke løbe ind i hinanden. */
+.pc-macro-labels.has-decimals span { min-width: 3ch; }
 .ml-carb { color: var(--macro-carb); font-size: 10px !important; font-weight: 700; }
 .ml-protein { color: var(--macro-protein); }
 .ml-fat { color: var(--macro-fat); }
@@ -4386,6 +4389,9 @@ body {
 
 .guide-sidebar {
     min-height: 0;
+    /* Indholdsfortegnelsen skal kunne rulles uafhængigt af selve guiden,
+       også på laptops hvor alle afsnit ikke kan være der på én gang. */
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 14px;

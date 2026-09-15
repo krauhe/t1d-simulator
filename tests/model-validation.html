@@ -2523,8 +2523,8 @@ addSection(
 addSection(
     'Fast-carbohydrate presets — 10g carbohydrate each',
     'Compares four distinct model responses from the Fast carbs row: ordinary solid sugar, juice, '
-    + 'banana and chocolate. Candy is omitted because it is model-identical to solid sugar, and '
-    + 'cola is omitted because it is model-identical to juice. Each portion is scaled proportionally to exactly 10g carbohydrate; '
+    + 'banana and chocolate. These represent solid sugar, a drink, fruit and a fatty snack. '
+    + 'Each portion is scaled proportionally to exactly 10g carbohydrate; '
     + 'protein, fat, total weight and eating time are scaled by the same factor. A no-food control '
     + 'provides the baseline. No bolus is given. X-axis shows clock time (intervention at 14:00, '
     + 'observation window 14:00 - 18:00).',
@@ -2725,7 +2725,7 @@ addSection(
         // and stomachRetentionWeight are comparable. Only CARB_TYPES parameters vary.
         // Ordered by expected τG (fastest first → slowest last).
         const foods = [
-            { name: 'liquid sugar (cola/juice)',  carbType: 'sukker_flydende', icon: FOODS.cola.icon,          color: '#06b6d4' },
+            { name: 'liquid sugar (juice)',  carbType: 'sukker_flydende', icon: FOODS.juice.icon,          color: '#06b6d4' },
             { name: 'solid sugar (glucose tabs)', carbType: 'sukker_fast',     icon: FOODS.druesukker.icon,    color: '#fbbf24' },
             { name: 'fruit (banana)',              carbType: 'frugt',           icon: FOODS.banan.icon,          color: '#ef4444' },
             { name: 'white flour (pasta)',         carbType: 'hvidt_mel',       icon: FOODS.pasta.icon,          color: '#f97316' },

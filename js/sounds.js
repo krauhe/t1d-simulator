@@ -86,10 +86,6 @@ function loadSettings() {
         if (stored) loadedSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
     } catch (e) { /* localStorage unavailable — use defaults */ }
 
-    // Midlertidig sikkerhedsregel: Statistikfragmentet viser kaloriebalancen,
-    // som spilleren skal kunne se for at gennemføre baner med vægtmål. En ældre
-    // gemt `false` må derfor ikke skjule fragmentet ved næste indlæsning.
-    loadedSettings.showStatsFragment = true;
     return loadedSettings;
 }
 

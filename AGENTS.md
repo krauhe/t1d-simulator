@@ -28,6 +28,14 @@ Codex skal behandle denne fil som den primære arbejdsaftale for fremtidige sess
 - Ved browserbaseret test: foretræk projektets Playwright/browser-skill frem for ad hoc screenshots.
 - Ved GitHub- eller push-relateret arbejde: husk versionreglerne i `js/version-data.js`.
 
+### Validering af eksterne links
+- Kontrollér alle eksterne links fra brugerens lokale pc, før de tilføjes til projektfiler eller afleveres til brugeren. Stol ikke alene på AI-hukommelse, søgeresultater, bibliografiske metadata eller et link vist i en søgeresultats tekst.
+- Åbn eller hent den konkrete URL, følg eventuelle omdirigeringer, og kontrollér at den endelige side findes, svarer til den beskrevne ressource og ikke er en fejl-, parkerings-, reklame- eller uvedkommende side.
+- Kontrollér så vidt muligt både den tekniske HTTP-status og sidens synlige indhold. En statuskode på 200 er ikke i sig selv tilstrækkelig dokumentation for, at linket er korrekt.
+- Ved DOI'er og videnskabelige kilder skal titel, forfatter eller anden entydig identifikation på destinationssiden stemme med citationen.
+- Hvis et link kræver login, er geografisk begrænset eller ikke kan kontrolleres fra den lokale pc, skal det markeres tydeligt som ikke fuldt verificeret og må ikke omtales som et fungerende offentligt link.
+- Kør en lokal linkkontrol på hele den relevante rapport eller hjemmeside før publicering, og undersøg manuelt alle fejl, omdirigeringer og tvivlsomme resultater.
+
 ### ElevenLabs intro-tour lyd
 - Intro-tour lydfiler ligger i `sounds/tour/<sprog>/`. Dansk generation logges i `sounds/tour/da/generation-log.txt`.
 - Før ethvert API-kald, der genererer eller regenererer en lydfil, skal Codex vise brugeren det præcise filnavn og manuskript og bede om udtrykkelig tilladelse. Et tidligere generelt "go" eller en bred implementeringsopgave er ikke tilladelse til et betalt lydkald. `-DryRun` må køres uden ny tilladelse, fordi det ikke kalder API'et.

@@ -405,13 +405,13 @@ const sizeCanvas = () => {
 // the FOODS lookup in one place so no code duplicates macros/icon/weight/carbType.
 // Also triggers the fly-icon animation to the graph on a successful intake.
 //
-// @param {string} foodKey — Key in the FOODS table (e.g. 'pizza', 'æg', 'cola')
+// @param {string} foodKey — Key in the FOODS table (e.g. 'pizza', 'æg', 'juice')
 // =============================================================================
 // Reverse keyboard mapping: FOODS key → shortcut key (for tooltips)
 const FOOD_SHORTCUT_MAP = {
     'æg': 'Q', 'nødder': 'W', 'salat': 'E', 'laksAvocado': 'R', 'ægBacon': 'T', 'bøfBearnaise': 'Y',
     'bollerIKarry': 'A', 'havregryn': 'S', 'burger': 'D', 'pasta': 'F', 'pizza': 'G', 'lagkage': 'H',
-    'druesukker': 'Z', 'slik': 'X', 'juice': 'C', 'cola': 'V', 'banan': 'B', 'chokolade': 'N',
+    'druesukker': 'Z', 'slik': 'X', 'chokolade': 'C', 'juice': 'V', 'banan': 'B', 'caffeLatte': 'N',
 };
 
 
@@ -462,7 +462,7 @@ function initFoodChipUI() {
         infoRow.className = 'pc-info-row';
 
         const isLiquid = food.carbType === 'sukker_flydende';
-        const weightUnit = isLiquid ? 'ml' : 'g';
+        const weightUnit = food.portionUnit || (isLiquid ? 'ml' : 'g');
 
         // Left: weight (value above unit)
         const weightGroup = document.createElement('div');
@@ -482,7 +482,7 @@ function initFoodChipUI() {
         kcalGroup.className = 'pc-info-group info-right';
         const kcalVal = document.createElement('span');
         kcalVal.className = 'pc-info-value pc-kcal-value';
-        const kcal = food.carbs * 4 + food.protein * 4 + food.fat * 9;
+        const kcal = Math.round(food.carbs * 4 + food.protein * 4 + food.fat * 9);
         kcalVal.textContent = kcal;
         const kcalUnitEl = document.createElement('span');
         kcalUnitEl.className = 'pc-info-unit';
@@ -504,6 +504,7 @@ function initFoodChipUI() {
         // Add labels div with the same flex proportions as the bar segments
         const labels = document.createElement('div');
         labels.className = 'pc-macro-labels';
+        if (food.portionDecimals) labels.classList.add('has-decimals');
 
         if (food.carbs > 0) {
             const s = document.createElement('span');
@@ -588,17 +589,17 @@ function updateFoodChips() {
 
         // Calculate scaled portion
         const scale = isChild ? (food.childScale !== undefined ? food.childScale : CHILD_PORTION_SCALE) : 1.0;
-        const carbs = Math.round(food.carbs * scale);
-        const protein = Math.round(food.protein * scale);
-        const fat = Math.round(food.fat * scale);
+        const carbs = foodMacroAmount(food, 'carbs', scale);
+        const protein = foodMacroAmount(food, 'protein', scale);
+        const fat = foodMacroAmount(food, 'fat', scale);
         const portionWeight = Math.round(food.weight * scale);
-        const kcal = carbs * 4 + protein * 4 + fat * 9;
+        const kcal = Math.round(carbs * 4 + protein * 4 + fat * 9);
 
         // Update info row (weight + kcal) above the macro bar
         const weightValEl = chip.querySelector('.pc-weight-value');
         if (weightValEl) weightValEl.textContent = portionWeight;
         const weightUnitEl = chip.querySelector('.pc-weight-unit');
-        if (weightUnitEl) weightUnitEl.textContent = food.carbType === 'sukker_flydende' ? 'ml' : 'g';
+        if (weightUnitEl) weightUnitEl.textContent = food.portionUnit || (food.carbType === 'sukker_flydende' ? 'ml' : 'g');
         const kcalValEl = chip.querySelector('.pc-kcal-value');
         if (kcalValEl) kcalValEl.textContent = kcal;
 
@@ -669,9 +670,9 @@ function addFoodFromKey(foodKey) {
     // Gem rettens viste navn sammen med handlingen, så logs er menneskeligt læsbare.
     const foodName = chip ? (chip.querySelector('.pc-name')?.textContent || '').trim() : '';
     const ok = game.addFood(
-        Math.round(food.carbs * scale),
-        Math.round(food.protein * scale),
-        Math.round(food.fat * scale),
+        foodMacroAmount(food, 'carbs', scale),
+        foodMacroAmount(food, 'protein', scale),
+        foodMacroAmount(food, 'fat', scale),
         food.icon,
         Math.round(food.weight * scale),
         food.carbType,
@@ -2193,8 +2194,7 @@ function initializeApp() {
     if (statsFragmentRow) {
         statsFragmentRow.addEventListener('click', () => {
             appSettings.showStatsFragment = !appSettings.showStatsFragment;
-            const frag = document.getElementById('stats-fragment');
-            if (frag) frag.style.display = appSettings.showStatsFragment ? '' : 'none';
+            updateStatsVisibility();
             statsFragmentToggle.classList.toggle('active', appSettings.showStatsFragment);
             saveSettings(appSettings);
         });
@@ -2327,7 +2327,7 @@ function initializeApp() {
     // AND as a single press when the panel is already open.
     //
     // Insulin (Z): Z/X/C = 1/2/4 U rapid, A/S/D = basal presets, V/F = custom
-    // Food (X):    Grid layout — bottom row: Z=Dextro(hypo!) X=Soda C=Apple V=Oats B=Burger
+    // Mad (X): nederste række Z=Druesukker X=Slik C=Chokolade V=Juice B=Banan N=Latte.
     //              Top row: A=Cake S=Salad D=Avocado F=Chicken G=Build own
     // Tests (V):   Z = finger prick, X = ketone test
     // =========================================================================
@@ -2377,7 +2377,7 @@ function initializeApp() {
         // 3 rows organised by carbohydrate profile. Keyboard follows the rows:
         //   Row 1 (Q-Y): Low-carb — eggs, nuts, salad, salmon-avocado, egg-bacon, steak-béarnaise
         //   Row 2 (A-H): Meals    — rye bread, oats, white bread, pasta, pizza, layer cake
-        //   Row 3 (Z-N): Snacks   — dextrose, sweets, juice, cola, banana, chocolate
+        //   Række 3 (Z-N): druesukker, slik, chokolade, juice, banan, caffè latte.
         //   P:           Build own (custom popup)
         // Mapping looks up FOOD_KEY_MAP and calls addFoodFromKey() which finds
         // all macros + carbType in the FOODS table (js/foods.js).
@@ -2389,8 +2389,8 @@ function initializeApp() {
                 a: 'bollerIKarry', s: 'havregryn', d: 'burger',
                 f: 'pasta', g: 'pizza', h: 'lagkage',
                 // Row 3 — Fast carbs
-                z: 'druesukker', x: 'slik', c: 'juice',
-                v: 'cola', b: 'banan', n: 'chokolade',
+                z: 'druesukker', x: 'slik', c: 'chokolade',
+                v: 'juice', b: 'banan', n: 'caffeLatte',
             };
             if (FOOD_KEY_MAP[key]) { addFoodFromKey(FOOD_KEY_MAP[key]); return true; }
             if (key === 'p') {
@@ -2531,7 +2531,7 @@ function initializeApp() {
         // --- Panel already open: single-key sub-action ---
         // When the panel is visible only one key press is needed.
         // Includes B (banana in food panel / 8 U rapid insulin),
-        // N (custom slider for rapid insulin / chocolate in food panel)
+        // N (custom slider for rapid insulin / caffè latte in food panel)
         // and H (custom slider for basal / layer cake in food panel).
         if (['z', 'x', 'c', 'v', 'a', 's', 'd', 'f', 'b', 'g', 'q', 'w', 'e', 'r', 't', 'h', 'n'].includes(key)) {
             // Try sub-action first (if relevant panel is open)
@@ -2572,10 +2572,7 @@ function initializeApp() {
     }
 
     // Stats fragment: shown by default (showStatsFragment=true), hidden if disabled
-    const statsFragmentEl = document.getElementById('stats-fragment');
-    if (statsFragmentEl) {
-        statsFragmentEl.style.display = appSettings.showStatsFragment ? '' : 'none';
-    }
+    updateStatsVisibility();
     const statsFragmentToggleInit = document.getElementById('statsFragmentToggle');
     if (statsFragmentToggleInit && appSettings.showStatsFragment) {
         statsFragmentToggleInit.classList.add('active');

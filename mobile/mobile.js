@@ -2159,7 +2159,7 @@ function crButton(label, cls, onClick) {
 // by data-level2 category (low/meal/fast), which map 1:1 to the desktop row ids:
 //   lowCarb     -> 'low'   (egg, nuts, salad, salmon&avocado, eggs&bacon, steak)
 //   meals       -> 'meal'  (curry, oatmeal, burger, pasta, pizza, cake)
-//   adjustments -> 'fast'  (dextro, candy, juice, cola, banana, chocolate)
+//   adjustments -> 'fast'  (druesukker, slik, chokolade, juice, banan, caffè latte)
 // e.g. level 1 enabledFoodRows ['adjustments'] -> only the 'fast' (fast-sugar) chips.
 var FOOD_ROW_TO_CATEGORY = { lowCarb: 'low', meals: 'meal', adjustments: 'fast' };
 
@@ -2391,7 +2391,7 @@ var FOOD_I18N = {
   'ægBacon': 'food.eggsBacon', 'bøfBearnaise': 'food.steakBearnaise', 'bollerIKarry': 'food.curry',
   'havregryn': 'food.cereal', 'burger': 'food.burger', 'pasta': 'food.pasta', 'pizza': 'food.pizza',
   'lagkage': 'food.cake', 'druesukker': 'food.dextro', 'slik': 'food.candy', 'juice': 'food.juice',
-  'cola': 'food.cola', 'banan': 'food.banana', 'chokolade': 'food.chocolate'
+  'caffeLatte': 'food.latte', 'banan': 'food.banana', 'chokolade': 'food.chocolate'
 };
 function enrichFoodChips() {
   if (typeof FOODS === 'undefined') return;
@@ -2404,7 +2404,7 @@ function enrichFoodChips() {
     var icon = imgEl ? imgEl.getAttribute('src') : f.icon;
     var c = f.carbs || 0, p = f.protein || 0, ft = f.fat || 0;
     var kcal = Math.round(c * 4 + p * 4 + ft * 9);
-    var unit = (f.carbType === 'sukker_flydende') ? ' ml' : ' g';   // liquids shown in ml
+    var unit = ' ' + (f.portionUnit || (f.carbType === 'sukker_flydende' ? 'ml' : 'g'));
     chip.innerHTML =
       '<img src="' + icon + '">' +
       '<div class="nm">' + name + '</div>' +

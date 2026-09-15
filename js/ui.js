@@ -458,6 +458,24 @@ function setLifeBar(fillEl, pctEl, barEl, rawPct) {
 // updateLifeBars — three game-over criterion bars (brain / acidosis / weight)
 // =============================================================================
 // Extracted from updateUI(). Self-contained: reads game + DOM, no updateUI locals.
+// Statistikvalget styrer TIR og gennemsnit. Et kaloriebaseret banemål skal
+// altid have sit tal synligt, også når spilleren har skjult statistikken.
+// Samme funktion bruges ved opstart, indstillingsskift og løbende UI-opdatering.
+function updateStatsVisibility() {
+    const fragment = document.getElementById('stats-fragment');
+    if (!fragment) return;
+    const showStats = appSettings.showStatsFragment;
+    const caloriesRelevant = shouldShowCalorieBalanceUI();
+    const caloriesRequired = typeof game !== 'undefined' && game
+        && game.gameMode === 'campaign' && caloriesRelevant;
+    const showCalories = caloriesRelevant && (showStats || caloriesRequired);
+    fragment.style.display = showStats || showCalories ? '' : 'none';
+    fragment.querySelectorAll('.stats-frag-row').forEach(row => {
+        row.style.display = (row.id === 'statsWeightRow' ? showCalories : showStats)
+            ? '' : 'none';
+    });
+}
+
 function updateLifeBars() {
     // --- Life bars: update the three game-over criteria ---
     // Brain: (1 - deficit/threshold) × 100 → full bar = safe, empty = game over
@@ -473,11 +491,10 @@ function updateLifeBars() {
     const _lfWt    = document.getElementById('life-fill-weight');
     const _lpWt    = document.getElementById('life-pct-weight');
     const _lrWt    = document.getElementById('life-bar-weight');
-    const statsWeightRow = document.getElementById('statsWeightRow');
     const showCalorieBalance = shouldShowCalorieBalanceUI();
 
     if (_lrWt) _lrWt.style.display = showCalorieBalance ? '' : 'none';
-    if (statsWeightRow) statsWeightRow.style.display = showCalorieBalance ? '' : 'none';
+    updateStatsVisibility();
 
     // Brain and acidosis are standard bars: full = safe, empty = game over.
     setLifeBar(_lfBrain, _lpBrain, _lrBrain,

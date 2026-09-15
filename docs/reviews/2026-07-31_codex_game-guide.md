@@ -2,10 +2,10 @@
 
 **Generated:** 2026-07-31  
 **Branch reviewed:** `codex/public-insights`  
-**Status:** Review complete; findings remain open  
+**Status:** Updated 2026-09-06: active guide rewritten; code/text findings addressed. Separate mobile-shell integration and reader-comprehension testing remain open under TODO 34.  
 **Scope:** `js/guide-data.js`, related tips and i18n text, guide mappings and intended-purpose consistency
 
-**Rewrite draft:** A complete shorter Danish proposal is available in `docs/reviews/2026-07-31_game-guide-rewrite-proposal-da.md`. The active bilingual guide has not yet been changed.
+**Rewrite draft:** A complete shorter Danish proposal is available in `docs/reviews/2026-07-31_game-guide-rewrite-proposal-da.md`. That historical proposal is superseded by the active bilingual rewrite documented in `2026-09-06_codex_game-guide-rewrite.md`.
 
 ## Conclusion
 
@@ -22,7 +22,7 @@ The Danish guide contains approximately 1,779 words. The existing content can be
 
 ### 1. Add a short What If section
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Added a dedicated What If section, including the six-hour extension and return to the original level.  
 **Severity:** High  
 **Files:** `js/guide-data.js:71`, `index.html:1434`, `js/i18n.js:373+`
 
@@ -37,7 +37,7 @@ Keep What If separate from the two game modes; it is a learning view opened from
 
 ### 2. Correct guide mappings and add a mapping test
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Three exact tip-key exceptions and level 5 links corrected; tests cover all 87 active tip keys and 10 level link lists.  
 **Severity:** High  
 **File:** `js/guide-data.js:408-446`
 
@@ -52,7 +52,7 @@ Use explicit exceptions before generic substring rules and add an automated test
 
 ### 3. Rewrite treatment-like passages as character-bound experiments
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Mechanism-first, character-bound explanations replace generic treatment directions.  
 **Severity:** High  
 **Files:** `js/guide-data.js:136`, `js/guide-data.js:205`, `js/guide-data.js:268`, `js/guide-data.js:289-298`
 
@@ -67,7 +67,7 @@ Describe the model mechanism first, then the observation the player can make in 
 
 ### 4. Remove inaccessible game-over mechanics
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Removed inaccessible weight-change and seven-day complication paragraphs.  
 **Severity:** High  
 **File:** `js/guide-data.js:389-402`
 
@@ -75,7 +75,7 @@ Remove the public guide paragraphs about 7% weight change and a seven-day mean a
 
 ### 5. Reduce the longest sections
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Existing Danish sections reduced from 1,781 to 1,333 words (25.2%); 1,424 including new What If. Useful mechanisms retained rather than forcing every section to an arbitrary length.  
 **Severity:** High  
 **Files:** `js/guide-data.js:90`, `js/guide-data.js:150`, `js/guide-data.js:173`, `js/guide-data.js:389`
 
@@ -90,7 +90,7 @@ Targets:
 
 ### 6. Physiology-view scoring text is inconsistent
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Both languages now say points/stars are not saved; no claim that scoring pauses.  
 **Severity:** Medium  
 **File:** `js/guide-data.js:106`
 
@@ -98,21 +98,21 @@ English says the view pauses scoring; Danish says the run does not count. The ga
 
 ### 7. Third-person perspective breaks in sensitive sections
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): The character receives food/insulin; the player uses controls and observes results.  
 **Severity:** Medium
 
 Use “the character's blood glucose”, “in the model”, “in the level” or “the game action” whenever insulin choices are discussed. Avoid generic instructions about dose, need or correction.
 
 ### 8. Too many specialist terms are concentrated in short passages
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Removed ICR and dense secondary terminology; retained explained IOB, CGM, eISF, DKA and TIR.  
 **Severity:** Medium
 
 ISF, ICR, IOB, stacking, glucotoxicity, fat-induced insulin resistance, glycogenolysis and counter-regulation appear densely. Keep only terms needed to understand the visible game. ICR is a strong candidate for removal because it is no longer an active player concept elsewhere.
 
 ### 9. “Change one thing at a time” is repeated and unnecessarily prescriptive
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Removed prescriptive single-change instruction from guide and bilingual tips.experiment.  
 **Severity:** Medium  
 **Files:** `js/guide-data.js:58`, `js/i18n.js:684`
 
@@ -120,7 +120,7 @@ Suggested direction: “Try actions and see what changes the character's blood g
 
 ### 10. The points section can resemble dose optimisation
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Points described as outcome feedback, with mechanism explanations and retry separated.  
 **Severity:** Medium  
 **File:** `js/guide-data.js:368`
 
@@ -128,14 +128,14 @@ Replace the list of timing, dose, food and activity as optimisation targets with
 
 ### 11. Remove vague or AI-like wording
 
-**Status:** ❌ OPEN  
+**Status:** ✅ FIKSET (2026-09-06): Removed the cited vague phrases and the Danish cooldown wording.  
 **Severity:** Low
 
 Examples include “practice room”, “hidden model layers”, “the later curve”, “an extra look later in the evening”, “the brain's reserve runs out” and the English word “cooldown” in Danish text. Prefer concrete references to blood glucose, model processes, later in the course and waiting time.
 
 ### 12. Resolve language inconsistencies
 
-**Status:** ❌ OPEN  
+**Status:** ⚠️ BY DESIGN (2026-09-06): Glukagon spelling is consistent in Danish. Settings and Insights are retained because these are the actual current button labels in the Danish UI; changing the menu names is outside this rewrite.  
 **Severity:** Low
 
 Use one Danish spelling of glucagon/glukagon and replace the English `Settings` label in Danish.
@@ -158,3 +158,7 @@ Use one Danish spelling of glucagon/glukagon and replace the English `Settings` 
 4. Add and run a complete guide-tip mapping test.
 5. Syntax-check `js/guide-data.js`, `js/i18n.js` and any changed guide UI file.
 6. Browser-test guide links, What If help and the longest sections on desktop and mobile.
+
+## Updated status summary (2026-09-06)
+
+11 findings fixed; 1 resolved by matching actual UI labels. Browser coverage includes both guide languages at 1280, 1920 and 375 px, plus What If return and result-guide-retry navigation. The independent mobile shell does not expose Guide/What If yet; reader comprehension is not established by these software tests. See `2026-09-06_codex_game-guide-rewrite.md` for verification and remaining scope.

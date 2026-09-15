@@ -227,23 +227,27 @@ const FOODS = {
     pizza:          { carbs: 55, protein: 20, fat: 25, weight: 150, carbType: 'hvidt_mel', icon: 'assets/icons/food/pizza.png', eatTimeMin: 5 },
     lagkage:        { carbs: 60, protein: 5,  fat: 25, weight: 150, carbType: 'hvidt_mel', icon: 'assets/icons/food/cake.png', eatTimeMin: 4 },
 
-    // ───── Row 3: Fast carbs (Glucose tablets, Candy, Juice, Cola, Banana, Chocolate) ─────
-    // Fast sugars + fruit + sweet snack. retentionFactor on cola/juice means they
-    // empty ~2x faster than solid glucose tablets — visible in T_peak on the BG graph.
-    // Candy (sucrose bar) replaces apple — apple was too close to banana in sugar content,
-    // and candy covers a completely different, didactically important category (a handful
-    // of candy = 20g carbs, same substance as glucose tablets but in a much higher dose).
-    // Glucose tablets intentionally have a short eatTimeMin (dissolves on the tongue)
-    // so they retain their value as fast hypo treatment.
-    // Chocolate bar uses sukker_fast as carb type (sucrose dominates carbs),
-    // but the high fat content delays gastric emptying via the fat pathway.
+    // Række 3: Druesukker, slik, chokolade, juice, banan og caffè latte.
+    // Slik og chokolade vejer 6 g pr. klik, også for børn; 6 g er IKKE kulhydratmængden.
+    // Makrodata og opskrift er dokumenteret i docs/reviews/2026-09-06_food-catalog.md.
+    // portionDecimals bevarer små makromængder i både visning og tilføjelse til maven.
+    // Latte: 200 g letmælk (1,5 %) + 30 g espresso, uden tilsat sukker. Kaffeens
+    // meget lille makrobidrag er udeladt. Koffein har ingen særskilt effekt i motoren.
+    // Flydende form, protein og fedt bruger de eksisterende absorptionsmekanismer.
     druesukker: { carbs: 3,  protein: 0, fat: 0,  weight: 3,   carbType: 'sukker_fast',     icon: 'assets/icons/food/glucose-tablets.png', childScale: 1.0, eatTimeMin: 0.3 },
-    slik:       { carbs: 20, protein: 0, fat: 0,  weight: 25,  carbType: 'sukker_fast',     icon: 'assets/icons/food/candy.png', eatTimeMin: 1 },
-    juice:      { carbs: 25, protein: 0, fat: 0,  weight: 250, carbType: 'sukker_flydende', icon: 'assets/icons/food/juice.png', childScale: 0.60, eatTimeMin: 1 },
-    cola:       { carbs: 27, protein: 0, fat: 0,  weight: 250, carbType: 'sukker_flydende', icon: 'assets/icons/food/cola.png', childScale: 0.60, eatTimeMin: 1 },
-    banan:      { carbs: 25, protein: 1, fat: 0,  weight: 120, carbType: 'frugt',           icon: 'assets/icons/food/banana.png', childScale: 0.67, eatTimeMin: 3 },
-    chokolade:  { carbs: 22, protein: 3, fat: 12, weight: 40,  carbType: 'sukker_fast',     icon: 'assets/icons/food/chocolate.png', eatTimeMin: 2 },
+    slik:       { carbs: 4.6, protein: 0.4, fat: 0,   weight: 6,   carbType: 'sukker_fast',     icon: 'assets/icons/food/candy.png', childScale: 1.0, portionDecimals: 1, eatTimeMin: 1 },
+    chokolade:  { carbs: 3.2, protein: 0.5, fat: 1.9, weight: 6,   carbType: 'sukker_fast',     icon: 'assets/icons/food/chocolate.png', childScale: 1.0, portionDecimals: 1, eatTimeMin: 1 },
+    juice:      { carbs: 24, protein: 1.5, fat: 0.5,  weight: 250, carbType: 'sukker_flydende', icon: 'assets/icons/food/juice.png', childScale: 0.60, portionDecimals: 1, portionUnit: 'g', eatTimeMin: 1 },
+    banan:      { carbs: 23.6, protein: 1.3, fat: 0.2, weight: 120, carbType: 'frugt',          icon: 'assets/icons/food/banana.png', childScale: 0.67, portionDecimals: 1, eatTimeMin: 3 },
+    caffeLatte: { carbs: 9.4, protein: 7, fat: 3,      weight: 230, carbType: 'sukker_flydende', icon: 'assets/icons/food/caffe-latte.png', childScale: 0.60, portionDecimals: 1, portionUnit: 'g', eatTimeMin: 2 },
 };
+
+// Samme afrunding til visning og faktisk indtag. Eksisterende større retter
+// beholder hele gram; de nye snacks bevarer tiendedele, så fx 0,4 g ikke bliver 0.
+function foodMacroAmount(food, nutrient, scale = 1) {
+    const precision = 10 ** (food.portionDecimals || 0);
+    return Math.round(food[nutrient] * scale * precision) / precision;
+}
 
 // estimateEatTimeMin — Fallback formula for foods without an explicit eatTimeMin
 // (typically custom food from the "Lav selv" panel). Weight-based heuristic:
@@ -273,6 +277,7 @@ if (typeof window !== 'undefined') {
     window.CARB_TYPES = CARB_TYPES;
     window.CHILD_PORTION_SCALE = CHILD_PORTION_SCALE;
     window.estimateEatTimeMin = estimateEatTimeMin;
+    window.foodMacroAmount = foodMacroAmount;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -281,5 +286,6 @@ if (typeof module !== 'undefined' && module.exports) {
         CARB_TYPES,
         CHILD_PORTION_SCALE,
         estimateEatTimeMin,
+        foodMacroAmount,
     };
 }
