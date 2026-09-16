@@ -2,6 +2,7 @@
 # Kun SOURCES.md (referencelisten med DOI-links) trackes i Git
 docs/references/*.pdf
 docs/references/*.html
+docs/references/*.xml
 
 # Wishlist over relevante artikler bag paywall — vedligeholdes lokalt af science-reviewer-skillen
 docs/references/_paywalled-wishlist.txt

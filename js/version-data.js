@@ -15,9 +15,17 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.121-beta',
-    date: '2026-09-15',
+    version: '0.9.122-beta',
+    date: '2026-09-16',
     history: [
+        {
+            version: '0.9.122-beta',
+            date: '2026-09-16',
+            fixes: {
+                da: ['Baggrundsviden om insulin er præciseret; spillets beregninger er uændrede.'],
+                en: ['Background information about insulin has been clarified; game calculations are unchanged.']
+            }
+        },
         {
             version: '0.9.121-beta',
             date: '2026-09-15',
@@ -45,15 +53,10 @@ const APP_VERSION_INFO = {
             }
         },
         {
-            version: '0.9.119-beta',
-            date: '2026-09-05',
-            fixes: {
-                da: [
-                    'Projektbeskrivelserne afgrænser nu de offentlige spiltilstande til Campaign og Box Challenge.'
-                ],
-                en: [
-                    'Project descriptions now define Campaign and Box Challenge as the public game modes.'
-                ]
+            month: '2026-09',
+            summary: {
+                da: 'Projektbeskrivelserne afgrænsede de offentlige spiltilstande til Campaign og Box Challenge.',
+                en: 'Project descriptions defined Campaign and Box Challenge as the public game modes.'
             }
         },
         {
