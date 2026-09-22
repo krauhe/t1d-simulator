@@ -405,12 +405,12 @@ const sizeCanvas = () => {
 // the FOODS lookup in one place so no code duplicates macros/icon/weight/carbType.
 // Also triggers the fly-icon animation to the graph on a successful intake.
 //
-// @param {string} foodKey — Key in the FOODS table (e.g. 'pizza', 'æg', 'juice')
+// @param {string} foodKey — Key in the FOODS table (e.g. 'pizza', 'græskYoghurt', 'juice')
 // =============================================================================
 // Reverse keyboard mapping: FOODS key → shortcut key (for tooltips)
 const FOOD_SHORTCUT_MAP = {
-    'æg': 'Q', 'nødder': 'W', 'salat': 'E', 'laksAvocado': 'R', 'ægBacon': 'T', 'bøfBearnaise': 'Y',
-    'bollerIKarry': 'A', 'havregryn': 'S', 'burger': 'D', 'pasta': 'F', 'pizza': 'G', 'lagkage': 'H',
+    'nødder': 'Q', 'græskYoghurt': 'W', 'salat': 'E', 'laksAvocado': 'R', 'ægBacon': 'T', 'bøfBearnaise': 'Y',
+    'havregryn': 'A', 'bollerIKarry': 'S', 'burger': 'D', 'pasta': 'F', 'pizza': 'G', 'lagkage': 'H',
     'druesukker': 'Z', 'slik': 'X', 'chokolade': 'C', 'juice': 'V', 'banan': 'B', 'caffeLatte': 'N',
 };
 
@@ -2379,9 +2379,9 @@ function initializeApp() {
         if (isPanelOpen('dock-panel-food')) {
             const FOOD_KEY_MAP = {
                 // Row 1 — Low-carb
-                q: 'æg', w: 'nødder', e: 'salat', r: 'laksAvocado', t: 'ægBacon', y: 'bøfBearnaise',
+                q: 'nødder', w: 'græskYoghurt', e: 'salat', r: 'laksAvocado', t: 'ægBacon', y: 'bøfBearnaise',
                 // Row 2 — Meals
-                a: 'bollerIKarry', s: 'havregryn', d: 'burger',
+                a: 'havregryn', s: 'bollerIKarry', d: 'burger',
                 f: 'pasta', g: 'pizza', h: 'lagkage',
                 // Row 3 — Fast carbs
                 z: 'druesukker', x: 'slik', c: 'chokolade',

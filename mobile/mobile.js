@@ -2387,7 +2387,7 @@ function renderFoodRecents() {
 // language toggle. enrichFoodChips() rebuilds the chip, so the name must come from
 // here rather than a data-i18n attribute (which the rebuild would drop).
 var FOOD_I18N = {
-  'æg': 'food.egg', 'nødder': 'food.nuts', 'salat': 'food.salad', 'laksAvocado': 'food.salmonAvocado',
+  'nødder': 'food.nuts', 'græskYoghurt': 'food.greekYoghurt', 'salat': 'food.salad', 'laksAvocado': 'food.salmonAvocado',
   'ægBacon': 'food.eggsBacon', 'bøfBearnaise': 'food.steakBearnaise', 'bollerIKarry': 'food.curry',
   'havregryn': 'food.cereal', 'burger': 'food.burger', 'pasta': 'food.pasta', 'pizza': 'food.pizza',
   'lagkage': 'food.cake', 'druesukker': 'food.dextro', 'slik': 'food.candy', 'juice': 'food.juice',

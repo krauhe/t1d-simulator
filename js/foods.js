@@ -207,8 +207,9 @@ const FOODS = {
     // Low carbs → minimal BG impact. Protein/fat give a small delayed effect
     // via gluconeogenesis and fat-mediated insulin resistance. The two bitmap dishes
     // are composite low-carb meals, making the level feel more like everyday food.
-    æg:            { carbs: 1,  protein: 7,  fat: 5,  weight: 50,  carbType: 'mixed',    icon: 'assets/icons/food/egg.png', childScale: 1.0, eatTimeMin: 2 },
     nødder:        { carbs: 6,  protein: 8,  fat: 25, weight: 40,  carbType: 'mixed',    icon: 'assets/icons/food/nuts.png', eatTimeMin: 3 },
+    // 200 g græsk yoghurt 5 % + 20 g valnødder. Afrundede makroer pr. voksenportion.
+    græskYoghurt:  { carbs: 7,  protein: 21, fat: 24, weight: 220, carbType: 'mixed',    icon: 'assets/icons/food/greek-yoghurt-walnuts.png', eatTimeMin: 5 },
     salat:         { carbs: 5,  protein: 2,  fat: 1,  weight: 200, carbType: 'grøntsag', icon: 'assets/icons/food/salad.png', eatTimeMin: 5 },
     laksAvocado:   { carbs: 5,  protein: 30, fat: 28, weight: 300, carbType: 'grøntsag', icon: 'assets/icons/food/lowcarb-salmon-avocado.png', eatTimeMin: 7 },
     ægBacon:       { carbs: 2,  protein: 25, fat: 32, weight: 180, carbType: 'mixed',    icon: 'assets/icons/food/lowcarb-eggs-bacon.png', eatTimeMin: 6 },

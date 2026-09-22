@@ -43,7 +43,7 @@
     <!-- Favicon: simpel BG-kurve i teal -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23181c24'/><polyline points='4,22 10,18 14,10 18,20 22,14 28,16' fill='none' stroke='%2300e5a0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <!-- Stylesheet med CSS-variabler for tema-skifte -->
-    <link rel="stylesheet" href="style.css?v=0.9.123">
+    <link rel="stylesheet" href="style.css?v=0.9.124">
     <!-- Fonts: Inter til generel UI, Orbitron til CGM hero-tal (sci-fi look) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
     <!-- Tone.js: Web Audio framework for lydeffekter (CDN, pinned version) -->
@@ -667,13 +667,13 @@
                 <!-- ─── Række 1: Lav-kulhydrat ─── -->
                 <div class="preset-row-title" data-row-id="lowCarb" data-i18n="food.row.lowCarb">Lav-kulhydrat</div>
                 <div class="preset-row preset-row-6" data-row-id="lowCarb">
-                    <div class="preset-chip" id="eggButton" data-food="æg">
-                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/egg.png" alt=""></span><span class="pc-name" data-i18n="food.egg">Æg</span><span class="pc-weight">50g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:1"></span><span class="pc-mb-protein" style="flex:7"></span><span class="pc-mb-fat" style="flex:5"></span></div><span class="pc-key">Q</span>
-                        <div class="pc-tooltip"><span class="tt-kcal">77 kcal</span></div>
-                    </div>
                     <div class="preset-chip" id="nutsButton" data-food="nødder">
-                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/nuts.png" alt=""></span><span class="pc-name" data-i18n="food.nuts">Nødder</span><span class="pc-weight">40g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:6"></span><span class="pc-mb-protein" style="flex:8"></span><span class="pc-mb-fat" style="flex:25"></span></div><span class="pc-key">W</span>
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/nuts.png" alt=""></span><span class="pc-name" data-i18n="food.nuts">Nødder</span><span class="pc-weight">40g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:6"></span><span class="pc-mb-protein" style="flex:8"></span><span class="pc-mb-fat" style="flex:25"></span></div><span class="pc-key">Q</span>
                         <div class="pc-tooltip"><span class="tt-kcal">281 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="greekYoghurtButton" data-food="græskYoghurt">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/greek-yoghurt-walnuts.png" alt=""></span><span class="pc-name" data-i18n="food.greekYoghurt">Gr. yoghurt &amp; nødder</span><span class="pc-weight">220g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:7"></span><span class="pc-mb-protein" style="flex:21"></span><span class="pc-mb-fat" style="flex:24"></span></div><span class="pc-key">W</span>
+                        <div class="pc-tooltip"><span class="tt-kcal">328 kcal</span></div>
                     </div>
                     <div class="preset-chip" id="saladButton" data-food="salat">
                         <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/salad.png" alt=""></span><span class="pc-name" data-i18n="food.salad">Salat</span><span class="pc-weight">200g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:5"></span><span class="pc-mb-protein" style="flex:2"></span><span class="pc-mb-fat" style="flex:1"></span></div><span class="pc-key">E</span>
@@ -696,13 +696,13 @@
                 <!-- ─── Række 2: Måltider ─── -->
                 <div class="preset-row-title" data-row-id="meals" data-i18n="food.row.meals">Måltider</div>
                 <div class="preset-row preset-row-6" data-row-id="meals">
-                    <div class="preset-chip" id="curryButton" data-food="bollerIKarry">
-                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/curry-rice.png" alt=""></span><span class="pc-name" data-i18n="food.curry">Karry &amp; ris</span><span class="pc-weight">350g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:50"></span><span class="pc-mb-protein" style="flex:25"></span><span class="pc-mb-fat" style="flex:15"></span></div><span class="pc-key">A</span>
-                        <div class="pc-tooltip"><span class="tt-kcal">435 kcal</span></div>
-                    </div>
                     <div class="preset-chip" id="cerealButton" data-food="havregryn">
-                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/oatmeal.png" alt=""></span><span class="pc-name" data-i18n="food.cereal">Havregryn</span><span class="pc-weight">250g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:30"></span><span class="pc-mb-protein" style="flex:8"></span><span class="pc-mb-fat" style="flex:2"></span></div><span class="pc-key">S</span>
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/oatmeal.png" alt=""></span><span class="pc-name" data-i18n="food.cereal">Havregryn</span><span class="pc-weight">250g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:30"></span><span class="pc-mb-protein" style="flex:8"></span><span class="pc-mb-fat" style="flex:2"></span></div><span class="pc-key">A</span>
                         <div class="pc-tooltip"><span class="tt-kcal">170 kcal</span></div>
+                    </div>
+                    <div class="preset-chip" id="curryButton" data-food="bollerIKarry">
+                        <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/curry-rice.png" alt=""></span><span class="pc-name" data-i18n="food.curry">Karry &amp; ris</span><span class="pc-weight">350g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:50"></span><span class="pc-mb-protein" style="flex:25"></span><span class="pc-mb-fat" style="flex:15"></span></div><span class="pc-key">S</span>
+                        <div class="pc-tooltip"><span class="tt-kcal">435 kcal</span></div>
                     </div>
                     <div class="preset-chip" id="burgerButton" data-food="burger">
                         <span class="pc-emoji"><img class="pc-emoji-img" src="assets/icons/food/burger.png" alt=""></span><span class="pc-name" data-i18n="food.burger">Burger</span><span class="pc-weight">300g</span><div class="pc-macro-bar"><span class="pc-mb-carb" style="flex:40"></span><span class="pc-mb-protein" style="flex:40"></span><span class="pc-mb-fat" style="flex:40"></span></div><span class="pc-key">D</span>
@@ -1429,25 +1429,25 @@
     <!-- ===================================================================
          SCRIPT LOADING ORDER — Kritisk! Filerne deler globalt scope.
          =================================================================== -->
-<script src="js/sounds.js?v=0.9.123"></script>
-<script src="js/i18n.js?v=0.9.123"></script>
-<script src="js/dose-controls.js?v=0.9.123"></script>
-<script src="js/guide-data.js?v=0.9.123"></script>
-<script src="js/version-data.js?v=0.9.123"></script>
-<script src="js/levels.js?v=0.9.123"></script>
-<script src="js/archetypes.js?v=0.9.123"></script>
-<script src="js/symptoms.js?v=0.9.123"></script>
-<script src="js/foods.js?v=0.9.123"></script>
-<script src="js/hovorka.js?v=0.9.123"></script>
-<script src="js/physiology-engine.js?v=0.9.123"></script>
-<script src="js/simulator.js?v=0.9.123"></script>
-<script src="js/graph-renderer.js?v=0.9.123"></script>
-<script src="js/ui.js?v=0.9.123"></script>
-<script src="js/editor.js?v=0.9.123"></script>
-<script src="js/game.js?v=0.9.123"></script>
-<script src="js/campaign-core.js?v=0.9.123"></script>
-<script src="js/campaign.js?v=0.9.123"></script>
-<script src="js/welcome-tour.js?v=0.9.123"></script>
-<script src="js/main.js?v=0.9.123"></script>
+<script src="js/sounds.js?v=0.9.124"></script>
+<script src="js/i18n.js?v=0.9.124"></script>
+<script src="js/dose-controls.js?v=0.9.124"></script>
+<script src="js/guide-data.js?v=0.9.124"></script>
+<script src="js/version-data.js?v=0.9.124"></script>
+<script src="js/levels.js?v=0.9.124"></script>
+<script src="js/archetypes.js?v=0.9.124"></script>
+<script src="js/symptoms.js?v=0.9.124"></script>
+<script src="js/foods.js?v=0.9.124"></script>
+<script src="js/hovorka.js?v=0.9.124"></script>
+<script src="js/physiology-engine.js?v=0.9.124"></script>
+<script src="js/simulator.js?v=0.9.124"></script>
+<script src="js/graph-renderer.js?v=0.9.124"></script>
+<script src="js/ui.js?v=0.9.124"></script>
+<script src="js/editor.js?v=0.9.124"></script>
+<script src="js/game.js?v=0.9.124"></script>
+<script src="js/campaign-core.js?v=0.9.124"></script>
+<script src="js/campaign.js?v=0.9.124"></script>
+<script src="js/welcome-tour.js?v=0.9.124"></script>
+<script src="js/main.js?v=0.9.124"></script>
 </body>
 </html>

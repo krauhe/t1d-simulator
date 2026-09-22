@@ -164,7 +164,7 @@ const I18N = {
         'food.portions.adult': 'voksen portioner',
         'food.portions.child': 'børne portioner',
         // Row 1 — Low-carb
-        'food.egg': 'Æg',
+        'food.greekYoghurt': 'Gr. yoghurt & nødder',
         'food.nuts': 'Nødder',
         'food.salad': 'Salat',
         'food.salmonAvocado': 'Laks & avocado',
@@ -1144,7 +1144,7 @@ const I18N = {
         'food.portions.adult': 'adult portions',
         'food.portions.child': 'child portions',
         // Row 1 — Low carb
-        'food.egg': 'Egg',
+        'food.greekYoghurt': 'Greek yogurt & nuts',
         'food.nuts': 'Nuts',
         'food.salad': 'Salad',
         'food.salmonAvocado': 'Salmon & avocado',

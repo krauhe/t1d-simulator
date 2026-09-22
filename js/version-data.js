@@ -15,12 +15,16 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.123-beta',
+    version: '0.9.124-beta',
     date: '2026-09-22',
     history: [
         {
-            version: '0.9.123-beta',
+            version: '0.9.124-beta',
             date: '2026-09-22',
+            features: {
+                da: ['Græsk yoghurt med nødder erstatter det enkelte æg i madpanelet. Havregryn står nu først i måltidsrækken.'],
+                en: ['Greek yogurt with nuts replaces the single egg in the food panel. Oatmeal now comes first in the meals row.']
+            },
             fixes: {
                 da: ['Madkortenes mouseover-tekst gentager ikke længere kulhydrat, protein og fedt, som allerede vises på kortene.'],
                 en: ['Food card tooltips no longer repeat carbohydrate, protein and fat amounts already shown on the cards.']
