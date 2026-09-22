@@ -15,9 +15,17 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.122-beta',
-    date: '2026-09-16',
+    version: '0.9.123-beta',
+    date: '2026-09-22',
     history: [
+        {
+            version: '0.9.123-beta',
+            date: '2026-09-22',
+            fixes: {
+                da: ['Madkortenes mouseover-tekst gentager ikke længere kulhydrat, protein og fedt, som allerede vises på kortene.'],
+                en: ['Food card tooltips no longer repeat carbohydrate, protein and fat amounts already shown on the cards.']
+            }
+        },
         {
             version: '0.9.122-beta',
             date: '2026-09-16',
@@ -27,36 +35,10 @@ const APP_VERSION_INFO = {
             }
         },
         {
-            version: '0.9.121-beta',
-            date: '2026-09-15',
-            features: {
-                da: [
-                    'Madpanelet har fået caffè latte, nye snackikoner og små portioner slik og chokolade på 6 g.',
-                    'Spilguiden er kortere og mere konkret på dansk og engelsk, med et nyt afsnit om Hvad Nu Hvis.'
-                ],
-                en: [
-                    'The food panel now includes caffè latte, new snack icons and small 6 g portions of candy and chocolate.',
-                    'The game guide is shorter and more concrete in Danish and English, with a new What If section.'
-                ]
-            },
-            fixes: {
-                da: [
-                    'Tiplinks åbner de relevante guideafsnit, og indholdsfortegnelsen kan rulles på mindre skærme.',
-                    'Valget om at skjule statistik bliver gemt, mens kaloriebalancen fortsat vises, når banens mål kræver den.',
-                    'Introen har opdateret tale om snacks og Settings på begge sprog. Oplæsningen følger nu kun det valgte sprog, og karakterteksten matcher lydmanuskriptet.'
-                ],
-                en: [
-                    'Tip links open the relevant guide sections, and the table of contents scrolls on smaller screens.',
-                    'The choice to hide statistics is remembered, while calorie balance stays visible when required by the level goal.',
-                    'The intro has updated snack and Settings narration in both languages. Narration now follows only the selected language, and the character text matches the audio script.'
-                ]
-            }
-        },
-        {
             month: '2026-09',
             summary: {
-                da: 'Projektbeskrivelserne afgrænsede de offentlige spiltilstande til Campaign og Box Challenge.',
-                en: 'Project descriptions defined Campaign and Box Challenge as the public game modes.'
+                da: 'Madpanelet fik caffè latte, nye ikoner og små snackportioner. Spilguiden blev kortere med Hvad Nu Hvis, bedre tiplinks og rulning. Statistikvalget blev bevaret, introens tekst og tale blev tilpasset, og oplæsningen fulgte det valgte sprog. Projektbeskrivelserne afgrænsede spiltilstandene til Campaign og Box Challenge.',
+                en: 'The food panel gained caffè latte, new icons and small snack portions. The shorter guide added What If, better tip links and scrolling. Statistics preferences were preserved, intro text and narration were updated, and audio followed the selected language. Project descriptions defined Campaign and Box Challenge as the game modes.'
             }
         },
         {

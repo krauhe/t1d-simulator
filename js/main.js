@@ -625,17 +625,12 @@ function updateFoodChips() {
             if (fatLabel) { fatLabel.textContent = fat; fatLabel.style.flex = fat || 1; }
         }
 
-        // Update tooltip with scaled values
+        // Næringstallene står allerede på madkortet. Tooltip viser kun
+        // kalorier, genvej og eventuel beskrivelse af retten.
         const tooltip = chip.querySelector('.pc-tooltip');
         if (tooltip) {
-            const carbTT = tooltip.querySelector('.tt-carb');
-            const proteinTT = tooltip.querySelector('.tt-protein');
-            const fatTT = tooltip.querySelector('.tt-fat');
             const kcalTT = tooltip.querySelector('.tt-kcal');
             const keyTT = tooltip.querySelector('.tt-key');
-            if (carbTT) carbTT.textContent = t('food.label.carbs') + ': ' + carbs + 'g';
-            if (proteinTT) proteinTT.textContent = t('food.label.protein') + ': ' + protein + 'g';
-            if (fatTT) fatTT.textContent = t('food.label.fat') + ': ' + fat + 'g';
             if (kcalTT) kcalTT.textContent = kcal + ' kcal';
             if (keyTT) {
                 const shortcut = FOOD_SHORTCUT_MAP[foodKey];
