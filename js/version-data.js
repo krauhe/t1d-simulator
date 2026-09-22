@@ -15,11 +15,11 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.125-beta',
+    version: '0.9.126-beta',
     date: '2026-09-22',
     history: [
         {
-            version: '0.9.125-beta',
+            version: '0.9.126-beta',
             date: '2026-09-22',
             features: {
                 da: ['Græsk yoghurt med nødder erstatter det enkelte æg i madpanelet. Havregryn står nu først i måltidsrækken.'],

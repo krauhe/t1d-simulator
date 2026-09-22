@@ -1,0 +1,23 @@
+{
+  "date": "2026-09-22",
+  "method": "Targeted web search of claims already present; not a systematic database review. Local metadata REST requests and acquisition routes are recorded separately.",
+  "queries": [
+    "Verhulst 2022 glycaemic thresholds counterregulatory 3.4 3.8 type 1 diabetes systematic review",
+    "Somogyi type 1 diabetes 2025 post hypoglycemic nocturnal hyperglycemia 755 CGM",
+    "Donga 2010 partial sleep restriction type 1 diabetes insulin sensitivity nine patients glucose infusion 21%",
+    "\"Post-hypoglycemic nocturnal hyperglycemia\" type 1 diabetes Somogyi 2025",
+    "\"Siler\" \"1998\" \"inhibition of gluconeogenesis\" alcohol humans",
+    "\"ISPAD\" \"2022\" \"Sick day management\" pdf Phelan",
+    "\"Hyperglycemic Crises in Adults With Diabetes\" \"2024\" PMC",
+    "ISPAD 2022 ketoacidosis Glaser pdf pedi 13406 835 856",
+    "\"Time Lag of Glucose From Intravascular to Interstitial Compartment\" \"2015\"",
+    "\"Basu\" \"2013\" \"5.6\" \"healthy\"",
+    "\"Garvey\" \"1985\" \"insulin treatment\" \"type II\" 222 234",
+    "\"Hypoglycemia in Type 1 Diabetes\" \"McCrimmon\" PMC2923455",
+    "\"The Relationships Between Time in Range\" \"2019\" \"0.6\"",
+    "\"Hyperglycemic Crises\" \"2024\" \"20–30 mmol\" potassium",
+    "\"Vuorinen-Markkola\" \"1992\" \"24\" \"20\" glucose uptake"
+  ],
+  "selection": "Prioritized original or authoritative sources for reversed thresholds, Somogyi prevalence/causality, sleep endpoints, menstrual-cycle heterogeneity, DKA definitions and potassium units, overdose cohort/arithmetic, alcohol route/flux, T2D-to-T1D misattribution, CGM transport and TIR/HbA1c estimands.",
+  "not_searched_exhaustively": ["seasonality registries", "all stress experiments", "all environmental-temperature experiments", "all overdose case reports", "all ketogenesis biochemistry", "current CGM manufacturer specifications", "all glucotoxicity pathways"]
+}

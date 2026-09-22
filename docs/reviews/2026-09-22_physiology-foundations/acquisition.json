@@ -1,0 +1,82 @@
+[
+  {
+    "source": "Basu 2015",
+    "requested_url": "https://journals.sagepub.com/doi/pdf/10.1177/1932296814554797",
+    "attempt_date": "2026-09-22T09:29:01.330719+00:00",
+    "error": "HTTP Error 403: Forbidden",
+    "candidate_retained": false
+  },
+  {
+    "source": "Basu 2015 repository",
+    "requested_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4495531/fullTextXML",
+    "attempt_date": "2026-09-22T09:29:01.508941+00:00",
+    "error": "HTTP Error 500: ",
+    "candidate_retained": false
+  },
+  {
+    "source": "Holman 2020",
+    "requested_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7462842/fullTextXML",
+    "attempt_date": "2026-09-22T09:29:01.834317+00:00",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7462842/fullTextXML",
+    "bytes": 303784,
+    "content_type": "application/xml",
+    "candidate_retained": true,
+    "local_path": "docs/references/Holman_2020_RW_MammalianGlucoseTransporters.xml",
+    "sha256": "3b2ca036b64fce2242e5746e87769a450ee65a4bbb035009f1216d49c9df9e05",
+    "identity": "Verified title, author and DOI from article front matter; targeted transporter/kinetics passages read, see parent appraisal record"
+  },
+  {
+    "source": "Basu 2015 PMC",
+    "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4495531/",
+    "attempt_date": "2026-09-22T09:37:02.598597+00:00",
+    "status": 200,
+    "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4495531/",
+    "bytes": 21313,
+    "content_type": "text/html; charset=utf-8",
+    "candidate_retained": false
+  },
+  {
+    "source": "Basu 2015 abstract",
+    "requested_url": "https://pubmed.ncbi.nlm.nih.gov/25305282/",
+    "attempt_date": "2026-09-22T09:37:02.949924+00:00",
+    "status": 203,
+    "final_url": "https://pubmed.ncbi.nlm.nih.gov/25305282/",
+    "bytes": 5567,
+    "content_type": "text/html; charset=utf-8",
+    "candidate_retained": false
+  },
+  {
+    "source": "Holman 2020 landing",
+    "requested_url": "https://pubmed.ncbi.nlm.nih.gov/32591905/",
+    "attempt_date": "2026-09-22T09:37:03.382955+00:00",
+    "status": 203,
+    "final_url": "https://pubmed.ncbi.nlm.nih.gov/32591905/",
+    "bytes": 5567,
+    "content_type": "text/html; charset=utf-8",
+    "candidate_retained": false
+  },
+  {
+    "source": "Asp 1996 PDF",
+    "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC1160686/pdf/jphysiol00398-0271.pdf",
+    "attempt_date": "2026-09-22T09:52:50.650394+00:00",
+    "status": 200,
+    "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC1160686/pdf/jphysiol00398-0271.pdf",
+    "bytes": 21380,
+    "content_type": "text/html; charset=utf-8",
+    "candidate_retained": false
+  },
+  {
+    "source": "Laborde 2021",
+    "requested_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8656666/fullTextXML",
+    "attempt_date": "2026-09-22T09:52:51.030238+00:00",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8656666/fullTextXML",
+    "bytes": 158079,
+    "content_type": "application/xml",
+    "candidate_retained": true,
+    "local_path": "docs/references/Laborde_2021_SlowBreathingDoseResponse.xml",
+    "sha256": "30d1d6ab2700ab08a141eb32d7430db59aa8a3e1a1f3527185f1c7eaa6ee8a26",
+    "identity": "Verified title/authors and article identity; Methods, Results and Discussion read, see parent appraisal record"
+  }
+]

@@ -1,0 +1,25 @@
+[
+  {
+    "file": "Oz_2009_HumanBrainGlycogenHypoglycemia.xml",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2731528/fullTextXML",
+    "attempted_at": "2026-09-22T10:01:48.707351+00:00",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2731528/fullTextXML",
+    "title": "Human Brain Glycogen Metabolism During and After Hypoglycemia",
+    "bytes": 93484,
+    "sha256": "6dd78094b0b9cc9a5520703f0b0c3d3cd67d08822dc5f06b0cf49f2a1725c348",
+    "identity_verified": true
+  },
+  {
+    "file": "Jacobson_2021_CognitivePerformance32YearsDCCT.xml",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8583716/fullTextXML",
+    "attempted_at": "2026-09-22T10:01:48.708703+00:00",
+    "error": "HTTP Error 500: "
+  },
+  {
+    "file": "Vallon_2020_RW_KidneyGlucoseTransporters.xml",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7483786/fullTextXML",
+    "attempted_at": "2026-09-22T10:01:48.708703+00:00",
+    "error": "HTTP Error 500: "
+  }
+]

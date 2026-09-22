@@ -1,0 +1,148 @@
+[
+  {
+    "url": "https://d-nb.info/1373067012/34",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://d-nb.info/1373067012/34",
+    "bytes": 1281476,
+    "sha256": "b80a7235f381fa76e7e67c32bcce5e9e0f43bff9ae33f0d2e3e9177a4f8135a0",
+    "content_kind": "pdf; identity inspected during acquisition"
+  },
+  {
+    "url": "https://discovery.dundee.ac.uk/ws/files/77405021/Verhulst2022_Article_GlycaemicThresholdsForCounterr.pdf",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://discovery.dundee.ac.uk/ws/files/77405021/Verhulst2022_Article_GlycaemicThresholdsForCounterr.pdf",
+    "bytes": 861411,
+    "sha256": "5495684eaf452eb9c6e586a208fdc5dae97c5b4855c73e8f02b4fdb56c76603c",
+    "content_kind": "pdf; identity inspected during acquisition"
+  },
+  {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3836156/",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3836156/",
+    "bytes": 128795,
+    "sha256": "c72ac0eb0826769eec10f6b3e2b87ef24cb745a71e8876f96273a3f330f3b1b3",
+    "title": "Thirty Years of Research on the Dawn Phenomenon: Lessons to Optimize Blood Glucose Control in Diabetes - PMC",
+    "challenge": false
+  },
+  {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/16043731/",
+    "date": "2026-09-22",
+    "status": 203,
+    "final_url": "https://pubmed.ncbi.nlm.nih.gov/16043731/",
+    "bytes": 5567,
+    "sha256": "152833640f50194fc73450f0bbc764e9f66e90e67aab7afa42a7bd0bd966c491",
+    "title": "pubmed.ncbi.nlm.nih.gov",
+    "challenge": false
+  },
+  {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/2226381/",
+    "date": "2026-09-22",
+    "status": 203,
+    "final_url": "https://pubmed.ncbi.nlm.nih.gov/2226381/",
+    "bytes": 5567,
+    "sha256": "67d221ec5f0d0611787f63cd5058627b4a4546acc7fe4f923907ac9a68a0f614",
+    "title": "pubmed.ncbi.nlm.nih.gov",
+    "challenge": false
+  },
+  {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/24606397/",
+    "date": "2026-09-22",
+    "status": 203,
+    "final_url": "https://pubmed.ncbi.nlm.nih.gov/24606397/",
+    "bytes": 5567,
+    "sha256": "36cdaccff7ac3a8b43f6f107c871b5d4081de04d52260584e3c8c7e64d68a279",
+    "title": "pubmed.ncbi.nlm.nih.gov",
+    "challenge": false
+  },
+  {
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11343900/fullTextXML",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11343900/fullTextXML",
+    "bytes": 351998,
+    "sha256": "6f63be2ff5309d444bcc946344666df478db8b709df3b9e864d67f36edcc4def",
+    "title": "Hyperglycaemic crises in adults with diabetes: a consensus report",
+    "challenge": false
+  },
+  {
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2890361/fullTextXML",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2890361/fullTextXML",
+    "bytes": 58084,
+    "sha256": "c947b3c5543141382d23d821aa735fb615d7a5a688270aaae72b98246931f651",
+    "title": "Partial Sleep Restriction Decreases Insulin Sensitivity in Type 1 Diabetes",
+    "challenge": false
+  },
+  {
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3279554/fullTextXML",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3279554/fullTextXML",
+    "bytes": 98281,
+    "sha256": "e8f8f09ab1e0900517daa184c4c76d7db24714d98a4ffa7a0f6cb6ebdf137db9",
+    "title": "Hypoglycemia in Type 1 Diabetes",
+    "challenge": false
+  },
+  {
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4693236/fullTextXML",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4693236/fullTextXML",
+    "bytes": 224034,
+    "sha256": "cdcc7e7c08f19642fce07b222dcd0fbedb3209df06127f82550d618a8330ff92",
+    "title": "Impact of Alcohol on Glycemic Control and Insulin Action",
+    "challenge": false
+  },
+  {
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6079517/fullTextXML",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6079517/fullTextXML",
+    "bytes": 256483,
+    "sha256": "7b8a2606c011c09b47bbc2f941b0f55fe87ceb9c7bf5e6d673daad78ddd44edb",
+    "title": "Factors Affecting the Absorption of Subcutaneously Administered Insulin: Effect on Variability",
+    "challenge": false
+  },
+  {
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6973648/fullTextXML",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6973648/fullTextXML",
+    "bytes": 157558,
+    "sha256": "63fae36300c9665942f2679a2467a66a8a0b4b62dff755a275c0c5e85006e9fe",
+    "title": "Clinical Targets for Continuous Glucose Monitoring Data Interpretation: Recommendations From the International Consensus on Time in Range",
+    "challenge": false
+  },
+  {
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC9962060/fullTextXML",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC9962060/fullTextXML",
+    "bytes": 256668,
+    "sha256": "e2577978d99d6fe0092acef67c9792f2a09c7a7e56e6c3ab2c8a9b3b178bb99a",
+    "title": "Menstrual Cycle, Glucose Control and Insulin Sensitivity in Type 1 Diabetes: A Systematic Review",
+    "challenge": false
+  },
+  {
+    "url": "https://www.ispad.org/static/6551d05a-156c-4772-a32a6d663fcfc2d4/2022CGCh13PediatricDiabetes-2.pdf",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://www.ispad.org/static/6551d05a-156c-4772-a32a6d663fcfc2d4/2022CGCh13PediatricDiabetes-2.pdf",
+    "bytes": 2848649,
+    "sha256": "540f5c834ee1afb94618bf2ec8c157721ee4c144fb1673daddc3c3fce63893e9",
+    "content_kind": "pdf; identity inspected during acquisition"
+  },
+  {
+    "url": "https://www.ispad.org/static/6dd62eae-c8cb-4b4a-84e1efc768505746/Ch11PediatricDiabetes.pdf",
+    "date": "2026-09-22",
+    "status": 200,
+    "final_url": "https://www.ispad.org/static/6dd62eae-c8cb-4b4a-84e1efc768505746/Ch11PediatricDiabetes.pdf",
+    "bytes": 4529980,
+    "sha256": "9ea9803c0e4a1db139209b6ba6e1deec043723d73d45ba5271c7e084c3c9e96b",
+    "content_kind": "pdf; identity inspected during acquisition"
+  }
+]

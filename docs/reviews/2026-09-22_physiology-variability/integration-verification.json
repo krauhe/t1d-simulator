@@ -1,0 +1,34 @@
+{
+  "changed_sections": [
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "17",
+    "18",
+    "19",
+    "23",
+    "24",
+    "25",
+    "26",
+    "27"
+  ],
+  "out_of_scope_changes": [],
+  "version_preserved": true,
+  "version": "<!-- doc-version: 2026-09-22-v2 -->",
+  "removed_explicit_or_heading_anchors": [
+    "accuracy-metrics-and-current-device-performance",
+    "counterregulatory-hormone-blunting",
+    "glycogenolysis-is-preserved----the-fed-state-vs-glycogen-depleted-distinction",
+    "hepatic-glycogen-the-hard-substrate-limit",
+    "mixed-and-sweetened-beverages----the-biphasic-glycemic-profile",
+    "pharmacokinetics-of-overdose-saturable-absorption-and-prolonged-tails"
+  ],
+  "new_unresolved_internal_fragments": [],
+  "current_unresolved_internal_fragments": [
+    "dawn",
+    "exercise",
+    "hypoglycemia-haaf"
+  ]
+}

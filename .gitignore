@@ -7,6 +7,15 @@ docs/references/*.xml
 # Wishlist over relevante artikler bag paywall — vedligeholdes lokalt af science-reviewer-skillen
 docs/references/_paywalled-wishlist.txt
 
+# Rå artikeluddrag og metadata fra reviewet bevares kun lokalt.
+docs/reviews/2026-09-22_physiology-inputs/url-checks.json
+docs/reviews/2026-09-22_physiology-organs/metadata.json
+docs/reviews/2026-09-22_physiology-organs/corrected-source-verification.json
+docs/reviews/2026-09-22_physiology-organs/final-link-verification.json
+docs/reviews/2026-09-22_physiology-variability/abstract-identity.json
+docs/reviews/2026-09-22_physiology-variability/acquisition.json
+docs/reviews/2026-09-22_physiology-variability/integration-before.json
+
 # Serious-game literature and review images - local research material synced via Dropbox.
 # The structured catalogue and SOURCES.md remain tracked under docs/game-literature/.
 docs/game-literature/references/

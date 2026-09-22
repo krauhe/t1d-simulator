@@ -1,0 +1,28 @@
+[
+  {
+    "file": "Ghezzi_2018_RW_RenalGlucoseHandling_VERIFIED.xml",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6133168/fullTextXML",
+    "attempted_at": "2026-09-22T09:53:22.262053+00:00",
+    "expected_title": "Physiology of renal glucose handling",
+    "status": 200,
+    "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6133168/fullTextXML",
+    "title": "Physiology of renal glucose handling via SGLT1, SGLT2 and GLUT2",
+    "bytes": 107557,
+    "sha256": "2f80a3dd9ee6afbb004d4567b00623daf3b12debbd3998998bd6a4e47c4573a6",
+    "full_text": true
+  },
+  {
+    "file": "Simpson_2007_RW_CerebralNutrientTransporters_VERIFIED.xml",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2094104/fullTextXML",
+    "attempted_at": "2026-09-22T09:53:22.660354+00:00",
+    "expected_title": "SUPPLY AND DEMAND",
+    "error": "HTTP Error 500: "
+  },
+  {
+    "file": "Kuppermann_2018_DKAFluidInfusionTrial.xml",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6051773/fullTextXML",
+    "attempted_at": "2026-09-22T09:53:23.117488+00:00",
+    "expected_title": "Clinical Trial of Fluid Infusion",
+    "error": "HTTP Error 500: "
+  }
+]

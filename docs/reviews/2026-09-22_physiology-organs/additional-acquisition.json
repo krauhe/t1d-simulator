@@ -1,0 +1,70 @@
+[
+  {
+    "file": "Kuppermann_2018_DKAFluidInfusionTrial.html",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6051773/",
+    "expected_title": "Clinical Trial of Fluid Infusion Rates",
+    "attempted_at": "2026-09-22T10:01:08.054057+00:00",
+    "status": 200,
+    "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6051773/",
+    "bytes": 21312,
+    "error": "Full-text body not established"
+  },
+  {
+    "file": "Simpson_2007_RW_CerebralNutrientTransporters_VERIFIED.html",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2094104/",
+    "expected_title": "SUPPLY AND DEMAND",
+    "attempted_at": "2026-09-22T10:01:08.054057+00:00",
+    "status": 200,
+    "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2094104/",
+    "bytes": 21312,
+    "error": "Full-text body not established"
+  },
+  {
+    "file": "Oz_2009_HumanBrainGlycogenHypoglycemia.html",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2731528/",
+    "expected_title": "Human Brain Glycogen Metabolism",
+    "attempted_at": "2026-09-22T10:01:08.055063+00:00",
+    "status": 200,
+    "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2731528/",
+    "bytes": 21312,
+    "error": "Full-text body not established"
+  },
+  {
+    "file": "Jacobson_2021_CognitivePerformance32YearsDCCT.html",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8583716/",
+    "expected_title": "Cognitive Performance Declines",
+    "attempted_at": "2026-09-22T10:01:08.055063+00:00",
+    "status": 200,
+    "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8583716/",
+    "bytes": 21312,
+    "error": "Full-text body not established"
+  },
+  {
+    "file": "Phillip_2021_Pooled52WeekDEPICT.pdf",
+    "url": "https://eprints.whiterose.ac.uk/id/eprint/169674/1/dom.14248.pdf",
+    "expected_title": "Long-term efficacy and safety",
+    "attempted_at": "2026-09-22T10:01:08.443676+00:00",
+    "status": 200,
+    "final_url": "https://eprints.whiterose.ac.uk/id/eprint/169674/1/dom.14248.pdf",
+    "bytes": 966651,
+    "identity_verified": true,
+    "sha256": "c31b7f995a975c4e7a6cdc95a60fdbda1ce15ead1cfff06f313d5cbbf0439223"
+  },
+  {
+    "file": "Dandona_2018_DEPICT1_52Weeks.pdf",
+    "url": "https://diabetesjournals.org/care/article-pdf/41/12/2552/527116/dc181087.pdf",
+    "expected_title": "DEPICT-1 52-Week",
+    "attempted_at": "2026-09-22T10:01:08.445734+00:00",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "Vallon_2020_RW_KidneyGlucoseTransporters.html",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7483786/",
+    "expected_title": "Glucose transporters in the kidney",
+    "attempted_at": "2026-09-22T10:01:08.508408+00:00",
+    "status": 200,
+    "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7483786/",
+    "bytes": 21313,
+    "error": "Full-text body not established"
+  }
+]
