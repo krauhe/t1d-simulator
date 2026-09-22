@@ -1,0 +1,190 @@
+{
+  "date": "2026-09-22",
+  "sources": [
+    {
+      "id": "Bergman1979",
+      "reading": "Original abstract; seven models and conscious-dog protocols. Later equations checked in Cobelli 2009.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": false,
+      "wishlist": "docs/references/_paywalled-wishlist.txt; 2026-09-22 entries"
+    },
+    {
+      "id": "Sorensen1985",
+      "reading": "Scanned title and abstract, PDF pages 1-2; organ structure and control purpose. Detailed comparison uses Pompa 2021, not a full thesis audit.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": true,
+      "local_path": "docs/references/Sorensen_1985_GlucoseMetabolismThesis.pdf",
+      "bytes": 31696353,
+      "sha256": "7db2c6f6f41adc55e2cd43e903655790daf226c04db9831f276dae2c18aec787"
+    },
+    {
+      "id": "Hovorka2004",
+      "reading": "Model equations, Tables 1-2, sections 2-5, clinical experiments and prediction results; 15 experiments/10 people and post-meal restriction.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": true,
+      "local_path": "docs/references/Hovorka_2004_NonlinearMPC.pdf",
+      "bytes": 276321,
+      "sha256": "8009f009ef7b826ee143fd656d33626f8ea1b075b7ba93636f027bd6d80c1bda"
+    },
+    {
+      "id": "DallaMan2007",
+      "reading": "PDF pages 1-8: population, subsystem identification, utilization relation and limitations.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": true,
+      "local_path": "docs/references/DallaMan_2007_MealSimulation.pdf",
+      "bytes": 872300,
+      "sha256": "8780106c17434f6b553856c5bc0414c9a4fe1b5e8296b640aaa8c15d31b5eedc"
+    },
+    {
+      "id": "Cobelli2009",
+      "reading": "Minimal-model, identification, glucose-flux, sensor and controller sections. Not every clinical reference was independently appraised.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": true,
+      "local_path": "docs/references/Cobelli_2009_RW_ModelsSignalsControl.html",
+      "bytes": 711546,
+      "sha256": "09411dc87ce867b427a3cb0d05eaadcd5f6691ebdf51b587eb6ae4a4ec8f853d"
+    },
+    {
+      "id": "Wilinska2010",
+      "reading": "PMC full-text sections on variability, population, protocol, Table 3 and discussion read via web tool; local retention failed.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": false,
+      "wishlist": "docs/references/_paywalled-wishlist.txt; 2026-09-22 entries"
+    },
+    {
+      "id": "DallaMan2014",
+      "reading": "PMC full-text sections on S2008/S2013, cohort generation, hypoglycaemia and glucagon data read via web tool; local retention failed.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": false,
+      "wishlist": "docs/references/_paywalled-wishlist.txt; 2026-09-22 entries"
+    },
+    {
+      "id": "Pompa2021",
+      "reading": "Methods, experimental setups, selected equations, results/discussion/conclusion; reconstructed models and single nondiabetic OGTT limitation.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": true,
+      "local_path": "docs/references/Pompa_2021_ThreeMaximalModels.xml",
+      "bytes": 703587,
+      "sha256": "cf86471d3359b4f42bfe2fb7bd2f4c02b8c868031fb836855aa768dac0d8d209"
+    },
+    {
+      "id": "AlAhdab2021",
+      "reading": "Final published article: model figure and sections 2-4, selected appendix equations; glucose-only meals, >120 parameters, numerical cohorts and explicit patient-validation gap.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": true,
+      "local_path": "docs/references/AlAhdab_2021_GlucoseInsulinMedicationsLifestyleT2D.pdf",
+      "bytes": 81777792,
+      "sha256": "c9cab842c4e2988bacb73a540fc5fcbfcf26999ea6b9952706966f51f3ac8d1e"
+    },
+    {
+      "id": "Wanika2024",
+      "reading": "Definitions, practical-identifiability methodology and discussion; adjacent methods evidence, not a T1D outcome study.",
+      "used_in": "BG-SCIENCE sections 28-29",
+      "reading_date": "2026-09-22",
+      "retained_full_text": true,
+      "local_path": "docs/references/Wanika_2024_RW_IdentifiabilityGuide.xml",
+      "bytes": 464637,
+      "sha256": "ba43e4afcc1e31f6ebeee4b2956392a13d3b4e99083163a9d2babe8bf6c834d3"
+    }
+  ],
+  "local_url_checks": [
+    {
+      "requested_url": "https://doi.org/10.1186/s13036-024-00410-x",
+      "checked": "2026-09-22",
+      "status": 200,
+      "final_url": "https://link.springer.com/article/10.1186/s13036-024-00410-x?error=cookies_not_supported&code=8a930c5e-1757-4d39-a72b-ca3b17c8e201",
+      "bytes": 420045,
+      "title": "Structural and practical identifiability analysis in bioengineering: a beginner’s guide | Journal of Biological Engineering | Springer Nature Link",
+      "response_kind": "HTML; inspect title for identity"
+    },
+    {
+      "requested_url": "https://gitlab.com/aau-adapt-t2d/aau-t2d-simulator",
+      "checked": "2026-09-22",
+      "status": 200,
+      "final_url": "https://gitlab.com/aau-adapt-t2d/aau-t2d-simulator",
+      "bytes": 56715,
+      "title": "AAU ADAPT-T2D / AAU T2D Simulator · GitLab",
+      "response_kind": "HTML; inspect title for identity"
+    },
+    {
+      "requested_url": "https://isbgroup.eu/files/Dalla%20Man%202007.pdf",
+      "checked": "2026-09-22",
+      "status": 200,
+      "final_url": "https://isbgroup.eu/files/Dalla%20Man%202007.pdf",
+      "bytes": 872300,
+      "response_kind": "PDF; identity checked in retained document"
+    },
+    {
+      "requested_url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0257789",
+      "checked": "2026-09-22",
+      "status": 200,
+      "final_url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0257789",
+      "bytes": 270610,
+      "title": "A comparison among three maximal mathematical models of the glucose-insulin system | PLOS One",
+      "response_kind": "HTML; inspect title for identity"
+    },
+    {
+      "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2825634/",
+      "checked": "2026-09-22",
+      "status": 200,
+      "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2825634/",
+      "bytes": 21313,
+      "title": "Checking your browser - reCAPTCHA",
+      "response_kind": "interstitial_or_challenge"
+    },
+    {
+      "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2951686/",
+      "checked": "2026-09-22",
+      "status": 200,
+      "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2951686/",
+      "bytes": 21311,
+      "title": "Checking your browser - reCAPTCHA",
+      "response_kind": "interstitial_or_challenge"
+    },
+    {
+      "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4454102/",
+      "checked": "2026-09-22",
+      "status": 200,
+      "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4454102/",
+      "bytes": 21313,
+      "title": "Checking your browser - reCAPTCHA",
+      "response_kind": "interstitial_or_challenge"
+    },
+    {
+      "requested_url": "https://pubmed.ncbi.nlm.nih.gov/443421/",
+      "checked": "2026-09-22",
+      "status": 203,
+      "final_url": "https://pubmed.ncbi.nlm.nih.gov/443421/",
+      "bytes": 5567,
+      "title": "pubmed.ncbi.nlm.nih.gov",
+      "response_kind": "interstitial_or_challenge"
+    },
+    {
+      "requested_url": "https://vbn.aau.dk/en/publications/glucose-insulin-mathematical-model-for-the-combined-effect-of-med/",
+      "checked": "2026-09-22",
+      "access_error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "requested_url": "https://www.cs.cmu.edu/~dmilam/files/sorensen_thesis.pdf",
+      "checked": "2026-09-22",
+      "status": 200,
+      "final_url": "https://www.cs.cmu.edu/~dmilam/files/sorensen_thesis.pdf",
+      "bytes": 31696353,
+      "response_kind": "PDF; identity checked in retained document"
+    },
+    {
+      "requested_url": "https://www.stat.yale.edu/~jtc5/diabetes/NonlinearModelPredictiveControl_Hovorka_04.pdf",
+      "checked": "2026-09-22",
+      "access_error": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1010)>"
+    }
+  ]
+}

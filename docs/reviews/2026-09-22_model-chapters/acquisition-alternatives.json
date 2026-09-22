@@ -1,0 +1,84 @@
+[
+  {
+    "source": "Wilinska_2010_ClosedLoopSimulation",
+    "repository_id_or_url": "https://journals.sagepub.com/doi/pdf/10.1177/193229681000400117",
+    "attempts": [
+      {
+        "requested_url": "https://journals.sagepub.com/doi/pdf/10.1177/193229681000400117",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "DallaMan_2014_UVAPadovaNewFeatures",
+    "repository_id_or_url": "https://journals.sagepub.com/doi/pdf/10.1177/1932296813514502",
+    "attempts": [
+      {
+        "requested_url": "https://journals.sagepub.com/doi/pdf/10.1177/1932296813514502",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "Kovatchev_2009_InSilicoPreclinicalTrials",
+    "repository_id_or_url": "https://journals.sagepub.com/doi/pdf/10.1177/193229680900300106",
+    "attempts": [
+      {
+        "requested_url": "https://journals.sagepub.com/doi/pdf/10.1177/193229680900300106",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "DallaMan_2007_MealSimulation",
+    "repository_id_or_url": "https://isbgroup.eu/files/Dalla%20Man%202007.pdf",
+    "attempts": [
+      {
+        "requested_url": "https://isbgroup.eu/files/Dalla%20Man%202007.pdf",
+        "date": "2026-09-22",
+        "status": 200,
+        "final_url": "https://isbgroup.eu/files/Dalla%20Man%202007.pdf",
+        "bytes": 872300,
+        "candidate_full_text": true,
+        "path": "docs\\references\\DallaMan_2007_MealSimulation.pdf",
+        "sha256": "8780106c17434f6b553856c5bc0414c9a4fe1b5e8296b640aaa8c15d31b5eedc"
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "Sorensen_1985_GlucoseMetabolismThesis",
+    "repository_id_or_url": "https://www.cs.cmu.edu/~./dmilam/files/sorensen_thesis.pdf",
+    "attempts": [
+      {
+        "requested_url": "https://www.cs.cmu.edu/~./dmilam/files/sorensen_thesis.pdf",
+        "date": "2026-09-22",
+        "status": 200,
+        "final_url": "https://www.cs.cmu.edu/~dmilam/files/sorensen_thesis.pdf",
+        "bytes": 31696353,
+        "candidate_full_text": true,
+        "path": "docs\\references\\Sorensen_1985_GlucoseMetabolismThesis.pdf",
+        "sha256": "7db2c6f6f41adc55e2cd43e903655790daf226c04db9831f276dae2c18aec787"
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "Raue_2009_IdentifiabilityProfileLikelihood",
+    "repository_id_or_url": "https://academic.oup.com/bioinformatics/article/25/15/1923/213246",
+    "attempts": [
+      {
+        "requested_url": "https://academic.oup.com/bioinformatics/article/25/15/1923/213246",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  }
+]

@@ -1,0 +1,181 @@
+[
+  {
+    "source": "Kovatchev_2009_InSilicoPreclinicalTrials",
+    "repository_id_or_url": "PMC2681269",
+    "attempts": [
+      {
+        "requested_url": "https://europepmc.org/articles/PMC2681269?pdf=render",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      },
+      {
+        "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2681269/",
+        "date": "2026-09-22",
+        "status": 200,
+        "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2681269/",
+        "bytes": 21313,
+        "candidate_full_text": false
+      },
+      {
+        "requested_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2681269/fullTextXML",
+        "date": "2026-09-22",
+        "error": "HTTP Error 500: "
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "Wilinska_2010_ClosedLoopSimulation",
+    "repository_id_or_url": "PMC2825634",
+    "attempts": [
+      {
+        "requested_url": "https://europepmc.org/articles/PMC2825634?pdf=render",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      },
+      {
+        "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2825634/",
+        "date": "2026-09-22",
+        "status": 200,
+        "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2825634/",
+        "bytes": 21312,
+        "candidate_full_text": false
+      },
+      {
+        "requested_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2825634/fullTextXML",
+        "date": "2026-09-22",
+        "error": "HTTP Error 500: "
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "DallaMan_2014_UVAPadovaNewFeatures",
+    "repository_id_or_url": "PMC4454102",
+    "attempts": [
+      {
+        "requested_url": "https://europepmc.org/articles/PMC4454102?pdf=render",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      },
+      {
+        "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4454102/",
+        "date": "2026-09-22",
+        "status": 200,
+        "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4454102/",
+        "bytes": 21313,
+        "candidate_full_text": false
+      },
+      {
+        "requested_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4454102/fullTextXML",
+        "date": "2026-09-22",
+        "error": "HTTP Error 500: "
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "Cobelli_2009_RW_ModelsSignalsControl",
+    "repository_id_or_url": "PMC2951686",
+    "attempts": [
+      {
+        "requested_url": "https://europepmc.org/articles/PMC2951686?pdf=render",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      },
+      {
+        "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2951686/",
+        "date": "2026-09-22",
+        "status": 200,
+        "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2951686/",
+        "bytes": 21313,
+        "candidate_full_text": false
+      },
+      {
+        "requested_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2951686/fullTextXML",
+        "date": "2026-09-22",
+        "error": "HTTP Error 500: "
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "Pompa_2021_ThreeMaximalModels",
+    "repository_id_or_url": "PMC8476045",
+    "attempts": [
+      {
+        "requested_url": "https://europepmc.org/articles/PMC8476045?pdf=render",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      },
+      {
+        "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8476045/",
+        "date": "2026-09-22",
+        "status": 200,
+        "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8476045/",
+        "bytes": 21313,
+        "candidate_full_text": false
+      },
+      {
+        "requested_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8476045/fullTextXML",
+        "date": "2026-09-22",
+        "status": 200,
+        "final_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8476045/fullTextXML",
+        "bytes": 703587,
+        "candidate_full_text": true,
+        "path": "docs\\references\\Pompa_2021_ThreeMaximalModels.xml",
+        "sha256": "cf86471d3359b4f42bfe2fb7bd2f4c02b8c868031fb836855aa768dac0d8d209"
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "Kovatchev_2023_RW_UVAPadovaDevelopment",
+    "repository_id_or_url": "PMC10658679",
+    "attempts": [
+      {
+        "requested_url": "https://europepmc.org/articles/PMC10658679?pdf=render",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      },
+      {
+        "requested_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10658679/",
+        "date": "2026-09-22",
+        "status": 200,
+        "final_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10658679/",
+        "bytes": 21317,
+        "candidate_full_text": false
+      },
+      {
+        "requested_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10658679/fullTextXML",
+        "date": "2026-09-22",
+        "error": "HTTP Error 500: "
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "Raue_2009_IdentifiabilityProfileLikelihood",
+    "repository_id_or_url": "https://opus.bibliothek.uni-augsburg.de/opus4/files/113236/113236.pdf",
+    "attempts": [
+      {
+        "requested_url": "https://opus.bibliothek.uni-augsburg.de/opus4/files/113236/113236.pdf",
+        "date": "2026-09-22",
+        "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>"
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  },
+  {
+    "source": "Bergman_1979_QuantitativeInsulinSensitivity",
+    "repository_id_or_url": "https://www.researchgate.net/profile/Yz-Ider/publication/22699697_Quantitative_Estimation_of_Insulin_Sensitivity/links/02e7e5376085032c14000000/Quantitative-Estimation-of-Insulin-Sensitivity.pdf",
+    "attempts": [
+      {
+        "requested_url": "https://www.researchgate.net/profile/Yz-Ider/publication/22699697_Quantitative_Estimation_of_Insulin_Sensitivity/links/02e7e5376085032c14000000/Quantitative-Estimation-of-Insulin-Sensitivity.pdf",
+        "date": "2026-09-22",
+        "error": "HTTP Error 403: Forbidden"
+      }
+    ],
+    "semantic_identity_and_reading": "Requires separate editorial verification"
+  }
+]
