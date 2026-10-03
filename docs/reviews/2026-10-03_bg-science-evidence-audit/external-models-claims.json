@@ -1,0 +1,126 @@
+{
+  "audit_date": "2026-10-03",
+  "target": "docs/BG-SCIENCE.md §§19–24, 26, 28–29",
+  "method": "Selective original-PDF visual checks; archive Markdown used for navigation only",
+  "local_external_link_check": "blocked_by_socket_policy; no new external URL certified",
+  "claims": [
+    {
+      "id": "EM01",
+      "correction_status": "fixed_local_uncommitted_2026-10-03",
+      "correction_note": "Fisher 3D overlap percentages explicitly labelled T2D; relative HbA1c prediction claim narrowed.",
+      "severity": "high",
+      "bg_lines": "1799-1801",
+      "status": "partially_supported_population_switch_not_explicit",
+      "source_sha256": "cbef2e425dfb3ed547b0481c9871ec1bc120f0d5d8cc1b11931ed48ad896f7b4",
+      "source_path": "C:/Dropbox/Kristian/Diabetes/t1d-serious-games-knowledge-base/private-literature/articles/Fisher_2014_RW_DepressionDistressDiabetes.pdf",
+      "pdf_page": 6,
+      "region": "left column, 3D study paragraph",
+      "verified_observation": "3D study followed 502 adults with T2D; 84.1% and 66.7% refer to that cohort. BG places the figures in a T1D paragraph without explicitly calling the 3D cohort T1D or signalling a population switch",
+      "limitations": "Review reports the 3D study; underlying cohort article was not independently checked"
+    },
+    {
+      "id": "EM02",
+      "correction_status": "fixed_local_uncommitted_2026-10-03",
+      "correction_note": "FITTER original author list and 4-mm/6-mm angle, fold and spacing guidance corrected.",
+      "severity": "medium",
+      "bg_lines": "1919,1933,1945,1948",
+      "status": "new_fulltext_resolves_access_limitation_and_bibliography_error",
+      "source_sha256": "9d4074397ef2a2c618c0ec51037f89d67bce55a5a29929ad75ee9a431deb907f",
+      "source_path": "C:/Dropbox/Kristian/Diabetes/t1d-serious-games-knowledge-base/private-literature/articles/Frid_2016_InsulinDeliveryRecommendations.pdf",
+      "pdf_pages": [1, 4, 9],
+      "region": "title/author list; needle recommendations; lipohypertrophy and rotation recommendations",
+      "verified_observation": "4-mm pen needles perpendicular at 90 degrees; lifted fold for very young children and very thin adults; 45 degrees alternative belongs to 6-mm needle; spacing at least 1 cm; current BG author list incorrect",
+      "limitations": "Consensus recommendations are not prospective risk estimates"
+    },
+    {
+      "id": "EM03",
+      "correction_status": "fixed_local_uncommitted_2026-10-03",
+      "correction_note": "Endothelial Brownlee pathways and human lipid-infusion muscle mechanism separated.",
+      "severity": "high",
+      "bg_lines": "2263-2283",
+      "status": "partially_supported_mechanism_overgeneralised",
+      "sources": [
+        {
+          "source_sha256": "f804ee4b1f59939bc7ad1dd35f7b776443c02cd8d12b2fe8a0103edafd522a97",
+          "source_path": "C:/Dropbox/Kristian/Diabetes/t1d-serious-games-knowledge-base/private-literature/articles/Du_2003_HyperglycemicEndothelialDamage.pdf",
+      "pdf_pages": [1, 2, 3],
+          "region": "abstract and methods",
+          "observation": "Bovine aortic endothelial cells and mouse aortae; PKC, hexosamine, AGE measured; polyol not investigated because aldose reductase activity was low"
+        },
+        {
+          "source_sha256": "2b5a7d1b01c0923440142105544ecb9362447969d845d0737ea3de97fc71fcd5",
+          "source_path": "C:/Dropbox/Kristian/Diabetes/t1d-serious-games-knowledge-base/private-literature/articles/Szendroedi_2014_DAGPKCthetaMuscleInsulinResistance.pdf",
+          "pdf_page": 4,
+          "region": "right column, lipid infusion signalling discussion",
+          "observation": "Human lipid-infusion muscle effect involved PKCtheta and IRS1 Ser1101; PKCepsilon did not change in this protocol"
+        }
+      ],
+      "limitations": "Neither experiment directly identifies a human T1D glucotoxicity dose-response"
+    },
+    {
+      "id": "EM04",
+      "correction_status": "partial_local_uncommitted_2026-10-03",
+      "correction_note": "Wrong Ceriello bibliography and unsupported T1D FMD values removed; actual T1D FMD magnitude and time course still need original appraisal.",
+      "severity": "high",
+      "bg_lines": "2297-2299,2350",
+      "status": "citation_identity_mismatch_and_quantitative_claim_unresolved",
+      "source_identifier": "Original indexed Detection of nitrotyrosine in the diabetic plasma: PMID 11508267; Diabetologia 2001;44:834-838",
+      "verified_observation": "Source is a T2D plasma-nitrotyrosine study, not a T1D FMD recovery study; current BG year/volume/pages/PMID conflict with that identity",
+      "evidence_basis": "agent indexed-abstract check; subsequent coordinating-reviewer original-PDF page-1 visual check and local Europe PMC metadata identity verification",
+      "source_sha256": "e2eb183704540d3591a88747cb39713bc52ea43687aa4f94af86bad79b1712a8",
+      "source_path": "C:/Dropbox/Kristian/Diabetes/Diabetes Simulator - Virtuel udforskning af din virkelighed/docs/references/Ceriello_2001_NitrotyrosineDiabeticPlasma.pdf",
+      "pdf_page": 1,
+      "coordinating_check": "Original abstract confirms 40 T2D participants and 35 controls; current BG PMID 11935147 instead identifies de Vos et al. on encapsulated pancreatic islets.",
+      "limitations": "The proposed correct T1D FMD source and its numerical endpoints remain to be checked from original full text"
+    },
+    {
+      "id": "EM05",
+      "correction_status": "fixed_local_uncommitted_2026-10-03",
+      "correction_note": "Dalla Man S2008/S2013 single-meal validation boundary added.",
+      "severity": "medium",
+      "bg_lines": "2604-2610,2648",
+      "status": "important_version_specific_boundary_missing",
+      "source_sha256": "4c225ec137dcfbbab27c6db05494c4e261d9033393caa28db9014626d44891ee",
+      "source_path": "C:/Dropbox/Kristian/Diabetes/t1d-serious-games-knowledge-base/private-literature/articles/DallaMan_2014_UVAPadovaT1DSimulator.pdf",
+      "pdf_page": 7,
+      "region": "left column, conclusion before Appendix",
+      "verified_observation": "Authors state S2008 and S2013 validated and FDA-accepted for single-meal scenario only; multiple meals can be simulated but lack time-varying parameters",
+      "limitations": "Publication-version statement; does not audit later releases or current regulatory status"
+    },
+    {
+      "id": "EM06",
+      "correction_status": "partial_local_uncommitted_2026-10-03",
+      "correction_note": "Universal thermal and device numeric claims removed or narrowed to qualitative formulation/device-specific statements; original source coverage remains partial.",
+      "severity": "medium",
+      "bg_lines": "1845-1883",
+      "status": "unresolved_unsupported_precision",
+      "verified_observation": "Multiple precise generalised temperature and device effects are not tied to original protocol/device-specific evidence in the section",
+      "evidence_basis": "section source-to-claim audit; no contrary original experiment established for each number",
+      "limitations": "Do not treat as a finding that every number is false; primary protocol checks remain pending"
+    },
+    {
+      "id": "SC01",
+      "bg_lines": "2098,2118",
+      "status": "supported_in_scoped_original_check",
+      "source_sha256": "152941cfde68564daa7d3fa0b7818ba68ef121cf699f96da1d42b0f79e6ce269",
+      "source_path": "C:/Dropbox/Kristian/Diabetes/Diabetes Simulator - Virtuel udforskning af din virkelighed/docs/references/Megarbane_2007_IntentionalOverdoseWithInsulinPrognosticFactors.pdf",
+      "pdf_page": 3,
+      "region": "results, outcomes and kinetics paragraphs",
+      "verified_observation": "Six kinetic patients, first-order terminal half-life 3.8 h IQR 1.5-4.6; 25 ICU patients, four unfavourable outcomes and two deaths",
+      "limitations": "Selected, heterogeneous ICU overdose cohort"
+    },
+    {
+      "id": "SC02",
+      "correction_status": "fixed_local_uncommitted_2026-10-03",
+      "correction_note": "Bergman original protocol (13 tests/five dogs, 9+4 partition), approximately 24% CV and full-text access are now stated in BG-SCIENCE; abstract-only labels removed.",
+      "bg_lines": "2476,2514,2541,2561,2653",
+      "status": "supported_and_fulltext_access_label_stale",
+      "source_sha256": "f0b8e410f85d4c007c458689a07802c34e3ca4e03abf090321576aa7d482871e",
+      "source_path": "C:/Dropbox/Kristian/Diabetes/t1d-serious-games-knowledge-base/private-literature/articles/Bergman_1979_QuantitativeInsulinSensitivity.pdf",
+      "pdf_pages": [1, 8],
+      "region": "abstract/methods and insulin-sensitivity results",
+      "verified_observation": "Seven models; 13 IVGTTs in five conscious dogs; 100, 200, 300 mg/kg; approximately 24% CV at 300 mg/kg",
+      "limitations": "Original animal identification experiment, not T1D daily-life validation"
+    }
+  ]
+}

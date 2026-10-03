@@ -46,6 +46,8 @@ Begge formål kræver SAMME stil: præcis, kvantitativ, citeret. Modellør-form�
 
 ## TRIN 0 — DISCOVERY
 
+Ved arkivbrug: læs først den fælles `scientific-article-handling`-skill fra brugerens `.codex/skills/`. Den versionsstyrede kilde findes i `../t1d-serious-games-knowledge-base/tools/literature/skill/scientific-article-handling/SKILL.md`. Kør `& '../t1d-serious-games-knowledge-base/tools/literature/archive.ps1'` før opslag i arkivet. Brug det fælles indeks og relevante Markdown-sider til at finde evidens, men kontrollér faglige påstande i originalen; tal, formler og tabeller kræver originalens sidebillede. Følg skillens procedure for svære udsnit og genbrugelige kontroller. Opdateringen er ikke en faglig godkendelse.
+
 Før omskrivning, læs:
 
 1. **Det aktuelle målafsnit** i `docs/BG-SCIENCE.md` (hele afsnittet, ikke kun en del)
@@ -174,6 +176,7 @@ Status: PAYWALL - bedt brugeren om kopi YYYY-MM-DD
 
 ### Hentning af tilgængelige kilder
 
+- Følg den fælles artikel-skills identitets-, navngivnings- og arkiveringsprocedure. Efter hver arkiveret batch køres `archive.ps1` igen; rapportér manglende eller blokerede udtræk. HTML/XML bevares i originalformat uden for PDF-konverteringen. Kør ingen baggrundsovervågning.
 - Brug `WebFetch` til at downloade PDF/HTML
 - Filnavns-format: `Efternavn_Aarstal[_RW]_KortTitel.pdf`
   - `Cherrington_1999_RW_HepaticGlucoseProduction.pdf` (review)

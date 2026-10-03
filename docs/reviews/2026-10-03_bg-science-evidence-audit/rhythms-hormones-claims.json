@@ -1,0 +1,99 @@
+{
+  "generated_at": "2026-10-03",
+  "implementation": {"date":"2026-10-03","source_version":"2026-10-03-v1","fixed_ids":["RH01","RH02","RH03","RH04","RH05","RH06","RH07","RH08"],"scope":"Scientific prose only; original support statuses preserved; Reschke full-text gap remains","commit":null},
+  "scope": "BG-SCIENCE.md lines 1120-1701, sections 11-18",
+  "review_mode": "read_only_targeted_scientific_audit",
+  "claims": [
+    {
+      "id": "RH01",
+      "severity": "high",
+      "bg_lines": [1320],
+      "bg_proposition": "Somogyi 1959, Diabetogenic Effect of Hyperinsulinism, 26:192-198 is the source for the specific 1959 clinical excess-insulin rebound case account.",
+      "support_status": "contradicted_source_identity",
+      "source_checks": [
+        {"author_year": "Somogyi 1959, Exacerbation of Diabetes by Excess Insulin Action", "sha256": "1d6ea0364e4c43824ca826cedc8037168a9d324d5ee7612a26d7dcc0490b6247", "pdf_pages": [1,4], "printed_pages": ["169","172"], "region": "title, case-study framing, and night-to-next-day glycosuria interpretation", "basis": "original_pdf_visual"},
+        {"author_year": "Somogyi 1959, Diabetogenic Effect of Hyperinsulinism", "sha256": "0b6123926f8584384d0fe087407f924a72d866d861afd22b35725283202482d4", "pdf_page": 1, "printed_page": "192", "region": "distinct title and opening interpretation", "basis": "original_pdf_visual"}
+      ],
+      "correction_proposal": "Cite 26:169-191, PMID 13617275 for this specific 1959 case account; distinguish 26:192-198, PMID 13617276, and do not call either the first publication of the hypothesis."
+    },
+    {
+      "id": "RH02",
+      "severity": "high",
+      "bg_lines": [1245, 1294, 1296, 1316],
+      "bg_proposition": "A CGM low below 3.5 mmol/L followed by morning hyperglycaemia identifies a Somogyi pattern.",
+      "support_status": "contradicted_by_adjacent_text_and_partial_external_evidence",
+      "source_checks": [
+        {"author_year": "Hoi-Hansen et al. 2005", "sha256": "3d6a7ed3cecb252947d97524c50484724bc889826083bd23449067a2da0416e9", "pdf_page": 2, "printed_page": "2438", "region": "Table 1 including group denominators and morning glucose means, methods continued from p.1", "basis": "original_pdf_visual", "context": "594 valid nights in 89 selected T1D participants; confirmed nocturnal low <=2.2 mmol/L for >=10 min; morning glucose 6.1 +/- 0.3 vs 11.5 +/- 0.2 mmol/L; means +/- SEM"},
+        {"author_year": "Guillod et al. 2007", "sha256": "bcff12b2475f85c630fd668d2808016abca61a9a096590a1ca49633b575fbd89", "pdf_page": 7, "printed_page": "363", "region": "section 4.6 and Table 3", "basis": "original_pdf_visual", "context": "Selected CGM cohort n=88; 23% of morning hyperglycaemia cases had nocturnal hypoglycaemia; no hormone or treatment attribution"}
+      ],
+      "correction_proposal": "Call the trace a post-hypoglycaemic rise; reserve Somogyi for a proposed hormonal mechanism and state CGM alone cannot identify the cause."
+    },
+    {
+      "id": "RH03",
+      "severity": "high",
+      "bg_lines": [1339, 1351, 1354, 1383, 1384],
+      "bg_proposition": "There is a definite intrinsic 24-hour tissue-coordinated insulin-sensitivity curve with a T1D morning trough.",
+      "support_status": "partially_contradicted_overgeneralization",
+      "source_checks": [
+        {"author_year": "Qian et al. 2018", "sha256": "0f923421d09569a74af199058acd12b3c12385b63d2ddff9bd137b00ef6ded00", "pdf_pages": [2,3,4], "region": "Methods, circadian-phase, misalignment and behavioural-cycle SI results", "basis": "original_pdf_visual", "context": "14 healthy adults; no significant intrinsic circadian-phase SI effect (p=0.06); behavioural dinner SI -25.4%; misalignment SI -16.5% (95% CI 7.9-24.3)"}
+      ],
+      "correction_proposal": "Separate endogenous phase, behavioural meal timing and misalignment; label T1D tissue-resolved phase/amplitude unestablished."
+    },
+    {
+      "id": "RH04",
+      "severity": "medium",
+      "bg_lines": [1353, 1377],
+      "bg_proposition": "Harfmann 2016 shows abolished diurnal muscle glucose uptake and glucose intolerance with normal insulin secretion.",
+      "support_status": "partial_and_unmeasured_components",
+      "source_checks": [
+        {"author_year": "Harfmann et al. 2016", "sha256": "bdc0a93909596ff719e7d82f9602341a289e601e7e5651870410bd5c4a210534", "pdf_pages": [3,6], "region": "glucose-tolerance methods and Figure 2 with caption", "basis": "original_pdf_visual", "context": "Mouse glucose tolerance tested at ZT14; approximately 2-fold higher fasting insulin concentration in muscle-Bmal1 knockout; insulin secretion rate not measured"}
+      ],
+      "correction_proposal": "Limit Harfmann attribution to measured mouse endpoints; check Dyar 2014 independently before attributing a rhythm-abolition or normal secretion claim."
+    },
+    {
+      "id": "RH05",
+      "severity": "medium",
+      "bg_lines": [1469],
+      "bg_proposition": "Seven Widom deteriorators showed a 19% luteal decline in glucose disposal.",
+      "support_status": "partial_missing_statistical_and_selection_caveat",
+      "source_checks": [
+        {"author_year": "Widom et al. 1992", "sha256": "45e9a8d230beb704a443be8bb1faf47c90668dcfe802bb2400bebc6722e7aef1", "pdf_page": 3, "printed_page": "215", "region": "Table 1, Figure 1 and adjacent Results", "basis": "original_pdf_visual", "context": "Seven participants selected by prior premenstrual hyperglycaemia history; 30.2 +/- 3.8 vs 24.5 +/- 2.0 umol/kg/min, p=0.09; Figure 1 mean +/- SE; hyperglycaemic clamp 11.7 mmol/L"}
+      ],
+      "correction_proposal": "State p=0.09 and preselection next to the effect size; do not infer phenotype prevalence from seven of sixteen."
+    },
+    {
+      "id": "RH06",
+      "severity": "high",
+      "bg_lines": [1364, 1676],
+      "bg_proposition": "Scheer 2009 isolates circadian misalignment with adequate or constant sleep and produces a 6% postprandial glucose rise.",
+      "support_status": "contradicted_sleep_control_and_endpoint_description",
+      "source_checks": [
+        {"author_year": "Scheer et al. 2009", "sha256": "ae9f2b3b8ded35603a87b1a74e7f74d7580ddab7b14be71f938705657c77d793", "pdf_page": 2, "printed_page": "4454", "region": "Effects of Circadian Misalignment results and sleep-efficiency comparison", "basis": "original_pdf_visual", "context": "Ten healthy adults; glucose +6% and insulin +22% averaged across behavioural cycle; sleep efficiency 67% vs 84%, n=9 sleep records"}
+      ],
+      "correction_proposal": "Retain observational estimates with their whole-cycle endpoint; remove adequate-sleep and independent-of-sleep claims from Scheer attribution."
+    },
+    {
+      "id": "RH07",
+      "severity": "medium",
+      "bg_lines": [1371],
+      "bg_proposition": "Van Cauter 1991 shows glucose +17% and calculated insulin secretion +49% under nocturnal wakefulness.",
+      "support_status": "supported_with_new_context",
+      "source_checks": [
+        {"author_year": "Van Cauter et al. 1991", "sha256": "b55e45ca31809f2bc2a51994e5f302f92d3810f7b60e174f8e3e38cfaec444ca", "pdf_page": 5, "printed_page": "937", "region": "Table I and clearance Results text", "basis": "original_pdf_visual", "context": "Eight healthy men on continuous IV glucose; mean +/- SEM nocturnal-wakefulness rises 16.6 +/- 4.7% glucose and 49.3 +/- 7.6% secretion; clearance 1.57 +/- 0.20 L/min 23:00-03:00 vs 1.16 +/- 0.13 L/min 08:00-11:00, p<0.01"}
+      ],
+      "correction_proposal": "Add the measured secretion-versus-circulating-insulin distinction and clearance timing; do not treat it as T1D subcutaneous-insulin calibration."
+    },
+    {
+      "id": "RH08",
+      "severity": "medium",
+      "bg_lines": [1528, 1532],
+      "bg_proposition": "BG attributes the SWEET seasonality paper to Kamrath et al. 2022 and uses it, with a T1D-incidence Mendelian-randomization null finding, to infer infection and vitamin D contributions to seasonal HbA1c in established T1D.",
+      "support_status": "endpoint_mismatch_abstract_level",
+      "source_checks": [
+        {"author_year": "Manousaki et al. 2021", "sha256": null, "locator": "primary full-text PMC HTML, title/methods/outcome", "basis": "primary_html_local_http_200_title_match", "context": "Genetic vitamin D exposure versus T1D incidence risk, not HbA1c in established T1D"},
+        {"author_year": "Reschke et al. 2022", "pmid": "36166593", "doi": "10.2337/dc22-0278", "bg_attribution": "Kamrath et al. 2022 (incorrect)", "sha256": null, "locator": "primary indexed abstract and bibliographic title", "basis": "primary_abstract_only_local_journal_http_403", "context": "Seasonality of new-onset paediatric T1D cases and first-year HbA1c, not seasonal HbA1c nadir in established T1D"}
+      ],
+      "correction_proposal": "Correct author attribution to Reschke et al. 2022; remove cross-endpoint inference or replace with endpoint-matched longitudinal/intervention data. Full Reschke paper not independently appraised."
+    }
+  ]
+}
