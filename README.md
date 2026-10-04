@@ -10,20 +10,21 @@ T1D Simulator is an educational game about type 1 diabetes glucose physiology. T
 
 > **Purpose and limitations — see [below](#purpose-and-limitations)**
 
+## Play online
+
+1. **[Play the stable version](https://krauhe.github.io/t1d-simulator/)** — the default release, kept unchanged while newer changes are tested.
+2. **[Try the preview version](https://krauhe.github.io/t1d-simulator/preview/)** — newer changes for testing; may contain bugs.
+
+No installation required. Both releases automatically select a desktop or phone layout. Use the bar at the top of the game to switch between stable and preview. Settings, progress and highscores are kept separate between releases.
+
+To run the development source locally, clone/download the full repository and open `index.html` in a browser. No server or build step is needed, but the JS, CSS and asset files must be present alongside `index.html`.
+
 ## Support the project
 
 This simulator is a free, open-source passion project built in my spare time. If you find it useful — whether as a patient, parent, or educator — consider buying me a coffee. Your support helps cover project costs and lets me dedicate more time to improving the simulation and adding new features.
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-krauhe-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/krauhe)
 [![Support via MobilePay](https://img.shields.io/badge/MobilePay-T1DSim-7B68EE?style=for-the-badge)](https://qr.mobilepay.dk/box/0946757d-b34b-4b1e-8302-f0a67fc49c69/pay-in)
-
-## Try it
-
-**[Play online](https://krauhe.github.io/t1d-simulator/)** — no installation required. The link automatically opens the version that fits your device: the full desktop UI on PC and tablet, or a touch-optimized layout on phones. You can switch at any time — both versions have a "switch version" option.
-
-On a phone you can also jump straight to the **[mobile version](https://krauhe.github.io/t1d-simulator/mobile/)**.
-
-Or clone/download the full repository and open `index.html` in a browser. No server, no build step needed — but the JS, CSS and asset files must be present alongside `index.html`.
 
 ## Feedback & Bug Reports
 

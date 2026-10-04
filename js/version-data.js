@@ -15,11 +15,11 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.127-beta',
+    version: '0.9.128-beta',
     date: '2026-10-04',
     history: [
         {
-            version: '0.9.127-beta',
+            version: '0.9.128-beta',
             date: '2026-10-04',
             features: {
                 da: ['Skift mellem den stabile udgave og en tydeligt markeret testversion.', 'Testversionen gemmer indstillinger, fremskridt og highscores separat.'],
