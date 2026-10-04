@@ -628,8 +628,8 @@ test('Fasting ketosis (insulin present) does NOT cause acidosis', () => {
 
 console.log('\n--- Test 6: DKA full pipeline ---');
 
-test('Pump failure: acidosis accumulates as ketones rise', () => {
-    // Opsæt pumpesvigt: fjern al insulin
+test('Zero-insulin-state ablation: heuristic acidosis load accumulates', () => {
+    // Tilstandsablation, ikke pumpestop med bevaret subkutant insulin-depot.
     const sim = createCleanSimulator();
     setSimulatorBG(sim, 12.0);
     sim.activeFastInsulin = [];
@@ -638,16 +638,14 @@ test('Pump failure: acidosis accumulates as ketones rise', () => {
     sim.hovorka.state[2] = 0; sim.hovorka.state[3] = 0; sim.hovorka.state[6] = 0;
     sim.hovorka.state[7] = 0; sim.hovorka.state[8] = 0; sim.hovorka.state[9] = 0;
 
-    // Simuler 18 timer uden insulin — ketoner bør nå DKA-niveau (>3.0).
-    // Rekalibreret 2026-06-06: med den langsommere codex-alignede ramp nås DKA-
-    // tærsklen (BHB >3.0 → acidosisLoad akkumulerer) omkring 14-16h, ikke 8h.
-    // 18h giver god margin (BHB ~3.7, acidosisLoad > 0).
+    // Historisk regression: BHB >3,0 aktiverer modellens heuristiske belastning.
+    // BHB alene diagnosticerer ikke DKA; dette er ikke klinisk timingvalidering.
     simulateMinutes(sim, 1080);
 
     assert(sim.ketoneLevel > 3.0,
-        `Ketones must exceed 3.0 after 18h pump failure (was ${sim.ketoneLevel.toFixed(2)})`);
+        `Historical regression: ketones exceed 3.0 after 18h state ablation (was ${sim.ketoneLevel.toFixed(2)})`);
     assert(sim.acidosisLoad > 0,
-        `Acidosis load must accumulate during prolonged pump failure (was ${sim.acidosisLoad.toFixed(1)})`);
+        `Heuristic acidosis load accumulates during prolonged state ablation (was ${sim.acidosisLoad.toFixed(1)})`);
 });
 
 test('Recovery after insulin: acidosis load is not instantly zeroed', () => {
@@ -2386,30 +2384,25 @@ test('Zero insulin causes rising ketones (lipolysis + CPT-1 open)', () => {
         `(start=${startKetones.toFixed(2)}, after 4h=${sim.ketoneLevel.toFixed(2)})`);
 });
 
-test('Pump failure 4h: ketones reach early-rise range (0.5-1.5)', () => {
-    // Pumpesvigt: ingen insulin i 4 timer.
-    // Rekalibreret 2026-06-06 mod codex/Guerci 2006-data (langsommere ramp end den
-    // tidligere Laffel-baserede kalibrering): beta-OHB ~0.5-1.0 ved 4h. Modellen
-    // giver ~0.88. Den langsommere ramp matcher nyere CSII-afbrydelsesdata —
-    // se docs/reviews/2026-06-05_codex_pump-failure-outcome.md.
+test('Ingen ny insulin, 4h: historisk BHB-regressionsinterval (0.5-1.5)', () => {
+    // Regresionsgrænser fra den tidligere kalibrering, ikke et uafhængigt
+    // klinisk target. createCleanSimulator er ikke en protokol for pumpestop.
     const sim = createCleanSimulator();
     simulateMinutes(sim, 240); // 4 timer uden insulin
     assert(sim.ketoneLevel >= 0.5,
-        `Ketones after 4h pump failure should be ≥0.5 (was ${sim.ketoneLevel.toFixed(2)})`);
+        `BHB after 4h should stay within the historical regression: ≥0.5 (was ${sim.ketoneLevel.toFixed(2)})`);
     assert(sim.ketoneLevel <= 1.5,
-        `Ketones after 4h pump failure should be ≤1.5 (was ${sim.ketoneLevel.toFixed(2)})`);
+        `BHB after 4h should stay within the historical regression: ≤1.5 (was ${sim.ketoneLevel.toFixed(2)})`);
 });
 
-test('Pump failure 8h: ketones reach clinical-concern range (1.5-2.5)', () => {
-    // 8 timer uden insulin. Codex/Guerci-target ~1.5-2.0 ved 8h (modellen ~1.90).
-    // DKA-tærsklen (>3.0) nås nu omkring 14-16h, ikke 8h — den langsommere ramp
-    // er bevidst (se 4h-testen og codex-reviewet).
+test('Ingen ny insulin, 8h: historisk BHB-regressionsinterval (1.5-2.5)', () => {
+    // Samme regressionsprotokol som 4h; BHB alene diagnosticerer ikke DKA.
     const sim = createCleanSimulator();
     simulateMinutes(sim, 480); // 8 timer
     assert(sim.ketoneLevel >= 1.5,
-        `Ketones after 8h pump failure should be ≥1.5 (was ${sim.ketoneLevel.toFixed(2)})`);
+        `BHB after 8h should stay within the historical regression: ≥1.5 (was ${sim.ketoneLevel.toFixed(2)})`);
     assert(sim.ketoneLevel <= 2.5,
-        `Ketones after 8h pump failure should be ≤2.5 (was ${sim.ketoneLevel.toFixed(2)})`);
+        `BHB after 8h should stay within the historical regression: ≤2.5 (was ${sim.ketoneLevel.toFixed(2)})`);
 });
 
 test('Insulin given after ketone rise → ketones fall (clearance)', () => {
@@ -2921,10 +2914,11 @@ test('BG forces viser hurtiginsulin som dominerende insulin-kraft efter bolus', 
         rapid.magnitude > basal.magnitude * 1.4,
         `Hurtiginsulin (${rapid.magnitude.toFixed(3)}) skal være klart større end basal (${basal.magnitude.toFixed(3)}) efter nylig bolus`
     );
-    assert(
-        rapid.magnitude > 0.5,
-        `Hurtiginsulin-force må ikke kollapses til en mikropil ved høj IOB (${rapid.magnitude.toFixed(3)})`
-    );
+    // Pilene opdeler den målte netto-transport fra plasma; størrelsen må ikke
+    // forstørres ved også at tælle Q2-disposal og allerede undertrykt EGP.
+    const transport = Math.max(0, sim.engine.q1Fluxes.exchange);
+    assert(Math.abs(basal.magnitude + rapid.magnitude - transport) < 1e-9,
+        'Basal- og bolusbidrag skal tilsammen svare til netto-transporten fra Q1');
 });
 
 test('physiologyDataPoints akkumuleres under simulation', () => {
@@ -3034,7 +3028,7 @@ test('Sustained hyperglycemia builds glucotoxic resistance', () => {
 
 test('24h at ~20 mmol/L gives ~20-30% ISF reduction (Vuorinen-Markkola 1992)', () => {
     // Kalibreringstest: 24 timer vedvarende hyperglykæmi (~20 mmol/L)
-    // bør give ca. 26% ISF-reduktion (dvs. glucotoxicResistanceFactor ~1.20-1.35).
+    // giver ca. 18% ISF-reduktion; divisor og procentreduktion er ikke det samme.
     // Vi bruger direkte manipulation af glucotoxicLoad for at teste sigmoid-funktionen
     // da det er upraktisk at holde BG stabilt ved 20 i 24 timer i simulationen.
     const sim = createCleanSimulator();
@@ -3554,7 +3548,7 @@ test('Pool genopfyldes post-exercise (fast phase + slow phase)', () => {
         `Pool skal genopfyldes over 2t (start=${depletedAt0.toFixed(1)}g væk, 2t=${depletedAt2h.toFixed(1)}g væk)`);
 });
 
-test('Pool-genopfyldning allokerer eksisterende muskeloptag uden ekstra Q1-drain', () => {
+test('Kapacitetsproxy genopfyldes uden ekstra Q1-drain; ikke en allokeringstest', () => {
     const sim = createCleanSimulator();
     setSimulatorBG(sim, 7.0);
     sim.muscleGlycogenGrams = sim.muscleGlycogenCapacity * 0.5;

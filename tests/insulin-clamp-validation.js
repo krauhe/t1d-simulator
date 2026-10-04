@@ -95,6 +95,8 @@ function runValidation() {
         SHETTY.baselineGirMean + 2 * SHETTY.baselineGirSem;
     const allAboveTarget =
         fluxes.every(flux => flux.girMgKgMin > targetUpper);
+    const anyWithinTarget = require('./validation-metrics.js').hasSampleInRange(
+        fluxes.map(flux => flux.girMgKgMin), targetLower, targetUpper);
     const fittedIsfAt60 =
         solveIsfForTargetGir(60, SHETTY.baselineGirMean);
 
@@ -105,10 +107,12 @@ function runValidation() {
             interpretation:
                 'Diagnostic only. The inferred ISF is not a calibration recommendation.'
         },
-        status: allAboveTarget ? 'PARTIAL' : 'PASS',
+        status: anyWithinTarget ? 'PASS' : 'PARTIAL',
         message: allAboveTarget
             ? 'The reference profile exceeds the Shetty resting GIR interval across the represented plasma-insulin range.'
-            : 'At least one represented insulin concentration overlaps the Shetty resting GIR interval.',
+            : anyWithinTarget
+                ? 'At least one represented insulin concentration overlaps the Shetty resting GIR interval.'
+                : 'None of the sampled insulin concentrations gives a GIR inside the Shetty resting interval.',
         target: {
             meanGirMgKgMin: SHETTY.baselineGirMean,
             semGirMgKgMin: SHETTY.baselineGirSem,
@@ -118,7 +122,7 @@ function runValidation() {
         referenceProfile: REFERENCE_PROFILE,
         fluxes,
         diagnosticIsfAt60ForMeanTarget: fittedIsfAt60,
-        openFinding: allAboveTarget
+        openFinding: !anyWithinTarget
             ? 'A single ISF multiplier currently links transient bolus response and sustained clamp response. Joint recalibration is required before changing the insulin-action curve.'
             : null
     };

@@ -476,6 +476,7 @@ window.bgVars = () => ({
 });
 </script>
 <script src="../js/simulator.js?v=0.9.109"></script>
+<script src="validation-metrics.js"></script>
 <script>
 // =========================================================================
 // SIMULATION ENGINE — Run the model forward in time and collect BG data
@@ -534,14 +535,16 @@ function createSim(profile = {}) {
 }
 
 /**
- * Opret en fuldt stokastisk simulator til kapitel H.
+ * Opret en stokastisk simulator til kapitel J med et eksplicit seed.
+ * Forskellige seeds giver forskellige samples; de faste testseeds gør gentagne
+ * kørsler reproducerbare uden at slukke variation eller vælge gunstige udfald.
  * Denne helper må ikke bruges til almindelige A-G/I-sammenligninger.
  */
-function createStochasticSim(profile = {}) {
+function createStochasticSim(profile, seed) {
     window.cgmDataPoints = [];
     window.trueBgPoints = [];
     window.physiologyDataPoints = [];
-    return new Simulator(profile);
+    return new Simulator(profile, 'sandbox', { seed });
 }
 
 /**
@@ -655,7 +658,9 @@ function drawChart(canvas, series, opts = {}) {
     // Autorange Y
     const yMin = opts.yMin ?? 0;
     let yMax = opts.yMax ?? 20;
-    series.forEach(s => s.data.forEach(d => { if (d.bg > yMax - 1) yMax = Math.ceil(d.bg) + 2; }));
+    if (opts.autoY !== false) {
+        series.forEach(s => s.data.forEach(d => { if (d.bg > yMax - 1) yMax = Math.ceil(d.bg) + 2; }));
+    }
 
     // X-range: use time from first series
     const allTimes = series.flatMap(s => s.data.map(d => d.time));
@@ -782,7 +787,7 @@ function drawChart(canvas, series, opts = {}) {
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep) {
-        ctx.fillText(y.toString(), pad.left - 8, toY(y));
+        ctx.fillText(Number(y.toFixed(4)).toString(), pad.left - 8, toY(y));
     }
 
     // Optional right y-axis, used for protocol curves such as plasma-insulin clamp.
@@ -1003,6 +1008,7 @@ function foodIconHtml(iconPath, alt = '') {
  */
 function validationFood(key, name) {
     const food = FOODS[key];
+    if (!food) throw new Error(`Unknown validation food: ${key}`);
     return { key, name, ...food, iconHtml: foodIconHtml(food.icon, name) };
 }
 
@@ -2457,12 +2463,12 @@ addSection(
     + 'X-axis shows clock time (meal at 14:00, observation window 14:00 - 22:00). '
     + 'Categorical colors — different food types are not variations of the same intervention.',
 
-    'Egg, nuts and salad should have small effects. Composite meals with salmon, bacon or steak '
+    'Compare the current yoghurt, nuts, salad and composite meal presets. Meals with salmon, bacon or steak '
     + 'should show a larger delayed protein/fat contribution despite containing few carbohydrates.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
         const foods = [
-            validationFood('æg', 'Egg'),
+            validationFood('græskYoghurt', 'Greek yoghurt & walnuts'),
             validationFood('nødder', 'Nuts'),
             validationFood('salat', 'Salad'),
             validationFood('laksAvocado', 'Salmon & avocado'),
@@ -2509,11 +2515,11 @@ addSection(
             ${tableRows}
         </table>`;
 
-        const eggRise = results.find(r => r.key === 'æg').rise;
+        const yoghurtRise = results.find(r => r.key === 'græskYoghurt').rise;
         const steakRise = results.find(r => r.key === 'bøfBearnaise').rise;
         const saladRise = results.find(r => r.key === 'salat').rise;
         conclusionDiv.innerHTML = `
-            <p class="${steakRise > eggRise ? 'pass' : 'fail'}">${steakRise > eggRise ? '✓' : '✗'} Steak & béarnaise has a larger delayed effect than one egg: +${steakRise.toFixed(1)} vs +${eggRise.toFixed(1)} mmol/L</p>
+            <p class="${steakRise > yoghurtRise ? 'pass' : 'fail'}">${steakRise > yoghurtRise ? '✓' : '✗'} Steak & béarnaise has a larger effect than the yoghurt preset: +${steakRise.toFixed(1)} vs +${yoghurtRise.toFixed(1)} mmol/L</p>
             <p class="${saladRise < steakRise ? 'pass' : 'fail'}">${saladRise < steakRise ? '✓' : '✗'} Salad remains below the steak meal: +${saladRise.toFixed(1)} vs +${steakRise.toFixed(1)} mmol/L</p>`;
     }
 );
@@ -2881,14 +2887,14 @@ addSection(
     'Macronutrients — fat and protein vs. pure carbohydrates',
     'Tests whether fat and protein affect the BG curve. Protein is modeled via amino acid '
     + 'absorption → glucagon stimulation → increased hepatic glucose production (HGP). '
-    + 'Onset ~90 min, peak ~180 min. '
+    + 'The timing is an output of this selected pathway, not a fixed clinical onset or peak. '
     + 'Fat delays carbohydrate absorption via CCK/GLP-1 feedback from intestinal fat. '
     + 'Dynamic τG = 40 + 18×ln(1 + fatIntestine/10). '
     + 'X-axis shows clock time (meal at 14:00, observation window 14:00 - 19:00). '
     + 'Categorical colors — different macronutrient mixes, ikke variationer af samme intervention.',
 
     'Pure carbohydrate meal (40g C): steep max slope, fast absorption. '
-    + 'With protein (40g C + 30g P): broader curve with additional late-phase rise from glucagon-driven HGP (~90 min onset). '
+    + 'With protein (40g C + 30g P): inspect the additional late-phase response. '
     + 'With fat (40g C + 30g F): gentler max slope — fat slows gastric emptying via the '
     + 'fatStomach → fatIntestine compartment model, dynamically increasing τG. '
     + 'Primary metric: max slope (dBG/dt) — robust for broad, fat-delayed curves.',
@@ -4462,12 +4468,12 @@ addChapter('G — Protein, Glucagon & Liver Pool');
 addSection(
     'Protein timing — glucagon-driven HGP from amino acids',
     'Protein is modeled via amino acid absorption → glucagon stimulation → increased '
-    + 'hepatic glucose production (HGP). Onset ~90 min, peak ~180 min. '
+    + 'hepatic glucose production (HGP). This diagnostic compares peak slopes, not clinical onset. '
     + 'We test a pure protein meal (0g carbs + 60g protein) '
     + 'to isolate the protein effect from carbohydrates. '
     + 'X-axis shows clock time (meal at 14:00, observation window 14:00 - 19:00).',
 
-    '60g protein → delayed BG rise via glucagon-driven HGP starting ~90 min after ingestion. '
+    'For this selected mechanism, inspect the delayed BG response to 60g protein. '
     + 'Expected: gentler max slope and later time-to-max-slope than 15g pure carbohydrates. '
     + 'Protein effect is indirect (amino acid → glucagon → HGP) so the slope is shallower '
     + 'and the onset is delayed compared to direct gut absorption of carbohydrates.',
@@ -4515,7 +4521,8 @@ addSection(
         const proteinGentler = pSlope.maxSlope < cSlope.maxSlope;
         const proteinLater = (pSlope.maxSlopeT - 14*60) > (cSlope.maxSlopeT - 14*60);
         conclusionDiv.innerHTML = `<p class="${proteinGentler ? 'pass' : 'warn'}">${proteinGentler ? '✓' : '⚠'} Protein max slope (${(pSlope.maxSlope*60).toFixed(2)} mmol/L/h) gentler than carbs (${(cSlope.maxSlope*60).toFixed(2)}) — indirect HGP pathway is slower than direct gut absorption</p>
-        <p class="${proteinLater ? 'pass' : 'warn'}">${proteinLater ? '✓' : '⚠'} Protein max-slope time (${(pSlope.maxSlopeT - 14*60).toFixed(0)} min) later than carbs (${(cSlope.maxSlopeT - 14*60).toFixed(0)} min) — glucagon-driven HGP has ~90 min onset delay</p>`;
+        <p class="${proteinLater ? 'pass' : 'warn'}">${proteinLater ? '✓' : '⚠'} Protein max-slope time (${(pSlope.maxSlopeT - 14*60).toFixed(0)} min) later than carbs (${(cSlope.maxSlopeT - 14*60).toFixed(0)} min).</p>
+        <p>This comparison does not reproduce Paterson's 75g protein-versus-water endpoint at 240–300 min. Maximum slope is not onset; protocol-matched validation remains open (F05).</p>`;
     }
 );
 
@@ -4834,26 +4841,25 @@ addSection(
 // -------------------------------------------------------------------------
 addSection(
     'Recovery dynamics — liver pool refill with meals vs. fasting',
-    'After a glucagon injection drains the liver, the pool refills via two mechanisms: ' +
-    '(1) gluconeogenesis (~6 g/h, Roden 2001 — always active when insulin is present), ' +
-    '(2) postprandialStorage from food intake (~22 g/h at BG≈8, Gonzalez 2016). ' +
+    'After glucagon, the model refills its liver-capacity proxy through basal refill and ' +
+    'postprandialStorage. These rates do not constitute a conserved hepatic carbon balance. ' +
     'This section compares two recovery scenarios over 12 hours: meals every 3 hours ' +
     'versus no food intake (continuous basal insulin only). ' +
     'X-axis shows hours from injection (xIsClockTime:false, xStep:120). ' +
     'Liver-pool subgroup (glycogen grams, y-axis 0-130 g).',
 
-    'With meals: pool should return to pre-hypo level within 4–8 hours. ' +
-    'Without meals: GNG-only recovery is slower (15–25 h estimated). ' +
+    'Report the observed nadir and first subsequent return to 65 g. No clinically validated ' +
+    'recovery-time interval is assigned to this protocol. ' +
     'The game-mechanical 24-h cooldown is independent of physiological pool recovery.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
         // Scenario A: meals every 3 hours
         const simA = createSim(DEFAULT_PROFILE);
         await advanceTo(simA, 14 * 60);
-        simA.liverGlycogenGrams = 65;
         simA.addFastInsulin(8);
         await collectBG(simA, 30, 5);
         clampBG(simA, 2.5);
+        simA.liverGlycogenGrams = 65;
         simA.useGlucagon();
         const dataA = [{ time: simA.totalSimMinutes, bg: simA.liverGlycogenGrams }];
         const endTime = simA.totalSimMinutes + 12 * 60;
@@ -4877,21 +4883,18 @@ addSection(
         // Scenario B: no food, only basal
         const simB = createSim(DEFAULT_PROFILE);
         await advanceTo(simB, 14 * 60);
-        simB.liverGlycogenGrams = 65;
         simB.addFastInsulin(8);
         await collectBG(simB, 30, 5);
         clampBG(simB, 2.5);
+        simB.liverGlycogenGrams = 65;
         simB.useGlucagon();
         const dataB = await collectLiverPool(simB, 12 * 60, 5);
 
         const refillTarget = 65;
-        const findRefillTime = (data) => {
-            const start = data[0].time;
-            for (const p of data) if (p.bg >= refillTarget) return p.time - start;
-            return -1;
-        };
-        const tA = findRefillTime(dataA);
-        const tB = findRefillTime(dataB);
+        const a = ValidationMetrics.recoveryAfterNadir(dataA, refillTarget);
+        const b = ValidationMetrics.recoveryAfterNadir(dataB, refillTarget);
+        const describe = r => r.status === 'recovered' ? (r.minutes / 60).toFixed(1) + ' h'
+            : r.status === 'no-observed-depletion' ? 'No observed depletion below 65 g' : 'Not recovered within 12 h';
 
         const series = [
             { label: 'With meals every 3h', data: dataA, color: '#22c55e' },
@@ -4904,16 +4907,13 @@ addSection(
         });
         legendDiv.innerHTML = buildLegend(series);
         resultDiv.innerHTML = `<table class="results-table">
-            <tr><th>Scenario</th><th>Start</th><th>Final</th><th>Time to 65 g</th></tr>
-            <tr><td>Meals every 3h</td><td>${dataA[0].bg.toFixed(1)} g</td><td>${dataA[dataA.length-1].bg.toFixed(1)} g</td><td>${tA > 0 ? (tA/60).toFixed(1) + ' h' : '>12 h'}</td></tr>
-            <tr><td>Fasting</td><td>${dataB[0].bg.toFixed(1)} g</td><td>${dataB[dataB.length-1].bg.toFixed(1)} g</td><td>${tB > 0 ? (tB/60).toFixed(1) + ' h' : '>12 h'}</td></tr>
+            <tr><th>Scenario</th><th>Start</th><th>Nadir</th><th>Final</th><th>Recovery after injection</th></tr>
+            <tr><td>Meals every 3h</td><td>${dataA[0].bg.toFixed(1)} g</td><td>${a.nadir.toFixed(1)} g</td><td>${dataA[dataA.length-1].bg.toFixed(1)} g</td><td>${describe(a)}</td></tr>
+            <tr><td>Fasting</td><td>${dataB[0].bg.toFixed(1)} g</td><td>${b.nadir.toFixed(1)} g</td><td>${dataB[dataB.length-1].bg.toFixed(1)} g</td><td>${describe(b)}</td></tr>
         </table>`;
 
-        const mealsFaster = (tA > 0 && tB > 0 && tA < tB) || (tA > 0 && tB < 0);
-        const mealsFastEnough = tA > 0 && tA <= 8 * 60;
         conclusionDiv.innerHTML =
-            `<p class="${mealsFaster ? 'pass' : 'warn'}">${mealsFaster ? '✓' : '⚠'} Meals accelerate recovery vs. fasting (Gonzalez 2016 postprandialStorage)</p>` +
-            `<p class="${mealsFastEnough ? 'pass' : 'warn'}">${mealsFastEnough ? '✓' : '⚠'} With meals: pre-hypo niveau reached in ${tA > 0 ? (tA/60).toFixed(1) + ' h' : '>12 h'} (expected ≤8 h)</p>` +
+            `<p>Recovery with meals: ${describe(a)}; fasting: ${describe(b)}. These are sampled model outputs, not clinical recovery estimates.</p>` +
             `<p>NB: the game-mechanical 24-h glucagon cooldown is independent of pool recovery — these are two separate clocks.</p>`;
     }
 );
@@ -5215,8 +5215,8 @@ addSection(
     + 'at 5.5 mmol/L throughout. The plot shows the resistance factor that divides '
     + 'effective insulin sensitivity, not a free-running BG trajectory.',
 
-    'Sustained 20 mmol/L should build approximately 20-30% modeled resistance after '
-    + '24 hours. Returning BG below the 10 mmol/L threshold should reduce the load with '
+    'Check the configured accumulation equation, not a clinical calibration interval. '
+    + 'Returning BG below the 10 mmol/L threshold should reduce the load with '
     + 'its documented 24-hour half-life, while the normal-BG control remains neutral.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
@@ -5262,6 +5262,7 @@ addSection(
             yMax: 1.35,
             yStep: 0.05,
             yLabel: 'glucotoxic resistance factor',
+            autoY: false,
             xLabel: 'Hours from exposure start',
             xIsClockTime: false,
             xStep: 6 * 60,
@@ -5285,12 +5286,16 @@ addSection(
             <tr><td>Control at 48 h</td><td>${control.glucotoxicLoad.toFixed(2)}</td><td>${control.glucotoxicResistanceFactor.toFixed(3)}</td><td>${((1 - 1 / control.glucotoxicResistanceFactor) * 100).toFixed(1)}%</td></tr>
         </table>`;
 
-        const calibrated = factorAt24 > 1.15 && factorAt24 < 1.35;
+        const expectedLoad = exposed.GLUCOTOX_RATE * Math.pow(20 - exposed.GLUCOTOX_BG_THRESHOLD, 2) * 1440;
+        const loadN = Math.pow(expectedLoad, exposed.GLUCOTOX_HILL_N);
+        const expectedFactor = 1 + exposed.GLUCOTOX_MAX_RESIST * loadN /
+            (Math.pow(exposed.GLUCOTOX_EC50, exposed.GLUCOTOX_HILL_N) + loadN);
+        const equationMatches = Math.abs(factorAt24 - expectedFactor) < 1e-9;
         const recovered = exposed.glucotoxicLoad < loadAt24 * 0.55
             && exposed.glucotoxicResistanceFactor < factorAt24;
         const controlNeutral = control.glucotoxicResistanceFactor < 1.001;
         conclusionDiv.innerHTML = `
-            <p class="${calibrated ? 'pass' : 'fail'}">${calibrated ? '✓' : '✕'} The 24-hour exposure produces factor ${factorAt24.toFixed(3)}, within the documented calibration range.</p>
+            <p class="${equationMatches ? 'pass' : 'fail'}">${equationMatches ? '✓' : '✕'} The configured equation gives divisor ${factorAt24.toFixed(3)}: ${((1 - 1 / factorAt24) * 100).toFixed(1)}% ISF reduction. This is implementation consistency, not clinical calibration.</p>
             <p class="${recovered ? 'pass' : 'fail'}">${recovered ? '✓' : '✕'} The load falls from ${loadAt24.toFixed(2)} to ${exposed.glucotoxicLoad.toFixed(2)} during 24 hours below threshold.</p>
             <p class="${controlNeutral ? 'pass' : 'fail'}">${controlNeutral ? '✓' : '✕'} The normal-BG control remains neutral.</p>
         `;
@@ -5609,33 +5614,26 @@ addSection(
             <tr><td>Glycogen (72h)</td><td>${glycEnd.toFixed(0)}g / ${sim.LIVER_GLYCOGEN_MAX}g</td></tr>
         </table>`;
 
-        conclusionDiv.innerHTML = `<p class="${maxK < 4.0 ? 'pass' : 'warn'}">${maxK < 4.0 ? '✓' : '⚠'} 72h fasting BHB peak = ${maxK.toFixed(2)} mmol/L — ${maxK < 0.35 ? 'minimal ketosis (basal over-covering for a prolonged fast)' : maxK < 2.0 ? 'physiological fasting ketosis, low end (well-basalized T1D suppresses lipolysis more than a non-diabetic faster; Cahill 1970, Owen 1967)' : maxK < 4.0 ? 'elevated fasting ketosis (borderline — usually means basal too low)' : 'pathological (DKA territory — basal insufficient)'}</p>
+        conclusionDiv.innerHTML = `<p>72h fasting BHB peak = ${maxK.toFixed(2)} mmol/L. No acid–base endpoint is modeled; this value alone cannot classify DKA or the adequacy of an insulin regimen.</p>
         <p class="${plateau ? 'pass' : 'warn'}">${plateau ? '✓' : '⚠'} ${plateau ? 'BHB plateau reached' : 'BHB still rising'} (48h: ${k48.toFixed(2)} → 72h: ${k72.toFixed(2)})</p>
-        <p>Glycogen: ${glycEnd.toFixed(0)}g remaining (started at ${sim.LIVER_GLYCOGEN_MAX}g). ${glycEnd < 30 ? 'Severely depleted — matches Petersen 2004 (24-48 h fast depletes liver glycogen) and Rothman 1991 (¹³C-MRS data).' : 'Still significant reserves — fast not deep enough.'}</p>
+        <p class="warn">Liver capacity proxy: ${glycEnd.toFixed(0)}g remaining (started at ${sim.LIVER_GLYCOGEN_MAX}g). This is not a conserved glycogen balance; persistent high stores during prolonged fasting remain an open model limitation (F06).</p>
         <p style="color:var(--muted)">Calibration sources: Cahill 1970 (J Clin Invest), Owen 1967 (J Clin Invest), Petersen 2004 (Diabetes), Rothman 1991 (Science 254:573-576). The 14 U input is a simulator-specific calibration for this fixed scenario and is not a treatment recommendation.</p>`;
     }
 );
 
 // -------------------------------------------------------------------------
-// SECTION: Ketones — Pump failure (24 h normal + 48 h no insulin, 72 h total)
+// SECTION: Ketones — zero-insulin-state ablation, not pump interruption
 // -------------------------------------------------------------------------
 addSection(
-    'Ketones — Pump failure (24 h normal day + 48 h no insulin → severe DKA)',
-    'The most critical ketone scenario: complete insulin deficiency simulating '
-    + 'insulin pump failure or forgotten injection. Shows 72 h total to match I.2, '
+    'Ketones — zero-insulin-state ablation (24 h baseline + 48 h observation)',
+    'Deletes subcutaneous insulin, plasma insulin and insulin-action states at hour 24. '
+    + 'This extreme model ablation is not equivalent to pump interruption or a missed injection. Shows 72 h total to match I.2, '
     + 'I.3, and I.5: first 24 h with normal basal + 3 meals + boluses (baseline), '
-    + 'then pump failure at hour 24 with NO insulin for the following 48 h.',
+    + 'then no insulin input for the following 48 h.',
 
-    'Day 1 (hours 0-24): BG stable in 4-10 mmol/L, BHB stays near 0 (full insulin '
-    + 'coverage suppresses lipolysis). At hour 24: pump failure. '
-    + 'Hours 24-48: BG rises rapidly, BHB follows an S-shaped ramp — ~1.8 at 4 h '
-    + 'post-failure, ~3.2 at 8 h, ~4.4 at 12 h, continuing to climb past ~6.8 at 24 h and '
-    + '~9.5 at 48 h (severe simulated DKA range — does NOT plateau, because peripheral '
-    + 'ketone oxidation saturates and is impaired by worsening acidosis). The ramp '
-    + '(recalibrated 2026-06-06) sits between the slow Guerci 2006 timeline and the faster '
-    + 'Laffel 1999 progression — defensible because this is complete insulin absence, more '
-    + 'aggressive than Guerci\'s basal-only withdrawal (see the codex review). '
-    + 'Calibration: Guerci 2006, PMC11531023, Laffel 1999, Pinnaro 2021.',
+    'Report BHB after state deletion. Pump-interruption studies retain existing insulin and '
+    + 'cannot supply pass/fail timing targets for this experiment. BHB ≥3 mmol/L is the ketone '
+    + 'component of DKA criteria, not a diagnosis without acidosis.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
         const sim = createSim(DEFAULT_PROFILE);
@@ -5653,7 +5651,7 @@ addSection(
         ];
         const day1 = await runSchedule(sim, day1Schedule, 24 * 60);
 
-        // PUMP FAILURE ved hour 24: ryd al insulin
+        // Ablation ved time 24: slet depoter, plasma og action states.
         sim.activeFastInsulin = [];
         sim.activeLongInsulin = [];
         sim.lastInsulinTime = sim.totalSimMinutes - 12 * 60;
@@ -5662,7 +5660,7 @@ addSection(
         sim.hovorka.state[8] = 0; sim.hovorka.state[9] = 0;
         sim.hovorka.state[13] = 0; sim.hovorka.state[14] = 0; sim.hovorka.state[15] = 0;
 
-        // Hours 24-72 (48 h efter pump failure): INGEN insulin — progressive DKA
+        // Time 24-72: observer modellen efter state-sletning uden nyt insulin.
         const day2 = await collectDual(sim, 48 * 60);
 
         // Kombiner data
@@ -5685,32 +5683,23 @@ addSection(
         // range. BG-akse er også højere (yMaxBG: 30) for at fange hyperglykæmien.
         drawDualAxisChart(canvas, bgSeries, kSeries, { yMaxBG: 30, yMaxK: 20, xLabel: 'Hours after start' });
         legendDiv.innerHTML = buildLegend([...bgSeries, ...kSeries]);
-        conditionsDiv.innerHTML = simulationConditions(['Whole model', 'Deterministic', 'Basal pre-injected (14 U, -2h)', 'BG clamped at 5.5', 'Day 1: meals + bolus', 'Pump failure at hour 24 — all insulin cleared']);
+        conditionsDiv.innerHTML = simulationConditions(['Whole model', 'Deterministic', 'Basal pre-injected (14 U, -2h)', 'Initial BG 5.5', 'Day 1: meals + bolus', 'State ablation at hour 24 — all insulin cleared']);
 
         resultDiv.innerHTML = `<table class="results-table">
             <tr><th>Time</th><th>BHB</th></tr>
-            <tr><td>Hour 24 (pump failure event)</td><td>${at24h.toFixed(2)} mmol/L</td></tr>
-            <tr><td>Hour 28 (+4 h post-failure)</td><td>${at28h.toFixed(2)} mmol/L</td></tr>
-            <tr><td>Hour 32 (+8 h post-failure)</td><td>${at32h.toFixed(2)} mmol/L</td></tr>
-            <tr><td>Hour 36 (+12 h post-failure)</td><td>${at36h.toFixed(2)} mmol/L</td></tr>
-            <tr><td>Hour 48 (+24 h post-failure)</td><td>${at48h.toFixed(2)} mmol/L</td></tr>
-            <tr><td>Hour 72 (+48 h post-failure)</td><td>${at72h.toFixed(2)} mmol/L</td></tr>
+            <tr><td>Hour 24 (state ablation)</td><td>${at24h.toFixed(2)} mmol/L</td></tr>
+            <tr><td>Hour 28 (+4 h after ablation)</td><td>${at28h.toFixed(2)} mmol/L</td></tr>
+            <tr><td>Hour 32 (+8 h after ablation)</td><td>${at32h.toFixed(2)} mmol/L</td></tr>
+            <tr><td>Hour 36 (+12 h after ablation)</td><td>${at36h.toFixed(2)} mmol/L</td></tr>
+            <tr><td>Hour 48 (+24 h after ablation)</td><td>${at48h.toFixed(2)} mmol/L</td></tr>
+            <tr><td>Hour 72 (+48 h after ablation)</td><td>${at72h.toFixed(2)} mmol/L</td></tr>
             <tr><td>Max BHB</td><td>${maxK.toFixed(2)} mmol/L</td></tr>
             <tr><td>Max BG</td><td>${maxBG.toFixed(1)} mmol/L</td></tr>
         </table>`;
 
-        // Codex-alignede targets (2026-06-06): +4h 0.5-1.0, +8h 1.5-2.0, +12h ~3.0.
-        // Den fulde scenario (efter en normal dag) ligger lidt højere pga. dag-1-carryover.
-        const day1Suppressed = at24h < 0.3;
-        const early4h = at28h >= 0.5 && at28h <= 2.5;   // codex ideal 0.5-1.0; full-scenario ~1.9
-        const dkaReached = at36h > 3.0;                  // DKA threshold crossed by +12h
-        const progressiveRise = at28h < at32h && at32h < at36h;
-        conclusionDiv.innerHTML = `<p class="${day1Suppressed ? 'pass' : 'warn'}">${day1Suppressed ? '✓' : '⚠'} Day 1 baseline: BHB at hour 24 = ${at24h.toFixed(2)} mmol/L ${day1Suppressed ? '— well-suppressed by normal insulin' : '— higher than expected'}</p>
-        <p class="${early4h ? 'pass' : 'warn'}">${early4h ? '✓' : '⚠'} Early ramp: BHB at +4 h = ${at28h.toFixed(2)} mmol/L (Guerci 0.5-1.0 clean-state; full scenario runs ~1.8 with day-1 carryover)</p>
-        <p class="${dkaReached ? 'pass' : 'fail'}">${dkaReached ? '✓' : '✗'} DKA threshold crossed: BHB at +12 h = ${at36h.toFixed(2)} mmol/L ${dkaReached ? '— DKA territory' : '— below threshold'}</p>
-        <p class="${progressiveRise ? 'pass' : 'warn'}">${progressiveRise ? '✓' : '⚠'} Progressive rise: ${at28h.toFixed(2)} (4 h) → ${at32h.toFixed(2)} (8 h) → ${at36h.toFixed(2)} (12 h) mmol/L</p>
-        <p>Without insulin: lipolysis maximally activated, CPT-1 fully open (cpt1Activity = 1.0 regardless of CPT-1 shape params). The ramp speed is set by the effective ketogenesis lag (FFA_LIPO_CLEAR_HALF = 180 min) + BHB production/clearance balance, giving an S-shaped rise calibrated to newer pump-occlusion data.</p>
-        <p style="color:var(--muted)">Calibration sources: Guerci 2006 (capillary β-OHB 0.1→0.9 over 4 h CSII interruption), PMC11531023 (pump-occlusion model: BHB 1.6 at ~8 h, 3.0 at ~14 h), Pinnaro 2021 (Diabetes Care — T1D ketogenesis kinetics). Recalibration: docs/reviews/2026-06-05_codex_pump-failure-outcome.md.</p>`;
+        conclusionDiv.innerHTML = `<p>BHB: ${at24h.toFixed(2)} mmol/L at ablation, ${at28h.toFixed(2)} at +4 h, ${at32h.toFixed(2)} at +8 h and ${at36h.toFixed(2)} at +12 h.</p>
+        <p>The configured ketogenesis lag is ${sim.FFA_LIPO_CLEAR_HALF} min. These outputs describe the ablation, not a validated pump-failure timeline.</p>
+        <p class="warn">Protocol-matched interruption with residual insulin retained and separate acid–base assessment remain unresolved (F04).</p>`;
     }
 );
 
@@ -5730,7 +5719,7 @@ addChapter('J — Stochastic Variability');
 // -------------------------------------------------------------------------
 addSection(
     'Bolus variability — 7× identical 3U insulin at 14:00, BG=8.0',
-    'Each simulation creates a new Simulator with fresh random parameters: '
+    'Each simulation creates a new Simulator with seeded random parameters (seeds 2026100400–2026100406): '
     + 'tauFactor (mean 1.0, CV 25%) varies per injection. '
     + 'Bioavailability is session-fixed at 78% (calibration choice). '
     + 'All 7 receive exactly 3U fast insulin at the same time. '
@@ -5752,7 +5741,7 @@ addSection(
         const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7'];
 
         for (let i = 0; i < N; i++) {
-            const sim = createStochasticSim(DEFAULT_PROFILE);
+            const sim = createStochasticSim(DEFAULT_PROFILE, 2026100400 + i);
             await advanceTo(sim, 14 * 60);
             clampBG(sim, 8.0);
             sim.addFastInsulin(3);
@@ -5801,7 +5790,7 @@ addSection(
 // -------------------------------------------------------------------------
 addSection(
     'Meal variability — 7× identical 40g carbs at 14:00, BG=6.0',
-    'Each simulation uses a FULLY STOCHASTIC Simulator (not createSim\'s deterministic mode). '
+    'Each simulation retains model variability with fixed seeds 2026100500–2026100506 (not createSim\'s noise-free mode). '
     + 'This means dawn amplitude, basal tauFactor, CGM noise and circadian parameters '
     + 'all vary between runs. All 7 receive exactly 40g carbs at 14:00 without bolus. '
     + 'The spread shows how background variability affects the BG response to carbs. '
@@ -5820,7 +5809,7 @@ addSection(
         for (let i = 0; i < N; i++) {
             // Variationen skal være aktiv fra konstruktionen, så dawn, basal-
             // absorption og måltidsrespons kan variere mellem kørslerne.
-            const sim = createStochasticSim(DEFAULT_PROFILE);
+            const sim = createStochasticSim(DEFAULT_PROFILE, 2026100500 + i);
             await advanceTo(sim, 14 * 60);
             clampBG(sim, 6.0);
             sim.addFood(40, 0, 0);
@@ -5864,7 +5853,7 @@ addSection(
 // -------------------------------------------------------------------------
 addSection(
     'CGM vs. true BG — qualitative noise, delay and drift over 6 hours',
-    'Compares true BG (smooth) with CGM reading (noisy, delayed) over 6 hours '
+    'Compares true BG (smooth) with CGM reading (noisy, delayed; seed 2026100600) over 6 hours '
     + 'after a 40g carb meal. The CGM model adds: proportional Gaussian noise (2.5-4%), '
     + 'sinusoidal drift (period 4-8h, amplitude 0.3-0.7 mmol/L), '
     + 'and random discontinuities (~0.7/day). '
@@ -5877,7 +5866,7 @@ addSection(
     + 'This single meal trace is a qualitative visualization, not a clinical MARD validation.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
-        const sim = createStochasticSim(DEFAULT_PROFILE);
+        const sim = createStochasticSim(DEFAULT_PROFILE, 2026100600);
         await advanceTo(sim, 14 * 60);
         clampBG(sim, 6.0);
         sim.addFood(40, 0, 0);
@@ -5956,18 +5945,15 @@ addSection(
 // =========================================================================
 addChapter('K — Advanced: Non-linear Insulin Diagnostics');
 
-// SECTION: Dead zone — five bolus doses from BG 9 (rest)
+// SECTION: Control-adjusted response to correction boluses
 // -------------------------------------------------------------------------
 addSection(
-    'Dead zone — five bolus doses (1-5U) from BG 9, no food (rest)',
-    'Hill dose-response: muscle glucose disposal has a high EC50 (~55 mU/L), so small '
-    + 'correction doses fall in a "dead zone" where the liver suppresses EGP but the muscle is '
-    + 'barely recruited — BG hardly moves. Each curve is one bolus (1-5U) from a clamped BG of 9.0, '
+    'Correction boluses — 1-5U from BG 9, with a matched zero-dose control',
+    'Each curve is one bolus (1-5U) from an initial BG of 9.0, '
     + 'observed for 4 h (14:00-18:00). Control = 0U.',
 
-    'The 1U dose should lower BG much less than a linear model would predict, and the marginal '
-    + 'effect of the 2nd unit should EXCEED the 1st (accelerating, non-linear). Larger doses '
-    + 'recruit the muscle and lower BG progressively.',
+    'Report the difference from the zero-dose control and the effect per unit. Remaining above '
+    + 'the initial BG does not imply that insulin had no effect. This protocol has no matched clinical target.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
         const doses = [0, 1, 2, 3, 4, 5];
@@ -6001,26 +5987,21 @@ addSection(
         }
         resultDiv.innerHTML = `<table class="results-table">${rows}</table>`;
 
-        // Dead zone: små doser kan ikke bringe BG UNDER udgangspunktet (9.0) — de bremser
-        // kun stigningen — mens doser over muskel-tærsklen faktisk sænker BG.
-        const oneUfails = ends[1] > 9.5;     // 1U: BG stiger stadig (ingen reel korrektion)
-        const threeUworks = ends[3] < 8.5;   // 3U: BG bragt ned
-        const deadZone = oneUfails && threeUworks;
-        conclusionDiv.innerHTML = `<p class="${deadZone ? 'pass' : 'warn'}">${deadZone ? '✓' : '⚠'} `
-            + `Dead zone: 1U leaves BG at ${ends[1].toFixed(1)} (still climbing from 9.0; 0U control reaches ${ctrlEnd.toFixed(1)}), `
-            + `while 3U brings it to ${ends[3].toFixed(1)} mmol/L.</p>`
-            + `<p>Against the rising control every dose has SOME effect, but only doses past the muscle `
-            + `threshold actually pull BG down — small corrections under-perform. That is the dead zone.</p>`;
+        conclusionDiv.innerHTML = `<p>At 4 h, 1U lowers BG by ${(ctrlEnd - ends[1]).toFixed(2)} mmol/L `
+            + `relative to control; the second unit adds ${(ends[1] - ends[2]).toFixed(2)} mmol/L. `
+            + `Final BG after 1U is ${ends[1].toFixed(2)} versus ${ctrlEnd.toFixed(2)} mmol/L without the bolus.</p>`
+            + `<p>The tissue response functions alone do not establish a clinically ineffective small-dose range. `
+            + `Joint bolus and sustained-clamp calibration remains open.</p>`;
     }
 );
 
-// SECTION: Exercise opens the dead zone — rest vs 8 h post-cardio
+// SECTION: Control-adjusted bolus response after exercise
 // -------------------------------------------------------------------------
 addSection(
-    'Exercise opens the dead zone — small doses, rest vs 8 h post-cardio',
+    'Bolus response — rest vs 7 h after cardio ends',
     'Post-exercise insulin sensitivity (PEIS) shifts the muscle EC50 leftward for ~24-48 h, so the '
-    + 'same small dose recruits more disposal and the dead zone shrinks. Compares 1U and 2U boluses '
-    + 'from BG 9 at rest vs 8 h after a 60 min medium cardio session (dashed = rest, solid = post-cardio). '
+    + 'same dose recruits more modeled disposal. Compares 1U and 2U boluses '
+    + 'from BG 9 at rest vs 7 h after a 60 min medium cardio session ends (06:00–07:00 exercise, 14:00 bolus; dashed = rest, solid = post-cardio). '
     + 'The result table lists all five doses (1-5U) for both conditions.',
 
     'Against a matched zero-dose control for each physiological state, the same small dose '
@@ -6087,17 +6068,16 @@ addSection(
 // SECTION: Stepped insulin clamp — the confound-free dose-response (72 h)
 // -------------------------------------------------------------------------
 addSection(
-    'Insulin dose-response (euglycemic glucose clamp) — glucose sources (+) vs sinks (−)',
+    'Insulin dose-response (euglycemic glucose clamp) — production and disposal',
     'Steady-state glucose fluxes vs plasma insulin, at euglycemia (BG=5.5), sampled finely (every 2 mU/L) '
-    + 'from the model\'s exact steady-state — not a coarse staircase. Sign convention: glucose SOURCES are '
-    + 'positive (liver EGP, adds glucose to blood), SINKS are negative (total disposal Rd, removes glucose). '
-    + 'The vertical gap between the source and sink curves is the glucose infusion rate needed to hold the '
-    + 'clamp = the clinical M-value. A separate 24 h basal clamp (deterministic, circadian off) confirms '
+    + 'from the model\'s exact steady-state. Both EGP and Rd are plotted as positive rates. '
+    + 'Rd minus EGP is the glucose infusion rate needed to hold the clamp, when this difference is positive. '
+    + 'A separate 24 h basal clamp (deterministic, circadian off) checks whether '
     + 'steady state is stable. NB: lipolysis/fat is NOT shown here — it is an FFA process, not a glucose '
     + 'flux (see the tissue-threshold diagnostic below).',
 
-    'EGP (source, +) should fall toward zero as insulin rises; Rd (sink, −) should grow more negative '
-    + 'and then approach the muscle Hill ceiling. Their gap = M-value. Shetty et al. (2021) measured '
+    'EGP should fall toward zero as insulin rises; Rd should increase '
+    + 'and then approach the model ceiling. Shetty et al. (2021) measured '
     + 'a pooled resting GIR of 4.4 ± 0.4 mg/kg/min while targeting plasma insulin 300-550 pmol/L '
     + '(approximately 50-92 mU/L).',
 
@@ -6132,21 +6112,21 @@ addSection(
         for (let I = 0; I <= 200; I += 2) {
             const f = fluxAt(I);
             egpC.push({ time: I, bg: f.egp });         // KILDE (+)
-            rdC.push({ time: I, bg: -f.rd });          // SINK (−)
+            rdC.push({ time: I, bg: f.rd });           // Positiv disposal-rate
             if (I === 60) m60 = f.M;
         }
-        // To kurver: kilde (+EGP) og sink (−Rd). Den lodrette afstand mellem dem = M-værdien.
+        // Begge rater er positive. Rd - EGP er nettobehovet, ikke Rd + EGP.
         const series = [
-            { label: 'Liver EGP — source (+)', data: egpC, color: '#D85A30' },
-            { label: 'Total Rd — sink (−)', data: rdC, color: '#1D9E75' }
+            { label: 'Liver EGP — production', data: egpC, color: '#D85A30' },
+            { label: 'Total Rd — disposal', data: rdC, color: '#1D9E75' }
         ];
-        drawChart(canvas, series, { yMin: -12, yMax: 2, xUnit: 'mU/L', xLabel: 'Plasma insulin (mU/L)', yLabel: 'glucose flux (mmol/min): source + / sink −' });
+        drawChart(canvas, series, { yMin: 0, yMax: 12, xUnit: 'mU/L', xLabel: 'Plasma insulin (mU/L)', yLabel: 'production / disposal (mmol/min)', noTargetZone: true });
         legendDiv.innerHTML = buildLegend(series);
 
-        let rows = '<tr><th>Insulin (mU/L)</th><th>EGP (source +)</th><th>Rd (sink −)</th><th>M-value (mg/kg/min)</th></tr>';
+        let rows = '<tr><th>Insulin (mU/L)</th><th>EGP</th><th>Rd</th><th>Rd − EGP (mg/kg/min)</th></tr>';
         [0, 8, 15, 30, 45, 60, 90, 150].forEach(I => {
             const f = fluxAt(I);
-            rows += `<tr><td>${I}</td><td>+${f.egp.toFixed(2)}</td><td>−${f.rd.toFixed(2)}</td><td>${f.M.toFixed(1)}</td></tr>`;
+            rows += `<tr><td>${I}</td><td>${f.egp.toFixed(2)}</td><td>${f.rd.toFixed(2)}</td><td>${f.M.toFixed(1)}</td></tr>`;
         });
         resultDiv.innerHTML = `<table class="results-table">${rows}</table>`;
 
@@ -6161,25 +6141,24 @@ addSection(
             + `M-value at I=60 = ${m60 != null ? m60.toFixed(1) : '?'} mg/kg/min vs Shetty resting `
             + `GIR ${shettyMean.toFixed(1)} ± ${shettySem.toFixed(1)}. The current muscle Hill response `
             + `saturates, but its sustained disposal is too high at this reference profile.</p>`
-            + `<p>Sign convention: glucose sources (liver EGP) plot positive (above 0), sinks (disposal Rd) negative (below 0); `
-            + `the vertical distance between the two curves at any insulin = the glucose that must be infused to hold BG (the M-value). `
+            + `<p>Both rates are positive; subtract EGP from Rd to obtain net glucose demand. `
+            + `A negative difference would require glucose removal, not infusion, to hold this BG. `
             + `Lipolysis is NOT a glucose flux — it is shown separately in the tissue-threshold diagnostic.</p>`;
     }
 );
 
-// SECTION: Tissue-specific insulin thresholds — the dead-zone gap
+// SECTION: Tissue-specific insulin response functions
 // -------------------------------------------------------------------------
 addSection(
-    'Tissue-specific insulin thresholds — where each glucose sink turns on',
-    'The dead zone IS the gap between tissue thresholds. Three stacked panels (Hovorka Fig 7-style), '
+    'Tissue-specific insulin response functions',
+    'Three stacked panels (Hovorka Fig 7-style), '
     + 'each on its own scale but sharing the plasma-insulin x-axis (euglycemia, rest). Fat (anti-lipolysis, '
     + 'not glucose uptake — the most insulin-sensitive endpoint), liver (EGP suppression) and muscle '
-    + '(glucose disposal) each have their own half-maximal threshold. If there is a wide insulin span '
-    + 'between when the early sinks saturate and when muscle finally engages, that span is the dead zone.',
+    + '(glucose disposal) have different response functions. The muscle marker is the EC50 of the '
+    + 'action function, not necessarily half-maximal whole-body glucose disposal.',
 
-    'Fat should saturate first (lowest threshold), liver next, muscle last (highest threshold ~55 mU/L). '
-    + 'The horizontal gap between liver and muscle is the dead-zone window — where the early sinks are '
-    + 'already handled but peripheral disposal has barely started.',
+    'Inspect the implemented response functions and their selected parameters. Their separation is '
+    + 'a model property, not independent evidence for a clinically ineffective correction dose.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
         const sim = createSim(DEFAULT_PROFILE);
@@ -6242,36 +6221,31 @@ addSection(
         })();
         legendDiv.innerHTML = '';
         resultDiv.innerHTML = `<table class="results-table">
-            <tr><th>Tissue</th><th>Half-max threshold (mU/L)</th><th>Role</th></tr>
+            <tr><th>Tissue</th><th>Model half-response marker (mU/L)</th><th>Role</th></tr>
             <tr><td>Fat</td><td>${ec50Fat.toFixed(0)}</td><td>anti-lipolytic (FFA/ketones)</td></tr>
             <tr><td>Liver</td><td>${liverHalf.toFixed(0)}</td><td>EGP suppression</td></tr>
-            <tr><td>Muscle</td><td>${ec50Musc.toFixed(0)}</td><td>glucose disposal (Rd)</td></tr>
+            <tr><td>Muscle</td><td>${ec50Musc.toFixed(0)}</td><td>action-function EC50, not half-maximal whole-body Rd</td></tr>
         </table>`;
 
         const gap = ec50Musc / liverHalf;
-        const hasGap = gap >= 2.5;
-        conclusionDiv.innerHTML = `<p class="${hasGap ? 'pass' : 'warn'}">${hasGap ? '✓' : '⚠'} `
-            + `Threshold separation: fat ≈${ec50Fat}, liver ≈${liverHalf.toFixed(0)}, muscle ≈${ec50Musc} mU/L `
-            + `(muscle/liver ratio ${gap.toFixed(1)}×). The liver→muscle gap (~${liverHalf.toFixed(0)}-${ec50Musc} mU/L) is the dead-zone window: `
-            + `fat and liver are already engaged, muscle barely.</p>`
-            + `<p>Whether this gap is NOTICEABLE in gameplay is a separate question — a correction bolus only passes through `
-            + `this insulin range transiently, so the BG effect is mild in the bolus diagnostic. The gap exists in the model; its visibility is what is in doubt.</p>`;
+        conclusionDiv.innerHTML = `<p>Model response markers: fat ${ec50Fat}, liver ${liverHalf.toFixed(1)}, `
+            + `muscle action ${ec50Musc} mU/L (muscle/liver ratio ${gap.toFixed(1)}). `
+            + `A bolus passes through these concentrations transiently; its glucose effect must be evaluated against a matched control.</p>`;
     }
 );
 
-// SECTION: Dose-response gain map — direct visualization of the dead zone
+// SECTION: Normalized steady-state response and marginal gain
 // -------------------------------------------------------------------------
 addSection(
-    'Dose-response gain map — direct visualization of the dead zone',
+    'Dose-response gain map — normalized response and marginal gain',
     'BG-over-time plots can make a non-linear mechanism look deceptively linear. '
     + 'This section removes time from the plot. Plasma insulin is placed directly on the x-axis, '
     + 'and the y-axis shows normalized steady-state response. Liver EGP suppression is an early, '
     + 'near-linear response; muscle disposal recruitment is the Hill-threshold response. The marginal '
     + 'muscle gain curve shows where each extra mU/L of insulin actually starts to matter.',
 
-    'A visible dead zone should look like a low-response region at low insulin, followed by a steeper '
-    + 'muscle recruitment zone. The marginal gain curve should peak around the muscle threshold instead '
-    + 'of staying flat, because that is the non-linear part.',
+    'Describe the selected response function. Each normalized curve uses its own maximum over '
+    + 'the displayed range; percentages are not interchangeable physiological effect sizes.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
         const sim = createSim(DEFAULT_PROFILE);
@@ -6320,7 +6294,7 @@ addSection(
             { label: 'Muscle disposal recruitment', data: muscleDisposal, color: '#1D9E75', lineWidth: 2.8 },
             { label: 'Marginal muscle gain per mU/L', data: marginalGain, color: '#f59e0b', lineWidth: 2.2 },
             { label: `Liver 50% threshold (${liverHalf.toFixed(0)} mU/L)`, data: liverThreshold, color: '#94a3b8', dash: [4, 4], lineWidth: 1.5 },
-            { label: `Muscle 50% threshold (${muscleEC50.toFixed(0)} mU/L)`, data: muscleThreshold, color: '#e2e8f0', dash: [4, 4], lineWidth: 1.5 }
+            { label: `Muscle action EC50 (${muscleEC50.toFixed(0)} mU/L)`, data: muscleThreshold, color: '#e2e8f0', dash: [4, 4], lineWidth: 1.5 }
         ];
 
         drawChart(canvas, series, {
@@ -6361,14 +6335,10 @@ addSection(
         const liverAt20 = normalizedAt(responseRows, 20, 'liver');
         const muscleAt20 = normalizedAt(responseRows, 20, 'muscle', maxMuscle);
         const muscleAt55 = normalizedAt(responseRows, 55, 'muscle', maxMuscle);
-        const hasVisibleGap = liverAt20 > 60 && muscleAt20 < 20 && muscleAt55 > muscleAt20 * 2;
-
-        conclusionDiv.innerHTML = `<p class="${hasVisibleGap ? 'pass' : 'warn'}">${hasVisibleGap ? '✓' : '⚠'} `
-            + `Dead-zone visualization: at 20 mU/L, liver suppression is already ${liverAt20.toFixed(0)}% of max, `
-            + `but muscle recruitment is only ${muscleAt20.toFixed(0)}%. Around the muscle EC50 (${muscleEC50.toFixed(0)} mU/L), `
-            + `muscle recruitment rises to ${muscleAt55.toFixed(0)}% and marginal gain peaks.</p>`
-            + `<p>This is the clearer plot for the non-linearity: the dead zone is the horizontal gap between early liver suppression `
-            + `and later muscle disposal recruitment, not the slope of a BG-over-time curve.</p>`;
+        conclusionDiv.innerHTML = `<p>At 20 mU/L, modeled liver suppression is ${liverAt20.toFixed(0)}%; `
+            + `muscle disposal is ${muscleAt20.toFixed(0)}% of its displayed maximum. At the muscle-action `
+            + `EC50 (${muscleEC50.toFixed(0)} mU/L), the latter reaches ${muscleAt55.toFixed(0)}%.</p>`
+            + `<p>This plot describes the equations; the independent clamp comparison above tests their quantitative output.</p>`;
     }
 );
 
@@ -6383,6 +6353,9 @@ async function runTestQueue() {
     const progressText = document.getElementById('progress-text');
     const progressFill = document.getElementById('progress-bar-fill');
     const progressContainer = document.getElementById('progress-container');
+    // Kørsel og faglige checks er separate: en kørt illustration er ikke
+    // automatisk en bestået litteraturvalidering. Browser-smoketests læser dette.
+    window.modelValidation = { running: true, sections: [], summary: null };
 
     for (let i = 0; i < total; i++) {
         const { num, title, testFn } = testQueue[i];
@@ -6402,6 +6375,7 @@ async function runTestQueue() {
             requestAnimationFrame(() => setTimeout(resolve, 0))
         );
 
+        const sectionResult = { num, title, execution: 'completed', error: null };
         // Run the test.
         try {
             const canvas = document.getElementById(`chart-${num}`);
@@ -6416,14 +6390,35 @@ async function runTestQueue() {
             }
         } catch (e) {
             const resultDiv = document.getElementById(`result-${num}`);
-            resultDiv.innerHTML = `<p class="fail">ERROR: ${e.message}</p>`;
+            resultDiv.textContent = `ERROR: ${e.message}`;
+            resultDiv.classList.add('fail');
+            sectionResult.execution = 'error';
+            sectionResult.error = e.message;
             console.error(e);
         }
+        const checks = document.getElementById(`conclusion-${num}`);
+        sectionResult.failedChecks = checks.querySelectorAll('.fail').length;
+        sectionResult.warnings = checks.querySelectorAll('.warn').length;
+        sectionResult.passedChecks = checks.querySelectorAll('.pass').length;
+        sectionResult.assessment = sectionResult.execution === 'error' ? 'not-assessed'
+            : sectionResult.failedChecks ? 'failed-checks'
+            : sectionResult.warnings ? 'partial'
+            : sectionResult.passedChecks ? 'checks-passed' : 'descriptive';
+        window.modelValidation.sections.push(sectionResult);
     }
 
     // Done — hide progress bar and show status.
     progressContainer.classList.add('done');
-    document.getElementById('status').textContent = `${total} test sections completed.`;
+    const sections = window.modelValidation.sections;
+    const errors = sections.filter(s => s.execution === 'error').length;
+    const failed = sections.filter(s => s.failedChecks > 0).length;
+    const warnings = sections.filter(s => s.warnings > 0).length;
+    const descriptive = sections.filter(s => s.assessment === 'descriptive').length;
+    window.modelValidation.summary = { total, errors, failed, warnings, descriptive };
+    window.modelValidation.running = false;
+    document.getElementById('status').textContent =
+        `${total} sections processed: ${errors} execution errors; ${failed} with failed checks; ` +
+        `${warnings} with warnings; ${descriptive} descriptive only. This is not a clinical-validation verdict.`;
 }
 
 // Dynamisk oprettede sektioner findes først efter at hele scriptet er evalueret.

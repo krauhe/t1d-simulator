@@ -10,7 +10,7 @@ Two reproducible conservation defects deserve priority: contraction-mediated upt
 
 The HTML validation page is broad but insufficient as a validation report. It completed 51 sections with one execution error and warnings in three other sections. One recovery warning is itself a test-analysis error. A completed page or successful regression command must not be read as scientific approval.
 
-Finding totals after the 4 October follow-up on the two archived Gemini reports: **2 CRITICAL, 10 WARNING, 3 NOTE; all 15 remain open.** The follow-up adds F15 and extends F13; it does not duplicate suggestions already covered by other findings. Severity refers to modelling or validation integrity, not an estimate of clinical harm. No production code, implementation documentation or existing tests were changed by this audit.
+Finding totals at the audit baseline: **2 CRITICAL, 10 WARNING, 3 NOTE; initially all 15 open.** The follow-up adds F15 and extends F13. Severity refers to modelling or validation integrity, not an estimate of clinical harm. Original measurements below describe that baseline; dated STATUS annotations record subsequent repairs. Current status: **9 fixed, 5 partial, 1 open**. See the [repair decision record](2026-10-04_model-review-fixes.md).
 
 ## Scope and verification
 
@@ -48,7 +48,7 @@ In a deliberately insulin-free boundary state, 70 kg, initial BG 5.5 mmol/L, 60 
 
 Required resolution: define substrate-limited realised contraction uptake and its transport coupling, then check the combined Q1/Q2 balance. Merely deleting the non-negativity clamp or subtracting the missing sink arbitrarily from Q1 would not constitute a validated repair. Acceptance tests should cover normal, low-insulin and depleted-Q2 states, exercise ablation and onset/offset at multiple actual substep sizes.
 
-STATUS: ❌ ÅBEN.
+STATUS: ❌ ÅBEN (2026-10-04). Structural transport/substrate-limitation choice deferred by the user. The unchanged diagnostic still shows a 10.40 g residual at dt=0.1 min.
 
 ### F02 — CRITICAL: six-hour bolus cleanup destroys residual insulin
 
@@ -65,7 +65,7 @@ The second case loses approximately 8.5% of bioavailable insulin. This is a dyna
 
 Required resolution: retain absorption state until its remaining mass is negligible under a stated tolerance, or transfer it to a conserved residual compartment. Test total injected, unavailable, absorbed and remaining mass across the expiry boundary, including slow absorption, stacking and exercise-accelerated absorption. Display-history retention should be independent of physiological retention.
 
-STATUS: ❌ ÅBEN.
+STATUS: ✅ FIKSET (2026-10-04, working tree). Retain depots beyond 360 min until below 10^-6 mU; preserve IOB scaling. Mass balance passes at dt=1/0.5 min, including stacked doses, accelerated absorption and eventual cleanup.
 
 ### F03 — WARNING: the insulin “dead zone” is overinterpreted, and sustained action remains miscalibrated
 
@@ -79,7 +79,7 @@ There is also a separate, already acknowledged quantitative discrepancy. At BG 5
 
 Required resolution: jointly assess transient bolus effects and sustained clamp fluxes. Relabel the low-dose experiments as model dose-response tests; retain the no-bolus comparator and report incremental effect per unit. The clamp diagnostic's status predicate also needs a genuine overlap check: `not all above` currently implies PASS even if every future result were below the target interval.
 
-STATUS: ❌ ÅBEN; the clamp mismatch was known before this audit and remains reproduced.
+STATUS: ⚠️ DELVIST (2026-10-04). K.1/K.2/K.4/K.5 and implementation prose now distinguish control-adjusted response from a hypothesised threshold. Clamp status requires a sampled value inside the target interval. Joint bolus/clamp calibration remains open.
 
 ### F04 — WARNING: ketone calibration combines incompatible endpoints and an artificial withdrawal protocol
 
@@ -93,7 +93,7 @@ The dietary-fat coefficient has a further provenance problem. Implementation §1
 
 Required resolution: separate complete insulin removal, retained-depot interruption and missed basal-dose protocols; label the first honestly. Maintain distinct targets for ketone concentration, production/clearance, and clinical acid–base diagnosis. Describe the fat coefficient and acidosis gate as heuristics until protocol-matched evidence supports them. Reproducing a previously fitted BHB trace is calibration, not independent validation.
 
-STATUS: ❌ ÅBEN.
+STATUS: ⚠️ DELVIST (2026-10-04). I.6 is labelled state ablation, unsupported clinical pass criteria removed, the 120-minute parameter read from code, and BHB distinguished from DKA. Dietary-fat mapping is identified as phenomenological. Matched interruption protocols and ketone/acid–base calibration remain open.
 
 ### F05 — WARNING: the protein endpoint is not the claimed timing or mechanism
 
@@ -105,7 +105,7 @@ The implementation currently assigns the dominant pathway to glucagon-driven hep
 
 Required resolution: reproduce the actual source's meal, background insulin, water comparator and measurement windows. Test both isolated protein and mixed meals; keep gastric transit, amino-acid appearance and glucagon gain distinguishable. Present the selected pathway as an implementation hypothesis, not a causal partition established by the glucose trial.
 
-STATUS: ❌ ÅBEN.
+STATUS: ⚠️ DELVIST (2026-10-04). Corrected Paterson's comparator, background basal insulin and 240–300 min endpoint; removed the inference of onset from peak slope. Selected protein-to-glucagon routing is labelled a model hypothesis. Protocol-matched quantitative validation remains open.
 
 ### F06 — WARNING: glycogen pools are capacity proxies, not substrate-constrained tissue balances
 
@@ -119,7 +119,7 @@ The fasting illustration also merits attention: I.5 ends its 72-hour fast with t
 
 Required resolution: define which pools are estimated capacities and which are conserved masses. Add a long-fast/refeeding validation with protocol-matched evidence, inspect downstream rescue responses, and audit glucose allocation if tissue mass balance is intended. Do not reintroduce an additional plasma drain without first avoiding double-counting.
 
-STATUS: ❌ ÅBEN; hepatic non-conservation is documented by design, but its predictive scope and the muscle-allocation claim remain unresolved.
+STATUS: ⚠️ DELVIST (2026-10-04). Both pools are described as capacity proxies, unsupported muscle-allocation wording removed, and the 72-hour fasting discrepancy is visible. Conserved tissue balances and their downstream rescue/PEIS consequences require a separate model choice.
 
 ### F07 — WARNING: resistance multipliers are confused with reductions in sensitivity
 
@@ -137,7 +137,7 @@ H.3 correctly prints 18.1% in its table but declares agreement with its calibrat
 
 Required resolution: choose and name the endpoint consistently in code comments, docs and assertions. Verify any replacement physiological target before recalibrating. Do not mechanically replace 0.42 with a larger coefficient to make the label true.
 
-STATUS: ❌ ÅBEN.
+STATUS: ✅ FIKSET (2026-10-04, working tree). Comments, implementation and H.3 distinguish R from 1−1/R. H.3 checks the configured equation rather than claiming clinical calibration. No resistance coefficient changed.
 
 ### F08 — WARNING: the HTML suite has a broken section and no truthful aggregate verdict
 
@@ -147,7 +147,7 @@ C.3 still requests `validationFood('æg', 'Egg')`, but that standalone food no l
 
 Required resolution: make the preset selection follow current identifiers, assert that every requested fixture exists, and expose structured section-level execution and validation states. A browser smoke test should fail on an uncaught section error. Keep scientific PARTIAL/NOT TESTABLE separate from software failure; do not silently count any of these as PASS.
 
-STATUS: ❌ ÅBEN.
+STATUS: ✅ FIKSET (2026-10-04, working tree). Replaced obsolete egg references consistently; unknown food keys fail clearly. Structured section/aggregate status distinguishes execution, failed checks, warnings and descriptive output. Browser: 51 sections, zero execution errors; injected missing-key fault gives exactly one error. J.1–J.3 use explicit distinct seeds and reproduce across both runs; this fixes repeatability, not distributional validation (see decision record).
 
 ### F09 — WARNING: the liver-recovery test reports zero elapsed time as failure to recover
 
@@ -157,7 +157,7 @@ The current run starts both sampled curves at 92.5 g while `refillTarget=65`. `f
 
 Required resolution: define recovery after the post-glucagon nadir or another explicitly depleted state; record the actual pre-intervention target and separate initial-state failure, already-at-target, recovered and not-recovered. Then reassess the expected 4–8 h recovery range against its cited protocol. Merely changing `>` to `>=` would correct display arithmetic but leave an invalid recovery experiment.
 
-STATUS: ❌ ÅBEN.
+STATUS: ✅ FIKSET (2026-10-04, working tree). Set 65 g immediately before glucagon; require observed depletion before recovery. Distinguish no depletion from no recovery, and preserve an observed first recovery despite later depletion. Corrected experiment gives 1.2 h with meals and no return within 12 h fasting; unsupported clinical time targets removed.
 
 ### F10 — WARNING: steady-state reinitialisation can inherit a phantom rapid-insulin input
 
@@ -169,7 +169,7 @@ Fresh construction sets this input to zero, so the experiment does not establish
 
 Required resolution: define whether reinitialisation resets all exogenous inputs and modifiers or rejects a non-fresh state. Test reinitialisation after bolus, exercise and meal histories against a new-model reference. Do not assume that changing a live player's profile currently invokes this path; no such gameplay call was demonstrated.
 
-STATUS: ❌ ÅBEN.
+STATUS: ✅ FIKSET (2026-10-04, working tree). Reset rapidU_I inside the steady-state search. Prior inputs 0/3/10 mU/min now give the same basal rate, 9.362958 mU/min.
 
 ### F11 — WARNING: the accepted long-intake API silently omits part of carbohydrate delivery
 
@@ -181,7 +181,7 @@ This is an accepted API boundary defect, not a claim that ordinary food presets 
 
 Required resolution: retain the delivery entry until its intake is complete, or narrow and document the accepted duration. Test intake mass at 359/360/361 minutes, completion and overlapping meals; check the separate calorie and protein/fat bookkeeping.
 
-STATUS: ❌ ÅBEN.
+STATUS: ✅ FIKSET (2026-10-04, working tree). Retain the food delivery schedule through eatingDuration. At 600 min intake, all 60 g are accounted for instead of 36 g; dt=1/0.5 min and 10/360/600 min intake tested.
 
 ### F12 — NOTE: low-BG exercise throttling is only partly coupled to the rest of the session
 
@@ -191,7 +191,7 @@ Below BG 3.5 mmol/L, the target heart-rate excess is multiplied by `(BG−1.5)/2
 
 Required resolution: document the rule as a modelling choice and test its coupled consequences. If it represents reduced performed work, workload-dependent expenditure and adaptation need a consistent interpretation. If it represents only one physiological response, supporting evidence is needed. The initial Gemini claim that all exercise effects fall by 95% was incorrect.
 
-STATUS: ❌ ÅBEN.
+STATUS: ⚠️ DELVIST (2026-10-04). Implementation scope now explicitly identifies which activity pathways the low-BG heart-rate throttle does and does not affect. Whether to couple the remaining outputs is deferred with the structural activity revision.
 
 ### F13 — NOTE: several equations, units and visual explanations lag behind the science or code
 
@@ -206,7 +206,7 @@ STATUS: ❌ ÅBEN.
 
 Required resolution: reconcile the description with executable equations and distinguish original constants, adaptations and scenario calibrations. No physiological parameter should change merely to match an outdated explanation.
 
-STATUS: ❌ ÅBEN.
+STATUS: ✅ FIKSET (2026-10-04, working tree). Corrected the eight listed description/arithmetic discrepancies: EGP0, F01, AG adaptation, fixed bioavailability/Hill targets, clamp plot, filter/stress timing, selected counterregulatory phenotype and SGLT2 scope. This does not validate unchanged parameters or historical figures.
 
 ### F14 — NOTE: the review skill itself retains outdated scientific shortcuts
 
@@ -216,7 +216,7 @@ The workflow correctly requires original-source checking, traceability, ablation
 
 Required resolution: retain the workflow, but replace unqualified physiological constants with links to appraised, protocol-specific source records and distinguish heuristic defaults. The present audit treated this summary as a list of questions, not as evidence. The skill has not been edited in this review task.
 
-STATUS: ❌ ÅBEN.
+STATUS: ✅ FIKSET (2026-10-04, working tree). Skill now requires protocol-specific targets and original-source appraisal rather than universal shortcuts; added conservation checks and corrected Euler stability dimensions. Skill validator passes.
 
 ### F15 — WARNING: the existing causal display does not represent a glucose balance
 
@@ -241,7 +241,7 @@ Existing tests check structure, sorting and relative basal/bolus attribution; th
 
 Required resolution: choose either a signed Q1 or Q1+Q2 flux accounting, or explicitly separate causal attribution from physical fluxes. Do not stack insulin-mediated suppression on top of already-suppressed EGP as another realised sink. Add a near-steady-state balance test and dynamic meal/bolus/exercise cases, with consistent sampling time and explicit treatment of omitted terms. Changes belong to the explanatory display, not an unmotivated retuning of the physiological ODEs.
 
-STATUS: ❌ ÅBEN.
+STATUS: ✅ FIKSET (2026-10-04, working tree). Effects use the last substep's signed Q1 balance, with rescue and numerical corrections explicit. Mechanisms use a diamond, not a second flux arrow. Near-steady net −0.000389517 mmol/min matches Q1 change; dynamic dt=1/0.5 tests and renderer checks pass. Five-row selection and basal/rapid attribution remain documented display conventions.
 
 ## Mechanism-to-evidence and test-coverage map
 
@@ -357,4 +357,4 @@ Reviewed raw-file SHA-256 values:
 | `docs/BG-SCIENCE.md` | `dce6d03d5c7f9f48fc42e9412adb86d72d72dbc7806f9fbdbd4929779f1bfd27` |
 | `tests/model-validation.html` | `ffda024249db4bd69ec3ccb422b4e342c6101bdb339a043b4a927ec80fe2de6c` |
 
-Final status after archived-report follow-up: F01–F15 **❌ ÅBEN** (2 CRITICAL, 10 WARNING, 3 NOTE). F13 now includes the counterregulatory-phenotype and euglycaemic-DKA scope discrepancies; F15 is the newly reproduced explanatory-display defect. The six reviewed file hashes above are unchanged. No model repair, commit or push performed. The reviewed implementation and tests still contain the findings above. This audit provides a repair order and coverage map; it does not certify the simulator's clinical predictive accuracy.
+Repair status, 4 October 2026: **9 fixed** (F02, F07–F11, F13–F15), **5 partial** (F03–F06, F12), **1 open** (F01). The hashes above identify the pre-repair audit, not the modified files. Checkpoint `1c8243e` precedes the repairs; the subsequent repair checkpoint contains the dated fixes below. The [decision record](2026-10-04_model-review-fixes.md) documents verification and the deferred choices. Passing regression checks does not close the remaining physiological calibration or conservation findings.

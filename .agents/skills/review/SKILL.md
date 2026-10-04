@@ -113,25 +113,28 @@ For ethvert subsystem, still disse spørgsmål:
 - Hvad sker der ved negative eller NaN-inputs?
 - Er der divisioner der kan give division-by-zero?
 
-**Klinisk sanity check — disse tal bør altid holde:**
-- Faste-BG hos velbehandlet T1D: 4.5-7.0 mmol/L
-- Hjernens glukoseforbrug: ~5-6 g/time (~120 g/dag)
-- Leverproduktion (basal): ~8-10 g/time (~160 mg/min for 70 kg)
-- 1E hurtigvirkende insulin sænker BG med ~ISF mmol/L (typisk 1.5-5.0)
-- Peak insulin-effekt: ~60-120 min efter injektion
-- Renal tærskel: ~9-10 mmol/L (glukosuri)
-- DKA udvikles over timer (6-24t) ved total insulinmangel
-- Hjertets glukoseforbrug: ~1 g/time (normalt negligibelt vs. hjerne)
-- Muskel-glukoseoptag under motion: 1-4 g/min afhængigt af intensitet
-- Leverglykogen: ~80-100g (tømmes på 8-14 timer ved faste)
+**Kliniske sammenligninger kræver et specificeret forsøg:**
+1. Find intervallet i revideret BG-SCIENCE og kontrollér originalkildens population,
+   protokol, insulinbaggrund, enhed, tidspunkt og endpoint. Brug artikel-skillen ved arkivbrug.
+2. Adskil basal produktion fra produktion ved nul insulinvirkning, total
+   kulhydratoxidation fra blodglukoseoptag og vævslager fra en kapacitetsproxy.
+3. Mål boluseffekt mod en matchet nul-dosekontrol; slut-BG over start-BG er
+   ikke bevis for manglende insulinvirkning. Kontrollér også sustained clamp-respons.
+4. BHB alene diagnosticerer ikke DKA. Sletning af insulin-states er ikke
+   pumpestop: ved leveringsstop skal eksisterende depoter og action states bevares.
+5. Frys evidensbaserede targets før kodeændring. Ændr ikke ranges for at skjule fejl;
+   beskriv protokolmismatch som åbent, ikke som bestået validering.
 
 ### Princip 3: Numerisk stabilitet
 
 - **Euler-integration** er førsteordens og betinget stabil.
-  Tommelfingerregel: dt < 2/|λ_max| hvor λ_max er den hurtigste
-  tidskonstant. For τ_E1=20 min → dt < ~10 min. Praksis: dt ≤ 1 min.
-- **Clamping**: Alle mængder (mmol, mU, gram) skal være ≥ 0.
-  Koncentrationer kan have en nedre fysiologisk grænse.
+  For et lineært henfald med reel egenværdi λ = −1/τ kræves dt < 2τ
+  for stabilitet; ved τ=20 min er grænsen 40 min, ikke 10 min.
+  Dette er ikke et nøjagtighedskriterium eller en garanti for et koblet system.
+  Sammenlign output og massebalance ved fx dt=1 og 0.5 min.
+- **Clamping**: En positiv state er ikke bevis for massebevarelse. Log den
+  korrektion som en clamp tilfører eller fjerner; efterspurgte sinks må ikke
+  tælles som realiseret forbrug, når kompartmentet er tomt.
 - **NaN-propagation**: Én NaN inficerer hele state-vektoren.
   Tjek alle Math.log(), Math.pow(), divisioner for edge cases.
 - **Hill-funktioner**: `x^n / (EC50^n + x^n)` — hvad sker der
@@ -341,10 +344,10 @@ Tilføj en samlet status-opsummering i bunden af rapporten.
 
 ## DOMÆNEVIDEN — Fysiologiske principper for T1D
 
-Denne sektion indeholder **tidløs** fysiologisk viden der gælder uanset
-kodens tilstand. Brug den til at vurdere om modellen er korrekt.
-Koden kan indeholde subsystemer der IKKE er nævnt her — reviewer dem
-ud fra generelle principper og de kilder koden selv refererer til.
+Dette er kontrolspørgsmål, ikke en autoritativ parameterliste. BG-SCIENCE og
+originalkilderne er den videnskabelige reference; MODEL-IMPLEMENTATION og koden
+beskriver de valgte forenklinger. En tidligere skill, test eller reviewrapport
+kan selv indeholde fejl og må ikke erstatte kildekontrol.
 
 ### Glukose-insulin systemet (kernen)
 
@@ -356,33 +359,32 @@ ud fra generelle principper og de kilder koden selv refererer til.
   tilgængeligt for BG-regulering)
 
 **Insulin i T1D:**
-- Al insulin er eksogen (injiceret). Ingen endogen produktion.
-- Subkutan absorption: 2-kompartment model (depot → plasma), τ ~55 min
+- Modellen kan antage rent eksogen insulin; det er ikke universelt for personer med T1D.
+- Subkutan absorption: kontrollér depoter, plasma og integreret levering som massebalance.
 - Tre effektkanaler: transport (Q1→Q2), disposal (Q2-forbrænding),
   EGP-suppression (lever). Alle med forsinkelse (x1/x2/x3).
-- Bioavailability ~78% (resten nedbrydes lokalt). CV ~10%.
-- Absorptionshastighed varierer ~25% CV (dybde, flow, temperatur).
+- Bioavailability og tidskonstanter skal læses i den aktuelle kode og sammenholdes
+  med det konkrete insulinpræparat. De er ikke universelle fysiologiske konstanter.
 
-**Kontraregulering i T1D — fundamentalt svækket:**
-- Glukagon-respons tabt inden 1-5 år (parakrin insulin-signal mangler)
-- Adrenalin-respons initialt bevaret, men svækkes ved HAAF
-- Konsekvens: insulinoverdosis er langt farligere end hos raske
+**Kontraregulering:** Adskil respons på hypoglykæmi, protein og motion.
+Restfunktion, sygdomsvarighed og tidligere hypoglykæmi påvirker fænotypen;
+en fast stress-cap er en modelantagelse, ikke et målt hormonforhold.
 
 ### Madabsorption
 
-**KH**: 2-kompartment (mave → tyndtarm → blod). Bioavailability ~80%.
-Peak BG ~40-60 min. Varierer med GI.
+**KH**: Adskil fordøjelig mængde, tarmabsorption og systemisk appearance.
+A_G=0.8 er Hovorkas modelparameter; A_G=1.0 er en senere simulatorantagelse.
+Fiberdeklaration alene begrunder ikke skiftet. Efterprøv integreret levering,
+også ved lang spisetid og efter at måltidseventet er fjernet.
 
 **Fedt**: Forsinker mavetømning via CCK/GLP-1. Effekten er logaritmisk
 mættende. "Pizza-effekten": sent, bredt BG-peak.
 
-**Protein**: Påvirker BG primært via glukagon → HGP, IKKE via
-direkte glukose-konvertering (Bernstein 25%-reglen er 2-6× overdrevet).
-Onset ~60-90 min, peak ~150-180 min.
-Dosis-respons: Hill-funktion (tærskel + mætning).
-75g protein → ~+1.7 mmol/L (Paterson 2016).
-Nøglemekanisme: Aminosyrer stimulerer alfa-celler → glukagon → HGP.
-I T1D er der ingen beta-celle insulinrespons til at modvirke.
+**Protein**: Kontrollér aminosyresubstrater og hormonrespons uden at ophøje
+simulatorens Hill-funktion til et direkte fysiologisk mål. Paterson 2016's
+75 g-resultat er en forskel mod vand i intervallet 240–300 min med fortsat
+basalinsulin, ikke en tidlig peak-respons uden insulin. Brug ikke størst
+hældning som synonym for onset eller et sent interval som peak-tidspunkt.
 
 ### Motion
 
@@ -417,11 +419,9 @@ mekanismer og skal have separate parametre og ablationstests.
 
 ### Circadian rytme
 
-**Dawn-fænomen**: Cortisol-peak typisk ~06-10 → øget HGP.
-**Circadian ISF**: Lavest om morgenen, højest om aftenen.
-  Klinisk: ~30-50% mere insulin nødvendigt om morgenen.
-**Søvn**: Deprivation øger insulinresistens ~20% (Donga 2010) og
-forstærker dawn (Leproult 1997: +30-50% morning cortisol).
+Kontrollér morgenstigning, døgnvariation i følsomhed og søvnmangel som
+adskilte mekanismer. Overfør ikke kortisolmålinger fra ét tidspunkt til
+et andet eller en studiespecifik ændring til alle T1D-profiler.
 
 ### Stresshormoner
 
@@ -444,32 +444,31 @@ Adrenalinfunktion: 3+ måneder for fuld recovery (Fanelli 1993).
 
 ### Ketoner og DKA
 
-Insulinmangel → lipolyse → ketogenese → metabolisk acidose.
-Kræver: lav insulin + typisk høj BG (men fasting ketosis eksisterer også).
-Kliniske tærskelværdier: 0.6 / 1.5 / 3.0 mmol/L.
-Tidsforløb: timer til DKA ved total insulinmangel.
+Adskil ketogenese, BHB-koncentration og metabolisk acidose. Kontrollér
+de aktuelle diagnostiske kriterier i BG-SCIENCE og konsensuskilden.
+En intern acidosis-load-proxy er ikke blod-pH eller bicarbonat. Bland ikke
+gram-pools og arbitrære pool-enheder uden en eksplicit dimensionel mapping.
 
 ### CGM-teknologi
 
-Interstitiel forsinkelse: ~5-10 min (førsteordens lavpasfilter).
-Fysiologisk delay: 5-6 min (raske), 7-8 min (T1D).
-Fibrøs indkapsling er dominerende forsinkelseskilde (Helton 2019).
-Støj: proportional med BG-niveau (~3-5% CV).
-MARD: 8-10% for moderne sensorer (Libre 2/3, Dexcom G6/G7).
-Diskontinuiteter: kompression, kalibrering, sensor-degradering.
+Adskil fysiologisk diffusion, filtertidskonstant, sampling og målefejl.
+Beregn filterets faktiske τ=1/k og test både trin- og rampeinput. MARD,
+støj-CV og fast tidsforskydning er forskellige mål; brug det relevante
+sensorstudie frem for et universelt interval.
 
 ### Glucotoxicitet (hvis implementeret)
 
 Vedvarende hyperglykæmi → insulinresistens via ROS, hexosamin-pathway,
-PKC, AGE, GLUT4-nedregulering. 24t ved 20 mmol/L → 26% reduktion i
-glukose-disposal (Vuorinen-Markkola 1992). Reverserbar over timer-uger.
-Dårligt kontrolleret T1D (HbA1c>9%): 30-50% mere insulin nødvendigt.
+PKC, AGE, GLUT4-nedregulering. Kontrollér eksponeringstid, population og
+målt endpoint før en ændring i disposal omsættes til en ISF-modifikator.
+For en divisor R er ISF-reduktionen 1−1/R, ikke R−1.
 
 ### FFA-induceret insulinresistens (hvis implementeret)
 
 Frie fedtsyrer fra fedt-absorption → DAG/ceramider → PKC-θ → IRS-1
-blokering → reduceret GLUT4-translokation. Onset ~2-4 timer efter
-fedt-måltid, peak ~5-6 timer. 60g fedt → ~42% mere insulin (Wolpert 2013).
+blokering → reduceret GLUT4-translokation. Wolpert 2013's gennemsnitlige
+42% højere insulinbehov ved 60 mod 10 g fedt er et integreret måltidsresultat,
+ikke en isoleret 42% reduktion i ISF eller direkte måling af modellens tidskonstanter.
 Separat mekanisme fra glucotoxicitet (lipotoxicitet vs. glucotoxicitet).
 
 ### Alkohol (hvis implementeret)

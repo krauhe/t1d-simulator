@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-08-05-v12 -->
+<!-- doc-version: 2026-10-04-v1 -->
 # Physiological Model — T1D Simulator
 
 *This page is the technical documentation of the simulator's physiological engine.
@@ -277,7 +277,7 @@ realistic and educational experience:
 | **Post-exercise ISF** | Improved sensitivity after exercise (three components) | Fast AMPK + early glycogen-coupled PEIS + late AS160 memory (t½ = 18 h) | [§6 Activity](#activity) |
 | **Sleep disruption** | Nighttime interventions increase chronic stress | +12% dawn amplitude per lost hour | [§9 Sleep](#sleep) |
 | **HAAF** | Repeated hypos blunt counterregulation | Area-based sigmoid decay, floor = 0.3 | [§10 HAAF](#haaf) |
-| **FFA insulin resistance** | Dietary fat → delayed ISF reduction ("second wave") | Hill function on FFA pool, max 42% ISF reduction | [§5 Food](#ffa-resistance) |
+| **FFA insulin resistance** | Dietary fat → delayed ISF reduction | Hill function on FFA pool, maximum resistance multiplier 1.42 (29.6% ISF reduction) | [§5 Food](#ffa-resistance) |
 | **Ketone model (FFA-driven)** | Low plasma insulin → lipolysis → CPT-1 → BHB accumulation | Two Hill gates (lipolysis + CPT-1), Michaelis-Menten clearance | [§11 Ketones](#ketones) |
 | **CGM noise & drift** | Realistic sensor inaccuracy | Gaussian σ = 0.3 mmol/L, drift ±0.5 | [§12 CGM](#cgm) |
 | **Basal/rapid separation** | Shadow cascade for exact insulin source attribution | S1b→S2b→Ib (baseTauI=55), IOB = rapid-only | [§4 Insulin](#insulin) |
@@ -371,8 +371,8 @@ everything that **adds** glucose to the blood and everything that **removes** it
 Blood glucose is always the result of a **balance** between addition and removal.
 When addition exceeds removal, blood glucose rises. When removal exceeds
 addition, it falls. A person with T1D lacks the body's own insulin, so without
-injected insulin there is nothing to drive glucose into the cells — and blood glucose
-rises uncontrollably.
+adequate insulin, insulin-dependent disposal is reduced and endogenous glucose
+production is less suppressed. Insulin-independent uptake continues.
 
 ### Key parameters (scaled with body weight)
 
@@ -380,16 +380,14 @@ rises uncontrollably.
 |-----------|-------------|----------------------|
 | VG | How much blood glucose distributes into | 0.16 * weight = 11.2 L |
 | F01 | Insulin-independent glucose use (brain + RBC + others) per minute | 0.0097 * weight = 0.68 mmol/min |
-| EGP0 | Liver's basal glucose production per minute (T1D-level) | 0.0161 * weight = 1.13 mmol/min |
+| EGP0 | Endogenous glucose production at zero insulin action | 0.0161 * weight = 1.13 mmol/min |
 | R_thr | Renal threshold for glucose excretion | 9 mmol/L |
 
 > Note on `EGP_0`: The Hovorka 2004 value 0.0161 mmol/kg/min ≈ 16.1 µmol/kg/min
-> matches measured T1D basal EGP (13-17 µmol/kg/min, Kacerovsky 2011; Petersen 2004).
-> Healthy controls typically run 11-12 µmol/kg/min — the T1D elevation reflects
-> deficient insulin suppression of hepatic glucose output. This is appropriate
-> for the simulator's target population (T1D patients).
+> is the zero-insulin-action parameter, not fasting EGP measured during basal
+> insulin replacement. Actual EGP also depends on x3 and the engine's modifiers.
 >
-> Note on `F_01`: The total 0.0097 mmol/kg/min ≈ 14 µmol/kg/min ≈ 176 g/day at 70 kg
+> Note on `F_01`: The total 0.0097 mmol/kg/min = 9.7 µmol/kg/min ≈ 176 g/day at 70 kg
 > is larger than brain consumption alone (~110-120 g/day, BG-SCIENCE §4). The
 > remainder (~50-60 g/day) covers other insulin-independent tissues: red blood
 > cells, renal medulla, parts of the heart. The lumping is conventional in
@@ -448,10 +446,9 @@ Three separate effect variables model this delay:
 - **x2 (disposal):** Insulin causes the muscles to burn more glucose
 - **x3 (liver suppression):** Insulin causes the liver to produce less glucose
 
-All three follow the same mathematical pattern: `dx = kb × I - ka × x`, where `kb × I`
-is the activation (the more insulin in the blood, the stronger the signal) and `ka × x` is
-the natural decay over time. However, they have different rates (ka and kb),
-which give them slightly different time profiles.
+All three follow `dx/dt = ka × (x_target(I) − x)`, with channel-specific
+deactivation rates. The original Hovorka targets were linear in insulin;
+the current muscle targets (x1, x2) are Hill functions, while x3 remains linear.
 
 Here is a summary of insulin's three effect mechanisms and where they appear
 in the model's equations:
@@ -524,13 +521,13 @@ of 0.80 (slightly less sensitive than average), and a character profile with ISF
 gets 1.33 (more sensitive).
 
 <a name="nonlinear-insulin"></a>
-### Non-linear insulin dose-response — the dead zone (Hill on muscle)
+### Non-linear insulin dose-response — implemented functions and calibration limits
 
 Insulin's glucose-lowering action is not proportional to dose: it follows a saturable,
 sigmoidal curve whose threshold differs across target tissues (see
 [Non-linearity in insulin action](BG-SCIENCE.md#nonlinear-insulin) in BG-SCIENCE for the
-physiology and the Rizza 1981 dose-response data). The simulator captures this on the
-**muscle** channel, where it matters most:
+physiology and the Rizza 1981 dose-response data). The simulator applies non-linearity
+to its muscle action channels:
 
 - **Muscle (x1 transport, x2 disposal)** uses a Hill steady-state target instead of the
   former linear `x = S·I`:
@@ -539,39 +536,37 @@ physiology and the Rizza 1981 dose-response data). The simulator captures this o
   x_target = amplitudeMod × x_max × I^n / (EC50_eff^n + I^n)
   ```
 
-  with `EC50_muscle = 55 mU/L` and `n = 1.5` (Rizza 1981). The deactivation rate `k_a`
+  with selected parameters `EC50_muscle = 55 mU/L` and `n = 1.5`. These are model
+  choices, not a fitted T1D bolus-response curve from Rizza's healthy-participant clamps.
+  The deactivation rate `k_a`
   still sets the time delay (`dx = k_a × (x_target − x)`). `x_max` is calibrated so the
   Hill curve matches the old linear response at a typical bolus peak (~35 mU/L), so meal
-  doses are essentially unchanged while **small correction doses fall in a "dead zone"**:
-  the liver suppresses EGP but the muscle is barely recruited, so BG hardly moves until
-  the dose crosses the muscle threshold.
+  doses remain close to the earlier calibration near that concentration. This does
+  not establish an ineffective small-dose range: a dose can substantially reduce BG
+  relative to a matched zero-dose control while BG remains above its starting value.
 
 - **Liver (x3 EGP suppression)** is kept **linear** (`x3 = amplitudeMod × S_IE × I`). The
   model's basal plasma insulin (~8 mU/L) sits well below the systemic Rizza liver EC50
   (29 mU/L), so a literal Hill there would either under-suppress at basal (breaking the
-  basal balance and the DKA gate) or over-suppress mid-range (deeper hypos). The liver is
-  an early responder with a low effective threshold, so a proportional response is a good
-  approximation on the model's insulin scale — and the liver→muscle threshold gap (which
-  *creates* the dead zone) is preserved because the muscle carries the high threshold.
+  basal balance and the ketone gate) or over-suppress mid-range. Retaining the linear
+  function preserves that calibration; it is not independent validation of the
+  separation between hepatic and peripheral responses.
 
 - **Fat (lipolysis suppression)** already has a Hill threshold in the ketone model
   (`LIPOLYSIS_EC50`), the most insulin-sensitive of the three tissues. It is unchanged.
 
-**Exercise opens the dead zone.** Post-exercise insulin sensitivity (PEIS) is applied as a
+Post-exercise insulin sensitivity (PEIS) is applied as a
 left-shift of the muscle EC50 (`EC50_eff = EC50_muscle / peisFactor`) rather than a gain
-scaling, so the same small dose recruits more disposal for ~24-48 h after a session — the
-dead zone shrinks. The other dynamic modulators (circadian ISF, vasodilatation, stress/FFA/
+scaling. The other dynamic modulators (circadian ISF, vasodilatation, stress/FFA/
 glucotoxic resistance) scale `x_max` (amplitude) for all channels via `setInsulinModifiers`.
 
-**Side effect — more physiological basal insulin.** Because basal insulin-dependent muscle
-disposal is now (correctly) lower at basal concentrations, the steady-state search settles
-basal plasma insulin at ~8 mU/L (was ~5.8), squarely in the physiological 8-17 mU/L range.
-This is classified as fasting ketosis (not DKA) by the acidosis model, matching clinical
-reality.
-
-Validation: see chapter N ("Non-linear insulin — dead zone") in
-`tests/model-validation.html` for the 5-dose dose-response and the rest-vs-post-cardio
-comparison.
+The resulting basal concentration is an output of the steady-state search, not an
+independently validated patient phenotype. The October 2026 audit found excessive
+sustained disposal at the reference profile: approximately 14.5 mg/kg/min at
+60 mU/L insulin versus 4.4 ± 0.4 mg/kg/min in the resting Shetty protocol (BG-SCIENCE,
+exercise section). The bolus and clamp responses therefore require joint calibration.
+Chapter K of `tests/model-validation.html` reports control-adjusted bolus effects,
+the rest-versus-post-cardio comparison, and the unresolved clamp discrepancy.
 
 ### Rapid-acting vs. long-acting insulin — separate cascades
 
@@ -662,11 +657,9 @@ Understanding insulin pharmacokinetics is crucial for good blood glucose managem
   character's blood glucose is already high, its effect will also be delayed.
 - **Variability:** Even the same dose of insulin does not work identically every time.
   The model simulates this in three ways:
-  1. **Bioavailability (mean 78%, std 8%):** Not all injected insulin
-     reaches the bloodstream. Some is degraded locally by proteases in the subcutaneous
-     tissue. The model draws a normally distributed bioavailability per injection
-     (clamped to 55-95%). This means that of e.g. 5 units of injected insulin,
-     approximately 3.5-4.5 units actually reach the blood — and it varies from time to time.
+  1. **Fixed bioavailability:** Rapid insulin uses 78% and basal insulin 82%.
+     These fractions do not vary between injections; variability is applied to
+     absorption timing and basal duration instead.
   2. **Absorption rate (CV ~25%):** The time constant tau_I varies from
      injection to injection, modeled with a normal distribution around
      the default value (mean 1.0, std 0.25, clamped 0.50-1.60). It depends
@@ -1056,33 +1049,20 @@ should be noted:
    efflux (see [BG-SCIENCE §5](BG-SCIENCE.md#carbohydrates)) is not
    represented.
 
-8. **No first-pass splanchnic extraction compartment.** Healthy adults extract
-   ~25–40% of an oral glucose load on first hepatic pass before it reaches the
-   peripheral circulation. The simulator absorbs this implicitly into the A_G
-   bioavailability constant rather than as a separate hepatic compartment.
+8. **No first-pass splanchnic extraction compartment.** With A_G=1.0, the current
+   model has no explicit or fractional first-pass loss of ingested carbohydrate.
+   The selected appearance mapping does not represent all intestinal and hepatic metabolism.
 
 ### Protein effect — glucagon-driven hepatic glucose production
 
 > 📊 **[Compartment diagram: Protein–Glucagon](diagrams/protein-glucagon/protein-glucagon-diagram.html)** — three-compartment protein absorption, Hill-function glucagon dose-response, glycogen gating, and EGP integration.
 
-Protein raises blood glucose in T1D, but through a fundamentally different mechanism
-than carbohydrates. Whereas carbs are directly absorbed as glucose, protein's effect is
-*hormonal*: amino acids from digested protein stimulate the pancreatic alpha cells to
-secrete glucagon, which in turn drives the liver to produce glucose (via both
-glycogenolysis and gluconeogenesis).
-
-In a healthy person, the same amino acids also stimulate beta-cell insulin secretion,
-which suppresses glucagon and counteracts the hepatic glucose output — so the net BG
-effect is minimal. In T1D, the beta cells are destroyed. There is no paracrine insulin
-brake on the alpha cells, so glucagon acts *unopposed*, producing a significant and
-sustained BG rise. This is why protein can substantially raise BG in T1D while having
-little effect in non-diabetic individuals.
-
-Isotope tracer studies show that actual gluconeogenesis from protein is modest
-(~4-10 g glucose from a 50 g protein load; Fromentin 2013, Nuttall & Gannon 2001).
-The older "Bernstein 25% rule" (25% of protein converts to glucose) overstates the
-direct conversion by 2-6 fold. The dominant pathway is the glucagon-driven HGP, not
-substrate-level gluconeogenesis.
+The selected implementation represents protein through amino-acid stimulation
+of glucagon and hepatic glucose output. It does not trace amino-acid carbon into
+new glucose. This is a model hypothesis, not a causal partition established by
+the Paterson glucose trial. Hormonal regulation and substrate supply both require
+consideration; the revised [protein review](BG-SCIENCE.md#fat-and-protein) distinguishes
+the relevant tracer and meal studies.
 
 #### Three-compartment absorption model
 
@@ -1180,8 +1160,8 @@ clinical observation that protein has less BG impact when IOB is high.
 
 #### Time course
 
-The model is calibrated against Paterson et al. (2016) and reproduces the
-characteristic slow, sustained profile of protein's glycemic effect:
+The following timings describe the implemented protein pathway, not independently
+validated endpoints from Paterson et al. (2016):
 
 | Phase | Time after meal | What happens |
 |-------|----------------|--------------|
@@ -1191,9 +1171,11 @@ characteristic slow, sustained profile of protein's glycemic effect:
 | Peak BG effect | ~150-180 min | AA pool at maximum → peak glucagon-driven HGP |
 | Sustained tail | 180-300+ min | Slow AA clearance (t½ = 60 min) sustains effect > 5 hours |
 
-At 75 g protein (no insulin), the model produces approximately +1.6-1.7 mmol/L BG
-rise, consistent with the +1.65 mmol/L reported by Paterson et al. (2016) at
-240-300 min.
+Paterson et al. (2016) reported a 1.65 mmol/L difference from water after 75 g
+protein during the 240–300 min interval, with background basal insulin maintained.
+This is neither a 150–180 min peak target nor an insulin-free response. Matching
+that late interval, the water control and the basal protocol remains necessary;
+the slope-based G.1 diagnostic does not measure the study's onset criterion.
 
 #### Parameter table
 
@@ -1255,13 +1237,10 @@ hours later, when accumulated FFA impair muscle glucose uptake.
 
 #### Clinical significance
 
-Wolpert et al. (2013) demonstrated that 60 g of dietary fat increased insulin
-requirements by 42%, with onset at 2-4 hours, peak at 5-6 hours, and duration
-of 5-10 hours after the meal. This explains a common clinical frustration:
-a patient delivers the correct insulin bolus for the carbohydrate content of a
-pizza, blood glucose is well-controlled for the first 3-4 hours, but then
-rises inexplicably 5-6 hours later. The "second wave" is the FFA-induced
-insulin resistance.
+Wolpert et al. (2013) found a mean 42% increase in insulin requirement for a
+60 g versus 10 g fat meal in seven analysed participants. That integrated meal
+endpoint does not isolate FFA-mediated resistance or identify the model's
+onset, peak and clearance constants.
 
 #### Implementation
 
@@ -1280,6 +1259,11 @@ ffaResistanceFactor = 1.0 + FFA_RESIST_MAX × FFA^n / (FFA_EC50^n + FFA^n)
 
 - At low FFA (< EC50): minimal resistance — `ffaResistanceFactor ≈ 1.0`
 - At high FFA (>> EC50): saturates toward `1.0 + FFA_RESIST_MAX = 1.42`
+
+Because ISF is divided by this multiplier, its maximum reduction is
+`1 − 1/1.42 = 29.6%`, not 42%. Likewise, the glucotoxicity multiplier's ceiling
+of 1.40 represents a 28.6% reduction. At 24 h and constant BG 20 mmol/L, the
+current glucotoxicity equations give approximately 18.1%, not 26%.
 
 The `ffaResistanceFactor` is integrated into the dynamic ISF calculation, where
 it divides the effective ISF:
@@ -1315,7 +1299,7 @@ during insulin deficiency).
 | Parameter | Symbol | Value | Unit | Rationale / Source |
 |-----------|--------|-------|------|------|
 | FFA clearance half-life | FFA_CLEARANCE_HALF | 180 | min | Muscle oxidation + hepatic re-esterification |
-| Max ISF reduction | FFA_RESIST_MAX | 0.42 | dimensionless | 42% more insulin needed (Wolpert 2013: 60 g fat) |
+| Maximum resistance increment | FFA_RESIST_MAX | 0.42 | dimensionless | Multiplier ceiling 1.42; ISF reduction 29.6%. Not a direct estimate from Wolpert's meal insulin requirement. |
 | Hill EC50 | FFA_EC50 | 8 | g (FFA equivalent) | Half-maximal resistance. Calibrated so moderate fat (~20 g) produces mild effect |
 | Hill coefficient | FFA_HILL_N | 2 | dimensionless | Moderate sigmoid steepness with threshold behavior |
 
@@ -1778,10 +1762,10 @@ Daily exercise creates overlapping slow-tails → sustained ~10–15% ISF boost,
 matching Riddell 2017's observation of reduced daily insulin requirements with
 regular training.
 
-#### Muscle glycogen depot — intracellular bookkeeping pool
+#### Muscle glycogen depot — capacity proxy
 
 The muscle glycogen reserve is not a derived parameter; it is an explicit
-gram-tracked pool (`muscleGlycogenGrams`) that drains during exercise and
+gram-labelled capacity state (`muscleGlycogenGrams`) that drains during exercise and
 replenishes after exercise. It serves two roles:
 
 1. **Substrate for exercise.** Consumption scales with intensity (Romijn 1993:
@@ -1824,11 +1808,11 @@ smoothly as the pool nears capacity.
 **No separate plasma drain.** Insulin-stimulated glucose uptake and
 non-oxidative disposal are already represented by the Hovorka `x1`/`x2`
 channels; contraction-mediated uptake is represented by `β · E1`. Muscle
-glycogen synthesis is a destination for part of that uptake, not an additional
-whole-body disappearance flux. The pool therefore refills as intracellular
-bookkeeping without subtracting Q1 again. This removes the previous
-double-counting between PEIS-driven disposal and the explicit resynthesis
-drain.
+glycogen synthesis would require allocation from actual uptake or other traced
+precursors in a conserved model. Here, the refill rate is not bounded by those
+fluxes. It is therefore a capacity heuristic, not verified intracellular mass
+bookkeeping. Adding another Q1 drain in isolation would risk double-counting;
+the complete uptake/storage allocation requires a separate model revision.
 
 **Substep integration.** Consumption and resynthesis bookkeeping are computed
 in the substep loop (`updateMuscleGlycogen(stepDt)` with `stepDt ≤ 1 min`) so
@@ -2033,16 +2017,12 @@ clipped to zero — and any counterregulatory signal was fully suppressed. This
 meant that counterregulation was ineffective during hypoglycemia, which does
 not correspond to reality.
 
-### Counterregulation in T1D — why is it so weak?
+### Counterregulation phenotype represented by the model
 
-T1D patients have dramatically impaired counterregulation. The most important cause
-is the **loss of the glucagon response to hypoglycemia**, which occurs surprisingly
-quickly after diagnosis:
-
-**Timeline:**
-- Within the first month, the glucagon response may already be reduced
-- Within 1-5 years, it is absent in most patients (Gerich 1988)
-- The loss is progressive and irreversible (except with islet transplantation)
+The engine represents impaired glucose counterregulation, not a universal T1D
+phenotype. Responses depend on the stimulus, residual beta-cell function and
+antecedent hypoglycaemia (BG-SCIENCE, counterregulation section). A fixed disease-duration
+cut-off or universal irreversible loss is not implemented.
 
 **Mechanism — the "switch-off" hypothesis:**
 
@@ -2051,13 +2031,12 @@ still function. The problem is that they lack the correct *signal* to
 react to low blood glucose. In a normal pancreas, alpha and
 beta cells sit close together in islets. When blood glucose falls, **the
 beta cells stop secreting insulin**. This fall in *local* insulin
-is the very signal to the alpha cells to release glucagon. The beta cells
+is one proposed signal to the alpha cells to release glucagon. The beta cells
 also co-secrete GABA and zinc, which normally inhibit the alpha cells —
 when they stop, the inhibition is lifted.
 
-In T1D, the beta cells are destroyed by the immune system → there is no local
-insulin secretion to "switch off" → the alpha cells never receive
-the switch-off signal → the glucagon response fails to occur. Exogenous insulin
+Loss of endogenous insulin secretion can remove this local fall in insulin.
+This hypothesis does not explain all variation in counterregulation. Exogenous insulin
 (injected under the skin) cannot replicate this, because it does not create
 the local, pulsatile drop *inside the islet*.
 
@@ -2070,10 +2049,9 @@ the signal returns.
 - Glucagon response to **exercise** — partially preserved (via catecholamines)
 - **Adrenaline response** — initially preserved, but can be weakened by HAAF
 
-**In the model:** Stress cap set to 0.4 (vs. approximately 5.0 in healthy individuals) to
-reflect this massive loss. The practical consequence: an insulin overdose
-cannot be "rescued" by the body's own hormonal response. The game therefore
-requires the player to prevent hypoglycemia rather than rely on the character's counterregulation.
+**In the model:** The acute stress cap of 0.4 is a phenomenological parameter,
+not a measured T1D-versus-healthy hormone ratio. It limits simulated compensation
+for excess insulin; it does not establish an individual's rescue capacity.
 
 ### Emergency glucagon injection — exogenous rescue tool
 
@@ -2547,7 +2525,7 @@ ketoacidosis (DKA) — a life-threatening condition.
 | Normal | Below 0.6 | Everything is fine |
 | Elevated | 0.6 - 1.5 | Take extra insulin, drink water |
 | Dangerous | 1.5 - 3.0 | Seek medical attention, give insulin |
-| DKA | Above 3.0 | Acutely life-threatening |
+| Significant ketonaemia | At or above 3.0 | Meets the ketone component of DKA criteria; acidosis is also required |
 
 ### How is it modeled?
 
@@ -2654,21 +2632,18 @@ not a brief dip.
 **Why dietary fat contributes (added 2026-06-05):** CPT-1 is source-agnostic —
 it gates *any* long-chain acyl-CoA entering the mitochondria, regardless of
 upstream origin (adipose lipolysis, chylomicron remnants, or postprandial
-spillover). The `BHB_DIET_FAT_FRAC` parameter (0.35, partial calibration) reflects two factors
-combined: (i) approximately 25-40% of absorbed long-chain dietary fat reaches
-the hepatic acyl-CoA pool — the rest is cleared peripherally by LPL into muscle
-and adipose tissue (Donnelly 2005, Lambert & Parks 2012, Piché 2018); and
-(ii) a unit-conversion factor between the gram-scale `ffaBlood` compartment
-and the arbitrary `ffaLipolysis`-scale used for the model's `BHB_PROD_RATE`
-calibration.
+spillover). `BHB_DIET_FAT_FRAC = 0.35` is an effective mapping from the gram-scale
+`ffaBlood` pool to the arbitrary `ffaLipolysis` scale. It is not a dimensionless
+35% hepatic extraction fraction derived from the cited studies. Its units are
+model-pool units per gram, and this mapping remains an unresolved calibration choice.
 
 The dietary contribution is gated by the same `cpt1Activity` as lipolysis, so
 high postprandial insulin (~20 mU/L) closes the gate and suppresses ketogenesis
 from both sources. The contribution becomes visible only in low-insulin steady
 states — keto/low-carb diets with adequate basal but tiny boluses
 (Ozoran 2023). This is consistent with clinical observations of nutritional
-ketosis in keto-adapted T1D patients (typical BHB 0.3-1.5 mmol/L) without
-risk of DKA as long as basal insulin is maintained.
+ketosis in the cited low-carbohydrate cohort; maintaining basal insulin does not
+by itself establish absence of DKA risk in all circumstances.
 
 #### Step 4 — BHB clearance (two mechanisms)
 
@@ -2706,6 +2681,15 @@ where excess = max(0, BHB - BHB_RENAL_THR)
 
 #### Calibration against clinical measurements
 
+The following records the historical calibration, not a current validation verdict.
+The HTML I.6 experiment deletes subcutaneous depots, plasma insulin and insulin-action
+states simultaneously. It is a zero-insulin-state ablation, not pump interruption:
+stopping delivery would leave existing insulin to decay. Its BHB trajectory cannot
+be directly validated against pump-interruption timings. Moreover, BHB alone does
+not diagnose DKA; clinical criteria also require acidosis and the diabetes/glucose
+criterion (BG-SCIENCE, ketoacidosis section). The engine has no blood-pH or bicarbonate
+state. Recalibration against a delivery-interruption protocol remains open.
+
 The model was recalibrated 2026-06-06 against a consolidated target table spanning
 the full insulin range, after a U-shaped error was found in the previous
 calibration (under-predicting BHB at moderate-low insulin, over-predicting at
@@ -2723,9 +2707,9 @@ new curve into the green clinical target boxes. Because both lipolysis and CPT-1
 maximal at I=0 regardless of their EC50, this reshaping does not touch the
 pump-failure ramp. **Panel B** is the zero-insulin BHB ramp over 24 h: the effective
 ketogenesis lag (FFA_LIPO_CLEAR_HALF) plus BHB_PROD_RATE shape an S-shaped rise that
-matches the orange Guerci 2006 / pump-occlusion target bars and crosses the DKA
-threshold around 12-14 h, then keeps climbing toward severe DKA (the lowered BHB_VMAX
-oxidation ceiling prevents the unrealistic low plateau the old curve settled into).*
+was compared with Guerci 2006 / pump-occlusion bars during the historical calibration.
+Those comparisons did not match the insulin-withdrawal protocol and do not establish
+the timing of DKA.*
 
 **Steady-state insulin → BHB** (clamped plasma insulin, no dietary fat):
 
@@ -2744,10 +2728,10 @@ oxidation ceiling prevents the unrealistic low plateau the old curve settled int
 | Overnight fast, 10h (G.4) | 0.2-0.5 | ~0.42 | Pinnaro 2021 |
 | Keto diet, 3 meals/day (G.3) | 0.3-1.5 | ~0.65 | Ozoran 2023 (VLCD) |
 | 72h fast, basal only (G.5) | 0.5-2.0 | ~0.44 | Cahill 1970, Owen 1967 |
-| Pump failure +4h (G.6) | 0.5-2.0 | ~1.82 | Guerci 2006 / Laffel 1999 |
-| Pump failure +8h | 1.5-3.5 | ~3.22 | Guerci 2006 / Laffel 1999 |
-| Pump failure +12h | 3.0-5.0 | ~4.37 | PMC11531023 / Laffel 1999 |
-| Pump failure +48h (severe DKA) | 8-15 | ~9.5 | clinical severe DKA |
+| Zero-insulin ablation +4h (now I.6) | 0.5-2.0 | ~1.82 | Historical pump-interruption comparator; protocol mismatch |
+| Zero-insulin ablation +8h | 1.5-3.5 | ~3.22 | Historical comparator; protocol mismatch |
+| Zero-insulin ablation +12h | 3.0-5.0 | ~4.37 | Historical comparator; protocol mismatch |
+| Zero-insulin ablation +48h | 8-15 | ~9.5 | Historical severe-ketonaemia target; not a DKA diagnosis |
 
 The calibration went through two rounds. The first (2026-06-06) fixed a U-shaped
 error and slowed the pump-failure ramp toward the Guerci 2006 timeline. A second
@@ -2761,10 +2745,8 @@ instead of climbing toward severe DKA, so BHB_VMAX was lowered 0.020 → 0.016: 
 the Michaelis-Menten oxidation is near-linear at low BHB but saturated at high BHB,
 a lower ceiling raises the high-BHB plateau (severe DKA now climbs to ~9.5 mmol/L by
 +48h) while barely affecting the low-BHB overnight value. The pump-failure ramp now
-sits between the slow Guerci 2006 and the fast Laffel 1999 timelines, crossing the DKA
-threshold around 12-14 h and continuing to severe DKA — defensible because the G.6
-scenario is *complete* insulin absence, more aggressive than Guerci's basal-only
-withdrawal. See the codex review
+sits between selected historical timelines, but complete state deletion is not
+equivalent to basal delivery withdrawal. The earlier rationale is retained in
 `docs/reviews/2026-06-05_codex_pump-failure-outcome.md`.
 
 #### Parameter table
@@ -2779,7 +2761,7 @@ withdrawal. See the codex review
 | CPT-1 max suppression | CPT1_MAX_SUPP | 0.95 | dimensionless | 95% suppression at high insulin (5% residual activity) |
 | FFA lipolysis effective lag t½ | FFA_LIPO_CLEAR_HALF | 120 | min | Recalibrated 2026-06-06 (60 → 180 → 120). Represents the effective lag in ramping hepatic ketogenesis after insulin withdrawal (malonyl-CoA depletion + CPT-1 derepression), not fast plasma-FFA turnover. Gives the S-shaped pump-failure ramp; 120 min sits between a fast (Laffel) and slow (Guerci) timeline. |
 | BHB production rate | BHB_PROD_RATE | 0.0012 | mmol/L per min per (FFA × CPT-1) | Recalibrated 2026-06-06 (0.0028 → 0.0008 → 0.0012). Tuned together with FFA_LIPO_CLEAR_HALF and the two EC50 levers: lower EC50s pull moderate insulin down, higher production lifts the zero-insulin pump-failure ramp. |
-| Dietary-fat → hepatic acyl-CoA weight | BHB_DIET_FAT_FRAC | 0.35 | dimensionless | Combined hepatic uptake fraction (~30%, Donnelly 2005, Lambert & Parks 2012) and unit-conversion. With the flatter CPT-1, G.3 keto plateau now reaches ~0.98 (target Ozoran VLCD 0.5-1.5) — in range. See tests/calibrate-ketone-pathway.js. |
+| Dietary-fat → ketone-substrate weight | BHB_DIET_FAT_FRAC | 0.35 | model-pool units/g | Phenomenological mapping between dissimilar pools; not a measured hepatic extraction fraction. |
 | BHB clearance Vmax | BHB_VMAX | 0.016 | mmol/L/min | Recalibrated 2026-06-06 (was 0.02). Peripheral ketone-oxidation ceiling, lowered so severe untreated DKA keeps climbing (to ~9.5 at +48h) instead of plateauing at ~5.7. MM clearance is near-linear at low BHB but saturated at high BHB, so this raises the high-BHB plateau without much affecting overnight ketosis. Reflects oxidation saturation + acidosis-impaired uptake in severe DKA. |
 | BHB clearance Km | BHB_KM | 2.0 | mmol/L | Half-saturation concentration |
 | Renal threshold | BHB_RENAL_THR | 0.5 | mmol/L | Ketonuria onset |
@@ -2896,8 +2878,9 @@ The difference is important:
   than reality. True BG can already be hypoglycemic while CGM still shows 4–5 mmol/L.
 - **Stable BG:** CGM = true BG. No delay at steady state.
 
-The effective delay is typically 5-10 minutes at normal rates of change,
-but can feel longer during rapid BG changes (e.g., post-bolus or during exercise).
+The implemented time constant is `1/0.073 = 13.7 min`. For a sustained linear
+glucose ramp, the asymptotic offset is approximately ramp slope × 13.7 min;
+a universal 5–10 min shift is not a property of this filter.
 
 *Code: `dC = ka_int * (G - C)` in the Hovorka ODE step,
 [hovorka.js](https://github.com/krauhe/t1d-simulator/blob/main/js/hovorka.js) line 398.*
@@ -3028,7 +3011,7 @@ The CGM value deviates from true blood glucose in four ways:
 
 | Source | What | Parameters |
 |--------|------|-----------|
-| Sensor delay | Glucose must diffuse from blood to interstitial fluid | 5-10 min (random) |
+| Sensor delay | First-order plasma-to-interstitial filter | Fixed time constant 13.7 min |
 | Random noise | Electrical and biological noise in the sensor | 2.5-4.0% of BG (normally distributed) |
 | Systematic drift | Slow sine wave from sensor degradation | Period 4-8h, amplitude 0.3-0.7 mmol/L |
 | Discontinuities | Sudden jumps (compression, calibration) | ~0.7 per day, up to ±2 mmol/L |
@@ -3050,9 +3033,14 @@ Note: the physiological delay (5-6 min in healthy individuals, **7-8 min in T1D*
 
 #### 5. Carbohydrate bioavailability (A_G)
 
-The simulator uses the **EU nutrition-label convention** where "carbohydrate" means *digestible* carbohydrate (sugars + starch) — fiber is already excluded. Under this convention, virtually all declared carbohydrate is absorbed as glucose (bioavailability close to 100%). The model therefore uses **A_G = 1.0**.
+The food database excludes fibre from its carbohydrate field. The simulator uses
+**A_G = 1.0**, mapping every entered gram of digestible carbohydrate to eventual
+modeled plasma appearance. This is a simulator adaptation, not a consequence of
+nutrition-label conventions. Intestinal absorption and systemic appearance are
+different endpoints because intestinal and hepatic metabolism intervene.
 
-The original Hovorka (2004) model used A_G = 0.8 because it was calibrated against UK/international nutrition data where "carbohydrate" included fiber, so the 20% loss factor compensated for unabsorbed fiber and resistant starch. Since the simulator's food database already excludes fiber from the carb count, that correction would double-count the loss.
+Hovorka (2004) used **A_G = 0.8** as carbohydrate bioavailability. The original
+paper does not attribute this value to fibre being included on UK labels.
 
 Fiber still affects absorption *timing* significantly (via `fiberMod` in the dynamic τG model), but it does not reduce the *total amount* of glucose that reaches the bloodstream — only the rate at which it arrives.
 
@@ -3224,6 +3212,26 @@ demonstrated through fixed fictional characters. The complete simulator has not 
 evaluated for individual prediction and must not be used as a basis for treatment.
 Important limitations:
 
+The October 2026 model audit leaves three structural questions unresolved.
+First, at low insulin action, exercise can request more Q2 glucose disposal than
+the compartment contains; clipping Q2 to zero hides a mass-balance residual.
+Second, liver and muscle glycogen states are capacity proxies: muscle refill is
+not bounded by measured disposal, and hepatic refill can maintain high stores
+during a prolonged fast. Third, the insulin curve requires joint transient-bolus
+and sustained-clamp calibration. These are not corrected by the bookkeeping
+repairs described in [the repair decision record](reviews/2026-10-04_model-review-fixes.md).
+
+The low-BG activity throttle reduces the heart-rate target and therefore
+heart-rate-coupled effects. It does not proportionally reduce every activity
+output: scheduled energy expenditure, activity duration, hepatic drive and
+glycogen-use rules have separate inputs. It is not a validated global exercise-capacity model.
+
+The effects panel now reports the last substep's Q1 fluxes. Net Q1-to-Q2
+transport is counted once; Q2 disposal and insulin suppression of EGP are not
+added again. The basal/rapid split uses plasma insulin source fractions as a
+display convention, not causal attribution to individual doses. Modifiers use
+a diamond rather than a flux arrow, and the five-row display is not a complete flux ledger.
+
 1. **Simplifications:** The model is a simplification of reality. Variation between
    people and within the same person over time is not fully captured by the model.
 
@@ -3262,8 +3270,9 @@ Important limitations:
    disturbances, or the DKA-induced insulin resistance feedback loop. The DKA
    game-over condition uses an acidosis load accumulation model (BHB-dependent,
    smoothstep-gated by insulin level) rather than direct blood pH modeling.
-   Euglycemic DKA (ketoacidosis at normal BG, e.g., from SGLT2 inhibitors)
-   is not specifically modeled but would emerge naturally from insulin deficiency.
+   SGLT2-inhibitor-associated euglycaemic DKA is outside the implemented scope:
+   neither the drug's renal effects nor a diagnostic acid–base model is present.
+   BHB can rise at lower BG in the equations, but that does not validate this phenotype.
    Fasting/starvation ketosis is partially captured by the lipolysis response to
    low basal insulin.
 

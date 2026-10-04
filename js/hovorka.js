@@ -100,12 +100,10 @@ class HovorkaModel {
         // -----------------------------------------------------------------
         // REMAINING CONSTANTS
         // -----------------------------------------------------------------
-        // Carbohydrate bioavailability [dimensionless]. EU convention: "carbohydrate"
-        // on food labels already denotes digestible carbohydrate (fibre
-        // subtracted), so ~100% is absorbed. Hovorka 2004 used A_G = 0.8
-        // (UK convention: total carbohydrate including fibre). See MODEL-IMPLEMENTATION.md
-        // §5 "Carb convention: EU/DK" for full discussion. BG-SCIENCE §5 cites
-        // 95-100% bioavailability for digestible CHO (Englyst & Cummings 1986).
+        // Systemisk kulhydrat-appearance [dimensionsløs]. 1.0 er en tilpasning
+        // i simulatoren; Hovorka 2004 bruger 0.8. Fiberdeklaration alene forklarer
+        // ikke forskellen mellem tarmabsorption og systemisk appearance.
+        // Se MODEL-IMPLEMENTATION §13 og review F13 for kalibreringsgrænsen.
         this.A_G = 1.0;
         this.k_12 = 0.066;            // Glucose transfer peripheral → plasma [1/min]
 
@@ -271,6 +269,7 @@ class HovorkaModel {
         const evaluateRate = rate => {
             this.state.fill(0);
             this.insulinRate = 0;      // Rapid depot: no input at steady state
+            this.rapidU_I = 0;         // Intet restinput fra en tidligere bolus
             this.basalInsRate = rate;  // Basal → shadow cascade
             this.carbRate = 0;
             this.heartRate = this.HR_base;
@@ -605,20 +604,10 @@ class HovorkaModel {
         // --- Insulin action at low BG (T1D) ---
         // NOTE: Hypo-guard has been REMOVED for T1D simulation.
         //
-        // In healthy individuals the body reduces peripheral glucose uptake at
-        // hypoglycaemia via glucagon-mediated hepatic insulin resistance and
-        // GLUT4 downregulation. But in T1D this protection is impaired:
-        //   - Glucagon response lost within 1-5 years of diagnosis
-        //   - Adrenaline response often blunted (HAAF)
-        //   - At supraphysiological insulin (>50-60 μU/mL) EGP is suppressed
-        //     completely regardless of counter-regulatory hormones
-        //
-        // Consequence: massive insulin overdose (e.g. 9 U from BG=6) should be
-        // lethal because insulin's clearance effect remains active even at
-        // very low BG. Counter-regulation (via stressMultiplier in EGP)
-        // is the only defence, and it is insufficient at large doses.
-        //
-        // Sources: Bengtsen 2021, Reno 2013, Rzepczyk 2022
+        // Ingen ekstra lav-BG-gate på x1/x2 er implementeret. Det er et modelvalg,
+        // ikke en universel T1D-fænotype eller en dosisbestemt klinisk prognose.
+        // Kontraregulering indgår via EGP; se BG-SCIENCE for stimulusafhængighed
+        // og variation mellem personer. Review F01 vedrører separat Q2-bevarelse.
 
         // Plasma glucose (Q1): THE central equation
         //   + U_G: glucose from the gut (food)

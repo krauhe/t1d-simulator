@@ -4649,6 +4649,20 @@ let physiologyWindow = null;
 //   • Can the player do anything?
 // Shown on mouseover (title), click opens the BG-SCIENCE.md section on GitHub.
 const _forceInfo = {
+    tissueReturn: {
+        da: 'Netto glukose fra det perifere kompartment tilbage til plasma.',
+        en: 'Net glucose transfer from the peripheral compartment back to plasma.',
+        section: '#glucose-distribution'
+    },
+    glucagonRescue: {
+        da: 'Glukose frigivet fra modellens leverlager efter tilført glukagon.',
+        en: 'Glucose released from the modelled liver reserve after administered glucagon.',
+        section: '#counterregulatory-hormones'
+    },
+    numericalCorrection: {
+        da: 'Korrektion ved modellens numeriske grænse, ikke en fysiologisk glukosekilde.',
+        en: 'Correction at a numerical model boundary, not a physiological glucose source.'
+    },
     egp: {
         da: '• Leveren frigiver glukose fra glykogenlagre\n• Stiger ved stress, dawn-effekt og lav insulin\n• Kontrol: Delvis — insulin undertrykker det',
         en: '• Liver releases glucose from glycogen stores\n• Rises with stress, dawn effect, and low insulin\n• Control: Partial — insulin suppresses it',
@@ -4665,13 +4679,13 @@ const _forceInfo = {
         section: '#insulin-pharmacology'
     },
     basalInsulin: {
-        da: '• Langvirkende insulin giver baggrundsvirkning over mange timer\n• Sænker blodsukker langsomt og jævnt\n• Du vælger basaldosis og tidspunkt',
-        en: '• Long-acting insulin provides background action for many hours\n• Lowers blood sugar slowly and steadily\n• You choose the basal dose and timing',
+        da: '• Pilen viser basalinsulinets andel af glukosetransporten fra blod til væv\n• Fordelingen bruger andelen af basalinsulin i blodet\n• Hæmning af leverens frigivelse er med i leverpilen',
+        en: '• The arrow shows the basal share of glucose transfer from blood to tissues\n• The split uses the basal share of insulin in blood\n• Reduced liver release is included in the liver arrow',
         section: '#insulin-pharmacology'
     },
     bolusInsulin: {
-        da: '• Hurtigvirkende insulin — til måltider og korrektioner\n• Peak effekt 1-2 timer, varighed 3-5 timer\n• Kontrol: Ja — du vælger dosis og timing',
-        en: '• Rapid-acting insulin — for meals and corrections\n• Peak effect 1-2 hours, duration 3-5 hours\n• Control: Yes — you choose dose and timing',
+        da: '• Pilen viser hurtiginsulinets andel af glukosetransporten fra blod til væv\n• Fordelingen bruger andelen af hurtiginsulin i blodet\n• Den viser ikke den samlede virkning af en bestemt dosis',
+        en: '• The arrow shows the rapid-insulin share of glucose transfer from blood to tissues\n• The split uses the rapid-insulin share of insulin in blood\n• It does not show the total effect of a particular dose',
         section: '#insulin-pharmacology'
     },
     exerciseUptake: {
@@ -4729,8 +4743,8 @@ const _bgScienceBaseUrls = {
  * Called from updateUI() every frame, but the DOM is only updated every ~500ms
  * and only when data has changed significantly (hysteresis).
  *
- * Visual balance: up/down groups are scaled proportionally to their total
- * flux, so the visual "weight" matches the actual BG direction.
+ * Viser de største bidrag til plasma-kompartmentets balance. Højst fem rækker
+ * vises; pile med minimumsstørrelse er ikke en fuldstændig sumkurve.
  * Up forces are shown at top (largest first), down forces at bottom (largest last).
  */
 // Placeholder HTML for the BG forces panel when the game is not running.
@@ -4823,24 +4837,27 @@ function updateEffectsPanel(snapshotOverride) {
 
     let html = '';
     forces.forEach(f => {
-        const arrow = f.direction === 'up' ? '▲' : '▼';
+        // Mekanismer har et andet symbol end direkte flux og ingen kvantitativ pil.
+        const arrow = f.kind === 'modifier' ? '◇' : f.direction === 'up' ? '▲' : '▼';
         const name = t('force.' + f.name);
 
         const rawSize = (f.magnitude / maxMag) * MAX_ARROW;
-        const modifierCap = f.kind === 'modifier' ? MAX_ARROW * 0.65 : MAX_ARROW;
-        const arrowSize = Math.round(Math.max(MIN_ARROW, Math.min(modifierCap, rawSize)));
+        const arrowSize = f.kind === 'modifier' ? 12
+            : Math.round(Math.max(MIN_ARROW, Math.min(MAX_ARROW, rawSize)));
 
         // Tooltip: structured bullet format (physiology + control) + click link
         const info = _forceInfo[f.name];
-        const tooltip = info ? (currLang === 'da' ? info.da : info.en) : '';
-        const link = info ? (_bgScienceBaseUrls[currLang] || _bgScienceBaseUrls.en) + info.section : '';
+        const mechanismNote = f.kind === 'modifier'
+            ? (currLang === 'da' ? '\nMekanisme, ikke et ekstra direkte glukosebidrag til plasma.' : '\nMechanism, not an additional direct plasma glucose flux.') : '';
+        const tooltip = (info ? (currLang === 'da' ? info.da : info.en) : '') + mechanismNote;
+        const link = info && info.section ? (_bgScienceBaseUrls[currLang] || _bgScienceBaseUrls.en) + info.section : '';
 
         // Cause (only for EGP — shows what drives liver production, indented on a new line)
         const causeLine = f.cause
             ? `<div class="effect-cause">${t('force.cause.' + f.cause)}</div>` : '';
 
         html += `<div class="effect-row" title="${tooltip}" data-link="${link}">` +
-            `<span class="effect-arrow ${f.direction}" style="font-size:${arrowSize}px">${arrow}</span>` +
+            `<span class="effect-arrow ${f.kind === 'modifier' ? 'modifier' : f.direction}" style="font-size:${arrowSize}px">${arrow}</span>` +
             `<span class="effect-name">${name}${causeLine}</span>` +
             `</div>`;
     });

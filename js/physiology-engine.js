@@ -573,7 +573,7 @@ class PhysiologyEngine {
         this.CPT1_MAX_SUPP = 0.95;              // Max 95% suppression of ketogenesis at high insulin
         this.FFA_LIPO_CLEAR_HALF = 120;         // Effective ketogenesis ramp half-life [min]
         this.BHB_PROD_RATE = 0.0012;            // mmol/L per min per unit FFA × CPT-1 activity
-        this.BHB_DIET_FAT_FRAC = 0.35;          // Weight of ffaBlood in ketogenesis formula (dietary fat)
+        this.BHB_DIET_FAT_FRAC = 0.35;          // Fænomenologisk mapping [lipolyse-poolenheder/g], ikke en ekstraktionsfraktion
         this.BHB_VMAX = 0.016;                  // Michaelis-Menten Vmax [mmol/L/min] — peak oxidation
         this.BHB_KM = 2.0;                      // Michaelis-Menten Km [mmol/L] — half-saturation
         this.BHB_RENAL_THR = 0.5;               // Renal ketone threshold [mmol/L] — ketonuria begins
@@ -589,7 +589,7 @@ class PhysiologyEngine {
         this.STOMACH_HYSTERESIS = 0.67;         // Can eat again below 67% capacity (~700 g at 70 kg)
         this.TAU_FAT_ABS = 150;                 // Time constant for fat absorption in the intestine [min]
         this.FFA_CLEARANCE_HALF = 180;          // FFA clearance half-life [min] (muscle uptake + re-esterification)
-        this.FFA_RESIST_MAX = 0.42;             // Max ISF reduction (42%, Wolpert 2013: 60 g fat)
+        this.FFA_RESIST_MAX = 0.42;             // Divisor højst 1.42: ISF reduceres højst 29.6%, ikke 42%
         this.FFA_EC50 = 8;                      // FFA level at half-maximal resistance [g]
         this.FFA_HILL_N = 2;                    // Hill coefficient (sigmoid steepness)
         this.TAU_PROT_ABS = 90;                 // Time constant for protein absorption from intestine [min]
@@ -608,7 +608,7 @@ class PhysiologyEngine {
         this.GLUCOTOX_BG_THRESHOLD = 10.0;      // BG above this → load accumulates [mmol/L]
         this.GLUCOTOX_RATE = 0.0004;            // Accumulation rate [units/min/(mmol/L)²]
         this.GLUCOTOX_RECOVERY_HALF = 24 * 60;  // Recovery t½ = 24 hours [sim-min]
-        this.GLUCOTOX_MAX_RESIST = 0.40;        // Max ISF reduction (40%, poorly controlled T1D)
+        this.GLUCOTOX_MAX_RESIST = 0.40;        // Divisor højst 1.40: ISF reduceres højst 28.6%
         this.GLUCOTOX_EC50 = 50;                // Half-maximal load for sigmoid saturation
         this.GLUCOTOX_HILL_N = 1.5;             // Sigmoid steepness (softer than Hill n=2)
         this.HAAF_DAMAGE_SCALE = 30;            // Scale for hypo damage [mmol·min/L]
@@ -815,6 +815,7 @@ class PhysiologyEngine {
     //                   standalone runs must re-dose basal just as in real life.)
     // @returns {number} steady-state trueBG [mmol/L]
     initSteadyState(opts = {}) {
+        this.q1Fluxes = null; // Et tidligere forløbs målte flux må ikke genbruges.
         const targetBG = (opts.targetBG != null) ? opts.targetBG : 5.5;
         const establishDepot = opts.establishDepot !== false;
         const preInjectAgeHours = (opts.preInjectAgeHours != null) ? opts.preInjectAgeHours : 3;
@@ -1458,8 +1459,29 @@ class PhysiologyEngine {
 
             // --- 3. Run Hovorka ODEs for this substep ---
             this.applyPlasmaInsulinClamp();
+            // Gem plasma-balancens starttilstand, så effektpanelet bruger samme
+            // tidspunkt som Euler-trinnet. Dette er diagnostik, ikke ny fysiologi.
+            const hs = this.hovorka.state;
+            const q1Before = hs[ENGINE_HOVORKA_STATE_IDX.Q1];
+            const plasmaExchange = hs[ENGINE_HOVORKA_STATE_IDX.x1] * q1Before -
+                this.hovorka.k_12 * hs[ENGINE_HOVORKA_STATE_IDX.Q2];
+            const basalFraction = Math.min(1, Math.max(0,
+                hs[ENGINE_HOVORKA_STATE_IDX.Ib] / Math.max(hs[ENGINE_HOVORKA_STATE_IDX.I], 1e-12)));
             this.hovorka.step(stepDt);
             this.applyPlasmaInsulinClamp();
+            this.q1Fluxes = {
+                gut: this.hovorka._lastUG,
+                egp: this.hovorka._lastEGP,
+                independent: this.hovorka._lastF01c,
+                renal: this.hovorka._lastFR,
+                exchange: plasmaExchange,
+                basalFraction,
+                rescue: 0,
+                // En eventuel numerisk gulvkorrektion er ikke en fysiologisk kilde.
+                numerical: (hs[ENGINE_HOVORKA_STATE_IDX.Q1] - q1Before) / stepDt -
+                    (this.hovorka._lastUG + this.hovorka._lastEGP -
+                     this.hovorka._lastF01c - this.hovorka._lastFR - plasmaExchange)
+            };
 
             // --- 4. Update ketone compartments (after Hovorka, so plasmaInsulin is fresh) ---
             // modules.ketones (S9.10): disabled -> no ketone/acidosis production
@@ -1467,15 +1489,18 @@ class PhysiologyEngine {
             if (this.moduleScale('ketones') > 0) this._substepKetones(stepDt);
 
             // --- 5. Update muscle glycogen pool (after Hovorka, so Q1 is fresh) ---
-            // The pool is intracellular bookkeeping that modulates earlyBoost in
-            // currentISF. Its replenishment is allocated from the glucose disposal
-            // already represented by x1/x2 and E1; it must not subtract Q1 again.
+            // Kapacitetsproxy for earlyBoost. Genopfyldningen er endnu ikke
+            // begrænset til realiseret glukoseoptag; dette er ikke en bevaret
+            // kulstofbalance (review F06). Træk ikke Q1 igen som et isoleret fix.
             this.updateMuscleGlycogen(stepDt);
 
             // --- 6. Update active glucagon injection (gradual glycogenolysis) ---
             // Triangle profile: ramp 0 → peak (12 min) → 0 (45 min). Draws from
             // liverGlycogenGrams, adds to Q1. Mass-conserving.
+            const q1BeforeRescue = this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.Q1];
             this._substepGlucagon(stepDt);
+            this.q1Fluxes.rescue =
+                (this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.Q1] - q1BeforeRescue) / stepDt;
 
             // --- 7. Refresh trueBG + BG-coupled damage accumulators (PER SUBSTEP) ---
             // trueBG is updated HERE — after all other substep physics — so the subsystems
@@ -1600,10 +1625,12 @@ class PhysiologyEngine {
                 ins.deposited = true;
             }
         });
-        // Remove bolus entries after 6 hours (well after all insulin has been absorbed,
-        // but retained for IOB tracking during this period)
+        // En visningsfrist må ikke slette insulin, som stadig absorberes.
+        // Opryd først efter 6 timer OG ved under 10^-9 U tilbage i depotet.
+        // Tolerancen er numerisk oprydning, ikke en fysiologisk virkningsgrænse.
         this.activeFastInsulin = this.activeFastInsulin.filter(ins =>
-            (this.totalSimMinutes - ins.injectionTime) < 6 * 60);
+            (this.totalSimMinutes - ins.injectionTime) < 6 * 60 ||
+            (ins.s1 || 0) + (ins.s2 || 0) > 1e-6);
 
         // IOB: rapid-only from separated depots. S1/S2 contain ONLY rapid insulin,
         // plasma rapid = I - Ib (total minus basal). No baseline subtraction needed.
@@ -1615,13 +1642,11 @@ class PhysiologyEngine {
         // displayIOB: shows the full injected dose in the game's IOB display.
         // Physiological IOB is reduced due to bioavailability (~78%), but the user
         // expects to see the dose they actually injected.
-        // Compute scaling factor from active bolus injections (last 6 hours):
+        // Skaleringen følger alle bevarede depoter, også deres sene hale.
         let _injected = 0, _effective = 0;
         for (const ins of this.activeFastInsulin) {
-            if (this.totalSimMinutes - ins.injectionTime < 360) {
-                _injected += ins.dose;
-                _effective += ins.dose * (ins.bioavailability || 1.0);
-            }
+            _injected += ins.dose;
+            _effective += ins.dose * (ins.bioavailability || 1.0);
         }
         const bioavScale = _effective > 0 ? _injected / _effective : 1.0;
         this.bioavScale = bioavScale;  // Exposed to the IAN band (ui.js)
@@ -1670,9 +1695,10 @@ class PhysiologyEngine {
             const carbDecay = Math.max(0, 1 - timeSinceConsumption / decayTime);
             this.cob += food.carbs * carbDecay;
         });
-        // Remove food entries after 6 hours (fat can significantly extend absorption)
+        // Bevar leveringsplanen, indtil sidste del af måltidet er indtaget.
+        // Allerede indtaget kulhydrat fortsætter i D1/D2 efter oprydningen.
         this.activeFood = this.activeFood.filter(f =>
-            (this.totalSimMinutes - f.startTime) < 360);
+            (this.totalSimMinutes - f.startTime) < Math.max(360, f.eatingDuration || 10));
 
         // --- COMPUTE HEART RATE AND EXERCISE EFFECTS ---
         // Heart rate rises/falls GRADUALLY via exponential smoothing (up t½≈2 min, down t½≈5 min).
@@ -1768,10 +1794,8 @@ class PhysiologyEngine {
         this.iob = Math.max(0, (postRapidDepot + postRapidPlasma) / 1000);
         let _inj2 = 0, _eff2 = 0;
         for (const ins of this.activeFastInsulin) {
-            if (this.totalSimMinutes - ins.injectionTime < 360) {
-                _inj2 += ins.dose;
-                _eff2 += ins.dose * (ins.bioavailability || 1.0);
-            }
+            _inj2 += ins.dose;
+            _eff2 += ins.dose * (ins.bioavailability || 1.0);
         }
         this.displayIOB = Math.max(0, this.iob * (_eff2 > 0 ? _inj2 / _eff2 : 1.0));
     }
@@ -1783,7 +1807,8 @@ class PhysiologyEngine {
     // via oxidative stress (Brownlee 2001), hexosamine pathway, PKC activation,
     // AGEs, and GLUT4 down-regulation. Modelled as an accumulating load
     // (glucotoxicLoad) that drives a sigmoid ISF divisor. Quadratic dose-response.
-    // Calibration: 24 h at 20 mmol/L → ~26% ISF reduction (Vuorinen-Markkola 1992).
+    // Nuværende ligning: 24 h ved 20 mmol/L giver ca. 18.1% ISF-reduktion.
+    // Et litteraturmål for disposal kan ikke direkte sidestilles med ISF-divisoren.
     updateGlucotoxicity(simulatedMinutesPassed) {
         const bg = this.trueBG;
 
@@ -1805,8 +1830,8 @@ class PhysiologyEngine {
 
         // --- ISF DIVISOR: sigmoid saturation (prevents unbounded resistance) ---
         //   load ~0:  factor ≈ 1.0  (no resistance)
-        //   load ~50: factor ≈ 1.16 (half-maximal — ~24 h at 20 mmol/L)
-        //   load →∞:  factor → 1.40 (max 40% ISF reduction)
+        //   load=50: factor=1.20 (halvdelen af maksimal divisorforøgelse)
+        //   load →∞: factor → 1.40 (ISF-reduktion 1−1/1.40 = 28.6%)
         if (this.glucotoxicLoad > 0.01) {
             const loadN = Math.pow(this.glucotoxicLoad, this.GLUCOTOX_HILL_N);
             const ec50N = Math.pow(this.GLUCOTOX_EC50, this.GLUCOTOX_HILL_N);
@@ -1910,10 +1935,9 @@ class PhysiologyEngine {
         }
     }
 
-    // updateMuscleGlycogen — muscle glycogen pool: exercise depletes and
-    // post-exercise resynthesis refills it (S7.5c). The pool tracks intracellular
-    // fuel allocation and gates early PEIS. It does not subtract Q1 directly:
-    // x1/x2 and E1 already own the corresponding whole-body glucose uptake.
+    // updateMuscleGlycogen: kapacitetsproxy, der styrer tidlig PEIS.
+    // Den nuværende genopfyldning er ikke bundet til faktisk optag eller et
+    // precursorbudget; derfor må den ikke fortolkes som bevaret substratmasse.
     updateMuscleGlycogen(simulatedMinutesPassed) {
         const dt = simulatedMinutesPassed;
 
@@ -2262,11 +2286,9 @@ class PhysiologyEngine {
         // Physiological basis: Cryer 2013 describes thresholds for counter-regulation:
         //   Glucagon: ~3.8 mmol/L, Adrenaline: ~3.8 mmol/L, Cortisol: ~3.2 mmol/L
         //
-        // Counter-regulation in T1D:
-        // T1D patients have IMPAIRED counter-regulation compared to healthy subjects:
-        //   - Glucagon response: lost within 1-5 years (Bengtsen 2021)
-        //   - Adrenaline response: preserved but blunted by repeated hypos (HAAF)
-        //   - Cap set at 0.4 (vs. ~5.0 in healthy subjects) to reflect this
+        // Modellen repræsenterer svækket kontraregulering. Den faste cap 0.4
+        // er en modelantagelse, ikke et målt T1D/raske-forhold. Responsen hos
+        // personer afhænger bl.a. af stimulus og tidligere hypoglykæmi.
         //
         // counterRegFactor: reduced continuously based on accumulated hypoArea.
         // See updateHAAF() for details.
@@ -2275,17 +2297,8 @@ class PhysiologyEngine {
         // BG rises after a hypoglycaemic episode, especially overnight.
         // But with a massive overdose the response is insufficient.
         if (this.trueBG < 4.0) {
-            // Graded response: stronger the lower BG is.
-            // T1D patients have only adrenaline (glucagon lost) — WEAK response.
-            //
-            // IMPORTANT: Cap set low (0.4) so counter-regulation CANNOT save
-            // the player from bad decisions. Educational point:
-            // hypo IS dangerous in T1D, and the player must learn to avoid it.
-            //
-            // Time-to-cap calculation (0.4):
-            //   BG=3.5: 0.002 + 0.01*0.25 = 0.0045/min → 0.4 in ~89 min
-            //   BG=3.0: 0.002 + 0.01*1.0  = 0.012/min  → 0.4 in ~33 min
-            //   BG=2.0: 0.002 + 0.01*4.0  = 0.042/min  → 0.4 in ~10 min
+            // Større input ved lavere BG. Tid til cap kan ikke beregnes som
+            // 0.4/inputrate: samtidigt henfald og HAAF reducerer opbygningen.
             //
             // With cap=0.4 and circadian=0: stressMultiplier max = 1.4 (dawn halved → max ~1.55 with dawn)
             // With active insulin (x3≈1.3): EGP = EGP_0 × max(0, 1.4-1.3) = EGP_0 × 0.1
@@ -3038,26 +3051,27 @@ class PhysiologyEngine {
         };
     }
 
-    // _computeBGForces — the individual physiological forces pulling BG up
-    // or down, sorted by magnitude. Educational causal display for the effect panel
-    // (arrows with direction + strength). Most rows are actual glucose fluxes
-    // (mmol/min) from Hovorka; insulin is shown as a combined insulin effect.
+    // _computeBGForces: Q1-balance fra seneste Euler-deltrin [mmol/min].
+    // Q2-forbrug og allerede indregnet EGP-hæmning tælles ikke igen.
+    // Modifikatorer forklarer mekanismer, men må ikke summeres med direkte flux.
     _computeBGForces() {
         const forces = [];
+        const flux = this.q1Fluxes;
+        if (!flux) return forces; // Ingen fuldført måling før første motortrin.
 
         // --- UP forces (raise BG) ---
 
         // Food absorption — carbohydrates from the gut (UG flux)
-        const ug = this.hovorka._lastUG || 0;
-        if (ug > 0.01) {
+        const ug = flux.gut;
+        if (ug > 0) {
             forces.push({ name: 'carbAbsorption', direction: 'up', magnitude: ug, kind: 'flux' });
         }
 
         // Hepatic production (EGP) — combined as ONE force with the dominant cause in parentheses.
         // Actual EGP = EGP_0 × max(0, stressMultiplier - x3). stressMultiplier =
         // 1.0 (base) + stress + dawn + protein. Cause = largest non-base component.
-        const actualEGP = this.hovorka._lastEGP || 0;
-        if (actualEGP > 0.01) {
+        const actualEGP = flux.egp;
+        if (actualEGP > 0) {
             const acuteStress = this.acuteStressLevel;
             const exerciseDrive = this.exerciseHepaticDrive;
             const chronicStress = this.chronicStressLevel;
@@ -3101,55 +3115,47 @@ class PhysiologyEngine {
 
         // --- DOWN forces (lower BG) ---
 
-        // Insulin — combined effect on BG: net Q1 transport + peripheral disposal (x2*Q2)
-        // + inhibited endogenous glucose production (x3). The x3 component is "avoided
-        // upward flux", but in the net model balance it is part of insulin's BG-lowering effect.
-        const Q1 = this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.Q1] || 1;
-        const Q2 = this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.Q2] || 0;
-        const x1 = this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.x1] || 0;
-        const x2 = this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.x2] || 0;
-        const x3 = this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.x3] || 0;
-        const exFactor = this.hovorka._lastExerciseFactor || 1;
-        const k12Q2 = this.hovorka.k_12 * Q2;
-        const netPlasmaTransport = Math.max(0, exFactor * x1 * Q1 - k12Q2);
-        const peripheralDisposal = Math.max(0, exFactor * x2 * Q2);
-        const stressMultiplier = Math.max(0, this.hovorka.stressMultiplier || 1);
-        const hepaticSuppression = this.hovorka.EGP_0 * Math.min(Math.max(0, x3), stressMultiplier);
-        const insulinEffectFlux = netPlasmaTransport + peripheralDisposal + hepaticSuppression;
+        // Kun netto-transport UD af Q1. Q2-forbrug påvirker Q1 via denne
+        // udveksling; leverhæmning er allerede indregnet i faktisk EGP.
+        const insulinEffectFlux = Math.max(0, flux.exchange);
 
-        if (insulinEffectFlux > 0.001) {
+        if (insulinEffectFlux > 0) {
             // Basal/rapid attribution: state[15] (Ib) is basal plasma insulin.
-            const totalPlasmaI = Math.max(this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.I] || 0, 0.01); // mU/L
-            const basalPlasmaI = Math.min(Math.max(this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.Ib] || 0, 0), totalPlasmaI);
-            const basalFrac = basalPlasmaI / totalPlasmaI;
+            // Fordeling efter plasmakilde er en visningskonvention, ikke en
+            // separat måling af hver dosis' forsinkede insulinvirkning.
+            const basalFrac = flux.basalFraction;
 
             const basalFlux = insulinEffectFlux * basalFrac;
             const bolusFlux = insulinEffectFlux * (1 - basalFrac);
 
-            if (basalFlux > 0.001) {
+            if (basalFlux > 0) {
                 forces.push({ name: 'basalInsulin', direction: 'down', magnitude: basalFlux, kind: 'flux' });
             }
-            if (bolusFlux > 0.001) {
+            if (bolusFlux > 0) {
                 forces.push({ name: 'bolusInsulin', direction: 'down', magnitude: bolusFlux, kind: 'flux' });
             }
         }
 
-        // Muscle uptake (exercise) — direct insulin-independent uptake during activity.
+        if (flux.exchange < 0) forces.push({ name: 'tissueReturn', direction: 'up', magnitude: -flux.exchange, kind: 'flux' });
+        if (flux.rescue > 0) forces.push({ name: 'glucagonRescue', direction: 'up', magnitude: flux.rescue, kind: 'flux' });
+        if (Math.abs(flux.numerical) > 1e-10) forces.push({ name: 'numericalCorrection', direction: flux.numerical > 0 ? 'up' : 'down', magnitude: Math.abs(flux.numerical), kind: 'numerical' });
+
+        // Motionsoptag sker i Q2. Vis det som mekanisme, ikke endnu et Q1-dræn.
         const e1 = this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.E1] || 0;
         const exerciseDirectUptake = this.hovorka.beta * e1;
         if (exerciseDirectUptake > 0.001) {
-            forces.push({ name: 'exerciseUptake', direction: 'down', magnitude: exerciseDirectUptake, kind: 'flux' });
+            forces.push({ name: 'exerciseUptake', direction: 'down', magnitude: exerciseDirectUptake, kind: 'modifier' });
         }
 
         // Brain consumption — F01c flux (mmol/min), always active
-        const f01c = this.hovorka._lastF01c || 0;
-        if (f01c > 0.001) {
+        const f01c = flux.independent;
+        if (f01c > 0) {
             forces.push({ name: 'brainConsumption', direction: 'down', magnitude: f01c, kind: 'flux' });
         }
 
         // Renal excretion — FR flux (mmol/min), only when BG > renal threshold
-        const fr = this.hovorka._lastFR || 0;
-        if (fr > 0.001) {
+        const fr = flux.renal;
+        if (fr > 0) {
             forces.push({ name: 'renalExcretion', direction: 'down', magnitude: fr, kind: 'flux' });
         }
 

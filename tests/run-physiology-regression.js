@@ -2,7 +2,7 @@
 // RUN-PHYSIOLOGY-REGRESSION.JS — Samlet fysiologi-regression
 // =============================================================================
 //
-// Kører de syv faste checks for physiology-engine arbejdet:
+// Kører review-regressionen for massebalance og grænsetilfælde samt:
 //   1. Direkte engine-API-test uden DOM-mocks
 //   2. Golden-master bit-identisk regression
 //   3. Klinisk ækvivalens mod frossen baseline
@@ -22,6 +22,10 @@ const repoRoot = path.join(__dirname, '..');
 const node = process.execPath;
 
 const checks = [
+    {
+        name: 'Review: massebalance og grænsetilfælde',
+        args: ['tests/model-review-regression.test.js']
+    },
     {
         name: 'Direkte engine-API-test',
         args: ['tests/physiology-engine-api.test.js']
