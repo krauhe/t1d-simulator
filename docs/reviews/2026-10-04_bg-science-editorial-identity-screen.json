@@ -1,0 +1,790 @@
+{
+  "date": "2026-10-04",
+  "source_version": "2026-10-03-v2",
+  "source_sha256": "d45eb7d53c58fa4803e122d8c7ed4bc745125caf643092ff0ad00de37c739702",
+  "scope": "Quoted-title entries in blockquote reference lists containing PubMed URLs; not all inline citations, DOI links, PMC links, author/year fields or claim support.",
+  "reference_occurrences_screened": 294,
+  "unique_pmids_requested": 284,
+  "records_returned": 282,
+  "screening_threshold": 0.8,
+  "candidates": 77,
+  "adjudication_basis": "Main agent compared every candidate claimed title with the indexed title returned by Europe PMC from the local PC. A different title does not by itself refute the physiological claim or identify its intended source.",
+  "counts": {
+    "different_indexed_title_confirmed": 71,
+    "related_title_discrepancy_requires_bibliographic_check": 1,
+    "shortened_title_not_identity_error": 3,
+    "unresolved_no_record_in_batch": 2
+  },
+  "findings": [
+    {
+      "line": 549,
+      "claimed_title": "The role of SGLT1 and GLUT2 in intestinal glucose transport and sensing.",
+      "pmid": "24587098",
+      "indexed_title": "VelC positively controls sexual development in Aspergillus nidulans.",
+      "doi": "10.1371/journal.pone.0089883",
+      "similarity": 0.317,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 551,
+      "claimed_title": "The diffusive component of intestinal glucose absorption is mediated by the glucose-induced recruitment of GLUT2 to the brush-border membrane.",
+      "pmid": "10677310",
+      "indexed_title": "Fine localization of a major disease-susceptibility locus for diffuse panbronchiolitis.",
+      "doi": "10.1086/302786",
+      "similarity": 0.173,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 552,
+      "claimed_title": "Apical GLUT2: a major pathway of intestinal sugar absorption.",
+      "pmid": "16186394",
+      "indexed_title": "ATP-sensitive K+ channel signaling in glucokinase-deficient diabetes.",
+      "doi": "10.2337/diabetes.54.10.2925",
+      "similarity": 0.291,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 553,
+      "claimed_title": "Computational modelling of glucose uptake by SGLT1 and apical GLUT2 in the enterocyte.",
+      "pmid": "34899386",
+      "indexed_title": "Sentinels in Salmon Aquaculture: Heart Rates Across Seasons and During Crowding Events.",
+      "doi": "10.3389/fphys.2021.755659",
+      "similarity": 0.259,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 566,
+      "claimed_title": "Delayed gastric emptying rate as a potential mechanism for lowered glycemia after eating sourdough bread.",
+      "pmid": "8942411",
+      "indexed_title": "Effect of the cholesterol content of a formula on the lipid compositions of plasma lipoproteins and red blood cell membranes in early infancy.",
+      "doi": "10.1093/ajcn/64.6.871",
+      "similarity": 0.249,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 572,
+      "claimed_title": "The disposal of an oral glucose load in healthy subjects: a quantitative study.",
+      "pmid": "3893478",
+      "indexed_title": "School nursing.",
+      "doi": "10.1891/0739-6686.3.1.25",
+      "similarity": 0.103,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 573,
+      "claimed_title": "Risk of gastroparesis in subjects with type 1 and 2 diabetes in the general population.",
+      "pmid": "22343744",
+      "indexed_title": "[Intrascrotal malignant mesothelioma diagnosed after surgery for hydrocele testis: a case report].",
+      "doi": null,
+      "similarity": 0.323,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 575,
+      "claimed_title": "Relationship between clinical features and gastric emptying disturbances in diabetes mellitus.",
+      "pmid": "22070278",
+      "indexed_title": "Genetics of resistance to race TTKSK of Puccinia graminis f. sp. tritici in Triticum monococcum.",
+      "doi": "10.1094/phyto-05-11-0133",
+      "similarity": 0.296,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 577,
+      "claimed_title": "Role of stress in functional gastrointestinal disorders.",
+      "pmid": "11752839",
+      "indexed_title": "Basic pathophysiologic mechanisms in irritable bowel syndrome.",
+      "doi": "10.1159/000050682",
+      "similarity": 0.212,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 579,
+      "claimed_title": "Fate of ingested fluids: factors affecting gastric emptying and intestinal absorption of beverages in humans.",
+      "pmid": "26290294",
+      "indexed_title": "Do small differences in hydration status affect mood and mental performance?",
+      "doi": "10.1093/nutrit/nuv045",
+      "similarity": 0.354,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 584,
+      "claimed_title": "Blood flow responses in celiac and superior mesenteric arteries in the initial phase of digestion.",
+      "pmid": "18303946",
+      "indexed_title": "",
+      "doi": null,
+      "similarity": 0.0,
+      "status": "manual_check_required",
+      "adjudication": "unresolved_no_record_in_batch"
+    },
+    {
+      "line": 586,
+      "claimed_title": "Whey protein delays gastric emptying and suppresses plasma fatty acids and their metabolites compared to casein, gluten, and fish protein.",
+      "pmid": "24467269",
+      "indexed_title": "Lower extremity reconstruction after limb-sparing sarcoma resection of the proximal tibia in the pediatric population: case series, with algorithm.",
+      "doi": "10.3109/2000656x.2013.868810",
+      "similarity": 0.249,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 587,
+      "claimed_title": "Effect of ethanol and some alcoholic beverages on gastric emptying in humans.",
+      "pmid": "15370685",
+      "indexed_title": "Lactose malabsorption in a population with irritable bowel syndrome: prevalence and symptoms. A case-control study.",
+      "doi": "10.1080/00365520410005405",
+      "similarity": 0.222,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 589,
+      "claimed_title": "The osmotic effects of some simple molecules and ions on gastric emptying.",
+      "pmid": "13835866",
+      "indexed_title": "Separation of a phytoene-accumulating mutant of Staphylococcus.",
+      "doi": "10.1016/0003-9861(60)90217-4",
+      "similarity": 0.239,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 590,
+      "claimed_title": "Quantified metrics of gastric emptying delay by GLP-1 agonists: a systematic review and meta-analysis with insights for periprocedural management.",
+      "pmid": "38879700",
+      "indexed_title": "P-move: a randomized control trial of exercise in patients with advanced pancreatic or biliary tract cancer (aPBC) receiving beyond first-line chemotherapy.",
+      "doi": "10.1007/s00520-024-08650-9",
+      "similarity": 0.307,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 591,
+      "claimed_title": "Prevalence and variations in gastric emptying delay in response to GLP-1 receptor agonist, liraglutide.",
+      "pmid": "38062770",
+      "indexed_title": "Conformations of Macrocyclic Peptides Sampled by Nuclear Magnetic Resonance: Models for Cell-Permeability.",
+      "doi": "10.1021/jacs.3c09367",
+      "similarity": 0.201,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 596,
+      "claimed_title": "Substantial intra-individual variability in post-prandial time to peak in controlled and free-living conditions in children with type 1 diabetes.",
+      "pmid": "34836413",
+      "indexed_title": "Ketamine as a Treatment for Anorexia Nervosa: A Narrative Review.",
+      "doi": "10.3390/nu13114158",
+      "similarity": 0.215,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 597,
+      "claimed_title": "A system model of oral glucose absorption: validation on gold standard data.",
+      "pmid": "17226757",
+      "indexed_title": "Shotgun electroelution: a proteomic tool for simultaneous sample elution from whole SDS-polyacrylamide gel slabs.",
+      "doi": "10.1002/elps.200600634",
+      "similarity": 0.338,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 600,
+      "claimed_title": "Diabetic gastroparesis: a review.",
+      "pmid": "32735467",
+      "indexed_title": "Physiotherapists' experiences of early mobilization after stroke thrombolysis in England and Wales: A qualitative study.",
+      "doi": "10.1080/09593985.2020.1799462",
+      "similarity": 0.275,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1189,
+      "claimed_title": "Assessment of human pancreatic islet architecture and composition by laser scanning confocal microscopy.",
+      "pmid": "16030190",
+      "indexed_title": "Understanding iron homeostasis through genetic analysis of hemochromatosis and related disorders.",
+      "doi": "10.1182/blood-2005-05-1857",
+      "similarity": 0.26,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1190,
+      "claimed_title": "α-Cells of the endocrine pancreas: 35 years of research but the enigma remains.",
+      "pmid": "17213323",
+      "indexed_title": "Smelling home can prevent dispersal of reef fish larvae.",
+      "doi": "10.1073/pnas.0606777104",
+      "similarity": 0.364,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1191,
+      "claimed_title": "Role of glucagon, catecholamines, and growth hormone in human glucose counterregulation.",
+      "pmid": "36413",
+      "indexed_title": "Role of glucagon, catecholamines, and growth hormone in human glucose counterregulation. Effects of somatostatin and combined alpha- and beta-adrenergic blockade on plasma glucose recovery and glucose flux rates after insulin-induced hypoglycemia.",
+      "doi": "10.1172/jci109464",
+      "similarity": 0.526,
+      "status": "manual_check_required",
+      "adjudication": "shortened_title_not_identity_error"
+    },
+    {
+      "line": 1196,
+      "claimed_title": "Reduced neuroendocrine and symptomatic responses to subsequent hypoglycemia after 1 episode of hypoglycemia in nondiabetic humans.",
+      "pmid": "2010052",
+      "indexed_title": "Higher insulin and C-peptide concentrations in Hispanic population at high risk for NIDDM. San Luis Valley Diabetes Study.",
+      "doi": "10.2337/diab.40.4.509",
+      "similarity": 0.343,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1197,
+      "claimed_title": "Meticulous prevention of hypoglycemia normalizes the glycemic thresholds and magnitude of most of neuroendocrine responses to, symptoms of, and cognitive function during hypoglycemia in intensively treated patients with short-term IDDM.",
+      "pmid": "8243826",
+      "indexed_title": "Differential expression of GAD65 and GAD67 in human, rat, and mouse pancreatic islets.",
+      "doi": "10.2337/diab.42.12.1799",
+      "similarity": 0.263,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1199,
+      "claimed_title": "Important role of adrenergic mechanisms in acute glucose counterregulation following insulin-induced hypoglycemia in type I diabetes.",
+      "pmid": "6376870",
+      "indexed_title": "[Pathogenesis and classification of diabetes mellitus].",
+      "doi": null,
+      "similarity": 0.258,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1243,
+      "claimed_title": "The dawn phenomenon, an early morning glucose rise: implications for diabetic intraday blood glucose variation.",
+      "pmid": "7318489",
+      "indexed_title": "The clinician as ethnographer: a psychoanalytic perspective on the epistemology of fieldwork.",
+      "doi": "10.1007/bf00050772",
+      "similarity": 0.287,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1314,
+      "claimed_title": "Nocturnal spikes of growth hormone secretion cause the dawn phenomenon in type 1 (insulin-dependent) diabetes mellitus by decreasing hepatic (and extrahepatic) sensitivity to insulin in the absence of insulin waning.",
+      "pmid": "2178966",
+      "indexed_title": "Metal toxicity and the respiratory tract.",
+      "doi": "10.1183/09031936.93.03020202",
+      "similarity": 0.139,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1318,
+      "claimed_title": "Basal rates and circadian profiles in continuous subcutaneous insulin infusion (CSII) differ for preschool children, prepubertal children, adolescents and young adults.",
+      "pmid": "22487548",
+      "indexed_title": "Diminished performance on neuropsychological testing in late life depression is correlated with microstructural white matter abnormalities.",
+      "doi": "10.1016/j.neuroimage.2012.02.044",
+      "similarity": 0.226,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1617,
+      "claimed_title": "The caloric equivalent of fever. II. Influence of major trauma.",
+      "pmid": "14252608",
+      "indexed_title": "[HISTOCHEMICAL STUDY OF SHEEP AND GUINEA PIG GALLBLADDERS: MUCOPOLYSACCHARIDES].",
+      "doi": null,
+      "similarity": 0.168,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1623,
+      "claimed_title": "Rates of diabetic ketoacidosis: international comparison with 49,859 pediatric patients with type 1 diabetes from England, Wales, the U.S., Austria, and Germany.",
+      "pmid": "26384389",
+      "indexed_title": "Momentary Predictors of Insulin Restriction Among Adults With Type 1 Diabetes and Eating Disorder Symptomatology.",
+      "doi": "10.2337/dc15-0753",
+      "similarity": 0.437,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1689,
+      "claimed_title": "Sleep-related hypoglycemia-associated autonomic failure in type 1 diabetes.",
+      "pmid": "12716752",
+      "indexed_title": "Sleep-related hypoglycemia-associated autonomic failure in type 1 diabetes: reduced awakening from sleep during hypoglycemia.",
+      "doi": "10.2337/diabetes.52.5.1195",
+      "similarity": 0.751,
+      "status": "manual_check_required",
+      "adjudication": "shortened_title_not_identity_error"
+    },
+    {
+      "line": 1822,
+      "claimed_title": "Epidemiology of depression and diabetes: a systematic review.",
+      "pmid": "22858441",
+      "indexed_title": "",
+      "doi": null,
+      "similarity": 0.0,
+      "status": "manual_check_required",
+      "adjudication": "unresolved_no_record_in_batch"
+    },
+    {
+      "line": 1825,
+      "claimed_title": "Stress and diabetes management: a review and call for clinical and research focus.",
+      "pmid": "27086134",
+      "indexed_title": "Prediction of violent reoffending on release from prison: derivation and external validation of a scalable tool.",
+      "doi": "10.1016/s2215-0366(16)00103-6",
+      "similarity": 0.282,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1826,
+      "claimed_title": "Acute hyperglycemia alters mood state and impairs cognitive performance in people with type 2 diabetes.",
+      "pmid": "15226212",
+      "indexed_title": "Postmenopausal hormone therapy is associated with atherosclerosis progression in women with abnormal glucose tolerance.",
+      "doi": "10.1161/01.cir.0000134955.93951.d5",
+      "similarity": 0.29,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1827,
+      "claimed_title": "Adrenal responses to stress.",
+      "pmid": "19698447",
+      "indexed_title": "Psychogenic paranoid psychosis: an empirical study.",
+      "doi": "10.1016/0924-9338(96)88388-x",
+      "similarity": 0.176,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1830,
+      "claimed_title": "Effectiveness of cognitive-behavioural therapy on glycaemic control and psychological outcomes in adults with diabetes mellitus: a systematic review and meta-analysis of randomized controlled trials.",
+      "pmid": "27933671",
+      "indexed_title": "Causal inference in obesity research.",
+      "doi": "10.1111/joim.12577",
+      "similarity": 0.157,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 1883,
+      "claimed_title": "Absorption kinetics and biological effects of subcutaneously injected insulin preparations.",
+      "pmid": "488572",
+      "indexed_title": "Absorption kinetics of subcutaneously injected insulin. Evidence for degradation at the injection site.",
+      "doi": "10.1007/bf01222209",
+      "similarity": 0.682,
+      "status": "manual_check_required",
+      "adjudication": "related_title_discrepancy_requires_bibliographic_check"
+    },
+    {
+      "line": 1950,
+      "claimed_title": "Skin and subcutaneous adipose layer thickness in adults with diabetes at sites used for insulin injections: implications for needle length recommendations.",
+      "pmid": "20602605",
+      "indexed_title": "Human immunodeficiency virus type 1 clade B and C Tat differentially induce indoleamine 2,3-dioxygenase and serotonin in immature dendritic cells: Implications for neuroAIDS.",
+      "doi": "10.3109/13550284.2010.497809",
+      "similarity": 0.27,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2055,
+      "claimed_title": "ISPAD Clinical Practice Consensus Guidelines 2018: Diabetic ketoacidosis and the hyperglycemic hyperosmolar state.",
+      "pmid": "29956180",
+      "indexed_title": "Identification of Novel Mycobacterial Targets for Murine CD4<sup>+</sup> T-Cells by IFNγ ELISPOT.",
+      "doi": "10.1007/978-1-4939-8567-8_12",
+      "similarity": 0.045,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2057,
+      "claimed_title": "Blood Ketones: Measurement, Interpretation, Limitations, and Utility in the Management of Diabetic Ketoacidosis.",
+      "pmid": "32546826",
+      "indexed_title": "Development and evaluation of a high throughput inhalation model for organic chemicals.",
+      "doi": "10.1038/s41370-020-0238-y",
+      "similarity": 0.341,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2058,
+      "claimed_title": "Rates of Diabetic Ketoacidosis: International Comparison With 49,859 Pediatric Patients With Type 1 Diabetes From England, Wales, the U.S., Austria, and Germany.",
+      "pmid": "26180108",
+      "indexed_title": "Randomized Controlled Trial of Intensive Versus Conservative Glucose Control in Patients Undergoing Coronary Artery Bypass Graft Surgery: GLUCO-CABG Trial.",
+      "doi": "10.2337/dc15-0303",
+      "similarity": 0.302,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2059,
+      "claimed_title": "Risk Factors for Cerebral Edema in Children With Diabetic Ketoacidosis.",
+      "pmid": "11419433",
+      "indexed_title": "Optimal treatment of acute coronary syndromes--an evolving strategy.",
+      "doi": "10.1056/nejm200106213442510",
+      "similarity": 0.235,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2060,
+      "claimed_title": "Clinical Trial of Fluid Infusion Rates for Pediatric Diabetic Ketoacidosis.",
+      "pmid": "30088006",
+      "indexed_title": "Opioids vs Nonopioids for Chronic Back, Hip, or Knee Pain-Reply.",
+      "doi": "10.1001/jama.2018.6953",
+      "similarity": 0.345,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2062,
+      "claimed_title": "Regulation of hepatic fatty acid oxidation and ketone body production.",
+      "pmid": "6998753",
+      "indexed_title": "[Effect of pituitary thyrotopic hormone administration on the enzyme secreting function of the stomach].",
+      "doi": null,
+      "similarity": 0.257,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2063,
+      "claimed_title": "From glycogen to ketones -- and back.",
+      "pmid": "6424550",
+      "indexed_title": "Structure and genetic control of V kappa-1 light chains.",
+      "doi": "10.1016/s0769-2625(84)80027-6",
+      "similarity": 0.27,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2064,
+      "claimed_title": "Dose-response characteristics for effects of insulin on production and utilization of glucose in man.",
+      "pmid": "7014664",
+      "indexed_title": "Keloids: a review.",
+      "doi": "10.1016/s0190-9622(81)70048-3",
+      "similarity": 0.1,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2067,
+      "claimed_title": "Ketone body kinetics in humans: a mathematical model.",
+      "pmid": "2523653",
+      "indexed_title": "Multicenter isradipine diuretic atherosclerosis study (MIDAS). Design features. The Midas Research Group.",
+      "doi": "10.1016/0002-9343(89)90188-5",
+      "similarity": 0.301,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2124,
+      "claimed_title": "Abnormal glucose counterregulation in insulin-dependent diabetes mellitus. Interaction of anti-insulin antibodies and impaired glucagon and epinephrine secretion.",
+      "pmid": "6337893",
+      "indexed_title": "Differences at the receptor and postreceptor levels between human omental and subcutaneous adipose tissue in the action of insulin on lipolysis.",
+      "doi": "10.2337/diab.32.2.117",
+      "similarity": 0.309,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2125,
+      "claimed_title": "Hypoglycemia-associated autonomic failure in insulin-dependent diabetes mellitus.",
+      "pmid": "8450043",
+      "indexed_title": "An evaluation of several biochemical markers for bone formation and resorption in a protocol utilizing cyclical parathyroid hormone and calcitonin therapy for osteoporosis.",
+      "doi": "10.1172/jci116273",
+      "similarity": 0.199,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2126,
+      "claimed_title": "Restoration of hypoglycaemia awareness in patients with long-duration insulin-dependent diabetes.",
+      "pmid": "7914299",
+      "indexed_title": "Can molecular monitoring improve outcome in leukaemia?",
+      "doi": "10.1016/s0140-6736(94)91393-5",
+      "similarity": 0.197,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2127,
+      "claimed_title": "Role of glucagon, catecholamines, and growth hormone in human glucose counterregulation. Effects of somatostatin and combined alpha- and beta-adrenergic blockade on plasma glucose recovery and glucose flux rates after insulin-induced hypoglycemia.",
+      "pmid": "220280",
+      "indexed_title": "Fluoride-mediated activation of the respiratory burst in human neutrophils. A reversible process.",
+      "doi": "10.1172/jci109346",
+      "similarity": 0.232,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2128,
+      "claimed_title": "Liver glycogen in man — the effect of total starvation or a carbohydrate-poor diet followed by carbohydrate refeeding.",
+      "pmid": "4762586",
+      "indexed_title": "[Incidence of hyperlipoproteinaemia in patients with chemical and clinical diabetes (author's transl)].",
+      "doi": "10.1007/bf01468253",
+      "similarity": 0.185,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2129,
+      "claimed_title": "Contribution of net hepatic glycogenolysis to glucose production during the early postprandial period.",
+      "pmid": "8772501",
+      "indexed_title": "Premature expression of sucrase-isomaltase triggered by corticoid-dependent changes in polyamine metabolism.",
+      "doi": "10.1152/ajpgi.1996.270.1.g54",
+      "similarity": 0.239,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2130,
+      "claimed_title": "Intentional insulin overdose: prognostic factors and toxicokinetic/toxicodynamic profiles.",
+      "pmid": "17976217",
+      "indexed_title": "Effect of stress on basophil function in chronic idiopathic urticaria.",
+      "doi": "10.1111/j.1365-2222.2007.02864.x",
+      "similarity": 0.257,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2131,
+      "claimed_title": "Prolonged hypoglycaemia after insulin lispro overdose.",
+      "pmid": "17273843",
+      "indexed_title": "A novel locus for autosomal recessive spastic ataxia on chromosome 17p.",
+      "doi": "10.1007/s00439-007-0328-0",
+      "similarity": 0.148,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2132,
+      "claimed_title": "Comparison of octreotide and standard therapy versus standard therapy alone for the treatment of sulfonylurea-induced hypoglycemia.",
+      "pmid": "18558602",
+      "indexed_title": "Nonclassic presentation of pheochromocytoma: difficulties in diagnosis and management of the normotensive patient.",
+      "doi": "10.4158/ep.14.4.470",
+      "similarity": 0.28,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2133,
+      "claimed_title": "Assessment of hyperglycemia after calcium channel blocker overdoses involving diltiazem or verapamil.",
+      "pmid": "18072157",
+      "indexed_title": "Captive subjects: pharmaceutical testing and prisoners.",
+      "doi": "10.1007/bf03161037",
+      "similarity": 0.307,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2134,
+      "claimed_title": "Drug-induced hypoglycemia.",
+      "pmid": "10500929",
+      "indexed_title": "Diagnostic approach to adults with hypoglycemic disorders.",
+      "doi": "10.1016/s0889-8529(05)70086-4",
+      "similarity": 0.405,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2135,
+      "claimed_title": "Intentional overdose with insulin glargine and insulin aspart.",
+      "pmid": "15460190",
+      "indexed_title": "Cytolytic vaginosis: misdiagnosed as candidal vaginitis.",
+      "doi": "10.1080/10647440410001672139",
+      "similarity": 0.291,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2136,
+      "claimed_title": "Use of dextrose-containing intravenous fluid as an antidote for sulfonylurea-induced hypoglycemia.",
+      "pmid": "8403981",
+      "indexed_title": "Tumor necrosis factor and the therapeutic potential of anti-tumor necrosis factor antibodies.",
+      "doi": "10.1097/00003246-199310001-00004",
+      "similarity": 0.303,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2137,
+      "claimed_title": "Is Type II diabetes associated with an increased risk of cognitive dysfunction?",
+      "pmid": "10868855",
+      "indexed_title": "Mutations in the genes for hepatocyte nuclear factor (HNF)-1alpha, -4alpha, -1beta, and -3beta; the dimerization cofactor of HNF-1; and insulin promoter factor 1 are not common causes of early-onset type 2 diabetes in Pima Indians.",
+      "doi": "10.2337/diacare.23.3.302",
+      "similarity": 0.152,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2138,
+      "claimed_title": "Octreotide for sulfonylurea-induced hypoglycaemia following overdose.",
+      "pmid": "17083625",
+      "indexed_title": "Binding characteristics of SLE anti-DNA autoantibodies to Catecholestrogen-modified DNA.",
+      "doi": "10.1111/j.1365-3083.2006.01855.x",
+      "similarity": 0.187,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2230,
+      "claimed_title": "The effect of graded doses of insulin on total glucose uptake, glucose oxidation, and glucose storage in man.",
+      "pmid": "6756541",
+      "indexed_title": "Treponemal serology on Bali Island, Indonesia.",
+      "doi": "10.1136/sti.58.6.351",
+      "similarity": 0.281,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2232,
+      "claimed_title": "Dose-response characteristics of insulin action on glucose metabolism: a non-steady-state approach.",
+      "pmid": "10780939",
+      "indexed_title": "Osteoblast-like cells of the hypophysectomized rat: a model of aberrant osteoblast development.",
+      "doi": "10.1152/ajpendo.2000.278.5.e832",
+      "similarity": 0.303,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2234,
+      "claimed_title": "Dynamics of hepatic and peripheral insulin effects suggest common rate-limiting step in vivo.",
+      "pmid": "8432408",
+      "indexed_title": "Incidence of gross proteinuria in older-onset diabetes. A population-based perspective.",
+      "doi": "10.2337/diab.42.3.381",
+      "similarity": 0.275,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2236,
+      "claimed_title": "Suppression of systemic, intramuscular, and subcutaneous adipose tissue lipolysis by insulin in humans.",
+      "pmid": "11061536",
+      "indexed_title": "Effects of 7 years of growth hormone replacement therapy in hypopituitary adults.",
+      "doi": "10.1210/jcem.85.10.6910",
+      "similarity": 0.204,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2237,
+      "claimed_title": "Role of fatty acids in the pathogenesis of insulin resistance and NIDDM.",
+      "pmid": "8522054",
+      "indexed_title": "Effects of insulin on vascular tone and sympathetic nervous system in NIDDM.",
+      "doi": "10.2337/diab.45.1.15",
+      "similarity": 0.419,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2238,
+      "claimed_title": "Minimal model: perspective from 2005.",
+      "pmid": "16439842",
+      "indexed_title": "Use of stable isotopes to assess protein and amino acid metabolism in children and adolescents: a brief review.",
+      "doi": "10.1159/000089315",
+      "similarity": 0.26,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2240,
+      "claimed_title": "Insulin action and insulin resistance in human skeletal muscle.",
+      "pmid": "10952455",
+      "indexed_title": "Decreasing incidence of major amputations in people with diabetes.",
+      "doi": "10.1007/s001250051459",
+      "similarity": 0.252,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2242,
+      "claimed_title": "The role of lipids in the pathogenesis of muscle insulin resistance and beta cell failure in type II diabetes and obesity.",
+      "pmid": "2074956",
+      "indexed_title": "[Clinico-roentgenological and physiological evaluation of the spine in patients with juvenile kyphosis].",
+      "doi": null,
+      "similarity": 0.158,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2246,
+      "claimed_title": "Receptor and postreceptor defects contribute to the insulin resistance in noninsulin-dependent diabetes mellitus.",
+      "pmid": "6117574",
+      "indexed_title": "Pharmacokinetics and mechanisms of action of analgesics in clinical pain.",
+      "doi": "10.1002/j.1552-4604.1981.tb02607.x",
+      "similarity": 0.296,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2334,
+      "claimed_title": "Glycation products and the pathogenesis of diabetic complications.",
+      "pmid": "1307588",
+      "indexed_title": "Craniopharyngioma: treatment by conservative surgery and radiation therapy.",
+      "doi": null,
+      "similarity": 0.194,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2337,
+      "claimed_title": "Role of insulin, adipocyte hormones, and nutrient-sensing pathways in the pathogenesis of type 2 diabetes.",
+      "pmid": "15155879",
+      "indexed_title": "Constitutive photomorphogenesis 1 and multiple photoreceptors control degradation of phytochrome interacting factor 3, a transcription factor required for light signaling in Arabidopsis.",
+      "doi": "10.1105/tpc.021568",
+      "similarity": 0.247,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2338,
+      "claimed_title": "Discovery of a metabolic pathway mediating glucose-induced desensitization of the glucose transport system.",
+      "pmid": "2002019",
+      "indexed_title": "Discovery of a metabolic pathway mediating glucose-induced desensitization of the glucose transport system. Role of hexosamine biosynthesis in the induction of insulin resistance.",
+      "doi": "10.1016/s0021-9258(19)67706-9",
+      "similarity": 0.753,
+      "status": "manual_check_required",
+      "adjudication": "shortened_title_not_identity_error"
+    },
+    {
+      "line": 2339,
+      "claimed_title": "The role of oxidative stress in diabetic vascular and neural disease.",
+      "pmid": "12797473",
+      "indexed_title": "Free radicals in wheat flour change during storage in air and are influenced by the presence of ozone during the growing season.",
+      "doi": "10.1080/1071576031000083143",
+      "similarity": 0.22,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2344,
+      "claimed_title": "Natural course of insulin resistance in type I diabetes.",
+      "pmid": "1359290",
+      "indexed_title": "Benzodiazepine sensitivity in Leber's hereditary optic neuroretinopathy.",
+      "doi": "10.1016/0140-6736(92)92925-6",
+      "similarity": 0.162,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    },
+    {
+      "line": 2345,
+      "claimed_title": "Hyperglycemia decreases glucose uptake in type I diabetes.",
+      "pmid": "3297886",
+      "indexed_title": "Estimation of endogenous glucose production during hyperinsulinemic-euglycemic glucose clamps. Comparison of unlabeled and labeled exogenous glucose infusates.",
+      "doi": "10.2337/diab.36.8.914",
+      "similarity": 0.221,
+      "status": "manual_check_required",
+      "adjudication": "different_indexed_title_confirmed"
+    }
+  ]
+}
