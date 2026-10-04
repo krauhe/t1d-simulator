@@ -113,6 +113,8 @@ Codex skal behandle denne fil som den primære arbejdsaftale for fremtidige sess
 - `ISSUES.txt` er IKKE tracket i git — kun til lokal planlægning.
 
 ### Versionering
+- **Stabil/test-udgivelse:** Værktøjet i `tools/releases/` bygger den låste stabile version i roden og ny kode under `preview/`. Se `docs/RELEASE-CHANNELS.md`. Før det første push med denne opsætning skal Pages-kilden, efter eksplicit publiceringstilladelse, ændres fra `main`/root til **GitHub Actions** og kontrolleres. Ellers vil den gamle branch-publicering stadig lægge ny kode direkte på den normale adresse. Et lokalt build ændrer ikke hostingindstillingerne.
+- **Ingen automatisk promotion:** Bevar `stableCommit`/`stableVersion` i `tools/releases/channels.json`, indtil brugeren udtrykkeligt godkender en ny stabil version. Workflowen er manuel; push og publicering er adskilte handlinger. Upload kun den testede pakke, aldrig repository-roden eller en `--working-tree`-pakke.
 - Versionsnummer, dato og hjælp-popupens versionshistorik bor i `js/version-data.js`.
 - Format: `version: 'X.Y.Z-beta'` og `date: 'YYYY-MM-DD'` i `APP_VERSION_INFO`.
 - **Ved hvert git push:** bump patch-nummeret (Z+1) og opdatér datoen i `js/version-data.js`. Versionsspring skal være små og gradvise: `0.8.0 → 0.8.1 → 0.8.2 → ...`. Major-bump (Y: `0.8 → 0.9`) kun ved meget store milepæle (ny spiltilstand, fundamental arkitekturændring).

@@ -1,0 +1,107 @@
+# Publicerer præcis to udgaver: det låste stabile commit i roden og det valgte
+# main-commit under preview/. Almindelige push udløser aldrig denne workflow.
+# Pages-kilden skal først ændres manuelt fra branch-publicering til GitHub Actions.
+name: Publish stable and preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      approve_publication:
+        description: 'Publish the pinned stable version and this main commit as preview'
+        type: boolean
+        required: true
+        default: false
+
+# Byggejobbet kan læse koden, men kan hverken pushe eller publicere Pages.
+permissions:
+  contents: read
+
+# En igangværende publicering afbrydes ikke af en ny manuel kørsel.
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Require main and explicit publication approval
+        env:
+          RELEASE_PUBLICATION_APPROVED: ${{ inputs.approve_publication }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Pages can only be published from main."
+            exit 1
+          fi
+          if [ "$RELEASE_PUBLICATION_APPROVED" != "true" ]; then
+            echo "::error::Publication must be explicitly approved in the dispatch form."
+            exit 1
+          fi
+
+      - name: Read the selected commit and all release history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Install the locked browser-test dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install Chromium for the release smoke test
+        run: npx --no-install playwright install --with-deps chromium
+
+      - name: Test channel isolation and release packaging
+        run: |
+          node tests/release-storage.test.cjs
+          node tests/release-build.test.cjs
+
+      # Ingen --working-tree: preview skal komme fra det valgte Git-commit.
+      - name: Build stable root and preview directory
+        run: node tools/releases/build-pages.cjs --out .release-builds/pages
+
+      - name: Refuse local or unexpected preview content
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const manifest = require('./.release-builds/pages/release-manifest.json');
+          assert.equal(manifest.localWorkingTree, false, 'Local builds cannot be published');
+          assert.equal(manifest.channels.preview.localWorkingTree, false);
+          assert.equal(manifest.channels.preview.commit, process.env.GITHUB_SHA);
+          NODE
+
+      - name: Test the actual packaged desktop and mobile pages
+        run: node tests/release-browser.cjs .release-builds/pages --chromium
+
+      - name: Upload only the tested Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: .release-builds/pages
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Kun dette job har udgivelsesrettigheder; det kører ingen projektkode.
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Read the existing Pages configuration
+        uses: actions/configure-pages@v5
+        with:
+          enablement: false
+
+      - name: Publish the tested stable and preview artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

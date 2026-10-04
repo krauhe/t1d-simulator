@@ -15,9 +15,17 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.126-beta',
-    date: '2026-09-22',
+    version: '0.9.127-beta',
+    date: '2026-10-04',
     history: [
+        {
+            version: '0.9.127-beta',
+            date: '2026-10-04',
+            features: {
+                da: ['Skift mellem den stabile udgave og en tydeligt markeret testversion.', 'Testversionen gemmer indstillinger, fremskridt og highscores separat.'],
+                en: ['Switch between the stable release and a clearly labelled preview.', 'The preview keeps settings, progress and highscores separate.']
+            }
+        },
         {
             version: '0.9.126-beta',
             date: '2026-09-22',
@@ -28,14 +36,6 @@ const APP_VERSION_INFO = {
             fixes: {
                 da: ['Madkortenes mouseover-tekst gentager ikke længere kulhydrat, protein og fedt, som allerede vises på kortene.'],
                 en: ['Food card tooltips no longer repeat carbohydrate, protein and fat amounts already shown on the cards.']
-            }
-        },
-        {
-            version: '0.9.122-beta',
-            date: '2026-09-16',
-            fixes: {
-                da: ['Baggrundsviden om insulin er præciseret; spillets beregninger er uændrede.'],
-                en: ['Background information about insulin has been clarified; game calculations are unchanged.']
             }
         },
         {

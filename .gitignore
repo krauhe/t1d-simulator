@@ -70,6 +70,9 @@ tests/playwright-results/
 # Lokale npm-afhængigheder til Playwright E2E-tests
 node_modules/
 
+# Genererede, selvstændige stable/preview-websteder til lokal test og Pages.
+.release-builds/
+
 # Lokal portable Node.exe til at køre tests/simulation.test.js
 # (downloades med scripts/install-node.ps1 eller manuelt — gitignored fordi
 # det er en 90 MB binær der varierer per OS)
