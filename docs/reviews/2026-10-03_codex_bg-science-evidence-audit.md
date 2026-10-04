@@ -90,7 +90,7 @@ Three additional full texts were obtained during the audit: Li (2025) and Manous
 
 The new literature supports a more discriminating review, not simply a longer one. The highest-value improvement is to keep each estimate attached to the population, protocol and endpoint that produced it, then compare genuinely comparable studies. Several existing passages already do this well. The remaining inconsistencies should be corrected before this document is treated as a dependable quantitative basis for further model development.
 
-All 27 audit items remain open for an authorised correction pass. Confirmed statements are documented separately; no production-text fix is claimed.
+Status reconciled on 4 October 2026: the authorised correction pass addressed 25 of the 27 principal findings; two remain partially addressed, as itemised in the status summary above. The subsequent [editorial and identity review](2026-10-04_codex_bg-science-final-editorial-review.md) records additional findings. Neither correction count establishes verification of every claim in BG Science.
 
 ## Selected references
 

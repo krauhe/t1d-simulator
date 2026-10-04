@@ -1,0 +1,799 @@
+{
+  "date": "2026-10-04",
+  "scope": "Manually selected identity corrections from indexed metadata; not a full claim appraisal or complete link audit",
+  "records": [
+    {
+      "old_pmid": "24587098",
+      "correct_pmid": "24587162",
+      "title": "The role of SGLT1 and GLUT2 in intestinal glucose transport and sensing.",
+      "authors": "Röder PV, Geillinger KE, Zietek TS, Thorens B, Koepsell H, Daniel H.",
+      "year": "2014",
+      "doi": "10.1371/journal.pone.0089977",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "10677310",
+      "correct_pmid": "10926839",
+      "title": "The diffusive component of intestinal glucose absorption is mediated by the glucose-induced recruitment of GLUT2 to the brush-border membrane.",
+      "authors": "Kellett GL, Helliwell PA.",
+      "year": "2000",
+      "doi": "10.1042/bj3500155",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "16186394",
+      "correct_pmid": "16186415",
+      "title": "Apical GLUT2: a major pathway of intestinal sugar absorption.",
+      "authors": "Kellett GL, Brot-Laroche E.",
+      "year": "2005",
+      "doi": "10.2337/diabetes.54.10.3056",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "34899386",
+      "correct_pmid": "34950044",
+      "title": "Computational Modelling of Glucose Uptake by SGLT1 and Apical GLUT2 in the Enterocyte.",
+      "authors": "Afshar N, Safaei S, Nickerson DP, Hunter PJ, Suresh V.",
+      "year": "2021",
+      "doi": "10.3389/fphys.2021.699152",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "8942411",
+      "correct_pmid": "8942413",
+      "title": "Delayed gastric emptying rate as a potential mechanism for lowered glycemia after eating sourdough bread: studies in humans and rats using test products with added organic acids or an organic salt.",
+      "authors": "Liljeberg HG, Björck IM.",
+      "year": "1996",
+      "doi": "10.1093/ajcn/64.6.886",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "3893478",
+      "correct_pmid": "3891471",
+      "title": "The disposal of an oral glucose load in healthy subjects. A quantitative study.",
+      "authors": "Ferrannini E, Bjorkman O, Reichard GA, Pilo A, Olsson M, Wahren J, DeFronzo RA.",
+      "year": "1985",
+      "doi": "10.2337/diab.34.6.580",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "22343744",
+      "correct_pmid": "22085818",
+      "title": "Risk of gastroparesis in subjects with type 1 and 2 diabetes in the general population.",
+      "authors": "Choung RS, Locke GR, Schleck CD, Zinsmeister AR, Melton LJ, Talley NJ.",
+      "year": "2012",
+      "doi": "10.1038/ajg.2011.310",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "22070278",
+      "correct_pmid": "18727706",
+      "title": "Relationship between clinical features and gastric emptying disturbances in diabetes mellitus.",
+      "authors": "Bharucha AE, Camilleri M, Forstrom LA, Zinsmeister AR.",
+      "year": "2009",
+      "doi": "10.1111/j.1365-2265.2008.03351.x",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "11752839",
+      "correct_pmid": "11752838",
+      "title": "Role of stress in functional gastrointestinal disorders. Evidence for stress-induced alterations in gastrointestinal motility and sensitivity.",
+      "authors": "Mönnikes H, Tebbe JJ, Hildebrandt M, Arck P, Osmanoglou E, Rose M, Klapp B, Wiedenmann B, Heymann-Mönnikes I.",
+      "year": "2001",
+      "doi": "10.1159/000050681",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "26290294",
+      "correct_pmid": "26290292",
+      "title": "Fate of ingested fluids: factors affecting gastric emptying and intestinal absorption of beverages in humans.",
+      "authors": "Leiper JB.",
+      "year": "2015",
+      "doi": "10.1093/nutrit/nuv032",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "18303946",
+      "correct_pmid": "18385466",
+      "title": "Blood flow responses in celiac and superior mesenteric arteries in the initial phase of digestion.",
+      "authors": "Someya N, Endo MY, Fukuba Y, Hayashi N.",
+      "year": "2008",
+      "doi": "10.1152/ajpregu.00553.2007",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "24467269",
+      "correct_pmid": "24708224",
+      "title": "Whey protein delays gastric emptying and suppresses plasma fatty acids and their metabolites compared to casein, gluten, and fish protein.",
+      "authors": "Stanstrup J, Schou SS, Holmer-Jensen J, Hermansen K, Dragsted LO.",
+      "year": "2014",
+      "doi": "10.1021/pr401214w",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "15370685",
+      "correct_pmid": "15370684",
+      "title": "Effect of ethanol and some alcoholic beverages on gastric emptying in humans.",
+      "authors": "Franke A, Teyssen S, Harder H, Singer MV.",
+      "year": "2004",
+      "doi": "10.1080/00365520410005009",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "13835866",
+      "correct_pmid": "16992067",
+      "title": "The osmotic effects of some simple molecules and ions on gastric emptying.",
+      "authors": "Hunt JN, Pathak JD.",
+      "year": "1960",
+      "doi": "10.1113/jphysiol.1960.sp006577",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "38879700",
+      "correct_pmid": "38634551",
+      "title": "Quantified Metrics of Gastric Emptying Delay by Glucagon-Like Peptide-1 Agonists: A Systematic Review and Meta-Analysis With Insights for Periprocedural Management.",
+      "authors": "Hiramoto B, McCarty TR, Lodhia NA, Jenkins A, Elnaiem A, Muftah M, Flanagan R, Chan WW.",
+      "year": "2024",
+      "doi": "10.14309/ajg.0000000000002820",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "38062770",
+      "correct_pmid": "37927173",
+      "title": "Prevalence and variations in gastric emptying delay in response to GLP-1 receptor agonist liraglutide.",
+      "authors": "Camilleri M, Carlson P, Dilmaghani S.",
+      "year": "2024",
+      "doi": "10.1002/oby.23941",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "17226757",
+      "correct_pmid": "17153204",
+      "title": "A system model of oral glucose absorption: validation on gold standard data.",
+      "authors": "Dalla Man C, Camilleri M, Cobelli C.",
+      "year": "2006",
+      "doi": "10.1109/tbme.2006.883792",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "32735467",
+      "correct_pmid": "32848351",
+      "title": "Diabetic Gastroparesis: A Review.",
+      "authors": "Young CF, Moussa M, Shubrook JH.",
+      "year": "2020",
+      "doi": "10.2337/ds19-0062",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "16030190",
+      "correct_pmid": "15923354",
+      "title": "Assessment of human pancreatic islet architecture and composition by laser scanning confocal microscopy.",
+      "authors": "Brissova M, Fowler MJ, Nicholson WE, Chu A, Hirshberg B, Harlan DM, Powers AC.",
+      "year": "2005",
+      "doi": "10.1369/jhc.5c6684.2005",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "17213323",
+      "correct_pmid": "17261637",
+      "title": "Alpha-cells of the endocrine pancreas: 35 years of research but the enigma remains.",
+      "authors": "Gromada J, Franklin I, Wollheim CB.",
+      "year": "2007",
+      "doi": "10.1210/er.2006-0007",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "2010052",
+      "correct_pmid": "1991573",
+      "title": "Reduced neuroendocrine and symptomatic responses to subsequent hypoglycemia after 1 episode of hypoglycemia in nondiabetic humans.",
+      "authors": "Heller SR, Cryer PE.",
+      "year": "1991",
+      "doi": "10.2337/diab.40.2.223",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "8243826",
+      "correct_pmid": "8405713",
+      "title": "Meticulous prevention of hypoglycemia normalizes the glycemic thresholds and magnitude of most of neuroendocrine responses to, symptoms of, and cognitive function during hypoglycemia in intensively treated patients with short-term IDDM.",
+      "authors": "Fanelli CG, Epifano L, Rambotti AM, Pampanelli S, Di Vincenzo A, Modarelli F, Lepore M, Annibale B, Ciofetta M, Bottini P.",
+      "year": "1993",
+      "doi": "10.2337/diab.42.11.1683",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "6376870",
+      "correct_pmid": "6298039",
+      "title": "Important role of adrenergic mechanisms in acute glucose counterregulation following insulin-induced hypoglycemia in type I diabetes. Evidence for an effect mediated by beta-adrenoreceptors.",
+      "authors": "Bolli G, de Feo P, Compagnucci P, Cartechini MG, Angeletti G, Santeusanio F, Brunetti P.",
+      "year": "1982",
+      "doi": "10.2337/diab.31.7.641",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "7318489",
+      "correct_pmid": "6751733",
+      "title": "The dawn phenomenon, an early morning glucose rise: implications for diabetic intraday blood glucose variation.",
+      "authors": "Schmidt MI, Hadji-Georgopoulos A, Rendell M, Margolis S, Kowarski A.",
+      "year": "1981",
+      "doi": "10.2337/diacare.4.6.579",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "2178966",
+      "correct_pmid": "2406181",
+      "title": "Nocturnal spikes of growth hormone secretion cause the dawn phenomenon in type 1 (insulin-dependent) diabetes mellitus by decreasing hepatic (and extrahepatic) sensitivity to insulin in the absence of insulin waning.",
+      "authors": "Perriello G, De Feo P, Torlone E, Fanelli C, Santeusanio F, Brunetti P, Bolli GB.",
+      "year": "1990",
+      "doi": "10.1007/bf00586461",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "22487548",
+      "correct_pmid": "21545675",
+      "title": "Basal rates and circadian profiles in continuous subcutaneous insulin infusion (CSII) differ for preschool children, prepubertal children, adolescents and young adults.",
+      "authors": "Bachran R, Beyer P, Klinkert C, Heidtmann B, Rosenbauer J, Holl RW, German/Austrian DPV Initiative, German Pediatric CSII Working Group, BMBF Competence Network Diabetes.",
+      "year": "2012",
+      "doi": "10.1111/j.1399-5448.2011.00777.x",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "14252608",
+      "correct_pmid": "14252624",
+      "title": "THE CALORIC EQUIVALENT OF FEVER. II. INFLUENCE OF MAJOR TRAUMA.",
+      "authors": "ROE CF, KINNEY JM.",
+      "year": "1965",
+      "doi": "10.1097/00000658-196501000-00022",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "26384389",
+      "correct_pmid": "26283737",
+      "title": "Rates of diabetic ketoacidosis: international comparison with 49,859 pediatric patients with type 1 diabetes from England, Wales, the U.S., Austria, and Germany.",
+      "authors": "Maahs DM, Hermann JM, Holman N, Foster NC, Kapellen TM, Allgrove J, Schatz DA, Hofer SE, Campbell F, Steigleder-Schweiger C, Beck RW, Warner JT, Holl RW, National Paediatric Diabetes Audit and the Royal College of Paediatrics and Child Health, the DPV Initiative, and the T1D Exchange Clinic Network.",
+      "year": "2015",
+      "doi": "10.2337/dc15-0780",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "22858441",
+      "correct_pmid": "23062861",
+      "title": "Epidemiology of depression and diabetes: a systematic review.",
+      "authors": "Roy T, Lloyd CE.",
+      "year": "2012",
+      "doi": "10.1016/s0165-0327(12)70004-6",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "15226212",
+      "correct_pmid": "15451897",
+      "title": "Acute hyperglycemia alters mood state and impairs cognitive performance in people with type 2 diabetes.",
+      "authors": "Sommerfield AJ, Deary IJ, Frier BM.",
+      "year": "2004",
+      "doi": "10.2337/diacare.27.10.2335",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "19698447",
+      "correct_pmid": "21061156",
+      "title": "Adrenal responses to stress.",
+      "authors": "Goldstein DS.",
+      "year": "2010",
+      "doi": "10.1007/s10571-010-9606-9",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "27933671",
+      "correct_pmid": "27472405",
+      "title": "Effectiveness of cognitive-behavioural therapy on glycaemic control and psychological outcomes in adults with diabetes mellitus: a systematic review and meta-analysis of randomized controlled trials.",
+      "authors": "Uchendu C, Blake H.",
+      "year": "2017",
+      "doi": "10.1111/dme.13195",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "20602605",
+      "correct_pmid": "20429833",
+      "title": "Skin and subcutaneous adipose layer thickness in adults with diabetes at sites used for insulin injections: implications for needle length recommendations.",
+      "authors": "Gibney MA, Arce CH, Byron KJ, Hirsch LJ.",
+      "year": "2010",
+      "doi": "10.1185/03007995.2010.481203",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "29956180",
+      "correct_pmid": "29900641",
+      "title": "ISPAD Clinical Practice Consensus Guidelines 2018: Diabetic ketoacidosis and the hyperglycemic hyperosmolar state.",
+      "authors": "Wolfsdorf JI, Glaser N, Agus M, Fritsch M, Hanas R, Rewers A, Sperling MA, Codner E.",
+      "year": "2018",
+      "doi": "10.1111/pedi.12701",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "32546826",
+      "correct_pmid": "28278308",
+      "title": "Blood Ketones: Measurement, Interpretation, Limitations, and Utility in the Management of Diabetic Ketoacidosis.",
+      "authors": "Dhatariya K.",
+      "year": "2016",
+      "doi": "10.1900/rds.2016.13.217",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "26180108",
+      "correct_pmid": "26283737",
+      "title": "Rates of diabetic ketoacidosis: international comparison with 49,859 pediatric patients with type 1 diabetes from England, Wales, the U.S., Austria, and Germany.",
+      "authors": "Maahs DM, Hermann JM, Holman N, Foster NC, Kapellen TM, Allgrove J, Schatz DA, Hofer SE, Campbell F, Steigleder-Schweiger C, Beck RW, Warner JT, Holl RW, National Paediatric Diabetes Audit and the Royal College of Paediatrics and Child Health, the DPV Initiative, and the T1D Exchange Clinic Network.",
+      "year": "2015",
+      "doi": "10.2337/dc15-0780",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "11419433",
+      "correct_pmid": "11172153",
+      "title": "Risk factors for cerebral edema in children with diabetic ketoacidosis. The Pediatric Emergency Medicine Collaborative Research Committee of the American Academy of Pediatrics.",
+      "authors": "Glaser N, Barnett P, McCaslin I, Nelson D, Trainor J, Louie J, Kaufman F, Quayle K, Roback M, Malley R, Kuppermann N, Pediatric Emergency Medicine Collaborative Research Committee of the American Academy of Pediatrics.",
+      "year": "2001",
+      "doi": "10.1056/nejm200101253440404",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "30088006",
+      "correct_pmid": "29897851",
+      "title": "Clinical Trial of Fluid Infusion Rates for Pediatric Diabetic Ketoacidosis.",
+      "authors": "Kuppermann N, Ghetti S, Schunk JE, Stoner MJ, Rewers A, McManemy JK, Myers SR, Nigrovic LE, Garro A, Brown KM, Quayle KS, Trainor JL, Tzimenatos L, Bennett JE, DePiero AD, Kwok MY, Perry CS, Olsen CS, Casper TC, Dean JM, Glaser NS, PECARN DKA FLUID Study Group.",
+      "year": "2018",
+      "doi": "10.1056/nejmoa1716816",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "6998753",
+      "correct_pmid": "6157353",
+      "title": "Regulation of hepatic fatty acid oxidation and ketone body production.",
+      "authors": "McGarry JD, Foster DW.",
+      "year": "1980",
+      "doi": "10.1146/annurev.bi.49.070180.002143",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "6424550",
+      "correct_pmid": "6094292",
+      "title": "Banting lecture 1984. From glycogen to ketones--and back.",
+      "authors": "Foster DW.",
+      "year": "1984",
+      "doi": "10.2337/diab.33.12.1188",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "7014664",
+      "correct_pmid": "7018254",
+      "title": "Dose-response characteristics for effects of insulin on production and utilization of glucose in man.",
+      "authors": "Rizza RA, Mandarino LJ, Gerich JE.",
+      "year": "1981",
+      "doi": "10.1152/ajpendo.1981.240.6.e630",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "2523653",
+      "correct_pmid": "6707525",
+      "title": "Ketone body kinetics in humans: a mathematical model.",
+      "authors": "Wastney ME, Hall SE, Berman M.",
+      "year": "1984",
+      "doi": "10.1016/s0022-2275(20)37836-6",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "6337893",
+      "correct_pmid": "6337896",
+      "title": "Abnormal glucose counterregulation in insulin-dependent diabetes mellitus. Interaction of anti-insulin antibodies and impaired glucagon and epinephrine secretion.",
+      "authors": "Bolli G, de Feo P, Compagnucci P, Cartechini MG, Angeletti G, Santeusanio F, Brunetti P, Gerich JE.",
+      "year": "1983",
+      "doi": "10.2337/diab.32.2.134",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "8450043",
+      "correct_pmid": "8450063",
+      "title": "Hypoglycemia-associated autonomic failure in insulin-dependent diabetes mellitus. Recent antecedent hypoglycemia reduces autonomic responses to, symptoms of, and defense against subsequent hypoglycemia.",
+      "authors": "Dagogo-Jack SE, Craft S, Cryer PE.",
+      "year": "1993",
+      "doi": "10.1172/jci116302",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "7914299",
+      "correct_pmid": "7914259",
+      "title": "Restoration of hypoglycaemia awareness in patients with long-duration insulin-dependent diabetes.",
+      "authors": "Cranston I, Lomas J, Maran A, Macdonald I, Amiel SA.",
+      "year": "1994",
+      "doi": "10.1016/s0140-6736(94)91336-6",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "220280",
+      "correct_pmid": "36413",
+      "title": "Role of glucagon, catecholamines, and growth hormone in human glucose counterregulation. Effects of somatostatin and combined alpha- and beta-adrenergic blockade on plasma glucose recovery and glucose flux rates after insulin-induced hypoglycemia.",
+      "authors": "Rizza RA, Cryer PE, Gerich JE.",
+      "year": "1979",
+      "doi": "10.1172/jci109464",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "4762586",
+      "correct_pmid": "4771102",
+      "title": "Liver glycogen in man--the effect of total starvation or a carbohydrate-poor diet followed by carbohydrate refeeding.",
+      "authors": "Nilsson LH, Hultman E.",
+      "year": "1973",
+      "doi": "10.3109/00365517309084355",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "8772501",
+      "correct_pmid": "8772491",
+      "title": "Contribution of net hepatic glycogenolysis to glucose production during the early postprandial period.",
+      "authors": "Petersen KF, Price T, Cline GW, Rothman DL, Shulman GI.",
+      "year": "1996",
+      "doi": "10.1152/ajpendo.1996.270.1.e186",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "17976217",
+      "correct_pmid": "17963523",
+      "title": "Intentional overdose with insulin: prognostic factors and toxicokinetic/toxicodynamic profiles.",
+      "authors": "Mégarbane B, Deye N, Bloch V, Sonneville R, Collet C, Launay JM, Baud FJ.",
+      "year": "2007",
+      "doi": "10.1186/cc6168",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "17273843",
+      "correct_pmid": "16175061",
+      "title": "Prolonged hypoglycaemia after insulin lispro overdose.",
+      "authors": "Brvar M, Mozina M, Bunc M.",
+      "year": "2005",
+      "doi": "10.1097/00063110-200510000-00007",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "18558602",
+      "correct_pmid": "17764782",
+      "title": "Comparison of octreotide and standard therapy versus standard therapy alone for the treatment of sulfonylurea-induced hypoglycemia.",
+      "authors": "Fasano CJ, O'Malley G, Dominici P, Aguilera E, Latta DR.",
+      "year": "2008",
+      "doi": "10.1016/j.annemergmed.2007.06.493",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "18072157",
+      "correct_pmid": "17855820",
+      "title": "Assessment of hyperglycemia after calcium channel blocker overdoses involving diltiazem or verapamil.",
+      "authors": "Levine M, Boyer EW, Pozner CN, Geib AJ, Thomsen T, Mick N, Thomas SH.",
+      "year": "2007",
+      "doi": "10.1097/01.ccm.0000278916.04569.23",
+      "disposition": "identity corrected, then removed from unrelated overdose bibliography",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "10500929",
+      "correct_pmid": "10500931",
+      "title": "Drug-induced hypoglycemia.",
+      "authors": "Marks V, Teale JD.",
+      "year": "1999",
+      "doi": "10.1016/s0889-8529(05)70088-8",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "15460190",
+      "correct_pmid": "15628838",
+      "title": "Intentional overdose with insulin glargine and insulin aspart.",
+      "authors": "Tofade TS, Liles EA.",
+      "year": "2004",
+      "doi": "10.1592/phco.24.14.1412.43147",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "10868855",
+      "correct_pmid": "9051402",
+      "title": "Is type II diabetes associated with an increased risk of cognitive dysfunction? A critical review of published studies.",
+      "authors": "Strachan MW, Deary IJ, Ewing FM, Frier BM.",
+      "year": "1997",
+      "doi": "10.2337/diacare.20.3.438",
+      "disposition": "identity corrected, then removed from unrelated overdose bibliography",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "17083625",
+      "correct_pmid": "12398568",
+      "title": "Octreotide for sulfonylurea-induced hypoglycemia following overdose.",
+      "authors": "Carr R, Zed PJ.",
+      "year": "2002",
+      "doi": "10.1345/aph.1c076",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "6756541",
+      "correct_pmid": "6757014",
+      "title": "The effect of graded doses of insulin on total glucose uptake, glucose oxidation, and glucose storage in man.",
+      "authors": "Thiebaud D, Jacot E, DeFronzo RA, Maeder E, Jequier E, Felber JP.",
+      "year": "1982",
+      "doi": "10.2337/diacare.31.11.957",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "10780939",
+      "correct_pmid": "10780934",
+      "title": "Dose-response characteristics of insulin action on glucose metabolism: a non-steady-state approach.",
+      "authors": "Natali A, Gastaldelli A, Camastra S, Sironi AM, Toschi E, Masoni A, Ferrannini E, Mari A.",
+      "year": "2000",
+      "doi": "10.1152/ajpendo.2000.278.5.e794",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "8432408",
+      "correct_pmid": "8093879",
+      "title": "Dynamics of hepatic and peripheral insulin effects suggest common rate-limiting step in vivo.",
+      "authors": "Bradley DC, Poulin RA, Bergman RN.",
+      "year": "1993",
+      "doi": "10.2337/diab.42.2.296",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "11061536",
+      "correct_pmid": "11061533",
+      "title": "Suppression of systemic, intramuscular, and subcutaneous adipose tissue lipolysis by insulin in humans.",
+      "authors": "Stumvoll M, Jacob S, Wahl HG, Hauer B, Löblein K, Grauer P, Becker R, Nielsen M, Renn W, Häring H.",
+      "year": "2000",
+      "doi": "10.1210/jcem.85.10.6898",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "8522054",
+      "correct_pmid": "8971073",
+      "title": "Role of fatty acids in the pathogenesis of insulin resistance and NIDDM.",
+      "authors": "Boden G.",
+      "year": "1997",
+      "doi": "10.2337/diab.46.1.3",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "16439842",
+      "correct_pmid": "16439839",
+      "title": "Minimal model: perspective from 2005.",
+      "authors": "Bergman RN.",
+      "year": "2005",
+      "doi": "10.1159/000089312",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "10952455",
+      "correct_pmid": "10952453",
+      "title": "Insulin action and insulin resistance in human skeletal muscle.",
+      "authors": "Zierath JR, Krook A, Wallberg-Henriksson H.",
+      "year": "2000",
+      "doi": "10.1007/s001250051457",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "2074956",
+      "correct_pmid": "11460570",
+      "title": "The role of lipids in the pathogenesis of muscle insulin resistance and beta cell failure in type II diabetes and obesity.",
+      "authors": "Kraegen EW, Cooney GJ, Ye JM, Thompson AL, Furler SM.",
+      "year": "2001",
+      "doi": "10.1055/s-2001-18581",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "6117574",
+      "correct_pmid": "7287908",
+      "title": "Receptor and postreceptor defects contribute to the insulin resistance in noninsulin-dependent diabetes mellitus.",
+      "authors": "Kolterman OG, Gray RS, Griffin J, Burstein P, Insel J, Scarlett JA, Olefsky JM.",
+      "year": "1981",
+      "doi": "10.1172/jci110350",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "1307588",
+      "correct_pmid": "1464241",
+      "title": "Glycation products and the pathogenesis of diabetic complications.",
+      "authors": "Brownlee M.",
+      "year": "1992",
+      "doi": "10.2337/diacare.15.12.1835",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "12797473",
+      "correct_pmid": "12797466",
+      "title": "The role of oxidative stress in diabetic vascular and neural disease.",
+      "authors": "Yorek MA.",
+      "year": "2003",
+      "doi": "10.1080/1071576031000083161",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "1359290",
+      "correct_pmid": "3523247",
+      "title": "Natural course of insulin resistance in type I diabetes.",
+      "authors": "Yki-Järvinen H, Koivisto VA.",
+      "year": "1986",
+      "doi": "10.1056/nejm198607243150404",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    },
+    {
+      "old_pmid": "3297886",
+      "correct_pmid": "3297883",
+      "title": "Hyperglycemia decreases glucose uptake in type I diabetes.",
+      "authors": "Yki-Järvinen H, Helve E, Koivisto VA.",
+      "year": "1987",
+      "doi": "10.2337/diab.36.8.892",
+      "disposition": "bibliographic identity corrected",
+      "claim_appraisal": "not implied by bibliographic correction",
+      "local_landing_identity_verified": false
+    }
+  ],
+  "additional_corrections": [
+    {
+      "old_pmid": "34836413",
+      "correct_pmid": "34836409",
+      "authors": "Bell E et al.",
+      "year": 2021,
+      "doi": "10.3390/nu13114154",
+      "basis": "Original XML front matter and methods inspected; not Bao et al."
+    },
+    {
+      "pmid": "22124465",
+      "removed_wrong_pmc": "PMC3237648",
+      "correct_pmc": "PMC3237647",
+      "basis": "Original XML front matter; wrong PMC link removed"
+    }
+  ],
+  "unresolved_retired": [
+    {
+      "pmid": "27086134",
+      "reason": "Claimed Hilliard burnout review could not be identified; unsupported instrument claim and citation removed"
+    },
+    {
+      "pmid": "488572",
+      "reason": "Related Berger article identifies injection-site degradation, not the claimed title; removed from temperature citations rather than treating it as verified support"
+    },
+    {
+      "pmid": "15155879",
+      "reason": "Claimed Marshall 2004 identity unresolved; removed; hexosamine passage rewritten using inspected Marshall 1991 and Buse 2006 abstracts"
+    },
+    {
+      "pmid": "8403981",
+      "reason": "Conflated Roberge bibliographic account unresolved and unused; removed"
+    }
+  ]
+}

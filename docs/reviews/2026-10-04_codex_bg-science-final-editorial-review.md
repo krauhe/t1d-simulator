@@ -1,6 +1,6 @@
 # BG Science: post-correction scientific and editorial review
 
-4 October 2026 · Review only · Baseline `2026-10-03-v2`
+4 October 2026 · Review baseline `2026-10-03-v2`; correction statuses updated against `2026-10-04-v1`
 
 ## Principal assessment
 
@@ -8,7 +8,7 @@ BG Science is not ready to be described as fully verified. Recent corrections ha
 
 The strongest passages distinguish measured flux from concentration, population observations from individual prediction, and physiological mechanism from model identifiability. Preserve that depth. The main weakness is uneven integration: carefully appraised paragraphs sit beside older assertions that contradict their qualifications. Concision alone will not resolve this.
 
-No scientific source text, simulator code or model parameters were changed during this review. Findings below require an authorised correction pass. This is not a new systematic literature search or a claim that every underlying paper has been reappraised.
+The original review changed no scientific source text, simulator code or model parameters. Status annotations below record the subsequent authorised correction pass. This is not a new systematic literature search or a claim that every underlying paper has been reappraised.
 
 ## Methods and scope
 
@@ -24,7 +24,7 @@ The coordinating reviewer checked the principal findings against the canonical p
 
 ### BG26-01 — High priority: bibliographic identities remain unreliable
 
-Status: OPEN. Basis: direct local retrieval of indexed records, followed by manual comparison of candidate titles.
+Status: ⚠️ DELVIST (2026-10-04). 69 indexed identities plus Bell corrected; four unresolved citations retired. See the correction ledger. Full claim appraisal and public landing-page verification remain incomplete.
 
 A reproducible screen examined 294 quoted-title reference occurrences containing PubMed URLs in blockquote bibliographies, representing 284 unique identifiers. Europe PMC returned 282 records. A title-similarity screen flagged 77 occurrences. Manual inspection classified 71 as a different indexed title, three as harmless title abbreviations, one as a related-title discrepancy requiring further bibliographic investigation, and two as unresolved because no record was returned. These are reference occurrences, not 71 independent physiological errors. The screen does not cover all inline citations, ordinary non-blockquote bibliographies, DOI/PMC links, author/year fields or claim support.
 
@@ -43,7 +43,7 @@ The complete candidate/adjudication ledger is [the identity-screen JSON](2026-10
 
 ### BG26-02 — High priority: corrected Rizza boundaries are not propagated
 
-Status: OPEN. Basis: internal contradiction; indexed abstract checked, full text not newly appraised.
+Status: ✅ FIKSET (2026-10-04). Unsupported Rizza lipolysis and portal-insulin threshold attributions removed from §§7, 23 and 25; Stumvoll's compartment-specific results have their own source and context.
 
 §7 line 703 explicitly says the inspected Rizza abstract does not establish a lipolysis threshold. §25 narrows its numerical use to production and utilisation. Yet §7 line 763 still attributes a lipolysis EC50 of 8–11 μU/mL to Rizza, and §23 line 1994 repeats the corresponding range with the wrong identifier. The later §25 discussion also retains broader tissue/threshold assertions after explaining the narrow evidence basis.
 
@@ -51,7 +51,7 @@ Find a source actually measuring the relevant lipolysis endpoint or remove the u
 
 ### BG26-03 — High priority: the gastric-emptying table conflicts with its prose
 
-Status: OPEN. Basis: direct text comparison, prompted by Opus.
+Status: ✅ FIKSET (2026-10-04). Desai's abstract supports one consistent symptomatic-cohort table: between-person 40%, within-person 20%, category values 12/18/28%. Full-text appraisal remains pending.
 
 §5 lines 519–531 gives approximately 40% intersubject variability for Desai in prose but 47% in its table. The text identifies normal-emptying participants as a subgroup of a symptomatic clinical cohort, whereas the table puts their 12% within-person estimate under “Healthy subjects”. A stated 12–24% range also precedes a 28% subgroup estimate. These cannot be resolved by stylistic editing.
 
@@ -59,7 +59,7 @@ Re-extract the original study's populations, outcome definitions and within-/bet
 
 ### BG26-04 — High priority: insulin summaries change denominators and formulations
 
-Status: OPEN. Basis: internal quantitative inconsistency, prompted by Opus.
+Status: ✅ FIKSET (2026-10-04). Original Matveyenko Results establish the reduction denominator and rat protocol. Gradel's review separates aspart and lispro. The rate-constant/time mismatch was removed.
 
 §7 line 732 describes pulsatile delivery as producing 50–80% higher phosphorylation than constant delivery; line 765 describes constant delivery as producing 50–80% lower phosphorylation. Those are not equivalent denominators: if the first comparison is correct, the reverse reduction is approximately 33–44%. The original experiment must determine which description to retain.
 
@@ -67,7 +67,7 @@ The lipohypertrophy table at line 758 combines an aspart comparison with variabi
 
 ### BG26-05 — High priority: the exercise argument states a reconciliation it has not established
 
-Status: OPEN. Basis: textual reasoning check; original experiments require appraisal.
+Status: ✅ FIKSET (2026-10-04). Catecholamine-infusion capacity and physiological necessity are separated; the asserted reconciliation and universal dominance conclusion were removed.
 
 §9 line 911 quotes a review reporting negative human tests of catecholamine involvement above 80% maximal oxygen uptake, then states that a reconciliation has emerged in which a catecholamine-driven effect becomes detectable above that intensity. It ends by calling the issue unresolved. The text does not show what experiment resolves the quoted objection.
 
@@ -75,7 +75,7 @@ Organise this passage by the actual contrasts: associations, infusion experiment
 
 ### BG26-06 — High priority: several mechanistic claims still need source-level review
 
-Status: OPEN; verification candidates, not all demonstrated errors.
+Status: ⚠️ DELVIST (2026-10-04). All five specified targets received corrections: DKA trigger and potassium, hexosamine substrate/site/causality, SGLT1 species inference, cytokines and fever. Some replacements remain abstract-supported; broader illness/DKA claims lack exhaustive appraisal.
 
 1. §23 line 1994: a specified portal-insulin threshold for DKA and “glucagon excess is a necessary co-driver”. The linked source identities are unreliable, and the text needs direct support for the claimed necessity and threshold.
 2. §23 line 2006: “invariably” depleted potassium and the “most common cause of iatrogenic mortality” assertion. These universal/ranking claims require defined populations and supporting outcome data; the nearby ISPAD link points to another article.
@@ -87,7 +87,7 @@ These issues warrant targeted original-source work before a replacement scientif
 
 ### BG26-07 — Medium priority: correction history interrupts scientific explanation
 
-Status: OPEN. Basis: direct inspection, independently raised by both models.
+Status: ⚠️ DELVIST (2026-10-04). Selected correction-history sentences removed; necessary access limitations preserved. A complete sweep of residual historical wording is not claimed.
 
 Examples include “not 60%”, “the inherited table”, “not the previously described 20% circadian sensitivity oscillation” and repeated accounts of local retrieval failures. Readers do not need the earlier erroneous draft to understand the final result.
 
@@ -95,13 +95,13 @@ State the supported result and its consequential boundary. Move obsolete-number 
 
 ### BG26-08 — Medium priority: duplication allows scientific drift
 
-Status: OPEN. Basis: checked examples in §§5, 7–9 and 25.
+Status: ⚠️ DELVIST (2026-10-04). Desai, Rizza, lipohypertrophy and degludec repetitions consolidated or cross-referenced. Other repeated quantitative summaries remain.
 
 Numbers are repeated in prose, summary tables and T1D-specific lists, sometimes with a changed population or interpretation. Yardley's exercise comparison and degludec variability recur several times. Give each full comparison one primary location, use tables for aligned quantities, and use prose to explain the comparison rather than recite the cells. Cross-reference related sections while retaining enough context for standalone reading.
 
 ### BG26-09 — Medium priority: the introduction promises more than the document delivers
 
-Status: OPEN. Basis: direct inspection.
+Status: ✅ FIKSET (2026-10-04). Introduction states scope and mixed evidence basis; blanket primary-source and self-assessed peer-review-depth assurances removed.
 
 The introduction says numerical values throughout have primary citations, but numerous passages explicitly rely on reviews, abstracts or unverified inherited estimates. Replace this blanket assurance with the actual evidence approach. Remove self-assessment such as “peer-review depth”. The opening's premise about physiology being inadequately articulated outside specialist literature also needs support or a narrower statement of this reference's purpose.
 
@@ -109,7 +109,7 @@ An introduction can explain the clinical problem and scope without claiming comp
 
 ### BG26-10 — Medium priority: source-to-publication boundaries remain inconsistent
 
-Status: OPEN. Basis: direct inspection and rendering-code inspection.
+Status: ✅ FIKSET (2026-10-04). Arbitrary bold and simulator-status labels removed; implementation footers reduced to cross-links. Terminology highlighting is retained as a rendering choice.
 
 §26 still begins “Active in simulator”. Several implementation footers contain long inventories of simulator mechanisms, whereas the reference's agreed purpose is general physiology. Keep a short permitted implementation cross-link where appropriate; move implementation explanations to their owning document through a separately authorised change.
 
@@ -117,7 +117,7 @@ Arbitrary bold emphasis remains in models and physiology. Gemini also called `==
 
 ### BG26-11 — Review records contain a stale completion statement
 
-Status: OPEN. Basis: direct inspection of the previous audit.
+Status: ✅ FIKSET (2026-10-04). Previous audit conclusion reconciled with its 25-fixed/two-partial summary.
 
 The 3 October audit's status summary says 25 findings were fixed and two partly addressed, but its conclusion still says “All 27 audit items remain open”. Reconcile this historical report when implementing the new findings. Do not interpret the stale concluding sentence as evidence that the earlier corrections were never made.
 
@@ -158,6 +158,6 @@ All 30 numbered sections received external feedback. Coverage was divided betwee
 
 The introduction and common writing criteria accompanied the packets. Headings at packet boundaries were not counted as reviewed chapters. Gemini's final packet explicitly identified §§28–29 as absent; those sections were reviewed in its separate earlier packet. No intended numbered section remains uncovered by external feedback.
 
-The coordinating reviewer inspected the returned criticism, checked the priority passages against the canonical document and independently screened the specified bibliography subset. This does not certify every sentence or every original study. The 71 different-title occurrences require reconciliation; their count must not be presented as a count of false physiological claims. Findings BG26-01–11 remain OPEN, with the source-verification candidates in BG26-06 explicitly distinguished from demonstrated contradictions.
+The coordinating reviewer inspected the returned criticism, checked the priority passages against the canonical document and independently screened the specified bibliography subset. This does not certify every sentence or every original study. The original 71 different-title occurrences are reference-screen findings, not a count of false physiological claims. Updated statuses appear at each finding and below.
 
-Canonical BG Science remains unchanged. No simulator code, generated website, Knowledge Base chapter or model parameter was edited; no commit or push was performed. The deliverables are this report and the linked bibliographic screening ledger. Raw model responses and review packets remain in the private editorial-review collection.
+The subsequently authorised pass is documented in [the correction record](2026-10-04_bg-science-corrections.md) and [reference ledger](2026-10-04_bg-science-reference-corrections.json). Current status: seven findings fixed within their stated scope (BG26-02–05 and 09–11); four partially addressed (BG26-01, 06–08). Simulator code and model parameters remain outside this correction pass. Raw model responses and review packets remain private.
