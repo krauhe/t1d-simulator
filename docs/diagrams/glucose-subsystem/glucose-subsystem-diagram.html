@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Glucose subsystem — Hovorka 2004 two-compartment model — diagram</title>
+  <title>Glucose subsystem — Hovorka 2004 two-compartment model (modified) — diagram</title>
   <style>
     body {
       font-family: 'Inter', system-ui, sans-serif;
@@ -50,13 +50,13 @@
   </style>
 </head>
 <body>
-  <h1>Glucose subsystem — Hovorka 2004 two-compartment model</h1>
+  <h1>Glucose subsystem — Hovorka 2004 two-compartment model (modified)</h1>
   <div class="figure">
     <object type="image/svg+xml" data="figure.svg">
       <img src="validation.png" alt="Glucose subsystem — Hovorka 2004 two-compartment model">
     </object>
   </div>
-  <p class="scope">Two-compartment glucose distribution model from Hovorka et al. (<em>Physiol Meas</em> 25:905-920, 2004), extended with one contraction-mediated uptake flux. Plasma glucose Q1 receives gut absorption U_G and hepatic glucose production EGP, exchanges with peripheral Q2 through x1-driven transport and passive k12 backflow, and is cleared by F01c and renal excretion F_R. Q2 loses glucose through x2-driven disposal and the adapted Resalat flux β·E1; delayed exercise sensitivity changes the upstream EC50 of x1 and x2 rather than adding another multiplier here.</p>
+  <p class="scope">Two-compartment glucose distribution from Hovorka et al. (Physiol Meas 25:905-920, 2004), extended with a direct, glucose-dependent contraction sink from Q1: plasma glucose receives U_G and EGP, exchanges with Q2 through x1-driven transport and k12 backflow, and supplies F01c, F_R and U_ex. Q2 loses glucose through x2-driven disposal, while delayed exercise sensitivity changes the upstream EC50 of x1 and x2; arrow equations show requested rates, with simultaneous outgoing fluxes from each glucose pool proportionally limited to its available mass per time step before updating either pool.</p>
   <hr class="thin">
   <h2>Variables</h2>
   <div class="var-grid">
@@ -65,19 +65,23 @@
       <table class="var-table">
         <tr><td class="symbol">Q1</td><td class="def">plasma glucose (mmol); blood glucose BG = Q1 / V_G</td></tr>
         <tr><td class="symbol">Q2</td><td class="def">peripheral (intracellular) glucose (mmol) — muscle and adipose tissue</td></tr>
-        <tr><td class="symbol">x1</td><td class="def">insulin effect on Q1→Q2 transport (dimensionless, driven by plasma insulin I)</td></tr>
-        <tr><td class="symbol">x2</td><td class="def">insulin effect on Q2 disposal (dimensionless, driven by plasma insulin I)</td></tr>
+        <tr><td class="symbol">x1</td><td class="def">insulin effect on Q1→Q2 transport (min⁻¹, driven by plasma insulin I)</td></tr>
+        <tr><td class="symbol">x2</td><td class="def">insulin effect on Q2 disposal (min⁻¹, driven by plasma insulin I); requested disposal rate x2·Q2 in mmol/min</td></tr>
+        <tr><td class="symbol">D2</td><td class="def">gut compartment delivering glucose to plasma (see carb-absorption sub-model)</td></tr>
       </table>
     </div>
     <div>
       <h3>Flow variables (arrows + their parameters)</h3>
       <table class="var-table">
-        <tr><td class="symbol">U_G</td><td class="def">glucose appearance from gut absorption (mmol/min); sourced from gut two-compartment D1→D2 cascade</td></tr>
+        <tr><td class="symbol">U_G</td><td class="def">glucose appearance from gut absorption (mmol/min); rate = D2 / tau_G × splanchnicAbsorbMod, where tau_G is the absorption time constant and splanchnicAbsorbMod the blood-flow modifier; carbohydrate bioavailability A_G is already applied at D1 input</td></tr>
         <tr><td class="symbol">EGP</td><td class="def">endogenous (hepatic) glucose production (mmol/min) = EGP₀ · max(0, stressMultiplier − x3)</td></tr>
         <tr><td class="symbol">F01c</td><td class="def">insulin-independent glucose uptake (mmol/min) — obligate brain use plus RBC; approximately 0.0097 × weight</td></tr>
         <tr><td class="symbol">F_R</td><td class="def">renal glucose excretion (mmol/min); active only when BG exceeds the renal threshold (~9 mmol/L)</td></tr>
         <tr><td class="symbol">k12</td><td class="def">rate constant for Q2→Q1 backflow (min⁻¹)</td></tr>
-        <tr><td class="symbol">β·E1</td><td class="def">contraction-mediated uptake (mmol/min); E1 already contains normalized heart-rate and activity-type input</td></tr>
+        <tr><td class="symbol">U_ex</td><td class="def">net contraction-mediated disposal from Q1, independently of insulin-driven Q1→Q2 transport; requested rate β·E1·G/5.5 mmol/min (contraction in code), reduced by the shared Q1 outflow limiter when necessary; _lastContraction records the realized flux</td></tr>
+        <tr><td class="symbol">β</td><td class="def">default beta = 0.78 × (body weight / 70 kg) mmol/min; an adapted simulator amplitude, not clinically validated for this revised flux</td></tr>
+        <tr><td class="symbol">E1</td><td class="def">dimensionless contraction-response state from the exercise subsystem; includes normalized heart-rate and activity-type input</td></tr>
+        <tr><td class="symbol">G</td><td class="def">plasma glucose concentration Q1/V_G in mmol/L (BG); normalization exerciseReferenceGlucose = 5.5 mmol/L is not an affinity constant or clinically validated parameter, and U_ex is zero at G = 0</td></tr>
         <tr><td class="symbol">V_G</td><td class="def">glucose distribution volume (L) ≈ 0.16 × weight; converts Q1 from mmol to mmol/L for BG display</td></tr>
       </table>
     </div>

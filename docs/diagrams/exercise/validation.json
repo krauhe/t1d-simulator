@@ -1,6 +1,17 @@
 {
   "passed": true,
-  "nodeCount": 11,
-  "edgeCount": 12,
-  "conflicts": []
+  "nodeCount": 10,
+  "edgeCount": 13,
+  "conflicts": [
+    {
+      "type": "arrow-crosses-arrow",
+      "edges": [
+        "e6",
+        "e7"
+      ],
+      "crossings": 1,
+      "sharedEndpoint": false,
+      "severity": "warning"
+    }
+  ]
 }

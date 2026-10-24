@@ -118,4 +118,7 @@ Line numbers refer to this repair working tree; named functions are stable navig
 5. `tests/model-validation.html`, C.3/C.6/G.1/G.5/H.3/I.5/I.6/J.1–J.3/K.1–K.5 and `runTestQueue`, line 6351; `tests/insulin-clamp-validation.js`; `tests/simulation.test.js`.
 6. `docs/MODEL-IMPLEMENTATION.md`, version `2026-10-04-v1`; `.agents/skills/review/SKILL.md`; [original review and references](2026-10-04_codex_model-science-test-review.md#references).
 
-Current status: **9 fixed, 5 partial, 1 open**. These categories track the specific findings, not clinical certification of the simulator.
+Status at checkpoint `3969eac`: **9 fixed, 5 partial, 1 open**. The subsequent
+[exercise transport revision](2026-10-04_exercise-transport-revision.md) closes F01's
+structural conservation defect; see the audit's dated status for the current totals.
+These categories track specific findings, not clinical certification of the simulator.

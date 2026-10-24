@@ -205,13 +205,16 @@ function fixturePath(name) {
 // GENERATE: kør alle scenarier og skriv fixturer.
 // -----------------------------------------------------------------------------
 function generate() {
+    const scenarioArg = process.argv.find(arg => arg.startsWith('--scenario='));
+    const selected = scenarioArg ? SCENARIOS.filter(s => s.name === scenarioArg.slice(11)) : SCENARIOS;
+    if (!selected.length) throw new Error('Ukendt --scenario; ingen fixturer ændret');
     fs.mkdirSync(FIXTURE_DIR, { recursive: true });
-    for (const scn of SCENARIOS) {
+    for (const scn of selected) {
         const result = runScenario(scn);
         fs.writeFileSync(fixturePath(scn.name), JSON.stringify(result, null, 2) + '\n', 'utf8');
         console.log(`  SKREVET: ${scn.name}  (${result.samples.length} samples)`);
     }
-    console.log(`\n${SCENARIOS.length} fixturer genereret i ${path.relative(process.cwd(), FIXTURE_DIR)}`);
+    console.log(`\n${selected.length} fixturer genereret i ${path.relative(process.cwd(), FIXTURE_DIR)}`);
 }
 
 // Sammenlign forventet vs. faktisk; returnér liste af afvigelser.

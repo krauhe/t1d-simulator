@@ -4689,8 +4689,8 @@ const _forceInfo = {
         section: '#insulin-pharmacology'
     },
     exerciseUptake: {
-        da: '• Motion forstærker insulins effekt på muskler\n• Glukose optages hurtigere under og efter træning\n• Kontrol: Ja — du starter og stopper motion',
-        en: '• Exercise amplifies insulin effect on muscles\n• Glucose is absorbed faster during and after exercise\n• Control: Yes — you start and stop exercise',
+        da: '• Pilen viser musklernes direkte glukoseoptag fra blodet under motion og kort efter\n• Dette optag kræver ikke insulin\n• Motionens øgede insulinfølsomhed indgår separat i insulinvirkningen',
+        en: '• The arrow shows direct muscle glucose uptake from blood during exercise and briefly afterwards\n• This uptake does not require insulin\n• Increased insulin sensitivity from exercise is included separately in insulin action',
         section: '#aerobic-exercise'
     },
     stressHormones: {

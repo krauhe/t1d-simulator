@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Exercise model — Resalat E1 pathway with simulator extensions</title>
+  <title>Exercise — adapted simulator mechanisms (Resalat 2020; Romeres 2021)</title>
   <style>
     body {
       font-family: 'Inter', system-ui, sans-serif;
@@ -58,29 +58,28 @@
   </style>
 </head>
 <body>
-  <h1>Exercise model — Resalat E1 pathway with simulator extensions</h1>
+  <h1>Exercise — adapted simulator mechanisms (Resalat 2020; Romeres 2021)</h1>
   <div class="figure">
     <object type="image/svg+xml" data="figure.svg">
-      <img src="validation.png" alt="Exercise model">
+      <img src="validation.png" alt="Adapted simulator exercise pathways with direct contraction-mediated Q1 disposal">
     </object>
   </div>
-  <p class="scope">The contraction pathway adapts the E1 equation from Resalat et al. (PLOS ONE 15:e0237511, 2020): normalized heart-rate excess is filtered with a 5-minute time constant and enters Q2 once as β·E1. Exercise-specific hepatic output, delayed insulin sensitivity, muscle-glycogen turnover and pulseFactor are explicit simulator extensions calibrated or constrained against exercise literature.</p>
+  <p class="scope">This pathway overview retains the E1 response from Resalat et al. (PLOS ONE 15:e0237511, 2020), while the insulin-independent, glucose-dependent disposal structure is inspired by Romeres et al. (2021), equations 4 and 11: U_ex removes glucose directly from Q1, independently of insulin-mediated transport through Q2. These are adapted simulator mechanisms, not a reproduction of either published model; β and the 5.5 mmol/L reference are not clinically validated, and glycogen remains a nonconserved capacity heuristic pending revision.</p>
+  <p>This is a pathway overview, not a complete ODE-state diagram. The dotted insulin-PK box refers to a separate subsystem, not a single combined depot state. Dashed arrows show control signals; the solid U_ex arrow shows glucose leaving Q1. Q2 transport and the other glucose fluxes are outside this figure's scope.</p>
   <hr class="thin">
   <h2>Variables</h2>
   <div class="var-grid">
     <div>
-      <h3>Compartment variables (boxes)</h3>
+      <h3>States and pathway signals (boxes)</h3>
       <table class="var-table">
         <tr><td class="symbol">type, intensity</td><td class="def">Selected activity profile and intensity; supplies independent parameters for contraction uptake, hepatic drive, delayed sensitivity and glycogen use.</td></tr>
         <tr><td class="symbol">HR</td><td class="def">Current heart rate in beats per minute; approaches the activity-specific target gradually.</td></tr>
         <tr><td class="symbol">E1</td><td class="def">Dimensionless contraction-response state; dE1/dt = (exerciseInput − E1) / 5 min.</td></tr>
         <tr><td class="symbol">exerciseHepaticDrive</td><td class="def">Bounded exercise-specific hepatic-output state; decays after exercise with a 30-minute half-life.</td></tr>
         <tr><td class="symbol">fast + early + late</td><td class="def">Continuous delayed insulin-sensitivity components with independent activity-specific scales and 15-minute, 4-hour and 18-hour decay half-lives.</td></tr>
-        <tr><td class="symbol">muscleGlycogenGrams</td><td class="def">Intracellular bookkeeping pool used during exercise and replenished afterward without an additional plasma-glucose drain.</td></tr>
+        <tr><td class="symbol">muscleGlycogenGrams</td><td class="def">Nonconserved capacity heuristic that gates early delayed sensitivity; replenishment is not limited by realized glucose uptake and is not debited from Q1 or Q2, so this is not validated glycogen mass bookkeeping and requires revision.</td></tr>
         <tr><td class="symbol">pulseFactor</td><td class="def">Heart-rate-dependent multiplier for rapid and basal subcutaneous insulin absorption.</td></tr>
-        <tr><td class="symbol">Q1</td><td class="def">Plasma-accessible glucose pool in mmol.</td></tr>
-        <tr><td class="symbol">Q2</td><td class="def">Peripheral glucose pool in mmol; receives the contraction-mediated drain.</td></tr>
-        <tr><td class="symbol">S1/S2, S1b/S2b</td><td class="def">Rapid and basal two-stage subcutaneous insulin depots.</td></tr>
+        <tr><td class="symbol">Q1</td><td class="def">Plasma-accessible glucose pool in mmol; source of the direct contraction sink, not a new muscle compartment.</td></tr>
         <tr><td class="symbol">x1, x2 EC50 shift</td><td class="def">Muscle insulin-action channels whose EC50 is shifted by the delayed sensitivity response; hepatic x3 is unchanged.</td></tr>
       </table>
     </div>
@@ -88,7 +87,9 @@
       <h3>Flow variables (arrows + their parameters)</h3>
       <table class="var-table">
         <tr><td class="symbol">exerciseInput</td><td class="def">max(0, (HR − HR_rest) / HR_rest) × contractionUptakeScaling.</td></tr>
-        <tr><td class="symbol">β·E1</td><td class="def">Insulin-independent contraction-mediated glucose uptake applied once in the Q2 equation.</td></tr>
+        <tr><td class="symbol">U_ex</td><td class="def">Requested net contraction-mediated disposal = β·E1·G/5.5 in mmol/min (contraction in code); applied once as a Q1 sink and zero at G = 0. Simultaneous outgoing fluxes from each glucose pool are proportionally limited to its available mass per time step; realized U_ex is stored as _lastContraction.</td></tr>
+        <tr><td class="symbol">β</td><td class="def">Default beta = 0.78 × (body weight / 70 kg) mmol/min; adapted reference amplitude, not clinically validated for this revised flux.</td></tr>
+        <tr><td class="symbol">G</td><td class="def">Plasma glucose concentration Q1/V_G in mmol/L; 5.5 mmol/L is the normalization exerciseReferenceGlucose, not a measured affinity constant or a clinically validated parameter.</td></tr>
         <tr><td class="symbol">EGP_ex</td><td class="def">Hepatic glucose output generated by exerciseHepaticDrive × liver-glycogen availability.</td></tr>
         <tr><td class="symbol">glycogenUseScaling</td><td class="def">Activity-specific scale for muscle-glycogen consumption only.</td></tr>
         <tr><td class="symbol">U_I, U_Ib</td><td class="def">Rapid and basal insulin appearance rates accelerated by pulseFactor.</td></tr>

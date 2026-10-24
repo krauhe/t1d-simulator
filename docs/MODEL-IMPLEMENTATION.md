@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-10-04-v1 -->
+<!-- doc-version: 2026-10-04-v2 -->
 # Physiological Model — T1D Simulator
 
 *This page is the technical documentation of the simulator's physiological engine.
@@ -182,7 +182,7 @@ The diagram below shows all 16 state variables (colored boxes), the flows betwee
   │   ↓  × A_G    │      │ U_I      │  U_Ib  → Ib   │  │  delayed ISF     │
   └───────┬───────┘      └───┬──────┴──────┬────────┘  └──┬────────────┬──┘
           │                  │             │               │            │
-          │ U_G              │ U_I    U_Ib              β·E1       EC50 shift
+          │ U_G              │ U_I    U_Ib               U_ex       EC50 shift
           │                  │     (both→I)                │     + hepatic EGP
           ▼                  └──────┬──────┘               ▼            │
   ┌──────────────────────────────────────────────────────────────────────┐
@@ -191,15 +191,15 @@ The diagram below shows all 16 state variables (colored boxes), the flows betwee
   │  Sources (+):                     Drains (−):                        │
   │    U_G    food absorption           F₀₁c  brain (~5.5 g/hr)         │
   │    EGP    liver production          F_R   kidneys (BG > 9 mmol/L)   │
-  │    k₁₂·Q2  return from muscles     x1·Q1·exF  transport → Q2       │
+  │    k₁₂·Q2  return from muscles      x1·Q1  transport → Q2             │
+  │                                     U_ex  contraction uptake        │
   └──────────────────┬───────────────────────────────▲───────────────────┘
-                     │ x1·Q1·exerciseFactor          │ k₁₂·Q2
+                     │ x1·Q1                         │ k₁₂·Q2
                      ▼                               │
   ┌──────────────────────────────────────────────────┴───────────────────┐
   │  Q2 — PERIPHERAL GLUCOSE             (muscles & adipose tissue)     │
   │                                                                      │
-  │  − exerciseFactor · x2 · Q2          insulin-driven disposal        │
-  │  − β · E1                            contraction-mediated uptake    │
+  │  − x2 · Q2                          insulin-driven disposal          │
   └──────────────────────────────────────────────────────────────────────┘
 
   ┌──────────────────────────────────────────────────────────────────────┐
@@ -365,6 +365,9 @@ everything that **adds** glucose to the blood and everything that **removes** it
   in the urine because filtered glucose exceeds the renal reabsorption capacity.
 - *Insulin-driven uptake:* Insulin transports glucose from the blood into
   muscles and adipose tissue
+- *Contraction-mediated uptake (U_ex):* A separate insulin-independent net
+  uptake from Q1, proportional to E1 and available glucose concentration
+  (see §6). It is not also subtracted from Q2.
 
 ### Why is this important to understand?
 
@@ -1354,17 +1357,22 @@ parameter cannot silently compensate for another:
 
 1. **Contraction-mediated glucose uptake (E1).** The activity profile supplies
    a normalized contraction input. E1 follows the Resalat first-order equation
-   with `τ = 5 min`, and the Hovorka peripheral compartment receives the flux
-   `β × E1` exactly once:
+   with `τ = 5 min`. A separate net uptake removes glucose from Q1 rather
+   than depending on insulin-mediated transport into Q2:
 
    ```
    dE1/dt = (exerciseInput - E1) / 5
-   dQ2/dt = ... - β × E1
+   U_ex = β × E1 × G / G_ref
+   dQ1/dt = ... - U_ex
+   G = Q1 / V_G; G_ref = 5.5 mmol/L
    exerciseInput = HR_effect_raw × contractionUptakeScaling
    ```
 
-   `HR_effect_raw` is not multiplied into `dQ2/dt` a second time. E1 therefore
-   contains the complete heart-rate and activity-type drive. Resalat et al.
+   E1 contains the heart-rate and activity-type drive; neither is multiplied
+   into U_ex a second time. The glucose-proportional independent-disposal
+   structure is adapted from Romeres et al. (2021), equations 4 and 11,
+   rather than reproducing their complete fitted model. G_ref normalises
+   the retained amplitude; it is not a transporter affinity. Resalat et al.
    report `β = 0.78 mmol/min` as an absolute subject-fitted flux. The simulator
    uses that value at its 70 kg reference weight and scales it linearly with
    body weight:
@@ -1376,6 +1384,16 @@ parameter cannot silently compensate for another:
    This is an adapted body-size approximation because the game has no
    independent lean-mass state. It prevents a fixed absolute uptake flux from
    being disproportionately strong at 40 kg and weak at 100 kg.
+
+   The inherited β and chosen G_ref have not been jointly recalibrated for
+   this new pathway. In every Euler substep, all outgoing fluxes from each
+   glucose pool share a proportional limit of `pool amount / dt`; incoming
+   glucose becomes available on the next substep. Diagnostic rates report
+   realised rather than requested fluxes. This numerical safeguard preserves
+   Q1 + Q2 mass balance, including empty Q2 and zero-insulin states; it does
+   not validate predicted severe hypoglycaemia. See the [transport decision
+   record](reviews/2026-10-04_exercise-transport-revision.md) for source appraisal,
+   candidate comparison and tests.
 
 2. **Exercise-specific hepatic glucose production.** A separate bounded state
    (`exerciseHepaticDrive`) represents catecholamine- and substrate-linked
@@ -1508,14 +1526,12 @@ higher after 24 hours, matching Breen et al. (2011). A session that continues
 for several hours develops this response while it is still running; stopping
 the session causes no discontinuity.
 
-**Net result:** At exact basal steady state, the deterministic 60-minute
-calibration gives approximately +0.25 mmol/L (low), +0.54 mmol/L (medium) and
-+0.94 mmol/L (high) for the 70 kg reference profile. The 40 and 100 kg profiles
-remain within about 0.03 mmol/L of these changes because contraction uptake is
-scaled with body weight. This is a deliberate educational calibration that
-makes the possible liver-driven rise visible; it is not an individual
-prediction or a claim that resistance exercise always raises BG. More active
-insulin or a fed context can still convert the rise into a fall.
+**Net result:** After the October 2026 transport revision, the deterministic
+60-minute steady-state scenario gives +0.078, +0.175 and +0.373 mmol/L for low,
+medium and high intensity in the 70 kg reference profile. These are internal
+regression values, not clinical targets. The previous larger educational
+rise was not restored by increasing hepatic output. More active insulin or
+a fed context can still convert the rise into a fall.
 
 **Heart rate targets:**
 - Low: 85 bpm (light weights, machines)
@@ -1666,7 +1682,7 @@ prevents threshold-induced jumps in effective ISF.
 - Decays with `t½ = 15 min` after the exercise stimulus ends
 - Has a large, intensity-graded amplitude
 - Is deliberately separate from insulin-independent contraction uptake, which
-  is represented by `β · E1` in `dQ2/dt`
+  is represented by `U_ex = β · E1 · G / G_ref` in `dQ1/dt`
 
 ```
 While the stimulus is active:
@@ -1807,7 +1823,7 @@ smoothly as the pool nears capacity.
 
 **No separate plasma drain.** Insulin-stimulated glucose uptake and
 non-oxidative disposal are already represented by the Hovorka `x1`/`x2`
-channels; contraction-mediated uptake is represented by `β · E1`. Muscle
+channels; contraction-mediated uptake is represented by `U_ex` from Q1. Muscle
 glycogen synthesis would require allocation from actual uptake or other traced
 precursors in a conserved model. Here, the refill rate is not bounded by those
 fluxes. It is therefore a capacity heuristic, not verified intracellular mass
@@ -3212,14 +3228,15 @@ demonstrated through fixed fictional characters. The complete simulator has not 
 evaluated for individual prediction and must not be used as a basis for treatment.
 Important limitations:
 
-The October 2026 model audit leaves three structural questions unresolved.
-First, at low insulin action, exercise can request more Q2 glucose disposal than
-the compartment contains; clipping Q2 to zero hides a mass-balance residual.
-Second, liver and muscle glycogen states are capacity proxies: muscle refill is
+The October 2026 exercise revision corrects the Q2-overdraw defect by providing
+a separate glucose-dependent Q1 uptake pathway and conservative pool limits.
+Its amplitude still needs joint exercise/insulin calibration. Liver and muscle
+glycogen states remain capacity proxies: muscle refill is
 not bounded by measured disposal, and hepatic refill can maintain high stores
-during a prolonged fast. Third, the insulin curve requires joint transient-bolus
-and sustained-clamp calibration. These are not corrected by the bookkeeping
-repairs described in [the repair decision record](reviews/2026-10-04_model-review-fixes.md).
+during a prolonged fast. The insulin curve also requires joint transient-bolus
+and sustained-clamp calibration. See the [original repairs](reviews/2026-10-04_model-review-fixes.md)
+and [exercise revision](reviews/2026-10-04_exercise-transport-revision.md) for the
+boundary between corrected bookkeeping and outstanding physiological calibration.
 
 The low-BG activity throttle reduces the heart-rate target and therefore
 heart-rate-coupled effects. It does not proportionally reduce every activity
@@ -3227,7 +3244,7 @@ output: scheduled energy expenditure, activity duration, hepatic drive and
 glycogen-use rules have separate inputs. It is not a validated global exercise-capacity model.
 
 The effects panel now reports the last substep's Q1 fluxes. Net Q1-to-Q2
-transport is counted once; Q2 disposal and insulin suppression of EGP are not
+transport and separate contraction uptake are each counted once; Q2 disposal and insulin suppression of EGP are not
 added again. The basal/rapid split uses plasma insulin source fractions as a
 display convention, not causal attribution to individual doses. Modifiers use
 a diamond rather than a flux arrow, and the five-row display is not a complete flux ledger.

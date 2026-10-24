@@ -180,6 +180,12 @@ class HovorkaModel {
         // uforholdsmæssigt kraftigt ved 40 kg og for svagt ved 100 kg.
         const betaAt70Kg = options.beta || 0.78;
         this.beta = betaAt70Kg * (this.BW / 70); // Direct muscle glucose uptake [mmol/min]
+        // Normalisering af den kontraktionsmedierede mass-action-flux, ikke Km.
+        // U_ex = beta * E1 * G/5,5. Ved G=5,5 bevares den tidligere referenceflux;
+        // ved tom Q1 er optaget nul, også når E1 stadig er positiv. Strukturen er
+        // inspireret af Romeres 2021, eq. 4/11; beta er fortsat en tilpasning.
+        // Se docs/reviews/2026-10-04_exercise-transport-revision.md.
+        this.exerciseReferenceGlucose = 5.5; // [mmol/L]
         this.HR_base = options.HR_base || 60; // Resting heart rate [bpm]
 
         // -----------------------------------------------------------------
@@ -534,12 +540,12 @@ class HovorkaModel {
         // at hyperglycaemia. BG-SCIENCE §4 holds CMRglc approximately
         // constant; a clamp at F_01 can be considered as a future improvement.
         const F_01s = this.F_01 / 0.85;
-        const F_01c = F_01s * G / (G + 1);
+        let F_01c = F_01s * G / (G + 1);
 
         // Renal clearance — kidneys excrete glucose when BG exceeds the threshold.
         // Above ~9 mmol/L the kidneys begin to "spill" glucose into the urine.
         // This is an important protective mechanism against extreme hyperglycaemia.
-        const F_R = (G >= this.R_thr) ? this.R_cl * (G - this.R_thr) * this.V_G : 0;
+        let F_R = (G >= this.R_thr) ? this.R_cl * (G - this.R_thr) * this.V_G : 0;
 
         // Endogenous glucose production (EGP) — hepatic glucose output.
         // EGP is a balance between insulin suppression (x3) and stimulation
@@ -572,6 +578,36 @@ class HovorkaModel {
         // could NEVER override — glucagon was ineffective during hypo!
         const EGP = Math.max(0, this.EGP_0 * (this.stressMultiplier - x3));
 
+        // Glukosestrømme [mmol/min] beregnet ved samme starttilstand. Kontraktion
+        // har en særskilt netto-optagsvej fra Q1, uafhængig af x1 og insulin.
+        // Q2 beskriver fortsat den insulinmedierede transport/disposal-vej.
+        // Netto-optaget samler transport og anvendelse i én flux; det er ikke en
+        // ekstra anatomisk pool eller et bevis for direkte målt GLUT4-kinetik.
+        let transport = x1 * Q1;
+        let returning = this.k_12 * Q2;
+        let disposal = x2 * Q2;
+        let contraction = this.beta * E1 * G / this.exerciseReferenceGlucose;
+
+        // Begræns samtidige udløb til deres kildes disponible masse. Indløb fra
+        // dette Euler-trin bliver først disponible i næste trin. Et lager må
+        // ikke overtrækkes og derefter nulstilles, mens det urealiserede forbrug
+        // stadig tælles med. Begrænsningen ændrer ikke normale, ubegrænsede trin.
+        const plasmaOut = F_01c + F_R + transport + contraction;
+        const peripheralOut = returning + disposal;
+        const plasmaScale = dt > 0 && plasmaOut > 0 ? Math.min(1, Q1 / (dt * plasmaOut)) : 1;
+        const peripheralScale = dt > 0 && peripheralOut > 0 ? Math.min(1, Q2 / (dt * peripheralOut)) : 1;
+        F_01c *= plasmaScale;
+        F_R *= plasmaScale;
+        transport *= plasmaScale;
+        contraction *= plasmaScale;
+        returning *= peripheralScale;
+        disposal *= peripheralScale;
+
+        // Gem realiserede, ikke blot forespurgte, strømme til tests og visning.
+        this._lastTransport = transport;
+        this._lastReturn = returning;
+        this._lastDisposal = disposal;
+        this._lastContraction = contraction;
         // Store derived quantities so they can be read externally (e.g. for physiology dashboard).
         // These are updated on every step() call and reflect the most recent computation.
         this._lastEGP = EGP;
@@ -616,21 +652,18 @@ class HovorkaModel {
         //   - F_01c: brain consumption
         //   - F_R: renal excretion
         //   - x1 * Q1: insulin-driven transport to periphery
-        const dQ1 = -(F_01c + F_R) - x1 * Q1
-                    + this.k_12 * Q2 + U_G + EGP;
+        //   - contraction: særskilt insulin-uafhængigt netto-optag
+        const dQ1 = -(F_01c + F_R) - transport
+                    + returning + U_G + EGP - contraction;
 
         // Peripheral glucose (Q2): muscle and adipose tissue
         //   + x1 * Q1: inflow from plasma (insulin-driven transport)
         //   - k_12 * Q2: passive diffusion back to plasma (NOT exercise-affected)
         //   - x2 * Q2: insulin-driven oxidation in muscle. Motionsbetinget
         //     insulinfølsomhed er allerede indbygget i x1/x2-målene via EC50.
-        //   - beta * E1: direct muscle uptake during exercise (insulin-independent).
-        // E1 is already the filtered normalized contraction stimulus, equivalent to
-        // Resalat's beta * E1_bpm / HR_base. Multiplying by heart rate again would
-        // square the stimulus.
-        const dQ2 = x1 * Q1 - this.k_12 * Q2
-                    - x2 * Q2
-                    - this.beta * E1;
+        // Kontraktionsoptaget tælles kun i Q1. Et ekstra Q2-dræn ville både
+        // dobbelttælle optaget og igen gøre det afhængigt af insulinens transport.
+        const dQ2 = transport - returning - disposal;
 
         // Plasma insulin: inflow from BOTH depots (rapid + basal), elimination.
         // S1/S2 (rapid) and S1b/S2b (basal) are separate depots with their own tau_I.

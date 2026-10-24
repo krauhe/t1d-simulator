@@ -36,8 +36,9 @@ for(const tauI of [55,88]) for(const dt of [1,0.5]) {
   }
   result.rapidExpiry.push({tauI,dt,initialEffectiveU:7.8,beforeExpiryU:before/1000,afterExpiryU:after/1000,absorbedU:absorbed/1000,unaccountedU:7.8-(absorbed+after)/1000});
 }
-// Glukosemassebalance over selve Hovorka-trinnet; perifert optag må ikke
-// fortsætte med større masse end tilgængeligt i det perifere kompartment.
+// Glukosemassebalance over selve Hovorka-trinnet. Efter F01-revisionen skal
+// disposal læses som faktisk realiserede rater, ikke den gamle beta*E1-formel.
+// Før-revisionens ligninger reproduceres i tests/experiments/exercise-balance.cjs.
 result.massBalance=[];
 for(const insulinFree of [false,true]) for(const dt of [1,0.5,0.1]) {
   const e=engine({stressResponse:0,glucotoxicity:0,ketones:0});
@@ -45,8 +46,8 @@ for(const insulinFree of [false,true]) for(const dt of [1,0.5,0.1]) {
   const original=e.hovorka.step.bind(e.hovorka);let residual=0,maxResidual=0,q2ZeroSteps=0;
   e.hovorka.step=d=>{
     const h=e.hovorka,oldMass=h.state[S.Q1]+h.state[S.Q2];
-    const disposal=h.state[S.x2]*h.state[S.Q2]+h.beta*h.state[S.E1];
     original(d);
+    const disposal=h._lastDisposal+h._lastContraction;
     const expected=(h._lastUG+h._lastEGP-h._lastF01c-h._lastFR-disposal)*d;
     const r=h.state[S.Q1]+h.state[S.Q2]-oldMass-expected;
     residual+=r;maxResidual=Math.max(maxResidual,r);if(h.state[S.Q2]===0)q2ZeroSteps++;

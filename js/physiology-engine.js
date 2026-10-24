@@ -1463,24 +1463,25 @@ class PhysiologyEngine {
             // tidspunkt som Euler-trinnet. Dette er diagnostik, ikke ny fysiologi.
             const hs = this.hovorka.state;
             const q1Before = hs[ENGINE_HOVORKA_STATE_IDX.Q1];
-            const plasmaExchange = hs[ENGINE_HOVORKA_STATE_IDX.x1] * q1Before -
-                this.hovorka.k_12 * hs[ENGINE_HOVORKA_STATE_IDX.Q2];
             const basalFraction = Math.min(1, Math.max(0,
                 hs[ENGINE_HOVORKA_STATE_IDX.Ib] / Math.max(hs[ENGINE_HOVORKA_STATE_IDX.I], 1e-12)));
             this.hovorka.step(stepDt);
             this.applyPlasmaInsulinClamp();
+            const plasmaExchange = this.hovorka._lastTransport - this.hovorka._lastReturn;
             this.q1Fluxes = {
                 gut: this.hovorka._lastUG,
                 egp: this.hovorka._lastEGP,
                 independent: this.hovorka._lastF01c,
                 renal: this.hovorka._lastFR,
                 exchange: plasmaExchange,
+                contraction: this.hovorka._lastContraction,
                 basalFraction,
                 rescue: 0,
                 // En eventuel numerisk gulvkorrektion er ikke en fysiologisk kilde.
                 numerical: (hs[ENGINE_HOVORKA_STATE_IDX.Q1] - q1Before) / stepDt -
                     (this.hovorka._lastUG + this.hovorka._lastEGP -
-                     this.hovorka._lastF01c - this.hovorka._lastFR - plasmaExchange)
+                     this.hovorka._lastF01c - this.hovorka._lastFR - plasmaExchange -
+                     this.hovorka._lastContraction)
             };
 
             // --- 4. Update ketone compartments (after Hovorka, so plasmaInsulin is fresh) ---
@@ -3140,11 +3141,10 @@ class PhysiologyEngine {
         if (flux.rescue > 0) forces.push({ name: 'glucagonRescue', direction: 'up', magnitude: flux.rescue, kind: 'flux' });
         if (Math.abs(flux.numerical) > 1e-10) forces.push({ name: 'numericalCorrection', direction: flux.numerical > 0 ? 'up' : 'down', magnitude: Math.abs(flux.numerical), kind: 'numerical' });
 
-        // Motionsoptag sker i Q2. Vis det som mekanisme, ikke endnu et Q1-dræn.
-        const e1 = this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.E1] || 0;
-        const exerciseDirectUptake = this.hovorka.beta * e1;
-        if (exerciseDirectUptake > 0.001) {
-            forces.push({ name: 'exerciseUptake', direction: 'down', magnitude: exerciseDirectUptake, kind: 'modifier' });
+        // Særskilt realiseret kontraktionsflux fra Q1; insulinens forsinkede
+        // eftereffekt er allerede med i x1/x2 og tælles ikke igen i denne række.
+        if (flux.contraction > 0) {
+            forces.push({ name: 'exerciseUptake', direction: 'down', magnitude: flux.contraction, kind: 'flux' });
         }
 
         // Brain consumption — F01c flux (mmol/min), always active

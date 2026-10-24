@@ -1,6 +1,6 @@
 # T1D Simulator
 
-**Try. Learn. Repeat.**
+**Experiment, learn, repeat**
 
 ![Status: Under Construction](https://img.shields.io/badge/Status-Under%20Construction%20🚧-orange?style=for-the-badge)
 

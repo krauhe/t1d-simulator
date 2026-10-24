@@ -7,7 +7,7 @@ const http = require('node:http');
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
-const output = path.join(__dirname, 'playwright/2026-10-04-model-fixes');
+const output = path.join(__dirname, 'playwright/2026-10-04-exercise-transport');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
 
 (async () => {
@@ -57,6 +57,7 @@ const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
             fs.writeFileSync(path.join(output, name + '.json'), JSON.stringify(report, null, 2));
             assert.equal(errors.length, 0, 'Ingen ufangede JavaScript-fejl');
             assert.equal(report.summary.errors, injectFault ? 1 : 0);
+            assert.equal(report.summary.failed, 0, 'Ingen fejlede testudsagn i HTML-suiten');
             if (injectFault) assert.match(report.sections.find(s => s.execution === 'error').error, /missing-review-fixture/);
             else {
                 await page.screenshot({ path: path.join(output, 'overview.png') });
@@ -84,8 +85,8 @@ const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
                 { name: 'tissueReturn', direction: 'up', magnitude: 0.4, kind: 'flux' },
                 { name: 'glucagonRescue', direction: 'up', magnitude: 0.3, kind: 'flux' },
                 { name: 'numericalCorrection', direction: 'up', magnitude: 0.2, kind: 'numerical' },
-                { name: 'bolusInsulin', direction: 'down', magnitude: 0.3, kind: 'flux' },
-                { name: 'exerciseUptake', direction: 'down', magnitude: 0.4, kind: 'modifier' }
+                { name: 'exerciseUptake', direction: 'down', magnitude: 0.3, kind: 'flux' },
+                { name: 'ffaResistance', direction: 'up', magnitude: 0.4, kind: 'modifier' }
             ] });
             return [...list.querySelectorAll('.effect-row')].map(row => ({
                 text: row.innerText, title: row.title, link: row.dataset.link

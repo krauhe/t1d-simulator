@@ -55,7 +55,7 @@ const I18N = {
     // =========================================================================
     da: {
         // --- Slogan ---
-        'ui.slogan': 'Prøv. Lær. Gentag.',
+        'ui.slogan': 'Eksperimenter, lær, gentag',
 
         // --- Knapper ---
         'ui.btn.start': 'Start',
@@ -1038,7 +1038,7 @@ const I18N = {
     // =========================================================================
     en: {
         // --- Slogan ---
-        'ui.slogan': 'Try. Learn. Repeat.',
+        'ui.slogan': 'Experiment, learn, repeat',
 
         // --- Buttons ---
         'ui.btn.start': 'Start',

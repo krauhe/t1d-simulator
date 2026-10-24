@@ -10,7 +10,7 @@ Two reproducible conservation defects deserve priority: contraction-mediated upt
 
 The HTML validation page is broad but insufficient as a validation report. It completed 51 sections with one execution error and warnings in three other sections. One recovery warning is itself a test-analysis error. A completed page or successful regression command must not be read as scientific approval.
 
-Finding totals at the audit baseline: **2 CRITICAL, 10 WARNING, 3 NOTE; initially all 15 open.** The follow-up adds F15 and extends F13. Severity refers to modelling or validation integrity, not an estimate of clinical harm. Original measurements below describe that baseline; dated STATUS annotations record subsequent repairs. Current status: **9 fixed, 5 partial, 1 open**. See the [repair decision record](2026-10-04_model-review-fixes.md).
+Finding totals at the audit baseline: **2 CRITICAL, 10 WARNING, 3 NOTE; initially all 15 open.** The follow-up adds F15 and extends F13. Severity refers to modelling or validation integrity, not an estimate of clinical harm. Original measurements below describe that baseline; dated STATUS annotations record subsequent repairs. Current status: **10 fixed, 5 partial, 0 wholly unaddressed**. See the [repair decision record](2026-10-04_model-review-fixes.md) and [exercise transport revision](2026-10-04_exercise-transport-revision.md). Partial findings retain unresolved work.
 
 ## Scope and verification
 
@@ -48,7 +48,7 @@ In a deliberately insulin-free boundary state, 70 kg, initial BG 5.5 mmol/L, 60 
 
 Required resolution: define substrate-limited realised contraction uptake and its transport coupling, then check the combined Q1/Q2 balance. Merely deleting the non-negativity clamp or subtracting the missing sink arbitrarily from Q1 would not constitute a validated repair. Acceptance tests should cover normal, low-insulin and depleted-Q2 states, exercise ablation and onset/offset at multiple actual substep sizes.
 
-STATUS: ❌ ÅBEN (2026-10-04). Structural transport/substrate-limitation choice deferred by the user. The unchanged diagnostic still shows a 10.40 g residual at dt=0.1 min.
+STATUS: ✅ FIKSET (2026-10-04, working tree after `3969eac`). Following user approval, contraction uptake now has a separate glucose-dependent Q1 pathway. All outgoing fluxes share each pool's source limit; diagnostics use realised rates. Twenty new invariant/continuity tests pass, including zero insulin and empty Q2. The 120-minute boundary experiment conserves glucose within 10⁻⁸ g at dt=1/0.5/0.1 min. The [decision record](2026-10-04_exercise-transport-revision.md) distinguishes this structural repair from the still-open amplitude, glycogen and insulin calibration.
 
 ### F02 — CRITICAL: six-hour bolus cleanup destroys residual insulin
 
@@ -357,4 +357,4 @@ Reviewed raw-file SHA-256 values:
 | `docs/BG-SCIENCE.md` | `dce6d03d5c7f9f48fc42e9412adb86d72d72dbc7806f9fbdbd4929779f1bfd27` |
 | `tests/model-validation.html` | `ffda024249db4bd69ec3ccb422b4e342c6101bdb339a043b4a927ec80fe2de6c` |
 
-Repair status, 4 October 2026: **9 fixed** (F02, F07–F11, F13–F15), **5 partial** (F03–F06, F12), **1 open** (F01). The hashes above identify the pre-repair audit, not the modified files. Checkpoint `1c8243e` precedes the repairs; the subsequent repair checkpoint contains the dated fixes below. The [decision record](2026-10-04_model-review-fixes.md) documents verification and the deferred choices. Passing regression checks does not close the remaining physiological calibration or conservation findings.
+Repair status, 4 October 2026: **10 fixed** (F01–F02, F07–F11, F13–F15), **5 partial** (F03–F06, F12), **0 wholly unaddressed**. The hashes above identify the pre-repair audit, not the modified files. Checkpoint `1c8243e` precedes the initial repairs committed as `3969eac`; F01 was repaired subsequently in the working tree. The [initial decision record](2026-10-04_model-review-fixes.md) and [exercise revision](2026-10-04_exercise-transport-revision.md) document verification. Passing regression checks does not close the remaining physiological calibration or glycogen-conservation findings.

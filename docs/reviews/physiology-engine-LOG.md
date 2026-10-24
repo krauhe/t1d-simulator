@@ -245,6 +245,21 @@ næste skridt er — så det andet værktøj kan fortsætte uden samtale-konteks
 
 ## Log
 
+### 2026-10-04 — Codex — conservative exercise uptake
+
+Contraction-mediated uptake now leaves Q1 through a glucose-dependent,
+insulin-independent pathway. Shared per-pool limits prevent outgoing fluxes
+from exceeding available glucose. The Q1 effects ledger uses realised rates.
+The [decision record](2026-10-04_exercise-transport-revision.md) documents the
+equations, source limits, changed trajectories and verification.
+
+Only the exercise-cardio golden fixture and corresponding scenario in the
+combined internal baseline changed. Non-exercise scenario samples were
+unchanged. Two pedagogical strength-response tests were explicitly reclassified
+as dated model regressions; external activity/clamp targets were not widened.
+Conservation is corrected; joint insulin/exercise calibration and glycogen
+conservation remain incomplete.
+
 ### 2026-06-16 — Claude — S9.9 + S9.10: standalone-API hærdet + toggleable fysiologi-moduler
 
 **Baggrund.** Efter at al facade-koblet fysiologi var flyttet ind i motoren (S9.6-S9.8),

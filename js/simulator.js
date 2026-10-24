@@ -3649,7 +3649,8 @@ class Simulator {
         this.hovorka.exerciseInput = 0;
 
         // Peripheral glucose (Q2) at Hovorka steady state:
-        //   dQ2/dt = x1 * Q1 - k_12 * Q2 - x2 * Q2 - beta * E1
+        //   dQ2/dt = x1 * Q1 - k_12 * Q2 - x2 * Q2
+        // Kontraktionsoptag er nu en særskilt Q1-flux; ved respawn er E1 nul.
         // At rest (E1=0), dQ2/dt = 0 gives:
         //   x1*Q1 = (k_12 + x2)*Q2   =>   Q2 = x1*Q1 / (k_12 + x2)
         // This honours the just-set insulin action variables from I_ss.

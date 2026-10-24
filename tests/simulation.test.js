@@ -324,7 +324,12 @@ test('High intensity builds exercise catecholamine drive without changing hypo s
     assert(sim.exerciseHepaticDrive === 0, 'Starting exercise drive must be 0');
 
     sim.startMotion("Høj", "30");
-    simulateMinutes(sim, 30);
+    // Hold glukose over hypogrænsen, så sekundær hypostress ikke forveksles
+    // med direkte kobling fra motion. Dette er en isoleret mekanismetest.
+    for (let minute = 0; minute < 30; minute++) {
+        sim.hovorka.state[HOVORKA_STATE_IDX.Q1] = 8 * sim.hovorka.V_G;
+        simulateMinutes(sim, 1);
+    }
 
     assert(sim.exerciseHepaticDrive > 0.1,
         `Exercise drive after high-intensity exercise (${sim.exerciseHepaticDrive.toFixed(3)}) must be > 0.1`);
@@ -1329,17 +1334,17 @@ test('HAAF recovery: hypoArea decreases when BG > 4.0', () => {
 
 console.log('\n--- Test 10: Activity system (4 types) ---');
 
-test('60 min styrketræning fra steady state giver kalibrerede akutte BG-responser', () => {
+test('60 min styrke: dateret karakterisering af standardprofil, ikke klinisk target', () => {
     const intensities = [
-        // Fælles pædagogisk steady-state-kontrakt: styrke skal gøre den mulige
-        // leverdrevne stigning synlig. Andre insulin-/måltidskontekster må
-        // fortsat vende nettoretningen og testes separat.
-        { intensity: 'Lav', min: 0.15, max: 0.35 },
-        { intensity: 'Medium', min: 0.40, max: 0.70 },
-        { intensity: 'Høj', min: 0.75, max: 1.15 }
+        // Regression efter den massebevarende optagsrevision 2026-10-04.
+        // Tidligere pædagogiske stigningsbånd var ikke litteraturtargets.
+        // Ekstern validering ligger særskilt i activity-validation.js.
+        { intensity: 'Lav', delta: 0.0777296778577421 },
+        { intensity: 'Medium', delta: 0.17475930777347415 },
+        { intensity: 'Høj', delta: 0.3732899385764723 }
     ];
 
-    intensities.forEach(({ intensity, min, max }) => {
+    intensities.forEach(({ intensity, delta }) => {
         const engine = createEngine({ weight: 70, isf: 3, icr: 10 }, {
             seed: 20260723,
             steadyState: true,
@@ -1354,7 +1359,7 @@ test('60 min styrketræning fra steady state giver kalibrerede akutte BG-respons
         engine.startActivity({ type: 'styrke', intensity, durationMin: 60 });
         for (let minute = 0; minute < 60; minute++) engine.step(1);
 
-        assertInRange(engine.trueBG - startBG, min, max,
+        assertInRange(engine.trueBG - startBG, delta - 1e-8, delta + 1e-8,
             `${intensity} styrke, akut BG-ændring efter 60 min`);
     });
 });
@@ -1607,7 +1612,7 @@ test('Young 2023: 45 min medium styrke balancerer EGP og ikke-insulinmedieret op
         egpAucMmolPerL +=
             (engine.hovorka._lastEGP - baselineEGP) / engine.hovorka.V_G;
         contractionAucMmolPerL +=
-            (engine.hovorka.beta * engine.hovorka.state[HOVORKA_STATE_IDX.E1]) /
+            engine.hovorka._lastContraction /
             engine.hovorka.V_G;
     }
 
@@ -1621,20 +1626,20 @@ test('Young 2023: 45 min medium styrke balancerer EGP og ikke-insulinmedieret op
         `Netto-BG skal være omtrent stabilt, fik ${(engine.trueBG - startBG).toFixed(3)} mmol/L`);
 });
 
-test('Fælles styrkerespons bevarer retning og størrelse på tværs af vægtprofiler', () => {
+test('Styrke: karakterisering af tre vægtprofiler efter optagsrevision 2026-10-04', () => {
     const profiles = [
-        { label: '40 kg', weight: 40, isf: 4, icr: 15 },
-        { label: '70 kg', weight: 70, isf: 3, icr: 10 },
-        { label: '100 kg', weight: 100, isf: 2, icr: 7 }
+        { label: '40 kg', weight: 40, isf: 4, icr: 15, deltas: [0.08344625912419978, 0.18541040327845604, 0.38948757541045786] },
+        { label: '70 kg', weight: 70, isf: 3, icr: 10, deltas: [0.0777296778577421, 0.17475930777347415, 0.3732899385764723] },
+        { label: '100 kg', weight: 100, isf: 2, icr: 7, deltas: [0.07297550198623615, 0.16687741650256793, 0.36193874579092] }
     ];
     const targets = [
-        { intensity: 'Lav', min: 0.15, max: 0.35 },
-        { intensity: 'Medium', min: 0.40, max: 0.70 },
-        { intensity: 'Høj', min: 0.75, max: 1.15 }
+        { intensity: 'Lav' },
+        { intensity: 'Medium' },
+        { intensity: 'Høj' }
     ];
 
     profiles.forEach(profile => {
-        targets.forEach(target => {
+        targets.forEach((target, index) => {
             const engine = createEngine(profile, {
                 seed: 20260723,
                 steadyState: true,
@@ -1654,8 +1659,8 @@ test('Fælles styrkerespons bevarer retning og størrelse på tværs af vægtpro
             stepEngineMinutes(engine, 60);
             assertInRange(
                 engine.trueBG - startBG,
-                target.min,
-                target.max,
+                profile.deltas[index] - 1e-8,
+                profile.deltas[index] + 1e-8,
                 `${profile.label}, ${target.intensity} styrke`
             );
         });

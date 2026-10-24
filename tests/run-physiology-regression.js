@@ -23,6 +23,10 @@ const node = process.execPath;
 
 const checks = [
     {
+        name: 'Kontraktionsoptag: massebalance, ablation og eventgrænser',
+        args: ['tests/exercise-conservation.test.js']
+    },
+    {
         name: 'Review: massebalance og grænsetilfælde',
         args: ['tests/model-review-regression.test.js']
     },

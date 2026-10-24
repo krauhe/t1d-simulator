@@ -85,13 +85,13 @@ Use the entity name (e.g. `"color": "insulin-fast"`) in spec.json, not the hex.
 | Slug | Title | Embedded in |
 |---|---|---|
 | `overview/` | T1D Simulator — overall model architecture (simplified) | (not yet linked) |
-| `glucose-subsystem/` | Glucose subsystem — Hovorka 2004 two-compartment model | (not yet linked) |
+| `glucose-subsystem/` | Glucose subsystem — Hovorka 2004 two-compartment model (modified) | MODEL-IMPLEMENTATION.md §3 |
 | `insulin-pk/` | Insulin pharmacokinetics — core Hovorka 2004 model | (not yet linked) |
 | `insulin-action-egp/` | Hovorka 2004 insulin subsystem (extended) — absorption, action, and EGP regulation | (not yet linked) |
 | `carb-absorption/` | Carbohydrate absorption — Hovorka 2004 gut model with dynamic gastric emptying | (not yet linked) |
 | `protein-glucagon/` | Protein → glucagon → hepatic glucose production (Paterson 2016) | (not yet linked) |
 | `ffa-resistance/` | Dietary fat → FFA-induced insulin resistance (Wolpert 2013) | (not yet linked) |
-| `exercise/` | Exercise model — Resalat E1 pathway with simulator extensions | MODEL-IMPLEMENTATION.md §6 |
+| `exercise/` | Exercise — adapted simulator mechanisms (Resalat 2020; Romeres 2021) | MODEL-IMPLEMENTATION.md §6 |
 | `stress-hormones/` | Stress hormone system — two-layer counterregulation (Cryer 2013) | (not yet linked) |
 | `dawn-phenomenon/` | Dawn phenomenon — hybrid HGP + circadian ISF model (Bolli & Gerich 1984) | (not yet linked) |
 | `sleep-disruption/` | Sleep disruption model — nighttime interventions, chronic stress, and dawn amplification | MODEL-IMPLEMENTATION.md §9 |
