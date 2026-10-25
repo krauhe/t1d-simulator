@@ -1,6 +1,6 @@
 # T1D Simulator
 
-**Experiment, learn, repeat**
+**Experiment, observe, learn, repeat**
 
 ![Status: Under Construction](https://img.shields.io/badge/Status-Under%20Construction%20🚧-orange?style=for-the-badge)
 
@@ -12,10 +12,9 @@ T1D Simulator is an educational game about type 1 diabetes glucose physiology. T
 
 ## Play online
 
-1. **[Play the stable version](https://krauhe.github.io/t1d-simulator/)** — the default release, kept unchanged while newer changes are tested.
-2. **[Try the preview version](https://krauhe.github.io/t1d-simulator/preview/)** — newer changes for testing; may contain bugs.
+**[Play T1D Simulator](https://krauhe.github.io/t1d-simulator/)**
 
-No installation required. Both releases automatically select a desktop or phone layout. Use the bar at the top of the game to switch between stable and preview. Settings, progress and highscores are kept separate between releases.
+No installation required. The game automatically selects a desktop or phone layout. There is one public version; old preview links open the same game. Development and onboarding experiments are tested locally before a new version is published.
 
 To run the development source locally, clone/download the full repository and open `index.html` in a browser. No server or build step is needed, but the JS, CSS and asset files must be present alongside `index.html`.
 
@@ -38,7 +37,7 @@ All feedback is welcome — from technical bug reports to "this felt confusing" 
 
 ## What is simulated?
 
-- **Glucose-insulin dynamics** based on the published [Hovorka et al. (2004)](https://doi.org/10.1109/TBME.2004.827938) research model from Cambridge
+- **Glucose-insulin dynamics** based on the published [Hovorka et al. (2004)](https://doi.org/10.1088/0967-3334/25/4/010) research model from Cambridge
 - **Carbohydrate absorption** with variable gastric emptying
 - **Fat compartment model** — two-compartment (stomach → intestine) with CCK/GLP-1 feedback slowing carb absorption ("pizza effect")
 - **Protein glucagon model** — amino acid absorption driving glucagon-stimulated hepatic glucose production via Hill function
@@ -241,7 +240,7 @@ Kristian R. Harreby — with AI-assisted research and implementation (Codex/Open
 
 **Core model**
 
-- **[Hovorka et al. (2004)](https://doi.org/10.1109/TBME.2004.827938):** Glucose-insulin ODE core extended in this simulator to 16 state variables — covers insulin pharmacokinetics, carbohydrate absorption, glucose kinetics, CGM delay, exercise states, and basal/rapid insulin separation.
+- **[Hovorka et al. (2004)](https://doi.org/10.1088/0967-3334/25/4/010):** Glucose-insulin ODE core extended in this simulator to 16 state variables — covers insulin pharmacokinetics, carbohydrate absorption, glucose kinetics, CGM delay, exercise states, and basal/rapid insulin separation.
 - **Open source foundation:** Inspired by [svelte-flask-hovorka-simulator](https://github.com/JonasNM/svelte-flask-hovorka-simulator) by Jonas Nordhassel Myhre.
 
 **Model extensions and scientific sources**

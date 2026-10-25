@@ -1,6 +1,7 @@
-// Bygger to selvstændige Pages-udgaver uden at ændre kildetræ eller Git-historik.
-// Stabil hentes fra et låst commit; preview hentes fra HEAD eller, kun lokalt,
-// arbejdsfilerne. Kun den eksplicitte liste af offentlige runtimefiler medtages.
+// Bygger én offentlig Pages-udgave fra det valgte Git-commit uden at ændre
+// kildetræ eller Git-historik. Arbejdsfiler kan kun bruges til lokal kontrol.
+// Kun den eksplicitte liste af offentlige runtimefiler medtages; gamle preview-
+// adresser får en statisk henvisning til samme spil og ingen ekstra runtime.
 const fs = require('node:fs');
 const path = require('node:path');
 const cp = require('node:child_process');
@@ -55,18 +56,10 @@ function decorateHtml(html, name, metadata, shellHash) {
     const releasePath = `${relativeRoot}_release/`;
     const config = JSON.stringify(metadata).replace(/</g, '\\u003c');
     const bootstrap = `\n<script>window.T1D_RELEASE = ${config};</script>\n`
-        + `<script src="${releasePath}storage-scope.js?v=${shellHash}"></script>\n`
-        + `<script src="${releasePath}channel.js?v=${shellHash}"></script>\n`
-        // Separat inline-guard beskytter også mod 404/parsefejl i bootstrap selv.
-        + `<script>if (window.T1D_RELEASE.channel === 'preview' && !window.T1D_RELEASE_READY) { window.stop(); location.replace('${releasePath}unavailable.html'); }</script>\n`;
+        + `<script src="${releasePath}channel.js?v=${shellHash}"></script>\n`;
     // Placering før platform-routing og før ethvert lageropslag er afgørende.
     if (!/<meta\s+charset=[^>]+>/i.test(html)) throw new Error(`Missing charset: ${name}`);
     html = html.replace(/<meta\s+charset=[^>]+>/i, match => match + bootstrap);
-    html = html.replace(/<\/head>/i, `<link rel="stylesheet" href="${releasePath}channel.css?v=${shellHash}">\n</head>`);
-    if (metadata.channel === 'preview') {
-        html = html.replace(/<title>/i, '<title>[Preview] ')
-            .replace(/<\/head>/i, '<meta name="robots" content="noindex,nofollow">\n</head>');
-    }
     // Omfatter også ankre inde i <template>, som querySelectorAll ikke ser.
     html = html.replaceAll('https://github.com/krauhe/t1d-simulator/blob/main/docs/',
         `https://github.com/krauhe/t1d-simulator/blob/${metadata.commit}/docs/`);
@@ -75,70 +68,61 @@ function decorateHtml(html, name, metadata, shellHash) {
         (full, before, url, after) => /^(https?:|\/\/|data:)/i.test(url) ? full
             : before + url + (url.includes('?') ? '&' : '?') + 'release=' + metadata.contentId + after);
 }
-function buildSite({ out, previewRef = 'HEAD', workingTree = false, configPath = path.join(__dirname, 'channels.json') }) {
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    if (config.schemaVersion !== 1 || !/^[a-f0-9]{40}$/.test(config.stableCommit)
-        || config.previewDirectory !== 'preview') throw new Error('Invalid channel configuration');
+function buildSite({ out, releaseRef = 'HEAD', workingTree = false }) {
     const destination = path.resolve(root, out || '');
     const allowedRoot = path.join(root, '.release-builds') + path.sep;
     if (!destination.startsWith(allowedRoot)) throw new Error('Output must be a new directory under .release-builds/');
     if (fs.existsSync(destination)) throw new Error('Output exists; choose a new directory. Nothing overwritten.');
-    const previewCommit = git(['rev-parse', '--verify', `${previewRef}^{commit}`]).toString().trim();
-    const bundles = {
-        stable: committedFiles(config.stableCommit),
-        preview: committedFiles(previewCommit)
-    };
+    const releaseCommit = git(['rev-parse', '--verify', `${releaseRef}^{commit}`]).toString().trim();
+    let files = committedFiles(releaseCommit);
     if (workingTree) {
         // Kun tracked runtimefiler; nye filer kræver Git-staging og allowliste.
-        // Ingen rå
-        // downloads, lokale launchere, testresultater eller private reviewpakker.
+        // Ingen rå downloads, lokale launchere, testresultater eller reviewpakker.
         const names = git(['ls-files', '-z', '--cached']).toString().split('\0');
-        bundles.preview = new Map([...new Set(names.filter(publicFile))].filter(name => fs.existsSync(path.join(root, name))).map(name => {
+        files = new Map([...new Set(names.filter(publicFile))].filter(name => fs.existsSync(path.join(root, name))).map(name => {
             const file = path.join(root, name);
             if (!fs.lstatSync(file).isFile()) throw new Error(`Not a regular file: ${name}`);
             return [name, fs.readFileSync(file)];
         }));
     }
-    if (versionOf(bundles.stable) !== config.stableVersion) throw new Error('Stable commit/version mismatch');
-    const shell = ['storage-scope.js', 'channel.js', 'channel.css'].map(name => [name, fs.readFileSync(path.join(__dirname, name))]);
+    const shell = [['channel.js', fs.readFileSync(path.join(__dirname, 'channel.js'))]];
     const shellHash = hash(Buffer.concat(shell.map(([, bytes]) => bytes))).slice(0, 16);
-    const manifest = { schemaVersion: 1, localWorkingTree: workingTree, shellHash, channels: {} };
-    for (const [channel, files] of Object.entries(bundles)) {
-        for (const required of ['index.html', 'mobile/index.html', 'js/hovorka.js', 'js/simulator.js']) {
-            if (!files.has(required)) throw new Error(`Missing ${channel}/${required}`);
-        }
-        const hashes = Object.fromEntries([...files].map(([name, bytes]) => [name, hash(bytes)]));
-        const metadata = {
-            channel, version: versionOf(files),
-            commit: channel === 'stable' ? config.stableCommit : previewCommit,
-            localWorkingTree: channel === 'preview' && workingTree,
-            contentId: hash(JSON.stringify(hashes)).slice(0, 16)
-        };
-        const folder = channel === 'stable' ? destination : path.join(destination, 'preview');
-        const write = (name, bytes) => {
-            const file = path.join(folder, name);
-            fs.mkdirSync(path.dirname(file), { recursive: true });
-            fs.writeFileSync(file, bytes);
-        };
-        for (const [name, original] of files) {
-            // Diagrammer er statiske referencefigurer, ikke selvstændige spilvinduer.
-            const decorate = ['index.html', 'mobile/index.html', 'physiology-dashboard.html', 'tests/model-validation.html'].includes(name);
-            write(name, decorate ? decorateHtml(original.toString('utf8'), name, metadata, shellHash) : original);
-        }
-        for (const [name, bytes] of shell) write('_release/' + name, bytes);
-        write('_release/unavailable.html', '<!doctype html><html lang="en"><meta charset="UTF-8">'
-            + '<meta name="viewport" content="width=device-width,initial-scale=1"><title>Preview unavailable</title>'
-            + '<body style="font:18px/1.6 system-ui;max-width:42em;margin:3em auto;padding:1em">'
-            + '<h1>Preview unavailable</h1><p>Preview storage isolation failed. The game has not started.</p>'
-            + '<p lang="da">Testversionen kunne ikke åbnes med separat lagring. Spillet er ikke startet.</p>'
-            + `<a href="${channel === 'preview' ? '../../' : '../'}index.html">Åbn stabil version / Open stable version</a></body></html>`);
-        if (channel === 'preview' && files.has('mobile/manifest.webmanifest')) {
-            const app = JSON.parse(files.get('mobile/manifest.webmanifest'));
-            app.name = 'T1D Simulator — Preview'; app.short_name = 'T1D Preview';
-            write('mobile/manifest.webmanifest', JSON.stringify(app, null, 2));
-        }
-        write('_release/metadata.json', JSON.stringify(metadata, null, 2));
-        manifest.channels[channel] = { ...metadata, sourceHashes: hashes };
+    for (const required of ['index.html', 'mobile/index.html', 'js/hovorka.js', 'js/simulator.js']) {
+        if (!files.has(required)) throw new Error(`Missing ${required}`);
+    }
+    const hashes = Object.fromEntries([...files].map(([name, bytes]) => [name, hash(bytes)]));
+    const metadata = {
+        version: versionOf(files), commit: releaseCommit, localWorkingTree: workingTree,
+        contentId: hash(JSON.stringify(hashes)).slice(0, 16)
+    };
+    const manifest = { schemaVersion: 2, localWorkingTree: workingTree, shellHash,
+        release: { ...metadata, sourceHashes: hashes } };
+    const write = (name, bytes) => {
+        const file = path.join(destination, name);
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, bytes);
+    };
+    for (const [name, original] of files) {
+        // Diagrammer er statiske referencefigurer, ikke selvstændige spilvinduer.
+        const decorate = ['index.html', 'mobile/index.html', 'physiology-dashboard.html', 'tests/model-validation.html'].includes(name);
+        write(name, decorate ? decorateHtml(original.toString('utf8'), name, metadata, shellHash) : original);
+    }
+    for (const [name, bytes] of shell) write('_release/' + name, bytes);
+    write('_release/metadata.json', JSON.stringify(metadata, null, 2));
+    // Gamle bogmærker peger frem til én udgave. Ingen preview-model, lyd eller
+    // lagerwrapper kopieres, og omdirigeringen bevarer eksplicit platformvalg.
+    for (const [oldPage, target] of Object.entries({
+        'preview/index.html': '../index.html',
+        'preview/mobile/index.html': '../../mobile/',
+        'preview/physiology-dashboard.html': '../physiology-dashboard.html',
+        'preview/tests/model-validation.html': '../../tests/model-validation.html'
+    })) {
+        write(oldPage, '<!doctype html><html lang="en"><head><meta charset="UTF-8">'
+            + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            + `<meta http-equiv="refresh" content="0;url=${target}">`
+            + '<meta name="robots" content="noindex,nofollow"><title>T1D Simulator</title></head>'
+            + `<body><p><a href="${target}">Åbn T1D Simulator / Open T1D Simulator</a></p>`
+            + `<script>location.replace(${JSON.stringify(target)} + location.search + location.hash);</script></body></html>`);
     }
     fs.writeFileSync(path.join(destination, '.nojekyll'), '');
     fs.writeFileSync(path.join(destination, 'release-manifest.json'), JSON.stringify(manifest, null, 2));
@@ -148,7 +132,7 @@ module.exports = { buildSite, publicFile, committedFiles };
 if (require.main === module) {
     const args = process.argv.slice(2);
     const value = flag => args.includes(flag) ? args[args.indexOf(flag) + 1] : undefined;
-    const manifest = buildSite({ out: value('--out'), previewRef: value('--preview-ref'), workingTree: args.includes('--working-tree') });
-    console.log(JSON.stringify({ output: value('--out'), stable: manifest.channels.stable.commit,
-        preview: manifest.channels.preview.commit, localWorkingTree: manifest.localWorkingTree }, null, 2));
+    const manifest = buildSite({ out: value('--out'), releaseRef: value('--ref'), workingTree: args.includes('--working-tree') });
+    console.log(JSON.stringify({ output: value('--out'), release: manifest.release.commit,
+        version: manifest.release.version, localWorkingTree: manifest.localWorkingTree }, null, 2));
 }

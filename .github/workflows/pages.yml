@@ -1,13 +1,13 @@
-# Publicerer præcis to udgaver: det låste stabile commit i roden og det valgte
-# main-commit under preview/. Almindelige push udløser aldrig denne workflow.
+# Publicerer én udgave fra det valgte main-commit i roden. Tidligere preview-
+# adresser henviser til samme spil. Push udløser aldrig denne workflow.
 # Pages-kilden skal først ændres manuelt fra branch-publicering til GitHub Actions.
-name: Publish stable and preview
+name: Publish T1D Simulator
 
 on:
   workflow_dispatch:
     inputs:
       approve_publication:
-        description: 'Publish the pinned stable version and this main commit as preview'
+        description: 'Publish this main commit as the only public version'
         type: boolean
         required: true
         default: false
@@ -57,23 +57,23 @@ jobs:
       - name: Install Chromium for the release smoke test
         run: npx --no-install playwright install --with-deps chromium
 
-      - name: Test channel isolation and release packaging
-        run: |
-          node tests/release-storage.test.cjs
-          node tests/release-build.test.cjs
+      - name: Test the single-release packaging boundary
+        run: node tests/release-build.test.cjs
 
-      # Ingen --working-tree: preview skal komme fra det valgte Git-commit.
-      - name: Build stable root and preview directory
+      # Ingen --working-tree: den offentlige udgave skal komme fra valgt commit.
+      - name: Build the single public version
         run: node tools/releases/build-pages.cjs --out .release-builds/pages
 
-      - name: Refuse local or unexpected preview content
+      - name: Refuse local or unexpected release content
         run: |
           node <<'NODE'
           const assert = require('node:assert/strict');
           const manifest = require('./.release-builds/pages/release-manifest.json');
+          assert.equal(manifest.schemaVersion, 2);
           assert.equal(manifest.localWorkingTree, false, 'Local builds cannot be published');
-          assert.equal(manifest.channels.preview.localWorkingTree, false);
-          assert.equal(manifest.channels.preview.commit, process.env.GITHUB_SHA);
+          assert.equal(manifest.channels, undefined, 'Only one public version is allowed');
+          assert.equal(manifest.release.localWorkingTree, false);
+          assert.equal(manifest.release.commit, process.env.GITHUB_SHA);
           NODE
 
       - name: Test the actual packaged desktop and mobile pages
@@ -102,6 +102,6 @@ jobs:
         with:
           enablement: false
 
-      - name: Publish the tested stable and preview artifact
+      - name: Publish the tested single-version artifact
         id: deployment
         uses: actions/deploy-pages@v4

@@ -55,7 +55,7 @@ const I18N = {
     // =========================================================================
     da: {
         // --- Slogan ---
-        'ui.slogan': 'Eksperimenter, lær, gentag',
+        'ui.slogan': 'Eksperimentér, observér, lær, gentag',
 
         // --- Knapper ---
         'ui.btn.start': 'Start',
@@ -161,8 +161,8 @@ const I18N = {
         'food.row.meals': 'Måltider',
         'food.row.adjustments': 'Hurtige kulhydrater',
         'food.shortcut': 'Genvej',
-        'food.portions.adult': 'voksen portioner',
-        'food.portions.child': 'børne portioner',
+        'food.portions.adult': 'Voksenportioner',
+        'food.portions.child': 'Børneportioner',
         // Row 1 — Low-carb
         'food.greekYoghurt': 'Gr. yoghurt & nødder',
         'food.nuts': 'Nødder',
@@ -665,7 +665,7 @@ const I18N = {
         // Global in-game tips (all modes)
         'tips.moreInfoIcons': 'Runde info-ikoner betyder mere forklaring. Tryk på dem for at åbne spilguiden ved det relevante afsnit.',
         'tips.foodNoBolus': 'Måltidet blev givet uden bolus. Kulhydraterne er allerede under optagelse.',
-        'tips.symptomHypo': 'Sved, rysten og hjertebanken kan følge lavt blodsukker. Giv {characterName} hurtigt sukker i spillet.',
+        'tips.symptomHypo': 'Sved, rysten og hjertebanken kan følge lavt blodsukker. Giv {characterName} hurtigt sukker.',
         'tips.symptomHyper': 'Tørst og hyppig vandladning kan følge højt blodsukker hos {characterName}.',
         'tips.symptomKetone': 'Kvalme og mavesmerter kan følge stigende ketoner og syrebelastning hos {characterName}.',
         'tips.symptomVfxSlowDown': 'Slør eller tunnelsyn er et visuelt symptom hos {characterName}. Pause spillet, og se på kurven.',
@@ -728,6 +728,7 @@ const I18N = {
         'log.exerciseCooldown': '⏳ {characterName} har brug for hvile — prøv igen om {min} min.',
         'log.acuteStress': 'Akut stresshormon-stigning: +{amount} (fx adrenalin/glukagon)',
         'log.chronicStress': 'Kronisk stressniveau øget: +{amount} (fx kortisol ved sygdom)',
+        'log.cgmLowAlarm': '{characterName}: CGM viser lavt blodsukker ({bg} {unit}).',
         'log.cgmCompression': 'CGM-kompression: sensoren viser midlertidigt for lavt.',
         'log.cgmSensorLost': 'CGM-sensoren er faldet af. Ingen nye CGM-tal før ny sensor og warmup.',
         'log.cgmSelfTest': 'CGM fejltester signalet. Brug fingerprik ved behov.',
@@ -780,7 +781,7 @@ const I18N = {
         'game.over.hypo.tip1': 'Giv {characterName} druesukker eller juice ved første tegn på lavt blodsukker',
         'game.over.hypo.tip2': 'Reagér på {characterName}s faldende CGM-kurve, før blodsukkeret når {threshold} {unit}',
         'game.over.hypo.tip3': 'Motion kan forstærke insulinvirkningen — sammenlign aktiv insulin og mad før træning',
-        'game.over.hypo.tip4': 'Giv {characterName} glukagon ved svær hypo i spillet',
+        'game.over.hypo.tip4': 'Giv {characterName} glukagon ved svær hypo',
         'brain.deficit.warning.title': 'Hjerne-energimangel!',
         'brain.deficit.warning.message': '{characterName}s blodsukker har været meget lavt i længere tid, og hjernen mangler energi.<br><br>Giv {characterName} druesukker, juice eller glukagon med det samme.',
 
@@ -913,13 +914,13 @@ const I18N = {
         'welcomeTour.step.kitOverview.title': 'T1D Kit',
         'welcomeTour.step.kitOverview.text': 'T1D Kit-ikonet nederst åbner måleudstyr, druesukker og glukagon.',
         'welcomeTour.step.kit.title': 'T1D Kit',
-        'welcomeTour.step.kit.text': 'Fingerprik viser spilkarakterens aktuelle blodsukker uden CGM-forsinkelse.\n\nKeton-stik måler ketoner. Ketoner kan stige, når kroppen mangler insulin og i stedet nedbryder fedt.\n\nDruesukker hæver blodsukkeret hurtigt. Glukagon kan bruges ved svær hypo i spillet.',
+        'welcomeTour.step.kit.text': 'Fingerprik viser spilkarakterens aktuelle blodsukker uden CGM-forsinkelse.\n\nKeton-stik måler ketoner. Ketoner kan stige, når kroppen mangler insulin og i stedet nedbryder fedt.\n\nDruesukker hæver blodsukkeret hurtigt. Glukagon kan bruges ved svær hypo.',
         'welcomeTour.step.time.title': 'Tiden',
         'welcomeTour.step.time.text': 'Øverst ser du dag og klokkeslæt. Simulatoren kører videre af sig selv, så du kan følge hvordan blodsukker ændrer sig gennem døgnet.',
         'welcomeTour.step.timeControls.title': 'Tidskontrol',
         'welcomeTour.step.timeControls.text': 'Midterknappen sætter spillet på pause og starter det igen. Pilene ændrer tempoet: 1, 4, 12 eller 24 simulerede timer per minut. Brug lavt tempo eller pause, når du skal vælge handlinger. Brug højt tempo, når der ikke sker så meget, for eksempel når spilkarakteren sover.',
         'welcomeTour.step.physiology.title': 'Indsigt',
-        'welcomeTour.step.physiology.text': 'Indsigt rummer to mere avancerede værktøjer.\n\nFysiologi-visning\nViser, hvad der sker i modellen.\n\nHvad Nu Hvis\nLader dig ændre de valg, du allerede har foretaget i en bane, og se et andet muligt forløb.',
+        'welcomeTour.step.physiology.text': 'Fysiologi-visning\nSe fx insulin og madens kulhydrater sammen med blodsukkerkurven.\n\nHvad Nu Hvis\nPrøv et andet valg i den bane, du spiller, og sammenlign kurverne. Din oprindelige bane er sat på pause og ændres ikke.',
         'welcomeTour.step.settings.title': 'Settings',
         'welcomeTour.step.settings.text': 'Settings-knappen åbner indstillingerne. Her kan du skifte blodsukkerenhed, slå tips til eller fra og styre lyd, musik og visning.',
         'welcomeTour.step.learn.title': 'Lær mere undervejs',
@@ -1038,7 +1039,7 @@ const I18N = {
     // =========================================================================
     en: {
         // --- Slogan ---
-        'ui.slogan': 'Experiment, learn, repeat',
+        'ui.slogan': 'Experiment, observe, learn, repeat',
 
         // --- Buttons ---
         'ui.btn.start': 'Start',
@@ -1144,8 +1145,8 @@ const I18N = {
         'food.row.meals': 'Meals',
         'food.row.adjustments': 'Fast carbs',
         'food.shortcut': 'Shortcut',
-        'food.portions.adult': 'adult portions',
-        'food.portions.child': 'child portions',
+        'food.portions.adult': 'Adult portions',
+        'food.portions.child': 'Child portions',
         // Row 1 — Low carb
         'food.greekYoghurt': 'Greek yogurt & nuts',
         'food.nuts': 'Nuts',
@@ -1641,7 +1642,7 @@ const I18N = {
 
         'tips.moreInfoIcons': 'Round info icons mean there is a deeper explanation. Tap them to open the game guide at the relevant section.',
         'tips.foodNoBolus': 'The meal was given without bolus. The carbohydrates are already being absorbed.',
-        'tips.symptomHypo': 'Sweating, trembling and palpitations can accompany low blood sugar. Give {characterName} fast sugar in the game.',
+        'tips.symptomHypo': 'Sweating, trembling and palpitations can accompany low blood sugar. Give {characterName} fast sugar.',
         'tips.symptomHyper': 'Thirst and frequent urination can accompany high blood sugar in {characterName}.',
         'tips.symptomKetone': 'Nausea and stomach pain can accompany rising ketones and acid load in {characterName}.',
         'tips.symptomVfxSlowDown': 'Blur or tunnel vision is a visual symptom in {characterName}. Pause the game and look at the curve.',
@@ -1704,6 +1705,7 @@ const I18N = {
         'log.exerciseCooldown': '⏳ {characterName} needs rest — try again in {min} min.',
         'log.acuteStress': 'Acute stress hormone surge: +{amount} (e.g. adrenaline/glucagon)',
         'log.chronicStress': 'Chronic stress level increased: +{amount} (e.g. cortisol from illness)',
+        'log.cgmLowAlarm': '{characterName}: CGM shows low glucose ({bg} {unit}).',
         'log.cgmCompression': 'CGM compression: the sensor is temporarily reading falsely low.',
         'log.cgmSensorLost': 'CGM sensor came off. No new CGM readings until a new sensor and warmup.',
         'log.cgmSelfTest': 'CGM is checking the signal. Use a fingerprick if needed.',
@@ -1756,7 +1758,7 @@ const I18N = {
         'game.over.hypo.tip1': 'Give {characterName} dextrose or juice at the first signs of low blood sugar',
         'game.over.hypo.tip2': 'Act on {characterName}\'s falling CGM curve before blood sugar reaches {threshold} {unit}',
         'game.over.hypo.tip3': 'Exercise can amplify insulin action — compare active insulin and food before exercise',
-        'game.over.hypo.tip4': 'Give {characterName} glucagon for severe hypoglycemia in the game',
+        'game.over.hypo.tip4': 'Give {characterName} glucagon for severe hypoglycemia',
         'brain.deficit.warning.title': 'Brain energy deficit!',
         'brain.deficit.warning.message': '{characterName}\'s blood sugar has been very low for a prolonged period, and the brain lacks energy.<br><br>Give {characterName} dextrose, juice, or glucagon immediately.',
 
@@ -1889,13 +1891,13 @@ const I18N = {
         'welcomeTour.step.kitOverview.title': 'T1D Kit',
         'welcomeTour.step.kitOverview.text': 'The T1D Kit icon at the bottom opens measuring tools, dextrose, and glucagon.',
         'welcomeTour.step.kit.title': 'T1D Kit',
-        'welcomeTour.step.kit.text': 'A fingerprick shows the game character\'s current blood glucose without CGM delay.\n\nA ketone test measures ketones. Ketones can rise when the body lacks insulin and breaks down fat instead.\n\nDextrose raises blood glucose quickly. Glucagon can be used for severe hypoglycemia in the game.',
+        'welcomeTour.step.kit.text': 'A fingerprick shows the game character\'s current blood glucose without CGM delay.\n\nA ketone test measures ketones. Ketones can rise when the body lacks insulin and breaks down fat instead.\n\nDextrose raises blood glucose quickly. Glucagon can be used for severe hypoglycemia.',
         'welcomeTour.step.time.title': 'Time',
         'welcomeTour.step.time.text': 'At the top you see the day and clock. The simulator keeps running on its own, so you can follow how blood sugar changes through the day.',
         'welcomeTour.step.timeControls.title': 'Time controls',
         'welcomeTour.step.timeControls.text': 'The middle button pauses the game and starts it again. The arrows change the pace: 1, 4, 12 or 24 simulated hours per minute. Use a slow pace or pause when choosing actions. Use a high pace when not much is happening, for example when the game character is sleeping.',
         'welcomeTour.step.physiology.title': 'Insights',
-        'welcomeTour.step.physiology.text': 'Insights contains two more advanced tools.\n\nPhysiology view\nShows what is happening in the model.\n\nWhat If\nLets you change choices you have already made in a level and see another possible course.',
+        'welcomeTour.step.physiology.text': 'Physiology view\nSee insulin and carbohydrates from food alongside the blood sugar curve.\n\nWhat If\nTry a different choice in the level you are playing and compare the curves. Your original level is paused and stays unchanged.',
         'welcomeTour.step.settings.title': 'Settings',
         'welcomeTour.step.settings.text': 'The Settings button opens the app controls. Here you can change the blood sugar unit, turn tips on or off, and control sound, music and display options.',
         'welcomeTour.step.learn.title': 'Learn as you go',

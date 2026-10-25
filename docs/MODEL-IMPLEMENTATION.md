@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-10-04-v2 -->
+<!-- doc-version: 2026-10-25-v1 -->
 # Physiological Model — T1D Simulator
 
 *This page is the technical documentation of the simulator's physiological engine.
@@ -2925,6 +2925,30 @@ Occasional sudden jumps in the CGM value (approximately 0.7 per day). These
 are caused by e.g., compression of the sensor (lying on it), calibration adjustments,
 or transient sensor errors. In the model they produce a jump of up to
 +/- 2 mmol/L.
+
+### Low-glucose alarm and night waking
+
+An active CGM sample below 4.0 mmol/L emits one `cgm-low-alarm` event. The
+alarm becomes ready for another episode after a sample at or above 4.5 mmol/L.
+These are the game's fixed sensor settings, not a fitted physiological threshold
+or a representation of every commercial sensor. The alarm follows the displayed
+sensor value, including its delay and measurement errors, rather than hidden
+plasma glucose. Offline, warming-up and self-testing sensors produce no new
+low-glucose alarm.
+
+The game plays the existing CGM alarm sound and shows the measured value. During
+the 22:00–07:00 sleep window, an alarm wakes a sleeping character through the
+existing `registerNightIntervention()` pathway. The existing simulated waking
+duration is reused; no new sleep-loss calibration is introduced. Sleep loss
+accrues only for actual awake minutes within the night window. Subsequent food
+or insulin actions share the same waking interval rather than adding another
+complete interruption. Muting audio does not prevent the character from waking.
+The episode latch and waking interval are included in engine snapshots, so the
+same rules apply in What If. This is simulated device-triggered waking, not a
+claim that hypoglycaemia reliably wakes a person without an alarm.
+
+See `tests/cgm-low-alarm.test.cjs` and
+[the implementation decision](reviews/2026-10-25_cgm-low-alarm-fix.md).
 
 ### Fingerstick vs. CGM
 

@@ -496,6 +496,9 @@ class PhysiologyEngine {
         // trueBG, just like real sensors.
         this.cgmBG = 5.5;                     // Overwritten after steady-state init
         this.lastCgmCalculationTime = -5;     // First CGM update occurs at t=0
+        // CGM-alarmens tilstand følger sensormålingen, ikke den skjulte plasma-BG.
+        // Genaktivering over 4,5 mmol/L forhindrer gentagne alarmer ved grænsen.
+        this.cgmLowAlarmArmed = true;
 
         // CGM sensor characteristics — calibrated against real Libre 2 data.
         // Analysis of ~34,000 readings over a year shows:
@@ -1263,14 +1266,16 @@ class PhysiologyEngine {
     // Emits 'sleep-pop' on every night action; 'sleep-disruption' only on a new
     // awakening. RNG: one gaussRand per new awakening — kept at the same call position
     // as the old facade trigger so the rng stream is unchanged.
-    registerNightIntervention() {
+    registerNightIntervention({ forceWake = false } = {}) {
         const sleepScale = this.moduleScale('sleepDisruption');
         if (sleepScale <= 0) return; // S9.10/S9.12: scale 0 -> no sleep penalty (morning always reports good sleep)
         const currentHour = Math.floor(this.timeInMinutes / 60);
         if (currentHour < 22 && currentHour >= 7) return; // only night hours 22:00-07:00
         const wasAlreadyAwake = this.isNightAwake();
         const timeSinceLastAwakening = this.totalSimMinutes - this.lastNightAwakeningTime;
-        if (!wasAlreadyAwake && timeSinceLastAwakening > 30) {
+        // En ny sensor-alarm skal vække en sovende karakter, også hvis en kort
+        // forrige vågenperiode sluttede inden for handlingernes 30-minutters værn.
+        if (!wasAlreadyAwake && (forceWake || timeSinceLastAwakening > 30)) {
             // New awakening: cost sleep (variance 0.3-1.8 h, mean 1.0). Sleep loss
             // accrues without ceiling; the ceiling sits on the morning stress effect.
             // Deterministic tools (noiseEnabled:false, e.g. the Scenarie editor) use the
@@ -2919,6 +2924,18 @@ class PhysiologyEngine {
             && this.totalSimMinutes > this.cgmAutoSelfTestCooldownUntil
             && this.rng() < 0.25) {
             this.startCgmSelfTest(15 + this.rng() * 15);
+        }
+
+        // Lav-alarmen er en egenskab ved den simulerede CGM. En aktiv måling
+        // under 4,0 udløser én alarm pr. episode, også uden faldende tendens.
+        // Offline sensorer kommer aldrig hertil. En natlig alarm vækker via
+        // samme søvntilstand som en handling, så tabet optjenes minut for minut
+        // og aldrig lægges til endnu en gang, når spilleren derefter spiser.
+        if (this.cgmBG >= 4.5) this.cgmLowAlarmArmed = true;
+        if (this.cgmBG < 4.0 && this.cgmLowAlarmArmed) {
+            this.cgmLowAlarmArmed = false;
+            this.emitEvent('cgm-low-alarm', { cgmBG: this.cgmBG });
+            if (!this.isNightAwake()) this.registerNightIntervention({ forceWake: true });
         }
 
         return { active: true, previousCgmBG, interstitialBG, discontinuity };

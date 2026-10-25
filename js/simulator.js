@@ -717,8 +717,6 @@ class Simulator {
         this.isInBonusRange = true;       // 5.0-6.0 mmol/L → star shower (true at start so sound doesn't trigger)
         this.isInRange = true;            // 4.0-10.0 mmol/L → positive sound (true at start)
         this.isInHyperZone = false;       // > 10.0 → "too high" sound
-        this.lastHypoWarnTime = -Infinity; // cooldown for hypo warning sound (sim-minutes)
-        this.hypoWarnArmed = true;         // hysteresis: ready for next hypo warning (reset when BG > 5.0)
 
         // --- Stress hormones (cortisol, glucagon, adrenaline) ---
         // These hormones increase the liver's glucose production and insulin resistance.
@@ -1221,6 +1219,21 @@ class Simulator {
             case 'cgm-sample':
                 this._applyCgmSample(event.data);
                 break;
+            case 'cgm-low-alarm': {
+                // Alarm og kort grafbesked bruger den samme måling som CGM.
+                // Lydens mute-indstilling påvirker ikke karakterens opvågning.
+                const message = t('log.cgmLowAlarm', {
+                    bg: displayBG(event.data.cgmBG), unit: bgUnitLabel()
+                });
+                playSound('cgmAlarm');
+                logEvent(message, 'event');
+                this.graphMessages.push({
+                    id: `cgm_low_${this.totalSimMinutes}`,
+                    text: message,
+                    expireTime: this.totalSimMinutes + 30
+                });
+                break;
+            }
             case 'fingerprick-measured':
                 logEvent(t('log.fingerprick', {
                     value: displayBG(event.data.value),
@@ -1905,21 +1918,9 @@ class Simulator {
         }
         this.isInBonusRange = inBonusNow;
 
-        // Hypo warning sound with hysteresis:
-        // Plays when BG crosses DOWN through 4.5 (falling).
-        // Does NOT play again until BG has been ABOVE 5.0 (hysteresis threshold).
-        // Prevents repeated sounds when BG hovers near 4.5 at equilibrium.
-        // Minimum 15 sim-min cooldown as extra spam protection.
-        if (this.trueBG >= 5.0) {
-            this.hypoWarnArmed = true;  // Reset — ready for the next warning
-        }
-        const bgFalling = this.trueBG < this.lastTrueBGForDropCheck;
-        if (this.trueBG < 4.5 && bgFalling && this.hypoWarnArmed
-            && this.totalSimMinutes - this.lastHypoWarnTime >= 15) {
-            playSound('hypoWarn');
-            this.lastHypoWarnTime = this.totalSimMinutes;
-            this.hypoWarnArmed = false;  // Latched — requires BG > 5.0 before next warning
-        }
+        // Lav-alarmen ejes af motorens CGM-sampling og håndteres ovenfor som
+        // cgm-low-alarm. Pointberegning må ikke bruge en separat alarmgrænse
+        // eller en faldtest, hvis referenceværdi allerede er opdateret.
 
         // In-range sound: positive sound when BG returns to green zone (4.0-10.0)
         // from either hypo (<4) or hyper (>10). Played only on the inbound transition.

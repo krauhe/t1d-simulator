@@ -4102,7 +4102,7 @@ function showHighscorePopup() {
     if (document.querySelector('.popup-overlay')) return; // Only one popup at a time
     if (game && !isPaused) togglePause();
 
-    const { overlay, content } = createPopup({ contentClass: 'help-popup' });
+    const { overlay, content } = createPopup({ contentClass: 'help-popup', maxWidth: '900px' });
 
     // Active tab = current gameMode, but only if that mode is a currently-enabled
     // play mode (it has a visible tab). Otherwise fall back to the first enabled
@@ -4190,7 +4190,7 @@ function showHighscorePopup() {
         // (older completions). A4: the signature is no longer stored on the profile.
         const signatureName = (typeof getPlayerSignature === 'function') ? getPlayerSignature() : '';
 
-        // Build 4×4 grid
+        // Kortene får så mange kolonner, som skærmen kan vise med læsbare titler.
         const TOTAL_SLOTS = 16;
         let html = '<div class="hs-campaign-grid">';
         for (let i = 0; i < TOTAL_SLOTS; i++) {
@@ -4204,13 +4204,16 @@ function showHighscorePopup() {
                 const stateClass = lp.completed ? 'completed' : 'no-score';
                 // Show bestName, or the player's signature as fallback, or "Anonymous"
                 const displayName = lp.bestName || (lp.completed ? (signatureName || t('stats.player.anonymous')) : '');
-                // A4f: character tag for the best run (older completions have none).
+                // Portrættet viser karakteren uden en ekstra tekstlinje. Navnet
+                // bevares som alternativ tekst, så billedet også kan aflæses uden syn.
+                const characterLabel = lp.bestCharacter
+                    ? escapeHtml(lp.bestCharacter.name || '').replace(/"/g, '&quot;')
+                    : '';
                 const charTag = lp.bestCharacter
-                    ? `<span class="hs-char-tag"><img class="hs-char-icon" src="assets/icons/app/character-${lp.bestCharacter.id}.png" alt="" onerror="this.style.display='none'">${escapeHtml(lp.bestCharacter.name)}</span>`
+                    ? `<span class="hs-char-tag"><img class="hs-char-icon" src="assets/icons/app/character-${lp.bestCharacter.id}.png" alt="${characterLabel}" title="${characterLabel}" onerror="this.style.display='none'"></span>`
                     : '';
                 html += `<div class="hs-level-card ${stateClass}">
-                    <span class="lc-number">${level.number}</span>
-                    <span class="lc-title">${t(level.titleKey)}</span>
+                    <span class="lc-title hs-lc-title">${level.number}. ${t(level.titleKey)}</span>
                     <div class="lc-stars">${starsHtml}</div>
                     ${lp.bestPoints > 0 ? `<span class="lc-score">${lp.bestPoints.toFixed(1)} pts</span>` : '<span class="lc-score" style="opacity:0.3;">—</span>'}
                     ${displayName ? `<span class="hs-lc-name">${displayName}</span>` : ''}

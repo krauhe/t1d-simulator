@@ -499,7 +499,12 @@ html.welcome-off #startScreen{display:none;}
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
   text-shadow:0 0 10px rgba(147,197,253,0.48), 0 0 22px rgba(167,139,250,0.28), 0 0 42px rgba(147,197,253,0.14);}
 @keyframes brand-shimmer{0%,100%{background-position:0% 50%;} 50%{background-position:100% 50%;}}
-.start-card .brand-slogan{font-family:'Orbitron', monospace; font-weight:500; font-size:9px; letter-spacing:1.5px; line-height:1; text-transform:uppercase; color:var(--text-secondary); margin-bottom:16px;}
+/* Det længere slogan skal forblive på én linje uden at gøre 9px-teksten mindre.
+   Tættere bogstavafstand giver plads til både dansk og engelsk på mobil. */
+.start-card .brand-slogan{font-family:'Orbitron', monospace; font-weight:500; font-size:9px; letter-spacing:0.9px; line-height:1; white-space:nowrap; text-transform:uppercase; color:var(--text-secondary); margin-bottom:16px;}
+/* Ved 320px er kortets tekstfelt kun 226px. Her bruges desktop-sloganets 8.5px
+   med normal bogstavafstand; resten af mobilens kort og typografi bevares. */
+@media(max-width:360px){.start-card .brand-slogan{font-size:8.5px; letter-spacing:0;}}
 .start-mode-card{display:flex; flex-direction:column; align-items:center; gap:6px; width:100%; padding:18px 14px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); color:var(--text-primary); font:inherit; cursor:pointer; text-align:center;}
 .start-mode-card:active{background:var(--bg-hover);}
 .start-mode-icon{width:56px; height:56px; object-fit:contain; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.25));}

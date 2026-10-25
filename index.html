@@ -23,13 +23,13 @@
         if (coarse && phoneSized) location.replace('mobile/');
     })();
     </script>
-    <title>T1D Simulator – Experiment, learn, repeat</title>
+    <title>T1D Simulator – Experiment, observe, learn, repeat</title>
     <!-- Open Graph / social link preview (Facebook, Messenger, LinkedIn, ...).
          og:image is an absolute URL so scrapers can fetch it; ~1.9:1 at 1717x916. -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="T1D Simulator">
     <meta property="og:title" content="T1D Simulator">
-    <meta property="og:description" content="Eksperimenter, lær, gentag. Udforsk insulin, mad, aktivitet og fysiologiske fænomener gennem fiktive karakterer.">
+    <meta property="og:description" content="Eksperimentér, observér, lær, gentag. Udforsk insulin, mad, aktivitet og fysiologiske fænomener gennem fiktive karakterer.">
     <meta property="og:url" content="https://krauhe.github.io/t1d-simulator/">
     <meta property="og:image" content="https://krauhe.github.io/t1d-simulator/assets/social-card.png">
     <meta property="og:image:width" content="1717">
@@ -38,12 +38,12 @@
     <meta property="og:locale" content="da_DK">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="T1D Simulator">
-    <meta name="twitter:description" content="Eksperimenter, lær, gentag">
+    <meta name="twitter:description" content="Eksperimentér, observér, lær, gentag">
     <meta name="twitter:image" content="https://krauhe.github.io/t1d-simulator/assets/social-card.png">
     <!-- Favicon: simpel BG-kurve i teal -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23181c24'/><polyline points='4,22 10,18 14,10 18,20 22,14 28,16' fill='none' stroke='%2300e5a0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <!-- Stylesheet med CSS-variabler for tema-skifte -->
-    <link rel="stylesheet" href="style.css?v=0.9.128">
+    <link rel="stylesheet" href="style.css?v=0.9.129">
     <!-- Fonts: Inter til generel UI, Orbitron til CGM hero-tal (sci-fi look) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;800&display=swap" rel="stylesheet">
     <!-- Tone.js: Web Audio framework for lydeffekter (CDN, pinned version) -->
@@ -106,7 +106,7 @@
                     <div class="brand-line">
                         <div class="brand">T1D SIMULATOR</div>
                     </div>
-                    <div class="brand-slogan" data-i18n="ui.slogan">Eksperimenter, lær, gentag</div>
+                    <div class="brand-slogan" data-i18n="ui.slogan">Eksperimentér, observér, lær, gentag</div>
                 </div>
                 <div class="top-actions">
                     <button class="top-btn start-btn-prominent" id="startButton" data-i18n="ui.btn.start" data-i18n-title="ui.title.start" title="Start en ny simulation">Start</button>
@@ -1123,11 +1123,11 @@
          opdateres og translated-from versionen bumpes.
          showHelpPopup() i ui.js henter indholdet herfra.
          =================================================================== -->
-    <!-- help-version-da: translated-from-en 2026-09-22-v1 -->
+    <!-- help-version-da: translated-from-en 2026-10-25-v2 -->
     <template id="help-content-da">
         <div class="brand-group" style="align-self:center; margin-bottom:14px;">
             <div class="brand">T1D SIMULATOR</div>
-            <div class="brand-slogan">Eksperimenter, lær, gentag</div>
+            <div class="brand-slogan">Eksperimentér, observér, lær, gentag</div>
         </div>
 
         <details class="help-section">
@@ -1160,11 +1160,11 @@
         <details class="help-section">
           <summary>Kontakt</summary>
           <p style="font-size: 13px;">
-            Har du spørgsmål, forslag, ris eller ros? Kom med i projektets Facebook-gruppe eller kontakt os direkte — al feedback er velkommen!
+            Har du spørgsmål, forslag, ris eller ros? Kom med i projektets Facebook-gruppe eller kontakt mig direkte — al feedback er velkommen!
           </p>
           <ul>
             <li><a href="https://www.facebook.com/groups/t1dsimulator" target="_blank" style="color: var(--blue);">Facebook-gruppen (dansk gruppe)</a> — følg med, del erfaringer og giv feedback</li>
-            <li><a href="https://forms.gle/9snv9saAYy64u2Ht9" target="_blank" style="color: var(--blue);">Dansk spørgeskema</a> — hvis du spiller spillet, hjælper det os meget, hvis du giver feedback</li>
+            <li><a href="https://forms.gle/9snv9saAYy64u2Ht9" target="_blank" style="color: var(--blue);">Dansk spørgeskema</a> — hvis du spiller spillet, hjælper det mig meget, hvis du giver feedback</li>
             <li><a href="mailto:t1d.simulator@gmail.com" style="color: var(--blue);">t1d.simulator@gmail.com</a></li>
             <li><a href="https://github.com/krauhe/t1d-simulator/issues" target="_blank" style="color: var(--blue);">GitHub Issues</a> — fejlrapporter og feature-forslag</li>
           </ul>
@@ -1233,12 +1233,12 @@
           <summary>Credits</summary>
 
           <p><strong>Idé, design &amp; fysiologisk modellering</strong></p>
-          <p>Kristian R. Harreby — med AI-assisteret research og implementering (Claude, Anthropic &amp; Gemini, Google).</p>
+          <p>Kristian R. Harreby — med AI-assisteret research og implementering via Codex (OpenAI), Claude (Anthropic) og Gemini (Google).</p>
           <p style="color: var(--text-muted); font-size: 12px;">Bemærk: Kildekode og tests er primært genereret via AI og har ikke gennemgået en fuldstændig manuel audit.</p>
 
           <p><strong>Kernemodel</strong></p>
           <ul>
-            <li><strong>Hovorka et al. (2004):</strong> Glukose-insulin ODE-kerne, udvidet i simulatoren til 16 tilstandsvariable — dækker insulin-farmakokinetik, kulhydrat-absorption, glukose-kinetik, CGM-forsinkelse, motions-state og basal/hurtiginsulin-adskillelse. <a href="https://doi.org/10.1109/TBME.2004.827938" target="_blank" style="color: var(--blue);">Kilde</a></li>
+            <li><strong>Hovorka et al. (2004):</strong> Glukose-insulin ODE-kerne, udvidet i simulatoren til 16 tilstandsvariable — dækker insulin-farmakokinetik, kulhydrat-absorption, glukose-kinetik, CGM-forsinkelse, motions-state og basal/hurtiginsulin-adskillelse. <a href="https://doi.org/10.1088/0967-3334/25/4/010" target="_blank" style="color: var(--blue);">Kilde</a></li>
             <li><strong>Open source-grundlag:</strong> Inspireret af <a href="https://github.com/JonasNM/svelte-flask-hovorka-simulator" target="_blank" style="color: var(--blue);">svelte-flask-hovorka-simulator</a> af Jonas Nordhassel Myhre.</li>
           </ul>
 
@@ -1277,11 +1277,11 @@
          Engelsk er primær for hjælp-tekst. Når denne ændres, bump versionen
          og opdatér den danske template til at matche.
          =================================================================== -->
-    <!-- help-version-en: 2026-09-22-v1 -->
+    <!-- help-version-en: 2026-10-25-v2 -->
     <template id="help-content-en">
         <div class="brand-group" style="align-self:center; margin-bottom:14px;">
             <div class="brand">T1D SIMULATOR</div>
-            <div class="brand-slogan">Experiment, learn, repeat</div>
+            <div class="brand-slogan">Experiment, observe, learn, repeat</div>
         </div>
 
         <details class="help-section">
@@ -1314,11 +1314,11 @@
         <details class="help-section">
           <summary>Contact</summary>
           <p style="font-size: 13px;">
-            Questions, suggestions, or feedback? Join the project's Facebook group or reach out directly — all input is welcome!
+            Questions, suggestions, or feedback? Join the project's Facebook group or contact me directly — all input is welcome!
           </p>
           <ul>
             <li><a href="https://www.facebook.com/groups/t1dsimulator" target="_blank" style="color: var(--blue);">Facebook group (Danish-language group)</a> — follow along, share experiences and give feedback</li>
-            <li><a href="https://forms.gle/Xm6X9wyMynFQ2rhk9" target="_blank" style="color: var(--blue);">Feedback questionnaire</a> — if you play the game, it helps us a lot if you share feedback</li>
+            <li><a href="https://forms.gle/Xm6X9wyMynFQ2rhk9" target="_blank" style="color: var(--blue);">Feedback questionnaire</a> — if you play the game, it helps me a lot if you share feedback</li>
             <li><a href="mailto:t1d.simulator@gmail.com" style="color: var(--blue);">t1d.simulator@gmail.com</a></li>
             <li><a href="https://github.com/krauhe/t1d-simulator/issues" target="_blank" style="color: var(--blue);">GitHub Issues</a> — bug reports and feature requests</li>
           </ul>
@@ -1387,12 +1387,12 @@
           <summary>Credits</summary>
 
           <p><strong>Idea, design &amp; physiological modelling</strong></p>
-          <p>Kristian R. Harreby — with AI-assisted research and implementation (Claude, Anthropic &amp; Gemini, Google).</p>
+          <p>Kristian R. Harreby — with AI-assisted research and implementation using Codex (OpenAI), Claude (Anthropic) and Gemini (Google).</p>
           <p style="color: var(--text-muted); font-size: 12px;">Note: Source code and automated tests are primarily generated via AI and have not undergone a complete manual audit.</p>
 
           <p><strong>Core model</strong></p>
           <ul>
-            <li><strong>Hovorka et al. (2004):</strong> Glucose-insulin ODE core extended in this simulator to 16 state variables — covers insulin pharmacokinetics, carbohydrate absorption, glucose kinetics, CGM delay, exercise states, and basal/rapid insulin separation. <a href="https://doi.org/10.1109/TBME.2004.827938" target="_blank" style="color: var(--blue);">Source</a></li>
+            <li><strong>Hovorka et al. (2004):</strong> Glucose-insulin ODE core extended in this simulator to 16 state variables — covers insulin pharmacokinetics, carbohydrate absorption, glucose kinetics, CGM delay, exercise states, and basal/rapid insulin separation. <a href="https://doi.org/10.1088/0967-3334/25/4/010" target="_blank" style="color: var(--blue);">Source</a></li>
             <li><strong>Open source foundation:</strong> Inspired by <a href="https://github.com/JonasNM/svelte-flask-hovorka-simulator" target="_blank" style="color: var(--blue);">svelte-flask-hovorka-simulator</a> by Jonas Nordhassel Myhre.</li>
           </ul>
 
@@ -1429,25 +1429,25 @@
     <!-- ===================================================================
          SCRIPT LOADING ORDER — Kritisk! Filerne deler globalt scope.
          =================================================================== -->
-<script src="js/sounds.js?v=0.9.128"></script>
-<script src="js/i18n.js?v=0.9.128"></script>
-<script src="js/dose-controls.js?v=0.9.128"></script>
-<script src="js/guide-data.js?v=0.9.128"></script>
-<script src="js/version-data.js?v=0.9.128"></script>
-<script src="js/levels.js?v=0.9.128"></script>
-<script src="js/archetypes.js?v=0.9.128"></script>
-<script src="js/symptoms.js?v=0.9.128"></script>
-<script src="js/foods.js?v=0.9.128"></script>
-<script src="js/hovorka.js?v=0.9.128"></script>
-<script src="js/physiology-engine.js?v=0.9.128"></script>
-<script src="js/simulator.js?v=0.9.128"></script>
-<script src="js/graph-renderer.js?v=0.9.128"></script>
-<script src="js/ui.js?v=0.9.128"></script>
-<script src="js/editor.js?v=0.9.128"></script>
-<script src="js/game.js?v=0.9.128"></script>
-<script src="js/campaign-core.js?v=0.9.128"></script>
-<script src="js/campaign.js?v=0.9.128"></script>
-<script src="js/welcome-tour.js?v=0.9.128"></script>
-<script src="js/main.js?v=0.9.128"></script>
+<script src="js/sounds.js?v=0.9.129"></script>
+<script src="js/i18n.js?v=0.9.129"></script>
+<script src="js/dose-controls.js?v=0.9.129"></script>
+<script src="js/guide-data.js?v=0.9.129"></script>
+<script src="js/version-data.js?v=0.9.129"></script>
+<script src="js/levels.js?v=0.9.129"></script>
+<script src="js/archetypes.js?v=0.9.129"></script>
+<script src="js/symptoms.js?v=0.9.129"></script>
+<script src="js/foods.js?v=0.9.129"></script>
+<script src="js/hovorka.js?v=0.9.129"></script>
+<script src="js/physiology-engine.js?v=0.9.129"></script>
+<script src="js/simulator.js?v=0.9.129"></script>
+<script src="js/graph-renderer.js?v=0.9.129"></script>
+<script src="js/ui.js?v=0.9.129"></script>
+<script src="js/editor.js?v=0.9.129"></script>
+<script src="js/game.js?v=0.9.129"></script>
+<script src="js/campaign-core.js?v=0.9.129"></script>
+<script src="js/campaign.js?v=0.9.129"></script>
+<script src="js/welcome-tour.js?v=0.9.129"></script>
+<script src="js/main.js?v=0.9.129"></script>
 </body>
 </html>

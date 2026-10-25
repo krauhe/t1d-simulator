@@ -15,9 +15,21 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.128-beta',
-    date: '2026-10-04',
+    version: '0.9.129-beta',
+    date: '2026-10-25',
     history: [
+        {
+            version: '0.9.129-beta',
+            date: '2026-10-25',
+            features: {
+                da: ['CGM-alarmen gør opmærksom på lave sensorværdier. Om natten vækker den karakteren, og tiden vågen reducerer søvnen.', 'Spillet har nu én offentlig udgave. Gamle links til testversionen åbner samme spil.'],
+                en: ['The CGM alarm signals low sensor readings. At night, it wakes the character, and time awake reduces their sleep.', 'The game now has one public version. Old preview links open the same game.']
+            },
+            fixes: {
+                da: ['Tydelige dagsangivelser gør det lettere at orientere sig, når du ruller gennem Hvad Nu Hvis.', 'Portionsangivelser og kampagnens highscorekort er lettere at læse.'],
+                en: ['Clear day labels make it easier to navigate while scrolling through What If.', 'Portion labels and Campaign highscore cards are easier to read.']
+            }
+        },
         {
             version: '0.9.128-beta',
             date: '2026-10-04',
@@ -27,22 +39,10 @@ const APP_VERSION_INFO = {
             }
         },
         {
-            version: '0.9.126-beta',
-            date: '2026-09-22',
-            features: {
-                da: ['Græsk yoghurt med nødder erstatter det enkelte æg i madpanelet. Havregryn står nu først i måltidsrækken.'],
-                en: ['Greek yogurt with nuts replaces the single egg in the food panel. Oatmeal now comes first in the meals row.']
-            },
-            fixes: {
-                da: ['Madkortenes mouseover-tekst gentager ikke længere kulhydrat, protein og fedt, som allerede vises på kortene.'],
-                en: ['Food card tooltips no longer repeat carbohydrate, protein and fat amounts already shown on the cards.']
-            }
-        },
-        {
             month: '2026-09',
             summary: {
-                da: 'Madpanelet fik caffè latte, nye ikoner og små snackportioner. Spilguiden blev kortere med Hvad Nu Hvis, bedre tiplinks og rulning. Statistikvalget blev bevaret, introens tekst og tale blev tilpasset, og oplæsningen fulgte det valgte sprog. Projektbeskrivelserne afgrænsede spiltilstandene til Campaign og Box Challenge.',
-                en: 'The food panel gained caffè latte, new icons and small snack portions. The shorter guide added What If, better tip links and scrolling. Statistics preferences were preserved, intro text and narration were updated, and audio followed the selected language. Project descriptions defined Campaign and Box Challenge as the game modes.'
+                da: 'Madpanelet fik caffè latte, græsk yoghurt med nødder, nye ikoner og små snackportioner. Havregryn kom først i måltidsrækken, og madkort fik kortere mouseover-tekst. Spilguiden blev kortere med Hvad Nu Hvis, bedre tiplinks og rulning. Statistikvalget blev bevaret, introens tekst og tale blev tilpasset, og oplæsningen fulgte det valgte sprog. Projektbeskrivelserne afgrænsede spiltilstandene til Campaign og Box Challenge.',
+                en: 'The food panel gained caffè latte, Greek yogurt with nuts, new icons and small snack portions. Oatmeal moved first in the meals row, and food card tooltips became shorter. The shorter guide added What If, better tip links and scrolling. Statistics preferences were preserved, intro text and narration were updated, and audio followed the selected language. Project descriptions defined Campaign and Box Challenge as the game modes.'
             }
         },
         {

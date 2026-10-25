@@ -321,14 +321,18 @@ const Editor = (function () {
     }
     frames = f;
     alternativeBoxHits = findAlternativeBoxHits();
+    // Motorens snapshot beholder absolut simuleringstid, mens grafens minut 0
+    // er starten på det eksporterede udsnit. Omregn kun de visuelle kopier;
+    // motorens intervaller og optjente søvntab må ikke flyttes eller genberegnes.
+    const timelineOriginMin = startEngineState?.state?.totalSimMinutes || 0;
     sleepAwakenings = engine.sleepAwakeIntervals.map(aw => ({
-      startMin: aw.startMin,
-      endMin: aw.endMin == null ? engine.totalSimMinutes : aw.endMin
-    }));
+      startMin: Math.max(0, aw.startMin - timelineOriginMin),
+      endMin: (aw.endMin == null ? engine.totalSimMinutes : aw.endMin) - timelineOriginMin
+    })).filter(aw => aw.endMin > 0 && aw.startMin < totalMin);
     // Mirror awakenings onto the facade (= global `game`) so drawGraph erases the
     // night shading over each awake stripe — the same visual the live game uses.
-    facade.sleepAwakeIntervals = engine.sleepAwakeIntervals.length
-      ? engine.sleepAwakeIntervals
+    facade.sleepAwakeIntervals = sleepAwakenings.length
+      ? sleepAwakenings
       : null;
     syncData();        // mirror frames into the global render arrays drawGraph reads
     updateSummary();
@@ -1028,8 +1032,22 @@ const Editor = (function () {
     return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
   }
 
+  // Et midnats-snapshot kan starte på en senere dag af den oprindelige bane.
+  // Grafens x-akse er lokal, men dagsnavnet skal bevare banens faktiske nummer.
+  function sourceDayOffset() {
+    return Math.floor((startEngineState?.state?.totalSimMinutes || 0) / 1440);
+  }
+
   function updateInspect() {
     const min = Math.max(0, Math.min(totalMin - 1, Math.round(cursorMin)));
+    // Ur og dag beskriver den låste cursor (eller den markør, som trækkes).
+    // De opdateres også efter et afsluttet forløb, hvor der ikke findes BG-data.
+    const clockMin = (dragEv && dragMoved) ? dragEv.t : min;
+    facade.timeInMinutes = clockMin % 1440;
+    facade.day = sourceDayOffset() + Math.floor(clockMin / 1440) + 1;
+    if (typeof updateClockAndDayNight === 'function') updateClockAndDayNight();
+    const dayEl = document.getElementById('dayDisplay');
+    if (dayEl) dayEl.textContent = facade.day;
     const fr = frames[min];
     if (!fr) return;
     // Feed the cursor frame's snapshot to the game's BG-forces panel so it shows
@@ -1059,17 +1077,6 @@ const Editor = (function () {
       facade.weightLimitKg = 0.07 * (profile.weight || 70);
       updateLifeBars();
     }
-    // Show the cursor's time + day + sun/moon in the game's clock (.top-status), so
-    // you can read exactly where the cursor sits. Reuses updateClockAndDayNight: feed
-    // it the time-of-day (clockMin % 1440) and set the day number separately.
-    // WHILE DRAGGING an event the clock follows the dragged marker instead of the
-    // cursor, so you can read the event's exact time live as you move it (the
-    // BG/IOB/COB tablet keeps showing the inspection cursor's values).
-    const clockMin = (dragEv && dragMoved) ? dragEv.t : min;
-    facade.timeInMinutes = clockMin % 1440;
-    if (typeof updateClockAndDayNight === 'function') updateClockAndDayNight();
-    const dayEl = document.getElementById('dayDisplay');
-    if (dayEl) dayEl.textContent = Math.floor(clockMin / 1440) + 1;
   }
 
   // Trend arrow at the cursor — same rate→arrow mapping as the game's CGM trend
@@ -1293,6 +1300,36 @@ const Editor = (function () {
     // The single death marker belongs to the canonical curve; in sweep mode each
     // variant shows its own death dot instead.
     if (!sweep) drawDeathMarker(m);
+    drawDayLabels(octx, m);
+  }
+
+  // Dagsnavnet følger den synlige del af hvert døgn, også når vinduet ruller
+  // hen over midnat. Den øverste aksemargen er fri for kurver og hændelsesikoner,
+  // så labels hverken dækker grafen eller følger inspektionsmarkørens position.
+  function drawDayLabels(octx, m) {
+    const viewEnd = m.startMin + m.widthMin;
+    const firstDay = Math.floor(m.startMin / 1440);
+    // Højre kant er eksklusiv: et vindue, der slutter præcis ved midnat,
+    // skal ikke vise navnet på det næste døgn uden nogen synlig del af det.
+    const lastDay = Math.ceil(viewEnd / 1440) - 1;
+    const graphLeft = m.padding.left;
+    const graphRight = graphLeft + m.graphWidth;
+    octx.save();
+    octx.font = '600 12px Inter, sans-serif';
+    octx.textAlign = 'center';
+    octx.textBaseline = 'middle';
+    octx.fillStyle = printRender ? '#334155' : '#cbd5e1';
+    for (let day = firstDay; day <= lastDay; day++) {
+      const left = m.timeToX(Math.max(m.startMin, day * 1440));
+      const right = m.timeToX(Math.min(viewEnd, (day + 1) * 1440));
+      const label = `${t('ui.badge.day')} ${sourceDayOffset() + day + 1}`;
+      const halfWidth = octx.measureText(label).width / 2;
+      // En meget smal dagsrest får stadig et helt læsbart navn ved kanten.
+      const centerX = Math.max(graphLeft + halfWidth + 4,
+        Math.min(graphRight - halfWidth - 4, (left + right) / 2));
+      octx.fillText(label, centerX, m.padding.top / 2);
+    }
+    octx.restore();
   }
 
   // Tegn Box Challenge-kasser under kurverne via drawGraph-hooket. De kopieres
@@ -2060,6 +2097,15 @@ const Editor = (function () {
   function clampCursor(m) {
     return Math.max(viewStart, Math.min(Math.min(viewStart + viewSpanMin, totalMin - 1), m));
   }
+  // Ved rulning bevares det valgte tidspunkt, så længe det stadig er synligt.
+  // Ellers flyttes aflæsningen til midten af det nye udsnit i stedet for at
+  // vise en gammel dag i topbaren, som slet ikke findes på skærmen.
+  function keepCursorInView() {
+    const endMin = Math.min(viewStart + viewSpanMin, totalMin - 1);
+    if (cursorMin < viewStart || cursorMin > endMin) {
+      cursorMin = Math.round((viewStart + endMin) / 2);
+    }
+  }
   function eventAt(px, py) {
     // Larger hit radius than the icon so taps are forgiving (touch-friendly).
     for (const ev of events) {
@@ -2468,7 +2514,7 @@ const Editor = (function () {
       const left = Math.max(0, Math.min(maxLeft, leftPx));
       const frac = maxLeft > 0 ? left / maxLeft : 0;
       viewStart = Math.round(frac * Math.max(0, (totalMin - 1) - viewSpanMin));
-      cursorMin = clampCursor(cursorMin);
+      keepCursorInView();
       syncScrollbar(); draw(); updateInspect();
     };
     thumb.addEventListener('pointerdown', e => {
@@ -2741,6 +2787,7 @@ const Editor = (function () {
 
     closeEventPop();
     cursorMin = playedUntilMin;
+    keepCursorInView();
     resetEditorYAxisScale();
     syncScrollbar();
     recompute();
@@ -3006,7 +3053,7 @@ const Editor = (function () {
       }).join('') || '<tr><td colspan="3" class="ep-empty">' + t('editor.print.noEvents') + '</td></tr>';
       const img = dayImgs[d] ? '<img class="ep-graph" src="' + dayImgs[d] + '" alt="">' : '';
       html += '<section class="ep-page">' +
-        '<header class="ep-head"><div class="ep-title">' + t('editor.print.title') + ' — ' + t('editor.print.day') + ' ' + (d + 1) + '/' + numDays + '</div>' +
+        '<header class="ep-head"><div class="ep-title">' + t('editor.print.title') + ' — ' + t('ui.badge.day') + ' ' + (sourceDayOffset() + d + 1) + '</div>' +
         '<div class="ep-sub">' + escHtml(profLine) + '</div></header>' +
         img +
         '<table class="ep-table"><thead><tr><th>' + t('editor.print.col.time') + '</th><th>' + t('editor.print.col.type') + '</th><th>' + t('editor.print.col.details') + '</th></tr></thead><tbody>' + rows + '</tbody></table>' +
