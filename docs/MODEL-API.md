@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-07-30-v2 -->
+<!-- doc-version: 2026-10-25-v1 -->
 # Physiology engine API
 
 This document describes the API surface of `js/physiology-engine.js`.
@@ -205,7 +205,32 @@ engine.stopActivity();
 engine.useGlucagon();                                       // → actualRelease_g (limited by liver glycogen)
 ```
 
-`carbParams = { simpleFraction, fiberPerGram, retentionFactor }` (default = mixed).
+`carbParams` separates gastric composition from downstream appearance:
+
+```js
+{
+    simpleFraction: 1,        // sugar fraction of digestible carbohydrate
+    fiberPerGram: 0,          // fibre grams per gram of digestible carbohydrate
+    retentionFactor: 1,       // physical-form proxy for gastric transport
+    appearanceProfileId: 'glucose-solid',
+    appearanceTauMin: 25,     // effective downstream time; provisional, not measured transport
+    sugarIdentity: 'glucose', // descriptive metadata
+    physicalForm: 'solid'    // descriptive metadata
+}
+```
+
+When `carbParams` is omitted, the engine uses its mixed-food default
+(`simpleFraction=0.20`, `fiberPerGram=0.08`, `retentionFactor=1`, profile ID
+`mixed`, downstream time 45 min). When an explicit object supplies only the
+three gastric fields, its default downstream profile is `custom` at 40 min;
+identity/form metadata default to `unspecified`. These defaults are model
+assumptions, not clinical estimates. Game/catalog callers supply full profiles
+from `js/foods.js`.
+
+A profile ID must start with a letter and contain only letters, digits,
+underscores or hyphens. Reusing an existing pool or queued intake's ID with a
+different downstream time throws a `RangeError` before the meal is accepted.
+Different profiles share gastric emptying but retain their own downstream times.
 
 `startActivity`: if `typeDef` is omitted, `type` is looked up in the engine's built-in
 default catalog `ENGINE_DEFAULT_ACTIVITIES` (`cardio`, `styrke`, `blandet`, `afslapning`;
@@ -288,7 +313,7 @@ bit-identical with normal game behavior.
 
 ## Snapshot
 
-`exportState()` returns a read-only snapshot of engine-owned state:
+`exportState()` returns an independent snapshot copy of engine-owned state:
 
 ```js
 const snapshot = engine.exportState();
@@ -298,14 +323,25 @@ Format:
 
 ```js
 {
-    version: 1,
+    version: 3,
     seed: 123,
     rngState: 123456789,
     eventCount: 0,
     state: {
         trueBG: 5.5,
         cgmBG: 5.5,
-        // other engine-owned physiology fields
+        // other engine-owned physiology fields, including activeIntake
+    },
+    hovorka: {
+        state: [/* 16 core vector fields */],
+        carbPools: {/* per-profile gastric/downstream inventories and mass ledger */},
+        carbIntakeRates: [/* profileId, appearanceTauMin, gramsPerMinute */],
+        insulinRate: 0,
+        tauGastric: 40,
+        splanchnicAbsorbMod: 1,
+        A_G: 1,
+        lastUG: 0,
+        heartRate: 60
     }
 }
 ```
@@ -313,22 +349,29 @@ Format:
 The snapshot copy is deep for arrays and plain objects and preserves values like
 `Infinity` and `undefined`. That is why JSON stringify/parse is not used for the copy.
 
-The following fields are not exported as state:
+The example shows structure and illustrative values, not a complete importable
+snapshot. Always restore the actual object returned by `exportState()`.
+
+The following instance fields are excluded from the generic `state` copy:
 
 - `rng`: the RNG function is exported via `seed` and `rngState`.
 - `events`: the event buffer is exported only as `eventCount`.
-- `hovorka`: engine-owned Hovorka object (built in the constructor; not serialized).
+- `hovorka`: the class instance is excluded, but its mutable core vector,
+  carbohydrate pools, rates and coefficients are explicitly copied into the
+  separate top-level `hovorka` object shown above.
 - `scenarioRunner`: optional runner bridge for `runScenario` (not physiological state).
 
-`importState(snapshot)` restores engine state from the version 1 format:
+`importState(snapshot)` restores engine state from format 3. Older formats are
+rejected rather than migrated:
 
 ```js
 engine.importState(snapshot);
 ```
 
-The import preserves the existing `rng`, `hovorka` and `scenarioRunner` references, so the
-Simulator facade does not lose its callbacks/references. The event buffer is cleared on
-import, because concrete events are not stored in snapshot v1.
+The import preserves the existing `rng`, `hovorka`, core state-array and
+`scenarioRunner` references, so the Simulator facade does not lose its
+callbacks/references. Profile pools are restored and D1/D2 views are synchronized.
+The event buffer is cleared on import; concrete events are not stored for replay.
 
 ## Hovorka ownership
 

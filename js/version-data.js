@@ -6,6 +6,8 @@
 //   - the current version number
 //   - the current version date
 //   - the version history shown in the help popup
+// Redaktionel standard: AGENTS.md, "Spiller-vendt versionshistorik".
+// Vælg nyheder efter hvad spilleren kan prøve, opleve eller forstå bedre.
 //
 // Why a JavaScript file and not version.json?
 // The app must open directly as index.html without a local web server. Browsers
@@ -15,15 +17,15 @@
 // =============================================================================
 
 const APP_VERSION_INFO = {
-    version: '0.9.129-beta',
+    version: '0.9.130-beta',
     date: '2026-10-25',
     history: [
         {
-            version: '0.9.129-beta',
+            version: '0.9.130-beta',
             date: '2026-10-25',
             features: {
-                da: ['CGM-alarmen gør opmærksom på lave sensorværdier. Om natten vækker den karakteren, og tiden vågen reducerer søvnen.', 'Lav selv har særskilte valg for druesukker og hvidt sukker. Blandede måltider kan give en tidligere blodsukkerstigning med den reviderede madmodel.', 'Spillet har nu én offentlig udgave. Gamle links til testversionen åbner samme spil.'],
-                en: ['The CGM alarm signals low sensor readings. At night, it wakes the character, and time awake reduces their sleep.', 'Custom food has separate choices for dextrose and table sugar. Mixed meals can produce an earlier glucose rise with the revised food model.', 'The game now has one public version. Old preview links open the same game.']
+                da: ['CGM-alarmen vækker nu karakteren ved lave sensorværdier om natten. Tiden vågen tæller med i nattens søvn.', 'I Lav selv kan du vælge druesukker eller hvidt sukker og blande det med fedt og protein.', 'Blodsukkeret kan nu stige tidligere efter blandede måltider. Prøv dine måltider igen, og læg mærke til timingen af mad og insulin.'],
+                en: ['The CGM alarm now wakes the character when sensor readings are low at night. Time awake counts towards lost sleep.', 'In Custom food, you can choose dextrose or table sugar and combine it with fat and protein.', 'Blood glucose can now rise earlier after mixed meals. Try your meals again and watch the timing of food and insulin.']
             },
             fixes: {
                 da: ['Tydelige dagsangivelser gør det lettere at orientere sig, når du ruller gennem Hvad Nu Hvis.', 'Portionsangivelser og kampagnens highscorekort er lettere at læse.'],
@@ -31,32 +33,32 @@ const APP_VERSION_INFO = {
             }
         },
         {
-            version: '0.9.128-beta',
-            date: '2026-10-04',
+            version: '0.9.126-beta',
+            date: '2026-09-22',
             features: {
-                da: ['Skift mellem den stabile udgave og en tydeligt markeret testversion.', 'Testversionen gemmer indstillinger, fremskridt og highscores separat.'],
-                en: ['Switch between the stable release and a clearly labelled preview.', 'The preview keeps settings, progress and highscores separate.']
+                da: ['Græsk yoghurt med nødder er kommet i madpanelet som et nyt alternativ til måltider med mange kulhydrater.'],
+                en: ['Greek yogurt with nuts has joined the food panel as a new alternative to meals with more carbohydrate.']
             }
         },
         {
             month: '2026-09',
             summary: {
-                da: 'Madpanelet fik caffè latte, græsk yoghurt med nødder, nye ikoner og små snackportioner. Havregryn kom først i måltidsrækken, og madkort fik kortere mouseover-tekst. Spilguiden blev kortere med Hvad Nu Hvis, bedre tiplinks og rulning. Statistikvalget blev bevaret, introens tekst og tale blev tilpasset, og oplæsningen fulgte det valgte sprog. Projektbeskrivelserne afgrænsede spiltilstandene til Campaign og Box Challenge.',
-                en: 'The food panel gained caffè latte, Greek yogurt with nuts, new icons and small snack portions. Oatmeal moved first in the meals row, and food card tooltips became shorter. The shorter guide added What If, better tip links and scrolling. Statistics preferences were preserved, intro text and narration were updated, and audio followed the selected language. Project descriptions defined Campaign and Box Challenge as the game modes.'
+                da: 'Caffè latte og mindre snackportioner gav flere valg i madpanelet. Spilguiden fik hjælp til Hvad Nu Hvis, og tips førte direkte til relevante forklaringer. Velkomstturens tale fulgte det valgte sprog.',
+                en: 'Caffè latte and smaller snack portions added more food choices. The game guide added help for What If, and tips linked directly to relevant explanations. Welcome-tour narration followed the selected language.'
             }
         },
         {
             month: '2026-08',
             summary: {
-                da: 'Velkomstturen forklarede de faste karakterer, Insights samlede Hvad Nu Hvis og fysiologi, og styrketræningens påvirkning af insulinfølsomheden blev mere gradvis. Modelvalideringen fik delbare testlinks og en sammenligning af hurtige kulhydrater med aktuelle maddata og ikoner.',
-                en: 'The welcome tour introduced the fixed characters, Insights brought What If and physiology together, and strength training gained a more gradual effect on insulin sensitivity. Model validation gained shareable test links and a fast-carbohydrate comparison using current food data and icons.'
+                da: 'Insights samlede Hvad Nu Hvis og fysiologivisningen, så du kunne undersøge et spilforløb og prøve andre handlinger. Styrketræningens påvirkning af insulinfølsomheden blev mere gradvis.',
+                en: 'Insights brought What If and the physiology view together, so you could explore a played session and try different actions. Strength training gained a more gradual effect on insulin sensitivity.'
             }
         },
         {
             month: '2026-07',
             summary: {
-                da: 'Seks faste karakterer med dynamiske navne og stemninger, omskrevne baner og tips samt udbygget motion, søvn og modelkontrol.',
-                en: 'Six fixed characters with dynamic names and moods, rewritten levels and tips, plus expanded exercise, sleep and model checks.'
+                da: 'Seks karakterer med forskellige forudsætninger og synlige stemninger. Kampagnebaner og tips blev tilpasset karaktererne.',
+                en: 'Six characters with different starting profiles and visible moods. Campaign levels and tips were adapted to the characters.'
             }
         },
         {

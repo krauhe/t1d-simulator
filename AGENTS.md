@@ -113,8 +113,8 @@ Codex skal behandle denne fil som den primære arbejdsaftale for fremtidige sess
 - `ISSUES.txt` er IKKE tracket i git — kun til lokal planlægning.
 
 ### Versionering
-- **Stabil/test-udgivelse:** Værktøjet i `tools/releases/` bygger den låste stabile version i roden og ny kode under `preview/`. Se `docs/RELEASE-CHANNELS.md`. Før det første push med denne opsætning skal Pages-kilden, efter eksplicit publiceringstilladelse, ændres fra `main`/root til **GitHub Actions** og kontrolleres. Ellers vil den gamle branch-publicering stadig lægge ny kode direkte på den normale adresse. Et lokalt build ændrer ikke hostingindstillingerne.
-- **Ingen automatisk promotion:** Bevar `stableCommit`/`stableVersion` i `tools/releases/channels.json`, indtil brugeren udtrykkeligt godkender en ny stabil version. Workflowen er manuel; push og publicering er adskilte handlinger. Upload kun den testede pakke, aldrig repository-roden eller en `--working-tree`-pakke.
+- **Én offentlig udgave:** Værktøjet i `tools/releases/` bygger den valgte commit som én app i roden og henvisninger fra gamle `preview/`-adresser. Se `docs/RELEASE-CHANNELS.md`. Kontrollér Pages-kilden som **GitHub Actions** før publicering; et lokalt build eller en ændret README beviser ikke, at den offentlige side er opdateret.
+- **Ingen automatisk publicering:** `tools/releases/channels.json` bevarer den tidligere stable-pin som historisk reference; den nye bygger bruger den ikke. Workflowen er manuel; commit, push og publicering kræver brugerens specifikke besked. Et ønske om klargøring eller snarlig udgivelse er ikke i sig selv tilladelse til commit/push. Upload kun den testede commit-pakke, aldrig repository-roden eller en `--working-tree`-pakke.
 - Versionsnummer, dato og hjælp-popupens versionshistorik bor i `js/version-data.js`.
 - Format: `version: 'X.Y.Z-beta'` og `date: 'YYYY-MM-DD'` i `APP_VERSION_INFO`.
 - **Ved hvert git push:** bump patch-nummeret (Z+1) og opdatér datoen i `js/version-data.js`. Versionsspring skal være små og gradvise: `0.8.0 → 0.8.1 → 0.8.2 → ...`. Major-bump (Y: `0.8 → 0.9`) kun ved meget store milepæle (ny spiltilstand, fundamental arkitekturændring).
@@ -125,12 +125,27 @@ Codex skal behandle denne fil som den primære arbejdsaftale for fremtidige sess
   - Overskrift: `vX.Y.Z-beta — YYYY-MM-DD`
   - *Features:* — de vigtigste nye funktioner
   - *Vigtige bugfixes:* / *Key bug fixes:* — kun de mest synlige/kritiske rettelser
-- Skriv kun versionshistorik som er interessant for spillere/brugere: nye baner, nye værktøjer, bedre feedback, tydelige gameplay-ændringer og vigtige bugfixes. Drop interne ændringer, små label-omdøbninger, refaktoreringer, dokumentationsarbejde og detaljer man må formode at de fleste vil finde kedelige, medmindre de direkte ændrer brugeroplevelsen.
-- **Komprimering af ældre versioner:** Behold kun punktlister på de 2 nyeste offentlige udgivelsesdage. Alt ældre samles til én kort `summary` pr. kalendermåned (`month: 'YYYY-MM'`). Fuld Git-historik findes i repositoryet.
+- **Redaktionel standard:** Følg afsnittet "Spiller-vendt versionshistorik" nedenfor. Det er den fælles standard for Hjælp og andre offentlige udgivelsestekster.
+- **Komprimering af ældre versioner:** Behold kun punktlister på de 2 nyeste udgivelsesdage med spillerrelevante nyheder. Ældre relevante nyheder samles til én kort `summary` pr. kalendermåned (`month: 'YYYY-MM'`). Udgivelser med kun internt arbejde udelades fra spillerhistorikken; opfind ikke nyheder for at udfylde et versionsnummer. Fuld Git-historik findes i repositoryet.
 - Repoets pre-push-hook kører `tests/check-version-history.js` og blokerer et push, hvis dagens versionspost mangler, datoer gentages, eller mere end de 2 nyeste poster har punktlister.
 - **Model-udvidelses-listen i hjælp-popup'en** ("Udvidelser af modellen" / "Model extensions" i `index.html`): hvert punkt = max én linje (kort sætning + kort kilde i parentes). Kun de SIDSTE TO punkter må være flerlinje med formler/tal. Engelsk er primær — synk dansk. (Se HTML-kommentaren ved listen.)
 
 ### Sprog og tegnsætning
+
+#### Spiller-vendt versionshistorik
+
+Denne sektion er den kanoniske redaktionelle regel for `APP_VERSION_INFO.history` i `js/version-data.js` og offentlige udgivelsesbeskrivelser. Forestil dig en spiller, som åbner Hjælp for at finde noget spændende eller nyttigt at prøve.
+
+1. Vælg kun ændringer, der giver spilleren et konkret nyt valg, en oplevelse, en forståelig ændring i spillets respons eller en løsning på et mærkbart problem. Prioritér nye baner, madvarer, værktøjer, feedback og tydelige gameplayændringer.
+2. Skriv virkningen først: Hvad kan spilleren nu gøre, se eller forstå bedre? Nævn det relevante værktøj eller den konkrete situation. Skriv fx "CGM-alarmen vækker nu karakteren ved lave sensorværdier om natten" frem for "Alarmens event-håndtering er rettet".
+3. Udelad komma- og stavejusteringer, omdøbte interne felter, refaktoreringer, testantal, snapshots, dokumentationsarbejde, AI-arbejdsfordeling, hosting, deploy-workflows, cacheversioner og teknikken bag parallelle stabile/testudgaver. Udviklerdetaljer hører til i Git-historik eller `docs/reviews/`.
+4. UI-rettelser medtages kun, når konsekvensen er konkret: fx læselige portioner eller tydelige dage i Hvad Nu Hvis. Undgå små kosmetiske ændringer uden betydning for en handling eller forståelse.
+5. Gør ikke en ændring mere spændende ved at overdrive. Nye madvalg må ikke beskrives som fysiologisk hurtigere eller mere præcise uden dokumentation. Skriv, hvad der faktisk ændres, og hvad spilleren kan undersøge.
+6. Hold hvert punkt til én kort pointe. Brug få udvalgte punkter frem for en komplet opgaveliste. Dansk og engelsk skal sige det samme og bruge spillets faktiske knapnavne.
+7. Samme filter gælder ældre månedsopsummeringer. Bevar ikke irrelevante tekniske nyheder alene af historiske hensyn, og gentag ikke en detaljeret udgivelses nyhed i månedsteksten.
+8. Før aflevering: spørg dig selv "Ville en spiller få lyst til at prøve noget eller genkende en forbedring efter at have læst dette?" Hvis nej, fjern punktet. Versionskontrollen kan kontrollere format, men erstatter ikke denne redaktionelle vurdering.
+
+At redigere udgivelsesteksten giver aldrig tilladelse til commit, push eller publicering. Det kræver brugerens specifikke besked.
 
 #### Tone i spiller-vendt tekst — VIGTIGT
 - **Målgruppen omfatter børn og nydiagnosticerede voksne.** Mange er bange, frustrerede eller usikre på deres nye virkelighed med diabetes. Spillets tekster skal støtte dem, ikke forværre angsten.

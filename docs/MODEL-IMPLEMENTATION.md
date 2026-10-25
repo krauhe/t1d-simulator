@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-10-25-v3 -->
+<!-- doc-version: 2026-10-25-v4 -->
 # Physiological Model — T1D Simulator
 
 *This page is the technical documentation of the simulator's physiological engine.
@@ -226,23 +226,25 @@ The diagram below shows all 16 state variables (colored boxes), the flows betwee
   │                          ~10 min delay from true BG                 │
   └──────────────────────────────────────────────────────────────────────┘
 
-  Legend:  D1, Q1, x1 ... = state variables (16 total, see table below)
+  Legend:  D1, D2 = aggregate carbohydrate views; Q1, x1 ... = core fields
            ──→  = substance flow with rate constant
            E1 = filtered contraction input; E2 = diagnostic telemetry
            τ = time constant (minutes)
 ```
 </details>
 
-### The 16 State Variables — Quick Reference
+### The 16 Core Vector Fields — Quick Reference
 
-These are the Hovorka model's "memory" — everything the simulation needs to know
-to compute the next time step. They are updated every simulated minute via
-Euler integration: `new = old + (rate of change) × dt`.
+The core retains a 16-field vector. It is not the complete physiological state:
+the engine also owns extension states and the core owns carbohydrate-profile
+pools. D1/D2 are aggregate views of those pools, not independently integrated
+ODEs. The diagram above summarizes connectivity; the food equations in §5
+define the current separate gastric and downstream transport.
 
 | # | State | Full name | What it represents | Unit | Details |
 |:-:|:-----:|-----------|-------------------|:----:|:-------:|
-| 0 | **D1** | Stomach | Carbohydrate awaiting gastric emptying | mmol | [§5 Food](#food) |
-| 1 | **D2** | Gut | Carbohydrate being absorbed in small intestine | mmol | [§5 Food](#food) |
+| 0 | **D1** | Stomach view | Sum of gastric carbohydrate-profile inventories | mmol | [§5 Food](#food) |
+| 1 | **D2** | Downstream view | Sum of downstream carbohydrate-profile inventories | mmol | [§5 Food](#food) |
 | 2 | **S1** | SC depot 1 | Injected insulin under the skin (first pool) | mU | [§4 Insulin](#insulin) |
 | 3 | **S2** | SC depot 2 | Insulin moving toward absorption (second pool) | mU | [§4 Insulin](#insulin) |
 | 4 | **Q1** | Plasma glucose | Glucose in the blood — the "BG" you measure | mmol | [§3 Glucose](#glucose) |
@@ -305,25 +307,26 @@ The Hovorka model describes the body as a series of connected "rooms" (compartme
 Glucose and insulin move between these rooms at rates determined by
 differential equations — mathematical expressions that describe *how something changes over time*.
 
-The model has 16 state variables distributed across four subsystems:
+The core and its carbohydrate pools represent these subsystems:
 
 - **Glucose subsystem** (2 compartments: plasma and peripheral tissues)
-- **Insulin subsystem** (3 compartments: two subcutaneous depots and plasma)
+- **Insulin subsystem** (two subcutaneous depots and plasma, with a parallel basal-source cascade)
 - **Insulin action subsystem** (3 effect variables)
-- **Gut absorption subsystem** (2 compartments)
+- **Carbohydrate transport** (gastric and downstream inventory per food profile; D1/D2 summarize their totals)
 - **CGM sensor** (1 variable with delay)
 - **Exercise effects** (2 state variables)
 
-For the mathematically inclined: the model is solved with Euler integration, where we
-update the state every minute (simulated time):
+The main ODE states use Euler updates within engine substeps:
 
 ```
 New value = old value + rate of change * time step
 ```
 
-This is the simplest numerical method, but it is sufficiently accurate for
-our purposes. More advanced methods (e.g., Runge-Kutta 4) could provide better
-precision, but Euler is faster and perfectly adequate for a game.
+The engine limits substeps to one minute, and to 0.1 minute during active food
+intake, splitting at intake boundaries. Carbohydrate-profile transport and
+physical gastric emptying use exact constant-coefficient updates within each
+substep. Numerical accuracy is assessed with time-step comparisons; the
+integration method alone does not establish physiological accuracy.
 
 ---
 
@@ -1132,13 +1135,18 @@ proteinStomach →(1/τG)→ proteinGut →(1/τProtAbs)→ aminoAcidsBlood →(
 - **aminoAcidsBlood:** The circulating amino acid pool. Amino acids are cleared
   via oxidation (used as fuel), protein synthesis, and renal excretion.
 
-The differential equations (Euler integration per tick):
+The continuous compartment equations, including the active protein intake rate:
 
 ```
-dproteinStomach/dt = -proteinStomach / τG
+dproteinStomach/dt = proteinIntakeRate - proteinStomach / τG
 dproteinGut/dt     = proteinStomach / τG  -  proteinGut / τProtAbs
 daminoAcidsBlood/dt = proteinGut / τProtAbs  -  aminoAcidsBlood × AA_DECAY_RATE
 ```
+
+Implementation: the gastric equation is integrated exactly with the shared
+gastric coefficient and constant intake rate within each substep. Its realized
+transferred mass enters proteinGut. Intestinal absorption and amino-acid
+clearance retain Euler updates from their starting inventories.
 
 #### Hill function dose-response — threshold behavior
 

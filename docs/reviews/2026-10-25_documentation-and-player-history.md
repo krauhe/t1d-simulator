@@ -1,0 +1,24 @@
+# Documentation consistency and player-facing release history
+
+Date: 2026-10-25. Status: local documentation/text corrections; no commit, push or deployment authorized or performed in this follow-up.
+
+Subsequent instruction, same date: the owner explicitly requested the science additions and commit/push for the single public release. See the [science/publication follow-up](2026-10-25_science-update-release.md). The original check below remains a record of its narrower scope; BG-SCIENCE was subsequently extended with explicitly limited source coverage.
+
+## 1. Scope and findings
+
+The owner requested a check of MODEL-IMPLEMENTATION, BG-SCIENCE and GitHub README against the new food model, and a lasting editorial rule for the Help release history. The owner confirmed that README may describe the intended single public version. The GitHub main README was read through the GitHub connector; its inspected content matched the local source.
+
+1. **MODEL-IMPLEMENTATION — ✅ FIKSET locally.** The food section already described separate gastric/downstream pools, provisional parameters, custom glucose/sucrose and snapshot 3. General summaries still described all 16 vector fields as independent Euler states; protein gastric transport was also labelled Euler-only. The descriptions now distinguish aggregate D1/D2 views, profile inventories, exact within-substep gastric transport and the remaining Euler updates. No equations in executable code changed.
+2. **MODEL-API — ✅ FIKSET locally.** Food input documentation now includes downstream identity/time and the distinct omitted-object versus gastric-only defaults. Snapshot documentation now describes format 3, explicit Hovorka data, reference preservation and rejection of older formats. The example is marked structural rather than a complete importable snapshot.
+3. **BG-SCIENCE — ⚠️ BY DESIGN, retained.** The relevant carbohydrate section already separates gastric delivery, hydrolysis, transport and systemic appearance; its fibre and GI discussion already rejects a unique mapping from glucose iAUC to absorption kinetics. Simulator parameters and snapshot details belong in implementation/API documentation. No new claim was inserted and the document-version date was not changed merely to imply freshness. Slama/Gray and the newly located Bell/Wolever material have not received a new full comparative synthesis here; the existing review reports retain their source-coverage limitations. This check is not a complete reappraisal of BG-SCIENCE.
+4. **README — ✅ FIKSET locally.** Updated the meal-profile overview, removed the claim that the current fibre proxy separately models intestinal delay, and corrected the all-Euler/16-independent-ODE description. Added links to existing model decisions and calibration limitations. The single-public-version description remains at the owner's direction.
+5. **Help history — ✅ FIKSET locally.** Removed stable/preview infrastructure announcements and internal model-test news. The latest entry describes night alarms, custom sugar choices, meal timing and visible usability fixes. The infrastructure-only October 4 entry was omitted; the next detailed entry is the September 22 yogurt addition, verified against source commit 95c3b5a3fcb36b69dfae0db3d504014de40f01c9. Older summaries retain player-relevant features and avoid repeating that yogurt item.
+6. **Future writing standard — ✅ FIKSET locally.** AGENTS.md now contains one canonical "Spiller-vendt versionshistorik" section with inclusion/exclusion rules, examples, language requirements and a player-interest check. js/version-data.js points to it. The release-process instructions also now match the single-version builder and explicitly distinguish release preparation from permission to commit/push.
+
+## 2. Verification and provenance
+
+An independent read-only Codex audit identified stale implementation/API passages and confirmed the existing BG-SCIENCE coverage. Root checked those findings against current export/import, food input and transport code and applied the documentation edits. This is documentation consistency work, not new physiological calibration.
+
+The version JavaScript syntax check, existing version-history check and intended-purpose text check passed. Additional inspection confirmed equal Danish/English item counts and the absence of development-channel/internal-test announcements. The numerical model and UI rendering code were not changed; no new model tests were added for these prose edits. Existing public source links were retained; new documentation links are repository-local.
+
+Status summary: five documentation/editorial findings corrected; BG-SCIENCE intentionally retained with an explicit boundary on what was reviewed. Scientific synthesis of additional studies remains separate work, not claimed complete here. All changes await the owner's specific Git/publication instruction.

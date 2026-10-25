@@ -38,7 +38,7 @@ All feedback is welcome — from technical bug reports to "this felt confusing" 
 ## What is simulated?
 
 - **Glucose-insulin dynamics** based on the published [Hovorka et al. (2004)](https://doi.org/10.1088/0967-3334/25/4/010) research model from Cambridge
-- **Carbohydrate absorption** with variable gastric emptying
+- **Carbohydrate transport** with variable gastric emptying and separate downstream glucose appearance for each food profile
 - **Fat compartment model** — two-compartment (stomach → intestine) with CCK/GLP-1 feedback slowing carb absorption ("pizza effect")
 - **Protein glucagon model** — amino acid absorption driving glucagon-stimulated hepatic glucose production via Hill function
 - **Insulin pharmacokinetics** with subcutaneous depot, plasma and effect compartments
@@ -62,7 +62,8 @@ All feedback is welcome — from technical bug reports to "this felt confusing" 
 |---|---|
 | **Carbohydrate absorption** | Juice raises blood glucose quickly, while bread, pasta and mixed meals usually appear more slowly because they must be digested first. |
 | **Dynamic gastric emptying** | The same amount of carbohydrate can arrive faster or slower depending on meal composition, current blood glucose and recent activity. |
-| **Fiber-mediated absorption delay** | A high-fiber meal can produce a flatter, slower blood glucose rise because fiber delays gastric emptying and intestinal absorption. |
+| **Fiber-related meal delay** | A higher-fiber meal can produce a slower blood glucose rise. The current simulator represents this through a simplified gastric-emptying effect; it does not separately model intestinal viscosity. |
+| **Custom carbohydrate choices** | Custom food offers dextrose and table sugar alongside drinks, fruit and starch-based foods. These are distinct profiles; the simulator does not currently assign dextrose a proven speed advantage over table sugar or gummy candy. |
 | **Hyperglycemia-delayed gastric emptying** | When blood glucose is already high, the stomach can empty more slowly, so a meal may appear later than expected. |
 | **Exercise-mediated gut delay** | During harder exercise, blood flow shifts toward working muscle, so a pre-exercise snack may reach the blood more slowly. |
 | **Pizza effect: gastric delay** | A high-fat meal can produce a delayed rise because fat slows gastric emptying. |
@@ -138,7 +139,7 @@ All feedback is welcome — from technical bug reports to "this felt confusing" 
 
 - Vanilla HTML / CSS / JavaScript — no frameworks, no build step
 - [Tone.js](https://tonejs.github.io/) for sound effects (loaded from CDN)
-- Hovorka 2004 core model, extended to 16 ODE state variables, solved with Euler integration
+- Hovorka-based glucose–insulin model: Euler integration for the main ODE states and exact within-step transport for the separate carbohydrate pools
 
 ## Using the physiology engine in your own project
 
@@ -240,12 +241,14 @@ Kristian R. Harreby — with AI-assisted research and implementation (Codex/Open
 
 **Core model**
 
-- **[Hovorka et al. (2004)](https://doi.org/10.1088/0967-3334/25/4/010):** Glucose-insulin ODE core extended in this simulator to 16 state variables — covers insulin pharmacokinetics, carbohydrate absorption, glucose kinetics, CGM delay, exercise states, and basal/rapid insulin separation.
+- **[Hovorka et al. (2004)](https://doi.org/10.1088/0967-3334/25/4/010):** Foundation for the glucose–insulin equations. The simulator adds basal/rapid insulin separation, CGM, exercise and other extensions; its current carbohydrate model uses separate gastric and downstream pools.
 - **Open source foundation:** Inspired by [svelte-flask-hovorka-simulator](https://github.com/JonasNM/svelte-flask-hovorka-simulator) by Jonas Nordhassel Myhre.
 
 **Model extensions and scientific sources**
 
 The simulator extends the Hovorka core with additional physiology for exercise, stress, dawn/circadian variation, ketones, sleep disruption, fat/protein effects, glucotoxicity, glucose measurement uncertainty and longer-term energy balance. The visitor-facing overview is kept in [What is simulated?](#what-is-simulated); implementation details and literature references are kept in [Model implementation](docs/MODEL-IMPLEMENTATION.md) and [Scientific overview](docs/BG-SCIENCE.md).
+
+Food-profile timings are provisional, literature-informed model choices, not clinically fitted predictions for individual foods. The [meal-model decision](docs/reviews/2026-10-25_gastric-intestinal-fix.md) and [calibration audit](docs/reviews/2026-10-25_codex_food-kinetics-calibration-audit.md) document the assumptions and unresolved evidence.
 
 **Technologies**
 
