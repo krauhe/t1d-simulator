@@ -116,7 +116,7 @@ function debugLogTick() {
         plasmaI.toFixed(1),
         game.cob.toFixed(1),
         game.fatIntestine.toFixed(1),
-        (hov ? hov.tau_G.toFixed(0) : '40'),
+        (hov ? hov.tauGastric.toFixed(0) : '40'),
         game.aminoAcidsBlood.toFixed(1),
         game.proteinGlucagonLevel.toFixed(3),
         game.ketoneLevel.toFixed(2),
@@ -178,7 +178,7 @@ function debugUpdateLiveValues() {
     set('dbgPlasmaI', plasmaI.toFixed(1));
     set('dbgCOB', game.cob.toFixed(1));
     set('dbgFatInt', game.fatIntestine.toFixed(1));
-    set('dbgTauG', game.hovorka ? game.hovorka.tau_G.toFixed(0) : '40');
+    set('dbgTauG', game.hovorka ? game.hovorka.tauGastric.toFixed(0) : '40');
     set('dbgAA', game.aminoAcidsBlood.toFixed(1));
     set('dbgProtGluc', game.proteinGlucagonLevel.toFixed(3));
     set('dbgKetone', game.ketoneLevel.toFixed(2));
@@ -461,7 +461,7 @@ function initFoodChipUI() {
         const infoRow = document.createElement('div');
         infoRow.className = 'pc-info-row';
 
-        const isLiquid = food.carbType === 'sukker_flydende';
+        const isLiquid = CARB_TYPES[food.carbType]?.physicalForm === 'liquid';
         const weightUnit = food.portionUnit || (isLiquid ? 'ml' : 'g');
 
         // Left: weight (value above unit)
@@ -599,7 +599,7 @@ function updateFoodChips() {
         const weightValEl = chip.querySelector('.pc-weight-value');
         if (weightValEl) weightValEl.textContent = portionWeight;
         const weightUnitEl = chip.querySelector('.pc-weight-unit');
-        if (weightUnitEl) weightUnitEl.textContent = food.portionUnit || (food.carbType === 'sukker_flydende' ? 'ml' : 'g');
+        if (weightUnitEl) weightUnitEl.textContent = food.portionUnit || (CARB_TYPES[food.carbType]?.physicalForm === 'liquid' ? 'ml' : 'g');
         const kcalValEl = chip.querySelector('.pc-kcal-value');
         if (kcalValEl) kcalValEl.textContent = kcal;
 
@@ -1672,7 +1672,7 @@ function initializeApp() {
     // ONE handler per chip is bound and macros/icon/weight/carbType are looked up in
     // the FOODS table (js/foods.js). This means:
     //   1) The table is the source of truth — changes update both UI and physics.
-    //   2) carbType is passed so Simulator.addFood() can control dynamic τG.
+    //   2) carbType vælger maveegenskaber og en separat tilførselsprofil.
     //   3) New food items only need a table entry + a chip in HTML — no JS.
     document.querySelectorAll('#dock-panel-food .preset-chip[data-food]').forEach(chip => {
         const foodKey = chip.dataset.food;
@@ -1833,8 +1833,7 @@ function initializeApp() {
     fingerprickButton.addEventListener('click', () => { if(game) { game.performFingerprick(); flyIconToGraph('assets/icons/app/blood-drop.png', 'dock-panel-kit'); } });
     ketoneTestButton.addEventListener('click', () => { if(game) { game.performKetoneTest(); flyIconToGraph('assets/icons/app/ketone-reagent.png', 'dock-panel-kit'); } });
 
-    // Dextrose in the kit panel — uses the FOODS table so carbType=sukker_fast
-    // is passed along (gives short τG ≈ 25 min via dynamic gastric emptying).
+    // Druesukker i kittet bruger samme glukoseprofil og portion som madmenuen.
     const kitDextroButton = document.getElementById('kitDextroButton');
     if (kitDextroButton) {
         kitDextroButton.addEventListener('click', () => {
@@ -2014,9 +2013,11 @@ function initializeApp() {
                 const cc = parseInt(customCarbsSlider.value);
                 const cp = parseInt(customProteinSlider.value);
                 const cf = parseInt(customFatSlider.value);
-                // Makroerne udgør omtrent 40 % af måltidets vægt. Resten er vand og fibre.
-                const customWeight = Math.round((cc + cp + cf) / 0.4);
-                if (!game.addFood(cc, cp, cf, '\u{1F372}', customWeight, customSelectedCarbType)) return;
+                // Profiler, vægt og spisetid opløses i den fælles madfunktion.
+                // Sukkerarten ændrer ikke den valgte kulhydratmængde.
+                const customFood = resolveCustomFoodSpec(cc, cp, cf, customSelectedCarbType);
+                if (!game.addFood(cc, cp, cf, '\u{1F372}', customFood.weight,
+                    customFood.carbType, customFood.eatTimeMin)) return;
                 flyIconToGraph('\u{1F372}', 'dock-panel-custom-food');
             }
             closeDockPanels();

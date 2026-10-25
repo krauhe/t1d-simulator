@@ -6,6 +6,12 @@ Decision status: **The owner has decided to retain gummy candy for now.** The ar
 
 Approval update, 2026-10-25: the owner approved local implementation of this plan and sensible delegation, then requested a commit checkpoint first. This authorizes implementation and testing, not push/publication or an unsupported kinetic speed claim. The proposal-stage statements below record the state before approval; measured parameter validity remains to be established.
 
+Implementation update, 2026-10-25: checkpoint e4b8494 was created first. The
+[implementation decision and verification record](2026-10-25_gastric-intestinal-fix.md)
+documents the completed local model, inherited parameters, exact numerical
+transport, shared 0.18016 g/mmol conversion and continuous custom-weight rule.
+It supersedes the proposal-stage implementation status below.
+
 Related work: [feasibility and source appraisal](2026-10-25_codex_glucose-feasibility.md), [initial brief](2026-10-25_glucose-model-plan.md), [review index](INDEX.md). This proposal reuses that appraisal; it does not constitute new clinical calibration. The earlier candyfloss replacement suggestion is not pursued.
 
 ## 1. Recommended scope

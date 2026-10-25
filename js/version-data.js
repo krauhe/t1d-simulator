@@ -22,8 +22,8 @@ const APP_VERSION_INFO = {
             version: '0.9.129-beta',
             date: '2026-10-25',
             features: {
-                da: ['CGM-alarmen gør opmærksom på lave sensorværdier. Om natten vækker den karakteren, og tiden vågen reducerer søvnen.', 'Spillet har nu én offentlig udgave. Gamle links til testversionen åbner samme spil.'],
-                en: ['The CGM alarm signals low sensor readings. At night, it wakes the character, and time awake reduces their sleep.', 'The game now has one public version. Old preview links open the same game.']
+                da: ['CGM-alarmen gør opmærksom på lave sensorværdier. Om natten vækker den karakteren, og tiden vågen reducerer søvnen.', 'Lav selv har særskilte valg for druesukker og hvidt sukker. Blandede måltider kan give en tidligere blodsukkerstigning med den reviderede madmodel.', 'Spillet har nu én offentlig udgave. Gamle links til testversionen åbner samme spil.'],
+                en: ['The CGM alarm signals low sensor readings. At night, it wakes the character, and time awake reduces their sleep.', 'Custom food has separate choices for dextrose and table sugar. Mixed meals can produce an earlier glucose rise with the revised food model.', 'The game now has one public version. Old preview links open the same game.']
             },
             fixes: {
                 da: ['Tydelige dagsangivelser gør det lettere at orientere sig, når du ruller gennem Hvad Nu Hvis.', 'Portionsangivelser og kampagnens highscorekort er lettere at læse.'],

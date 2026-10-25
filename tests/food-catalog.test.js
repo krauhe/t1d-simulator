@@ -1,9 +1,11 @@
 // Kontrollerer snackportioner, næringsberegning og katalogkobling uden browser.
+// Glukose/sukrose/bamser har adskilte identiteter, men ingen opdigtet hastighedsbonus.
+// Custom-kontrollerne skal sende gram én gang og bruge de samme madprofiler.
 // Kør med tests/.bin/node.exe tests/food-catalog.test.js fra projektroden.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { FOODS, foodMacroAmount } = require('../js/foods.js');
+const { FOODS, CARB_TYPES, foodMacroAmount, resolveCustomFoodSpec } = require('../js/foods.js');
 const order = ['druesukker', 'slik', 'chokolade', 'juice', 'banan', 'caffeLatte'];
 assert.deepEqual(Object.keys(FOODS).slice(-6), order);
 assert.equal(FOODS.cola, undefined);
@@ -36,6 +38,43 @@ for (const file of ['index.html', 'mobile/index.html']) {
     assert(!html.includes('data-food="cola"'), file);
 }
 console.log('OK: snackrækkefølge, 6 g portioner, makroer, latteopskrift, decimaler og ikonreferencer.');
+
+// Profilerne er gyldige for motoren og kan ikke forveksles ved aggregering.
+const profileIds = new Set();
+for (const [type, profile] of Object.entries(CARB_TYPES)) {
+    assert(Number.isFinite(profile.appearanceTauMin) && profile.appearanceTauMin > 0, type);
+    assert(typeof profile.appearanceProfileId === 'string' && profile.appearanceProfileId.length > 0, type);
+    assert(!profileIds.has(profile.appearanceProfileId), type + ': profilidentitet skal være entydig');
+    profileIds.add(profile.appearanceProfileId);
+    assert(profile.sugarIdentity && profile.physicalForm, type + ': kemi og fysisk form er særskilte');
+}
+assert.equal(CARB_TYPES[FOODS.druesukker.carbType].sugarIdentity, 'glucose');
+assert.equal(CARB_TYPES[FOODS.slik.carbType].sugarIdentity, 'mixed-sugars');
+assert.equal(CARB_TYPES.sukrose.sugarIdentity, 'sucrose');
+assert.notEqual(FOODS.druesukker.carbType, FOODS.slik.carbType);
+assert.equal(CARB_TYPES.druesukker.appearanceTauMin, CARB_TYPES.vingummi.appearanceTauMin,
+    'Den foreløbige strukturelle revision må ikke opfinde en glukosebonus');
+
+// En ren sukkeropskrift må ikke få skjult ekstra vand. Valget ændrer hverken
+// gram eller kalorier; blandet mad bruger den dokumenterede vægtheuristik.
+for (const type of ['druesukker', 'sukrose']) {
+    const custom = resolveCustomFoodSpec(15, 0, 0, type);
+    assert.equal(custom.carbs, 15);
+    assert.equal(custom.weight, 15);
+    assert.equal(custom.carbType, type);
+    assert(Number.isFinite(custom.eatTimeMin) && custom.eatTimeMin > 0);
+}
+assert.equal(resolveCustomFoodSpec(15, 10, 5, 'druesukker').weight, 52.5);
+assert.throws(() => resolveCustomFoodSpec(15, 0, 0, 'unknown'), RangeError);
+assert.throws(() => resolveCustomFoodSpec(NaN, 0, 0, 'druesukker'), RangeError);
+
+const desktopHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const customTypes = [...desktopHtml.matchAll(/data-carb-type="([^"]+)"/g)].map(match => match[1]);
+assert(customTypes.includes('druesukker') && customTypes.includes('sukrose'));
+assert(!customTypes.includes('vingummi'), 'Produktprofilen for bamser er ikke et falsk rent sukkervalg');
+assert(!customTypes.includes('sukker_fast'), 'Det gamle tvetydige custom-valg er erstattet');
+for (const type of customTypes) assert(CARB_TYPES[type], type + ': UI-profil findes');
+console.log('OK: særskilte sukkeridentiteter, neutrale startprofiler og custom-mængder.');
 // Kontroller også den rigtige simulatorgrænse og Hvad Nu Hvis-historik,
 // så decimalerne ikke kun overlever UI-testens opsamling af argumenter.
 const { Simulator } = require('./harness.js');
@@ -46,5 +85,6 @@ for (const key of order) {
     const event = sim.scenarioLog.at(-1);
     assert.deepEqual([event.carbs, event.protein, event.fat, event.weight], [f.carbs, f.protein, f.fat, f.weight]);
     assert.equal(event.icon, f.icon);
+    assert.equal(event.carbType, f.carbType, key + ': replay bevarer kulhydratprofilen');
 }
 console.log('OK: alle seks portioner accepteres af simulatoren og bevares i Hvad Nu Hvis-historikken.');

@@ -17,6 +17,9 @@
 //
 // Brug:
 //   tests/.bin/node.exe tests/clinical-equivalence.js generate   # frys baseline
+//   tests/.bin/node.exe tests/clinical-equivalence.js generate --scenario=meal-fat-protein
+// Kun en fagligt vurderet, tilsigtet ændring må give en ny reference. Det smalle
+// filter bevarer alle andre scenarier og ændrer aldrig regressionstolerancerne.
 //   tests/.bin/node.exe tests/clinical-equivalence.js check       # sammenlign mod baseline
 //
 // Baseline gemmes i tests/fixtures/clinical-baseline.json (alle scenarier i én fil).
@@ -287,14 +290,22 @@ function compareRuns(expected, actual) {
 // GENERATE: kør alle scenarier og frys baseline.
 // -----------------------------------------------------------------------------
 function generate() {
+    const scenarioArg = process.argv.slice(3).find(arg => arg.startsWith('--scenario='));
+    const selectedName = scenarioArg ? scenarioArg.slice('--scenario='.length) : null;
+    if (selectedName !== null && !SCENARIOS.some(scenario => scenario.name === selectedName)) {
+        throw new Error(`Ukendt scenario: ${selectedName}`);
+    }
     fs.mkdirSync(path.dirname(BASELINE_PATH), { recursive: true });
-    const baseline = {
+    const baseline = selectedName
+        ? JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8')) : {
         version: 2,
         generatedAt: new Date().toISOString().slice(0, 10),
         sensorContract: 'deterministic-interstitial-no-faults',
         scenarios: {}
     };
+    baseline.generatedAt = new Date().toISOString().slice(0, 10);
     for (const scn of SCENARIOS) {
+        if (selectedName && scn.name !== selectedName) continue;
         const result = runScenario(scn);
         baseline.scenarios[scn.name] = result;
         const agg = result.aggregates;
@@ -303,7 +314,7 @@ function generate() {
             `max ${agg.maxTrueBG.toFixed(2)}, TIR ${(agg.tir * 100).toFixed(0)}%)`);
     }
     fs.writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + '\n', 'utf8');
-    console.log(`\n${SCENARIOS.length} scenarier frosset i ${path.relative(process.cwd(), BASELINE_PATH)}`);
+    console.log(`\n${selectedName ? 1 : SCENARIOS.length} scenarier frosset i ${path.relative(process.cwd(), BASELINE_PATH)}`);
 }
 
 // -----------------------------------------------------------------------------

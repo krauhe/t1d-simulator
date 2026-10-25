@@ -2404,7 +2404,7 @@ function enrichFoodChips() {
     var icon = imgEl ? imgEl.getAttribute('src') : f.icon;
     var c = f.carbs || 0, p = f.protein || 0, ft = f.fat || 0;
     var kcal = Math.round(c * 4 + p * 4 + ft * 9);
-    var unit = ' ' + (f.portionUnit || (f.carbType === 'sukker_flydende' ? 'ml' : 'g'));
+    var unit = ' ' + (f.portionUnit || (CARB_TYPES[f.carbType]?.physicalForm === 'liquid' ? 'ml' : 'g'));
     chip.innerHTML =
       '<img src="' + icon + '">' +
       '<div class="nm">' + name + '</div>' +

@@ -1,4 +1,4 @@
-<!-- doc-version: 2026-10-25-v1 -->
+<!-- doc-version: 2026-10-25-v3 -->
 # Physiological Model — T1D Simulator
 
 *This page is the technical documentation of the simulator's physiological engine.
@@ -690,20 +690,58 @@ output targets (plasma glucose, liver HGP, and insulin sensitivity).
 
 ![Digestion Model — Food Absorption Pathways](MODEL-DIGESTION.svg)
 
-> 📊 **[Compartment diagram: Carbohydrate Absorption](diagrams/carb-absorption/carb-absorption-diagram.html)** — D1/D2 gut cascade, dynamic τG, and the three factors that modify gastric emptying rate.
+> **Historical diagram:** [Carbohydrate Absorption](diagrams/carb-absorption/carb-absorption-diagram.html) and the digestion overview above predate the 2026-10-25 separation. They do not show the new profile-specific downstream pools; use the equations below for the current implementation.
 
 ### Carbohydrate absorption
 
-When the simulated character receives carbohydrates, they are not absorbed immediately. The gastrointestinal tract
-is modeled as two compartments from the Hovorka 2004 model:
+The local implementation separates a shared gastric-transfer time
+(`tauGastric`) from a fixed effective downstream time (`appearanceTauMin`)
+for each product profile. `HovorkaModel.carbPools` owns each profile's gastric
+and intestinal-accounting masses in grams. D1/D2 are derived mmol views,
+not additional integrating states. Products mix in one stomach environment;
+they retain their profile after transfer downstream.
 
-- **D1 (stomach):** Food arrives here and gradually moves onward
-- **D2 (small intestine):** From here glucose is absorbed into the blood
+```text
+gastric_p = stomachGrams_p / tauGastric
+appearance_p = intestinalGrams_p / appearanceTauMin_p * splanchnicAbsorbMod
+d(stomachGrams_p)/dt = intakeGramsPerMinute_p - gastric_p
+d(intestinalGrams_p)/dt = gastric_p - appearance_p
+U_G = A_G * sum(appearance_p) / 0.18016                 [mmol/min]
+```
 
-The rate is determined by the parameter τG (time to peak absorption). In the
-original Hovorka 2004 paper this is a fixed constant of 40 minutes. The
-simulator extends this to a *dynamic* τG that depends on the current
-composition of the stomach contents — see the next subsection.
+`U_G` is effective systemic glucose appearance. The downstream pool is not
+a measurement of total intestinal absorption and does not resolve sucrose
+hydrolysis, fructose metabolism or first-pass extraction. `A_G=1` remains
+the existing glucose-equivalent yield assumption, applied once at output.
+
+The two-stage linear subsystem is integrated exactly with coefficients frozen
+within each substep, including the equal-rate limit. Actual transferred mass,
+rather than a start/end rate approximation, supplies the average `U_G` used
+in the plasma equation. One `activeIntake` queue supplies all food components;
+steps split at eating boundaries and are at most 0.1 minute during intake.
+Physical stomach mass, fibre, protein and fat share the same gastric
+exponential update. All other physiological states retain their documented
+integration scheme. Diagnostic fluxes are averaged over the outer engine step.
+
+Initial downstream parameters are **provisional inherited product parameters**:
+glucose, sucrose and gummy/mixed solid sugars 25 min; mixed sugar drink 16 min;
+fruit 27.5; white flour 48.75; wholegrain 48; vegetables 33.75; mixed meal 45.
+The drink value retains an old effective product response, not a measured
+intestinal effect of liquid form. These values are not a new clinical
+calibration or evidence of glucose superiority. No additional hydrolysis
+delay or glucose speed bonus is imposed. The gastric fibre/fat modifiers no
+longer also slow downstream appearance, so mixed-meal curves change.
+
+Catalog dextrose and the custom-food Dextrose option share the same profile.
+Table sugar has a separate sucrose identity; gummy candy retains its mixed
+sugar identity and existing macros. Pure custom sugar uses carbohydrate mass
+as weight; added protein/fat contributes an explicit estimated mass continuously.
+Form and identity are separate metadata. Water is not modelled.
+
+Snapshot format 3 explicitly stores profile pools, intake and resolved
+parameters; reset/respawn clear them. COB is remaining ingested carbohydrate
+in gastric plus downstream pools, excluding not-yet-eaten queue contents.
+See the [implementation decision and validation record](reviews/2026-10-25_gastric-intestinal-fix.md).
 
 #### Carb convention: EU/DK (sugar + starch), fiber is separate
 
@@ -716,12 +754,10 @@ Food Institute) and in the EFSA dietary guidelines. It is *different* from the
 US USDA / FDA convention where "Total Carbohydrate" is reported as the sum of
 sugars + starch + fiber.
 
-For the model this means every gram of `food.carbs` can be fed directly into
-the Hovorka D1 compartment as digestible substrate without any bioavailability
-correction for fiber — the fiber has already been excluded upstream. Fiber
-still has a strong effect on gastric emptying (via `fiberMod`) and on the
-viscosity of intestinal content; it just does so *as a separate nutrient*
-rather than as an unabsorbed fraction of the carbohydrate number.
+Entered `food.carbs` feeds the profile's gastric pool without subtracting
+declared fibre again. This accounting convention does not establish systemic
+glucose yield. The current fibre heuristic modifies gastric transfer only;
+an explicit downstream viscosity mechanism is not implemented.
 
 ### Dynamic τG — gastric emptying depends on the meal
 
@@ -737,7 +773,7 @@ observations:
 The simulator extends the Hovorka model with a *dynamic τG* that is recomputed
 every tick from the current stomach mixture. The stomach is treated as a single
 "continuous stirred-tank reactor" (CSTR) where everything that has been eaten
-is mixed together. The model tracks four mixture variables:
+is mixed together. The model tracks five mixture variables:
 
 - `stomachContentGrams` — total mass in the stomach (g)
 - `stomachCarbsTotal` — total carbohydrate in the stomach (g)
@@ -746,17 +782,17 @@ is mixed together. The model tracks four mixture variables:
 - `stomachRetentionWeight` — retention-weighted content (g, = Σ foodWeight × retentionFactor;
   solid food contributes fully (factor 1.0), liquids contribute less (factor 0.4))
 
-When new food is added, these variables are incremented additively. When the
-stomach empties, all four are scaled down by the same proportional factor —
-this preserves ratios (so the simple-sugar fraction and fiber-per-gram stay
-constant during emptying until the next meal changes the mixture).
+Food enters continuously over its eating interval. These quantities use the
+same gastric propagator and time interval as the carbohydrate pools;
+`stomachCarbsTotal` is synchronized from those pools. Without new input,
+proportional emptying preserves the mixture ratios.
 
 #### Formula
 
 ```
 simpleFrac    = stomachCarbsSimple / stomachCarbsTotal
 carbBase      = 25 + (1 - simpleFrac) × 25               (range: 25-50 min)
-fiberMod      = 1 + 0.5 × ln(1 + stomachFiber / 2)       (saturating, ~2.2× at 10 g)
+fiberMod      = 1 + 0.5 × ln(1 + stomachFiber / 2)       (diminishing slope, ~1.90× at 10 g)
 retentionRatio   = stomachRetentionWeight / stomachContentGrams
 retentionMod     = 1 - 0.6 × (1 - retentionRatio)              (range: 0.4-1.0)
 fatDelay      = 18 × ln(1 + fatIntestine / 10)           (Wolpert/Smart pizza effect)
@@ -770,39 +806,37 @@ exerciseGEMod = 1 + 0.35 × clamp((hrFrac - 1.0) / 0.6, 0, 1)  (linear ramp, max
 
 Each component captures one physiological mechanism:
 
-- **`carbBase`** — base emptying time set by the chemical complexity of the
-  carbohydrate. Pure simple sugars (glucose, sucrose) need no enzymatic
-  digestion and empty around 25 min. Pure starch must be hydrolysed by
-  amylase first and empties around 50 min. The linear interpolation is a
-  pragmatic fit, not a mechanistic model — the underlying mechanism is the
-  combined effect of digestion rate and pyloric pacing on small particles.
-- **`fiberMod`** — soluble fiber (oat β-glucan, fruit pectin) and insoluble
-  fiber both delay emptying and slow intestinal glucose absorption by forming
-  viscous gels. The simulator uses a *saturating* logarithmic form
-  `1 + 0.5·ln(1 + fiber/2)` that matches the same stylistic shape as
-  `fatDelay` and reproduces the dose-response measured by Würsch & Pi-Sunyer
-  (1997) and the beta-glucan meta-analyses that underpin the EFSA health
-  claim:
-    - 0 g fiber → ×1.00 (no delay)
-    - 1 g fiber → ×1.20 (small delay, typical white bread)
-    - 2 g fiber → ×1.35 (light fiber meal)
-    - 5 g fiber → ×1.65 (whole-grain meal, ~2.5 g β-glucan per 30 g carb)
-    - 10 g fiber → ×1.90 (very high fiber, EFSA claim range)
-    - 30 g fiber → ×2.35 (saturating — broccoli/pure-vegetable extreme)
-  The saturation is physiologically realistic: adding more fiber past
-  ~8-10 g per meal produces diminishing returns because the gel is already
-  viscous enough to be rate-limiting.
-- **`retentionMod`** — the pyloric sieve passes liquids much faster than solids.
+- **`carbBase`** — inherited food-class heuristic, ranging from 25 to 50 min
+  according to the simple-sugar fraction. These are model time constants,
+  not measured complete-emptying times. Glucose requires no hydrolysis;
+  sucrose does. This formula does not model that distinction mechanistically
+  and must not be combined with a new digestion penalty without checking
+  double counting. Separating the downstream parameter does not independently
+  validate this gastric heuristic.
+- **`fiberMod`** — an inherited proxy based on total fiber currently in the
+  stomach. It does not distinguish viscous soluble fiber from insoluble fiber
+  or intact food structure, and it does not model a separate intestinal
+  viscosity effect. Insoluble fiber must not be described as universally
+  forming viscous gels. The logarithmic function has a diminishing slope,
+  but no finite saturation limit. Formula outputs are ×1.00, ×1.20, ×1.35,
+  ×1.63, ×1.90 and ×2.39 at 0, 1, 2, 5, 10 and 30 g, respectively.
+  These are model calculations, not measured clinical dose-response targets.
+  The coefficients 0.5 and 2 g were manually selected; the historical
+  GI/glucose-AUC rationale does not identify gastric kinetics. See the
+  [calibration audit](reviews/2026-10-25_codex_food-kinetics-calibration-audit.md).
+- **`retentionMod`** — an effective physical-form proxy for gastric transport.
   `retentionRatio = 1.0` means a fully solid meal (no modification);
   `retentionRatio = 0.4` (cola/juice) gives `retentionMod = 0.64` so a sugary drink
-  empties about 35% faster than the same sugar in solid form. The liquid
-  factor is calibrated to Kong & Singh (2008) and Marathe et al. (2013)
-  observations that liquid nutrient drinks empty 2-3× faster than matched
-  solid meals.
+  has a 36% shorter model time constant than solid sugar under otherwise
+  identical conditions (a 1/0.64-fold transfer rate). This is a provisional
+  choice inspired by liquid/solid differences, not a demonstrated fit or a
+  universal measured ratio for nutrient drinks versus solid meals.
 - **`fatDelay`** — unchanged from the previous fat-only implementation. Fat
   in the small intestine triggers CCK and GLP-1 release, which signals the
-  stomach to slow down. The logarithmic shape produces a ~25 min added delay
-  for 30 g fat and saturates around ~40 min for very high-fat meals.
+  stomach to slow down. The heuristic adds about 25 min to the gastric time
+  constant at 30 g of current intestinal fat. It has diminishing slope but
+  no finite saturation limit. Its 18 min and 10 g coefficients are inherited
+  manual choices, not independently fitted gastric measurements.
 - **`hyperMod`** — hyperglycemia-mediated gastric emptying delay. Plasma
   glucose above 8 mmol/L activates vagal and nitrergic feedback from duodenal
   glucose sensors, slowing antral contractions and pyloric outflow
@@ -863,7 +897,7 @@ The model applies a `splanchnicAbsorbMod` factor (0–1) to the gut absorption
 rate U_G in the Hovorka ODE:
 
 ```
-U_G = D2 / τG × splanchnicAbsorbMod
+U_G = A_G / 0.18016 × Σ_p(intestinalGrams_p / appearanceTauMin_p) × splanchnicAbsorbMod
 
 splanchRamp = clamp((hrFrac - 0.5) / 1.2, 0, 1)
 splanchnicAbsorbMod = 1 - 0.55 × splanchRamp²
@@ -900,9 +934,10 @@ background.
 #### Carb-type lookup table
 
 Foods in the FOODS table specify a `carbType` that maps to a CARB_TYPES
-entry with three properties: `simpleFraction`, `fiberPerGram`, and
-`retentionFactor`. When a meal is added, these are used to fill the stomach
-mixture variables:
+entry with gastric properties `simpleFraction`, `fiberPerGram` and
+`retentionFactor`, plus `sugarIdentity`, `physicalForm`,
+`appearanceProfileId` and `appearanceTauMin`. Over the eating interval,
+the gastric metadata contributes the following total input amounts:
 
 ```
 stomachCarbsTotal   += carbs
@@ -911,35 +946,45 @@ stomachFiber        += carbs × fiberPerGram
 stomachRetentionWeight += foodWeight × retentionFactor
 ```
 
-The seven CARB_TYPES are calibrated against the frida.fooddata.dk database
-(DTU National Food Institute) and the literature referenced in
-[BG-SCIENCE §5](BG-SCIENCE.md#carbohydrates).
+The ten CARB_TYPES combine inherited food-composition assumptions with
+provisional kinetic parameters. The composition references do not by
+themselves calibrate gastric or downstream time constants.
 Because we use the EU convention, `simpleFraction` is the ratio of *sugars*
 to *sugars + starch* (the digestible part), and `fiberPerGram` is g fiber per
 g digestible carb — which can be greater than 1 for foods like broccoli
 where the absolute fiber mass exceeds the digestible carb mass.
 
-For the public engine API, omitting `carbParams` selects the calibrated `mixed`
-defaults. If a caller supplies the object, all three fields are mandatory finite
+For the engine API, omitting `carbParams` selects mixed-meal gastric
+defaults and a 45-minute downstream time. If a caller supplies the object,
+all three gastric fields are mandatory finite
 numbers and are validated before any meal state or event is created:
 `simpleFraction` must be in [0, 1], while `fiberPerGram` and `retentionFactor`
 must be in [0, 10]. The latter limits are deliberately broad numerical safety
 bounds rather than calibration targets. After every public `step()` chunk, the
-engine also verifies that all 16 Hovorka states, `tau_G`, and `trueBG` remain
+engine also verifies that all Hovorka state-vector entries, `tauGastric`, and `trueBG` remain
 finite, and throws an error naming the contaminated state if an internal or future
 input path violates this invariant.
 
+An explicitly supplied gastric-only parameter object uses the documented
+generic custom downstream default (40 min). To select a named product,
+provide its profile ID and positive finite downstream time. Reusing one ID
+with a different time is rejected before registration; existing intestinal
+contents cannot be relabelled by a later intake.
+
 | carbType | simpleFraction | fiberPerGram | retentionFactor | Example foods | τG at 25 g carb (no fat) |
 |----------|----------------|--------------|--------------|--------------|-------------------------|
-| `sukker_flydende` | 1.00 | 0.00 | 0.40 | Cola, juice, sports drink | ~18 min |
-| `sukker_fast`     | 1.00 | 0.00 | 1.00 | Glucose tablets, honey | ~25 min |
+| `sukker_flydende` | 1.00 | 0.00 | 0.40 | Generic mixed-sugar drink | ~16 min |
+| `druesukker`     | 1.00 | 0.00 | 1.00 | Dextrose tablets/custom glucose | ~25 min |
+| `sukrose`        | 1.00 | 0.00 | 1.00 | Custom table sugar | ~25 min |
+| `vingummi`       | 1.00 | 0.00 | 1.00 | Gummy candy | ~25 min before its other nutrients |
+| `sukker_fast`    | 1.00 | 0.00 | 1.00 | Generic mixed solid sugar | ~25 min |
 | `frugt`           | 0.90 | 0.16 | 1.00 | Apple, banana, pear | ~43 min |
 | `hvidt_mel`       | 0.05 | 0.05 | 1.00 | White bread, pasta, pizza, cake | ~61 min |
 | `mixed`           | 0.20 | 0.08 | 1.00 | Default for unspecified meals | ~61 min |
 | `grøntsag`        | 0.65 | 0.75 | 1.00 | Salad, carrot, broccoli | ~73 min |
 | `fuldkorn`        | 0.08 | 0.20 | 1.00 | Rye bread, oatmeal | ~78 min |
 
-Calibration provenance (frida per 100 g food):
+Composition provenance (frida per 100 g food; not kinetic calibration):
 - `frugt` — weighted avg of apple (sugars 10.9 g, starch 0 g, fiber 2.2 g →
   simpleFrac ≈ 1.00, fiber/carb ≈ 0.20) and banana (sugars 15.4 g, starch
   4.3 g, fiber 1.6 g → simpleFrac ≈ 0.78, fiber/carb ≈ 0.08).
@@ -956,12 +1001,13 @@ Calibration provenance (frida per 100 g food):
 - `mixed` — default for a blended meal of grains + vegetables + meat. Lower
   sugar fraction (starch dominates), modest fiber.
 
-The `mixed` default is deliberately slower than the original Hovorka
-40 min constant — Horowitz et al. (1991) measured solid mixed-meal gastric
-emptying at 90-120 min half-time in healthy adults, which corresponds to a
-τG around 60 min in this model. This makes default-carb-type meals behave
-more realistically while simple sugars (fast) and rye bread (slow) remain at
-the two ends of the spectrum.
+The `mixed` default gives a longer initial gastric time constant than the
+original effective 40 min constant under the table's conditions. This is
+an inherited food-category assumption, not proof of greater accuracy.
+A single exponential gastric pool has half-emptying time ln(2)*tau;
+a gastric half-time of 90–120 min would therefore not imply tau around
+60 min. Gastric half-time, peak systemic appearance and peak plasma glucose
+must be treated as different calibration endpoints.
 
 #### Empty stomach fallback
 
@@ -985,7 +1031,7 @@ The logarithmic shape means that:
 - 10 g fat → ~12 min added delay (light meal)
 - 30 g fat → ~25 min added delay (typical mixed meal)
 - 60 g fat → ~35 min added delay (high-fat pizza)
-- 100 g fat → ~45 min added delay (very high-fat meal, saturating)
+- 100 g fat → ~43 min added delay (diminishing slope, no finite upper limit)
 
 This is the reason why a pizza (high fat content, ~60 g per portion)
 produces a different blood glucose profile than a slice of white bread (low
@@ -997,15 +1043,15 @@ resistance from accumulated FFA in blood).
 
 ### Limitations and simplifications of the carbohydrate model
 
-The dynamic τG model is a **pragmatic semi-mechanistic heuristic** — it captures
-the right physiological *directions* (liquid faster than solid, fiber slows
-things down, fat delays absorption) and the magnitudes are calibrated against
-literature values, but it is not derived from a single validated mathematical
-model. Each proxy (`simpleFraction`, `fiberPerGram`, `retentionFactor`,
-`fatDelay`) blends multiple distinct physiological mechanisms into a single
-number. For an educational simulator this is acceptable; for users comparing
-the simulator output to clinical or research data the following limitations
-should be noted:
+The dynamic τG model is a **pragmatic semi-mechanistic heuristic**. It encodes
+selected qualitative tendencies for the represented foods; it does not
+establish universal liquid/solid or fiber rules. The magnitudes were manually
+tuned using literature-informed expectations, not a reproducible fit to
+matched product-level gastric or systemic appearance data. Each proxy
+(`simpleFraction`, `fiberPerGram`, `retentionFactor`, `fatDelay`) combines
+multiple mechanisms. The separated downstream times are provisional too.
+Numerical tests and gameplay checks do not establish clinical validation;
+the following limitations apply when interpreting the output:
 
 1. **No gastroparesis or accelerated gastric emptying.** Diabetic gastroparesis
    (delayed emptying due to vagal autonomic neuropathy and loss of interstitial
@@ -1044,9 +1090,9 @@ should be noted:
    model even though a small fraction (typically 1–10% depending on food
    preparation) would not produce glucose in vivo.
 
-7. **No SGLT1 / GLUT2 / GLUT5 transporter resolution.** The Hovorka two-
-   compartment gut absorption model lumps all monosaccharide transport into a
-   single first-order flux from D2 into plasma, with bioavailability A_G. The
+7. **No SGLT1 / GLUT2 / GLUT5 transporter resolution.** Product-specific
+   downstream pools supply an effective first-order systemic appearance
+   flux, with the inherited yield A_G. The
    physiological detail of separate Na⁺-coupled glucose/galactose absorption
    (SGLT1), facilitative fructose absorption (GLUT5), and basolateral GLUT2
    efflux (see [BG-SCIENCE §5](BG-SCIENCE.md#carbohydrates)) is not

@@ -2482,7 +2482,8 @@ body {
 }
 .dp-carb-type-chips {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    /* Otte kulhydratvalg fordeles på to rækker med samme brede knapper. */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
 }
 .carb-type-chip {

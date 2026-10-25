@@ -2022,7 +2022,7 @@ class Simulator {
     /**
      * addFood — Player eats a meal with specified macronutrients.
      *
-     * Creates a food entry in activeFood[] that will be absorbed over time
+     * Opretter ét indtag i activeIntake[], der leveres over spisetiden.
      * during subsequent update() calls. Fat slows carb absorption significantly.
      *
      * The food's carbType determines how the carbohydrates affect gastric emptying
@@ -2044,7 +2044,7 @@ class Simulator {
      * @param {number} weight   - Total food weight in grams (estimated from macros if 0)
      * @param {string} carbType - Carbohydrate type from CARB_TYPES (default 'mixed')
      */
-    // addFood — facade wrapper (S8-A1). The physics (stomach gate, kcal, activeFood/
+    // addFood — facade wrapper (S8-A1). The physics (stomach gate, kcal,
     // activeIntake queue, food events) now live in engine.addFood(). The facade
     // resolves catalog globals (estimateEatTimeMin, CARB_TYPES) and passes the
     // resolved values in, and injects its game-side bookkeeping (campaign
@@ -2071,7 +2071,9 @@ class Simulator {
         // Look up carb-type parameters. Fall back to 'mixed' for unknown types
         // (e.g. if the caller passes a typo or a new type not yet in CARB_TYPES).
         // typeof guard because CARB_TYPES comes from foods.js (script load order).
-        let carbParams = { simpleFraction: 0.20, fiberPerGram: 0.08, retentionFactor: 1.0 };
+        let carbParams = { simpleFraction: 0.20, fiberPerGram: 0.08, retentionFactor: 1.0,
+            appearanceProfileId: 'mixed', appearanceTauMin: 45,
+            sugarIdentity: 'mixed', physicalForm: 'solid' };
         if (typeof CARB_TYPES !== 'undefined') {
             carbParams = CARB_TYPES[carbType] || CARB_TYPES.mixed || carbParams;
         }
@@ -2223,11 +2225,8 @@ class Simulator {
      * activeIntake into the stomach state (fatStomach, proteinStomach,
      * stomachContentGrams, and blend variables that govern τG).
      *
-     * Carbs for Hovorka D1 are handled separately via the carbRate mechanism in
-     * update() — this method does NOT touch Hovorka state.
-     *
-     * Called every substep before _substepFatProteinFFA() so that τG is computed
-     * on the updated stomach blend.
+     * Samme kø leverer både kulhydratprofil og fysisk måltid. Metoden forbereder
+     * rater; core og mavemodel integrerer dem i det samme efterfølgende interval.
      *
      * @param {number} dt — Substep duration in sim-min
      */
@@ -2809,7 +2808,7 @@ class Simulator {
     // FFA: accumulation from fat absorption + exponential clearance
     //
     // Also updates derived values:
-    //   - hovorka.tau_G (dynamic gastric emptying — pizza effect)
+    //   - hovorka.tauGastric (dynamic gastric emptying — pizza effect)
     //   - ffaResistanceFactor (FFA-induced insulin resistance)
     //   - proteinGlucagonLevel (amino acid-driven glucagon)
     //
@@ -3607,8 +3606,7 @@ class Simulator {
 
         // Carb gut compartments (D1/D2) — unabsorbed carbs from the previous
         // meal. Must be cleared to avoid a "free" BG rise after respawn.
-        this.hovorka.state[HOVORKA_STATE_IDX.D1] = 0;  // D1 — carb depot 1
-        this.hovorka.state[HOVORKA_STATE_IDX.D2] = 0;  // D2 — carb depot 2
+        this.hovorka.clearCarbohydrates();
 
         // --- Set insulin to basal steady-state ---
         // Use the calibrated steady-state rate from Hovorka initialisation.
@@ -3691,7 +3689,6 @@ class Simulator {
         // -------------------------------------------------------------------
         // 3) Stomach/gut/diet pipeline — carbs, fat, protein, FFA
         // -------------------------------------------------------------------
-        this.activeFood = [];
         this.activeIntake = [];
         this.cob = 0;
 
@@ -4237,7 +4234,7 @@ const SIMULATOR_ENGINE_READWRITE = [
     'cgmSensorWarmupStart', 'cgmSelfTestUntil', 'cgmSelfTestStart', 'cgmAutoSelfTestCooldownUntil', 'cgmSensorStatus', 'activeFastInsulin',
     'activeLongInsulin', 'iob', 'displayIOB', 'lastInsulinTime', 'basalIOBbaseline', 'basalInsulinRate',
     'bioavScale', 'sessionBioavFast', 'sessionBioavBasal', 'acidosisLoad', 'ketoneLevel', 'ffaLipolysis',
-    'totalKcalConsumed', 'totalKcalBurnedBase', 'totalKcalBurnedMotion', 'weightChangeKg', 'activeFood', 'activeIntake',
+    'totalKcalConsumed', 'totalKcalBurnedBase', 'totalKcalBurnedMotion', 'weightChangeKg', 'activeIntake',
     'stomachContentGrams', 'stomachFull', 'stomachCarbsTotal', 'stomachCarbsSimple', 'stomachFiber', 'stomachRetentionWeight',
     'cob', 'fatStomach', 'fatIntestine', 'ffaBlood', 'ffaResistanceFactor', 'proteinStomach',
     'proteinGut', 'aminoAcidsBlood', 'proteinGlucagonLevel', 'activeMotion', 'activeAktivitet', 'exerciseCooldownUntil',

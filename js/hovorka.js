@@ -50,6 +50,10 @@ const HOVORKA_STATE_IDX = Object.freeze({
     S1b: 13, S2b: 14, Ib: 15,
 });
 
+// Samme glukoseækvivalent som motorens indtag [g/mmol]. Bruges kun ved
+// grænsen mellem gram-puljerne og kernens mmol; alle gramregnskaber er separate.
+const HOVORKA_GLUCOSE_G_PER_MMOL = 0.18016;
+
 class HovorkaModel {
 
     // =========================================================================
@@ -93,7 +97,7 @@ class HovorkaModel {
         // -----------------------------------------------------------------
         // TIME CONSTANTS
         // -----------------------------------------------------------------
-        this.tau_G = options.tau_G || 40;   // Time to peak carbohydrate absorption [min]
+        this.tauGastric = options.tauGastric || 40; // Fælles mavetømning [min]; ændrer aldrig tarmprofilen.
         this.tau_I = options.tau_I || 55;   // Time to peak insulin absorption [min] — modified by bolus tauFactor
         this.baseTauI = 55;                // Fixed basal tau_I [min] — unaffected by bolus variability
 
@@ -210,7 +214,10 @@ class HovorkaModel {
         // -----------------------------------------------------------------
         this.insulinRate = 0;           // Current TOTAL insulin infusion rate [mU/min]
         this.basalInsRate = 0;          // Current BASAL insulin rate [mU/min] — for shadow cascade
-        this.carbRate = 0;              // Current carbohydrate ingestion rate [mmol/min]
+        // Profilpuljer bruger gram fordøjeligt kulhydrat. D1/D2 er kun afledte
+        // mmol-visninger; de integreres ikke længere som selvstændige beholdninger.
+        this.carbPools = {};
+        this.carbIntakeRates = [];
         this.heartRate = this.HR_base;  // Current heart rate [bpm] — set by exercise model
         // Dimensionless contraction stimulus: max(0, (HR-HRbase)/HRbase) multiplied
         // by the activity type's contraction-uptake scaling. Set to zero as soon as
@@ -277,7 +284,7 @@ class HovorkaModel {
             this.insulinRate = 0;      // Rapid depot: no input at steady state
             this.rapidU_I = 0;         // Intet restinput fra en tidligere bolus
             this.basalInsRate = rate;  // Basal → shadow cascade
-            this.carbRate = 0;
+            this.clearCarbohydrates();
             this.heartRate = this.HR_base;
             this.splanchnicAbsorbMod = 1.0;
             this.stressMultiplier = 1.0;
@@ -400,8 +407,95 @@ class HovorkaModel {
     }
 
     /** Carbs On Board — unabsorbed carbohydrate in the gut [mmol] → convert to grams */
+    // Nulstil den autoritative kulhydrattilstand, også ved respawn og ligevægtssøgning.
+    clearCarbohydrates() {
+        this.carbPools = {};
+        this.carbIntakeRates = [];
+        this.state[HOVORKA_STATE_IDX.D1] = 0;
+        this.state[HOVORKA_STATE_IDX.D2] = 0;
+        this._lastUG = 0;
+    }
+
+    // Genopbyg visninger fra puljerne; ingen separat numerisk D1/D2-opdatering.
+    syncCarbohydrateViews() {
+        let stomach = 0, intestine = 0;
+        for (const pool of Object.values(this.carbPools)) {
+            stomach += pool.stomachGrams;
+            intestine += pool.intestinalGrams;
+        }
+        this.state[HOVORKA_STATE_IDX.D1] = stomach / HOVORKA_GLUCOSE_G_PER_MMOL;
+        this.state[HOVORKA_STATE_IDX.D2] = intestine / HOVORKA_GLUCOSE_G_PER_MMOL;
+    }
+
+    // Eksakt løsning af to lineære puljer med konstant indtag og koefficienter
+    // i deltrinnet. Mavens tidskonstant er fælles; tarmens tidskonstant tilhører
+    // profilen. Returnér den realiserede gennemsnitsrate til plasma [mmol/min],
+    // så præcis den samme mængde forlader tarmen og indgår i Q1-ligningen.
+    advanceCarbohydrates(dt) {
+        if (!Number.isFinite(dt) || dt <= 0) throw new RangeError('Kulhydrattrin skal være positivt');
+        if (!Number.isFinite(this.tauGastric) || this.tauGastric <= 0) throw new RangeError('Ugyldig mavetømningstid');
+        if (!Number.isFinite(this.splanchnicAbsorbMod) || this.splanchnicAbsorbMod < 0) throw new RangeError('Ugyldig tarmfaktor');
+        const rates = Object.create(null);
+        for (const intake of this.carbIntakeRates) {
+            const { profileId, appearanceTauMin, gramsPerMinute } = intake;
+            if (typeof profileId !== 'string' || !/^[a-z][a-z0-9_-]*$/i.test(profileId)
+                || !Number.isFinite(appearanceTauMin) || appearanceTauMin <= 0
+                || !Number.isFinite(gramsPerMinute) || gramsPerMinute < 0) {
+                throw new TypeError('Ugyldig kulhydratprofil eller indtagsrate');
+            }
+            if (Object.hasOwn(this.carbPools, profileId) && this.carbPools[profileId].appearanceTauMin !== appearanceTauMin) {
+                throw new Error('Samme kulhydratprofil må ikke skifte optagelsestid');
+            }
+            if (!Object.hasOwn(this.carbPools, profileId)) {
+                this.carbPools[profileId] = {
+                    stomachGrams: 0, intestinalGrams: 0, appearanceTauMin,
+                    deliveredGrams: 0, appearedGrams: 0,
+                };
+            }
+            rates[profileId] = (rates[profileId] || 0) + gramsPerMinute;
+        }
+        const k = 1 / this.tauGastric;
+        const gastricDecay = Math.exp(-k * dt);
+        const gastricIntegral = -Math.expm1(-k * dt) / k;
+        let appeared = 0;
+        for (const [id, pool] of Object.entries(this.carbPools)) {
+            const input = rates[id] || 0;
+            const s0 = pool.stomachGrams, i0 = pool.intestinalGrams;
+            const l = this.splanchnicAbsorbMod / pool.appearanceTauMin;
+            const s1 = s0 * gastricDecay + input * gastricIntegral;
+            const available = s0 + i0 + input * dt - s1;
+            let i1;
+            if (l === 0) {
+                i1 = available; // Ingen systemisk tilførsel: alt bevares i tarmen.
+            } else {
+                const intestinalDecay = Math.exp(-l * dt);
+                const intestinalIntegral = -Math.expm1(-l * dt) / l;
+                const difference = l - k;
+                const convolution = Math.abs(difference * dt) < 1e-7
+                    ? gastricDecay * dt * (1 - difference * dt / 2 + difference * difference * dt * dt / 6)
+                    : (gastricDecay - intestinalDecay) / difference;
+                i1 = i0 * intestinalDecay + k * s0 * convolution
+                    + input * (intestinalIntegral - convolution);
+            }
+            // Kun maskinpræcision må korrigeres; større afvigelser er en model-/solverfejl.
+            const tolerance = 1e-10 * Math.max(1, s0 + i0 + input * dt);
+            if (!Number.isFinite(i1) || i1 < -tolerance || i1 > available + tolerance) {
+                throw new Error('Kulhydratpuljens massebalance fejlede');
+            }
+            i1 = Math.max(0, Math.min(available, i1));
+            const out = available - i1;
+            pool.stomachGrams = s1;
+            pool.intestinalGrams = i1;
+            pool.deliveredGrams += input * dt;
+            pool.appearedGrams += out;
+            appeared += out;
+        }
+        this.syncCarbohydrateViews();
+        return appeared / dt / HOVORKA_GLUCOSE_G_PER_MMOL * this.A_G;
+    }
+
     get carbsOnBoard() {
-        return (this.state[HOVORKA_STATE_IDX.D1] + this.state[HOVORKA_STATE_IDX.D2]) * 180 / 1000;  // D1+D2 in mmol → grams
+        return Object.values(this.carbPools).reduce((sum, pool) => sum + pool.stomachGrams + pool.intestinalGrams, 0);
     }
 
 
@@ -471,8 +565,6 @@ class HovorkaModel {
     // =========================================================================
     step(dt) {
         // Extract state variables for readability
-        const D1 = this.state[HOVORKA_STATE_IDX.D1];   // Gut compartment 1 [mmol]
-        const D2 = this.state[HOVORKA_STATE_IDX.D2];   // Gut compartment 2 [mmol]
         const S1 = this.state[HOVORKA_STATE_IDX.S1];   // Subcutaneous insulin depot 1 [mU]
         const S2 = this.state[HOVORKA_STATE_IDX.S2];   // Subcutaneous insulin depot 2 [mU]
         const Q1 = this.state[HOVORKA_STATE_IDX.Q1];   // Plasma glucose [mmol]
@@ -496,7 +588,7 @@ class HovorkaModel {
         // splanchnicAbsorbMod (0-1): reduces absorption during exercise due to
         // splanchnic blood flow redistribution to muscle (Qamar & Read 1987).
         // 1.0 = rest (normal absorption), 0.45 = intense exercise (-55%).
-        const U_G = D2 / this.tau_G * this.splanchnicAbsorbMod;
+        const U_G = this.advanceCarbohydrates(dt);
 
         // Heart-rate-driven insulin absorption — increased subcutaneous perfusion during exercise.
         // At elevated heart rate, more blood flows through subcutaneous tissue, which
@@ -625,11 +717,7 @@ class HovorkaModel {
         // DIFFERENTIAL EQUATIONS (dX/dt for all 16 state variables)
         // -----------------------------------------------------------------
 
-        // Gut compartment 1: food in, passage to compartment 2
-        const dD1 = this.A_G * this.carbRate - D1 / this.tau_G;
-
-        // Gut compartment 2: from compartment 1, absorption into blood
-        const dD2 = D1 / this.tau_G - U_G;
+        // Kulhydratpuljerne er allerede integreret af advanceCarbohydrates().
 
         // Rapid depots S1/S2 (state[2]/state[3]) are NO LONGER updated here.
         // Per-bolus integration (codex review 2026-04-07 followup, issue 3):
@@ -715,8 +803,6 @@ class HovorkaModel {
         // -----------------------------------------------------------------
         // EULER INTEGRATION: X(t+dt) = X(t) + dX/dt * dt
         // -----------------------------------------------------------------
-        this.state[HOVORKA_STATE_IDX.D1]  += dD1 * dt;
-        this.state[HOVORKA_STATE_IDX.D2]  += dD2 * dt;
         // state[2] (S1) and state[3] (S2) are updated by Simulator
         // (per-bolus rapid depots, see issue 3 above)
         this.state[HOVORKA_STATE_IDX.Q1]  += dQ1 * dt;
@@ -800,6 +886,7 @@ class HovorkaModel {
 // Expose the state-index map as a static so external consumers can read it
 // via HovorkaModel.STATE_IDX without importing the module-scope const.
 HovorkaModel.STATE_IDX = HOVORKA_STATE_IDX;
+HovorkaModel.GLUCOSE_G_PER_MMOL = HOVORKA_GLUCOSE_G_PER_MMOL;
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { HovorkaModel, HOVORKA_STATE_IDX };

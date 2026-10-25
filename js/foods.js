@@ -2,16 +2,10 @@
 // FOODS.JS — Food items and carbohydrate types
 // =============================================================================
 //
-// This file has two responsibilities:
-//   1) FOODS — data table for the ready-made food buttons in the UI.
-//      Each food item has macros (carbs/protein/fat), total weight, an icon and
-//      a carb type (carbType). Button handlers in js/main.js look up the
-//      table instead of hardcoding numbers directly in each event listener.
-//
-//   2) CARB_TYPES — physiological parameters for each carb type.
-//      Used by Simulator.addFood() to fill the stomach "mix state"
-//      (stomachCarbsSimple, stomachFiber, stomachRetentionWeight) and by
-//      _substepFatProteinFFA() to compute the dynamic τG (gastric emptying).
+// Filen samler portionsdata (FOODS) og kulhydratprofiler (CARB_TYPES).
+// Madmenu, T1D-kit og brugerdefineret mad bruger de samme profiler gennem
+// Simulator.addFood(). En profil har både egenskaber til den fælles mave og
+// en selvstændig tidskonstant for efterfølgende systemisk glukosetilførsel.
 //
 // EU/DK carb convention (IMPORTANT — applied throughout the simulator):
 // -----------------------------------------------------------------------
@@ -19,22 +13,20 @@
 //     carbs  = sugar + starch  (digestible carbohydrates)
 //     fiber  = indigestible fibre (separate nutrient field, NOT part of carbs)
 //
-// This differs from the US USDA convention where "total carbohydrate"
-// includes fibre as a sub-category. Under the EU convention there is NO
-// "bioavailability correction" needed: food.carbs = what can be digested.
+// Kostfibre tælles derfor ikke med i food.carbs. Denne deklarationsregel
+// dokumenterer ikke, hvor stor en andel der bliver til systemisk glukose.
+// Motorens A_G=1 er en særskilt, foreløbigt bevaret modelantagelse.
 //
 // Implications for the model:
-//   * food.carbs  fed directly into Hovorka D1/D2 (fully bioavailable)
+//   * food.carbs føres ind i de profilejede mave-/tarmpuljer i gram.
 //   * food.fiber  recorded separately in stomachFiber and influences τG via fiberMod
 //   * CARB_TYPES.fiberPerGram means "grams of fibre per gram of digestible carb"
 //   * simpleFraction = sugar / (sugar + starch)  (fraction of digestible carb)
 //
-// Design principle — "one bag always mixed":
-// The stomach is modelled as a CSTR (continuous stirred-tank reactor):
-// everything ingested mixes with what was already there, and the mix's overall
-// composition determines τG each tick. We do NOT track each food item as
-// a separate compartment — that would be complex and is physiologically unnecessary
-// (the stomach actually has peristaltic mixing).
+// Maven er én fælles blanding. Kulhydratprofilerne spores hver for sig, men
+// har samme aktuelle gastriske overførsel. Efter overførsel til tarmen bevarer
+// de deres appearanceProfileId og appearanceTauMin; ny mad i maven må ikke
+// omskrive hastigheden for kulhydrat, der allerede er nået videre.
 //
 // Scaling during emptying:
 // When the stomach's total gram content falls by a factor (X grams → X*r grams),
@@ -42,7 +34,7 @@
 // same factor r. This preserves ratios — so simpleFraction and fiberPerGram
 // remain constant during emptying until the next meal changes the mix.
 //
-// Carb-type parameters (calibrated 2026-04-11 against frida.fooddata.dk + literature):
+// Eksisterende gastriske heuristikker og nye profilfelter:
 //   simpleFraction: sugar / (sugar + starch)
 //                   1.0 = pure sugar, 0.0 = pure starch, 0.2 = "mixed" default
 //   fiberPerGram:   g fibre per g digestible carb (EU convention)
@@ -50,7 +42,19 @@
 //                   fruit 0.16, vegetables often >0.5 (low-carb + high fibre).
 //   retentionFactor:   1.0 = solid food (normal gastric retention)
 //                   <1.0 = liquid (passes pylorus faster — pyloric sieve)
-//                   Example: cola/juice = 0.4 → empties ~2.5x faster
+//                   retentionFactor 0.4 giver retentionMod 0.64 i motoren;
+//                   det er ikke en faktor 2.5 i hastighed.
+//   sugarIdentity: navngiver kendt sukkerart eller en uafklaret blanding.
+//   physicalForm: fysisk form holdes adskilt fra kemisk identitet.
+//   appearanceProfileId: stabil identitet for den efterfølgende kulhydratpulje.
+//   appearanceTauMin: effektiv systemisk tilførselstid [min], IKKE en direkte
+//                     måling af transport gennem tarmvæggen.
+//
+// Startværdierne nedenfor er arvet fra den tidligere models simple,
+// isolerede basistider uden ekstra fiber-/fedt-/motionsfaktorer. De er IKKE
+// ny klinisk kalibrering. Druesukker, sukrose og vingummi starter neutralt
+// med 25 min; ukendt produktforskel må ikke erstattes af en kunstig bonus.
+// Se docs/reviews/2026-10-25_codex_gastric-intestinal-proposal.md.
 //
 // Sources (see docs/references/ and docs/BG-SCIENCE.md §22 for full discussion):
 //   Wolever 2008       — International GI Tables (sugar, bread, fruit, pasta)
@@ -67,7 +71,7 @@
 // -----------------------------------------------------------------------------
 // CARB_TYPES — Physiological parameters per carb type
 // -----------------------------------------------------------------------------
-// Used as a lookup table: CARB_TYPES[food.carbType] → { simpleFraction, fiberPerGram, retentionFactor }
+// CARB_TYPES[food.carbType] leverer både maveegenskaber og tilførselsprofil.
 //
 // When a player eats a food item, the stomach mix variables are filled as:
 //   stomachCarbsSimple   += carbs * simpleFraction
@@ -78,29 +82,59 @@
 // fiberPerGram is therefore the ratio fibre/digestible-carb — not fibre/total.
 // Example: Rye bread 100g ≈ 40g digestible carb + 8g fibre → fiberPerGram = 0.20
 //
-// The default type 'mixed' is used when none is specified — preserves existing
-// calls (e.g. from older tests or campaign events) without changing behaviour.
-//
-// Calibrated 2026-04-11 against frida.fooddata.dk and Wolever 2008.
+// 'mixed' er standard for en uspecificeret blandet ret.
 const CARB_TYPES = {
-    // Pure sugar (solid): glucose tablets, honey, candy
-    // 100% simple, no fibre, normal gastric retention
-    // frida: table sugar = 100g sugar/100g, 0 starch, 0 fibre
+    // Rent druesukker i fast form. Separat profil uden påstået hastighedsfordel.
+    druesukker: {
+        simpleFraction: 1.00,
+        fiberPerGram: 0.00,
+        retentionFactor: 1.0,
+        appearanceProfileId: 'glucose-solid',
+        appearanceTauMin: 25,
+        sugarIdentity: 'glucose',
+        physicalForm: 'solid',
+    },
+    // Hvidt sukker i "Lav selv". Modellen opløser ikke sukrose i kemiske delpuljer.
+    sukrose: {
+        simpleFraction: 1.00,
+        fiberPerGram: 0.00,
+        retentionFactor: 1.0,
+        appearanceProfileId: 'sucrose-solid',
+        appearanceTauMin: 25,
+        sugarIdentity: 'sucrose',
+        physicalForm: 'solid',
+    },
+    // Bamsernes opskrift indeholder flere sukkerkilder. Præcise andele er ukendte.
+    vingummi: {
+        simpleFraction: 1.00,
+        fiberPerGram: 0.00,
+        retentionFactor: 1.0,
+        appearanceProfileId: 'gummy-mixed-sugars',
+        appearanceTauMin: 25,
+        sugarIdentity: 'mixed-sugars',
+        physicalForm: 'gummy',
+    },
+    // Øvrigt fast sukker, fx chokoladens kulhydrat. Ikke synonym med sukrose.
     sukker_fast: {
         simpleFraction: 1.00,
         fiberPerGram:   0.00,
         retentionFactor:   1.0,
+        appearanceProfileId: 'mixed-sugars-solid',
+        appearanceTauMin: 25,
+        sugarIdentity: 'mixed-sugars',
+        physicalForm: 'solid',
     },
 
-    // Pure sugar (liquid): juice, cola, sports drink
-    // 100% simple, no fibre, LIQUID → passes pylorus quickly
-    // retentionFactor 0.4 = ~2.5x faster gastric emptying than solid food
-    // Calibrated against Marathe 2013: liquid glucose T_peak ~30 min (BG)
-    // Kong & Singh 2008: pyloric sieve allows particles <2 mm to pass
+    // Generisk sukkerdrik. Flydende form angiver ikke en bestemt sukkerart.
+    // Den arvede simple væsketid er 25 * 0.64 = 16 min, ikke 10 min.
     sukker_flydende: {
         simpleFraction: 1.00,
         fiberPerGram:   0.00,
         retentionFactor:   0.4,
+        appearanceProfileId: 'mixed-sugars-liquid',
+        appearanceTauMin: 16,
+        sugarIdentity: 'mixed-sugars',
+        physicalForm: 'liquid',
     },
 
     // Fruit (apple, banana, pear): mixed fructose/glucose + skin fibre
@@ -115,6 +149,10 @@ const CARB_TYPES = {
         simpleFraction: 0.90,
         fiberPerGram:   0.16,
         retentionFactor:   1.0,
+        appearanceProfileId: 'fruit-carbohydrate',
+        appearanceTauMin: 27.5,
+        sugarIdentity: 'fruit-mixture',
+        physicalForm: 'solid',
     },
 
     // White flour (white bread, pasta, pizza, cake): almost pure starch
@@ -129,6 +167,10 @@ const CARB_TYPES = {
         simpleFraction: 0.05,
         fiberPerGram:   0.05,
         retentionFactor:   1.0,
+        appearanceProfileId: 'white-flour-carbohydrate',
+        appearanceTauMin: 48.75,
+        sugarIdentity: 'starch-rich-mixture',
+        physicalForm: 'solid',
     },
 
     // Whole grain (rye bread, oatmeal): starch + high fibre → slow
@@ -143,6 +185,10 @@ const CARB_TYPES = {
         simpleFraction: 0.08,
         fiberPerGram:   0.20,
         retentionFactor:   1.0,
+        appearanceProfileId: 'wholegrain-carbohydrate',
+        appearanceTauMin: 48,
+        sugarIdentity: 'starch-rich-mixture',
+        physicalForm: 'solid',
     },
 
     // Vegetables (salad, carrot, broccoli): low-carb + high fibre ratio
@@ -162,6 +208,10 @@ const CARB_TYPES = {
         simpleFraction: 0.65,
         fiberPerGram:   0.75,
         retentionFactor:   1.0,
+        appearanceProfileId: 'vegetable-carbohydrate',
+        appearanceTauMin: 33.75,
+        sugarIdentity: 'vegetable-mixture',
+        physicalForm: 'solid',
     },
 
     // Default when type is absent: typical mixed meal (rice/pasta + vegetables + meat)
@@ -170,6 +220,10 @@ const CARB_TYPES = {
         simpleFraction: 0.20,
         fiberPerGram:   0.08,
         retentionFactor:   1.0,
+        appearanceProfileId: 'mixed-meal-carbohydrate',
+        appearanceTauMin: 45,
+        sugarIdentity: 'mixed-carbohydrate',
+        physicalForm: 'solid',
     },
 };
 
@@ -235,8 +289,8 @@ const FOODS = {
     // Latte: 200 g letmælk (1,5 %) + 30 g espresso, uden tilsat sukker. Kaffeens
     // meget lille makrobidrag er udeladt. Koffein har ingen særskilt effekt i motoren.
     // Flydende form, protein og fedt bruger de eksisterende absorptionsmekanismer.
-    druesukker: { carbs: 3,  protein: 0, fat: 0,  weight: 3,   carbType: 'sukker_fast',     icon: 'assets/icons/food/glucose-tablets.png', childScale: 1.0, eatTimeMin: 0.3 },
-    slik:       { carbs: 4.6, protein: 0.4, fat: 0,   weight: 6,   carbType: 'sukker_fast',     icon: 'assets/icons/food/candy.png', childScale: 1.0, portionDecimals: 1, eatTimeMin: 1 },
+    druesukker: { carbs: 3,  protein: 0, fat: 0,  weight: 3,   carbType: 'druesukker',       icon: 'assets/icons/food/glucose-tablets.png', childScale: 1.0, eatTimeMin: 0.3 },
+    slik:       { carbs: 4.6, protein: 0.4, fat: 0,   weight: 6,   carbType: 'vingummi',         icon: 'assets/icons/food/candy.png', childScale: 1.0, portionDecimals: 1, eatTimeMin: 1 },
     chokolade:  { carbs: 3.2, protein: 0.5, fat: 1.9, weight: 6,   carbType: 'sukker_fast',     icon: 'assets/icons/food/chocolate.png', childScale: 1.0, portionDecimals: 1, eatTimeMin: 1 },
     juice:      { carbs: 24, protein: 1.5, fat: 0.5,  weight: 250, carbType: 'sukker_flydende', icon: 'assets/icons/food/juice.png', childScale: 0.60, portionDecimals: 1, portionUnit: 'g', eatTimeMin: 1 },
     banan:      { carbs: 23.6, protein: 1.3, fat: 0.2, weight: 120, carbType: 'frugt',          icon: 'assets/icons/food/banana.png', childScale: 0.67, portionDecimals: 1, eatTimeMin: 3 },
@@ -259,10 +313,34 @@ function estimateEatTimeMin(food) {
         return Math.max(0.1, food.eatTimeMin);
     }
     const w = food.weight || (food.carbs + food.protein + food.fat) || 50;
-    if (food.carbType === 'sukker_flydende') {
+    if (CARB_TYPES[food.carbType]?.physicalForm === 'liquid') {
         return Math.min(2, Math.max(0.5, w / 125));
     }
     return Math.max(0.5, Math.min(10, w / 50));
+}
+
+// Bygger "Lav selv"-måltidet ét sted, så UI og test bruger samme antagelser.
+// Rent fast sukker vejer det samme som de angivne kulhydrater; der tilføjes
+// ikke implicit vand. Ved disse sukkervalg tilføjes protein/fedt som en
+// kontinuerlig vægtheuristik (deres gram/0.4), så en lille tilføjelse ikke
+// pludselig fortynder hele sukkerportionen. Andre valg bruger makroer/0.4.
+// Det er ikke en måling af en bestemt opskrift. Spisetiden er ligeledes
+// et estimat; ved sammenligning af kemi skal dosis OG spisetid være ens.
+function resolveCustomFoodSpec(carbs, protein, fat, carbType = 'mixed') {
+    if (!Object.hasOwn(CARB_TYPES, carbType)) {
+        throw new RangeError('Ukendt kulhydrattype i brugerdefineret mad');
+    }
+    for (const amount of [carbs, protein, fat]) {
+        if (!Number.isFinite(amount) || amount < 0) {
+            throw new RangeError('Makromængder skal være endelige, ikke-negative tal');
+        }
+    }
+    const solidSugar = carbType === 'druesukker' || carbType === 'sukrose';
+    const weight = solidSugar ? carbs + (protein + fat) / 0.4
+        : Math.round((carbs + protein + fat) / 0.4);
+    const spec = { carbs, protein, fat, weight, carbType };
+    spec.eatTimeMin = estimateEatTimeMin(spec);
+    return spec;
 }
 
 
@@ -279,6 +357,7 @@ if (typeof window !== 'undefined') {
     window.CHILD_PORTION_SCALE = CHILD_PORTION_SCALE;
     window.estimateEatTimeMin = estimateEatTimeMin;
     window.foodMacroAmount = foodMacroAmount;
+    window.resolveCustomFoodSpec = resolveCustomFoodSpec;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -288,5 +367,6 @@ if (typeof module !== 'undefined' && module.exports) {
         CHILD_PORTION_SCALE,
         estimateEatTimeMin,
         foodMacroAmount,
+        resolveCustomFoodSpec,
     };
 }

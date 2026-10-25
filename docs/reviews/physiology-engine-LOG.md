@@ -24,6 +24,16 @@ næste skridt er — så det andet værktøj kan fortsætte uden samtale-konteks
 
 ## Status nu
 
+**Opdatering 2026-10-25:** Arbejdet foregår nu lokalt på `main`, efter checkpoint
+`e4b8494`. Mavetømning og profilbundet systemisk glukosetilførsel er adskilt;
+snapshot-formatet er 3. Druesukker og hvidt sukker findes som særskilte custom-valg,
+bamserne er bevaret. Modellen er numerisk kontrolleret, men profilerne er ikke
+nykalibreret klinisk. Kun `meal-fat-protein`-goldenreferencen er opdateret efter
+dokumenteret ændring; de seks andre er uændrede. Se
+[beslutning og verifikation](2026-10-25_gastric-intestinal-fix.md).
+Ingen modelændringer er committet, pushet eller publiceret i dette trin.
+Den ældre migrationsstatus nedenfor bevares som historik.
+
 - **Gren:** `physiology-engine` (`main` urørt, intet pushet)
 - **Aktuelt:** S9 I GANG — engine gøres til en GENEREL standalone-model (S9.0-S9.3
   færdige + verificerede; S9.4 docs; S9.5 playtest+merge mangler). S8 FÆRDIG —
@@ -244,6 +254,19 @@ næste skridt er — så det andet værktøj kan fortsætte uden samtale-konteks
 ---
 
 ## Log
+
+### 2026-10-25 — adskilt mave/tarm, profilsporing og fælles indtag
+
+1. Implementeret efter brugerens godkendelse og checkpoint `e4b8494`; core og UI
+   delegeret med separate filområder, efterfulgt af uafhængigt kode-review.
+2. Fjernet dobbeltansvaret i `tau_G`, gamle `activeFood` og scalar `carbRate`.
+   D1/D2 er summer af profilejede puljer. Indtag, massebalance, snapshots og
+   faktisk Q1-tilførsel er kontrolleret; samme omregning på 0,18016 g/mmol anvendes.
+3. Før/efter-forsøg med 48 arme viser tidligere respons på blandede måltider.
+   `tests/golden-master.js generate --scenario=meal-fat-protein` blev kørt efter
+   denne vurdering; alle syv scenarier matcher derefter. Ingen tolerancer lempet.
+4. Kilder, arvede startparametre, afvigelser fra oplægget og åbne kalibreringskrav
+   er samlet i `2026-10-25_gastric-intestinal-fix.md`. Publicering er ikke foretaget.
 
 ### 2026-10-04 — Codex — conservative exercise uptake
 

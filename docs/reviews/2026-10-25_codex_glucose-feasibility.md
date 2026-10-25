@@ -54,6 +54,11 @@ Status: ⚠️ BY DESIGN, but insufficient for the requested distinction.
 
 Status: ❌ ÅBEN for a future model revision.
 
+Update 2026-10-25: **✅ FIKSET locally** by the approved profile-pool implementation.
+See the [decision and verification record](2026-10-25_gastric-intestinal-fix.md).
+Clinical glucose/gummy kinetic differentiation remains open; this status fixes
+parameter coupling, not the missing calibration.
+
 `js/physiology-engine.js:2133` computes one time constant from the whole stomach mixture. `js/hovorka.js:499` and `:629` use it for both stomach-to-gut transfer and gut-to-blood appearance. Consequently, new low-retention material in the stomach changes the exit rate of carbohydrate already in the downstream gut compartment. That is not an isolated tablet-dissolution mechanism.
 
 For an isolated, fat-free sugar input at rest and BG below the hyperglycaemic modifier, the implemented relationship is: time constant = 25 minutes multiplied by (0.4 + 0.6 multiplied by retention factor). Retention 1 gives 25 minutes; 0.4 gives 16, not 10. The food-file comment claiming a 2.5-fold speed change is incorrect. The implementation document also incorrectly groups sucrose with glucose as needing no enzymatic digestion (`docs/MODEL-IMPLEMENTATION.md:775`). These documentation findings remain open; this analysis has not edited the app or its implementation description.
@@ -142,3 +147,10 @@ The custom-food UI currently exposes `sukker_fast` as one category for both gluc
 Reusable conclusion: sucrose-based candyfloss is a catalog candidate, not a demonstrated slower comparator. Custom-food consistency belongs in the scope of any approved glucose extension. Reopen the product choice when a defined preparation and suitable response data are available. No replacement decision has been made.
 
 Subsequent owner decision, 2026-10-25: retain gummy candy for now. The candyfloss replacement is not pursued. The requested concrete architecture and custom-food proposal is saved in [Separate gastric delivery and intestinal appearance](2026-10-25_codex_gastric-intestinal-proposal.md). Model implementation and kinetic parameters are still unapproved; the earlier PDF does not contain these follow-ups.
+
+Implementation update, 2026-10-25: the owner subsequently approved the proposal.
+The [local implementation record](2026-10-25_gastric-intestinal-fix.md) now
+supersedes the earlier unapproved/unimplemented status. Glucose, sucrose and
+gummy profiles have separate identities but the same provisional downstream
+time; no clinical speed advantage has been established. The PDF remains the
+earlier feasibility snapshot and does not include these later changes.

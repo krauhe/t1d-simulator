@@ -144,7 +144,6 @@ const MUSCLE_GLYCOGEN_FAST_PHASE_HL_MIN = 45;    // Phase-1 decay t½ (AMPK pers
 // 1 mmol glucose weighs 0.18016 g (equivalently 1 g = 1000/180.16 ~ 5.55 mmol).
 // Engine-owned (ENGINE_-prefixed); this is now the single source — the former
 // GLUCOSE_* copies in simulator.js have been removed.
-const ENGINE_GLUCOSE_G_PER_MMOL = 180.16 / 1000;  // = 0.18016 g/mmol
 
 // Energy density of body tissue: ~7700 kcal stored/released per kg of body-weight
 // change (standard nutritional approximation). Drives weightChangeKg from the net
@@ -350,6 +349,7 @@ function resolveHovorkaBindings() {
 
 const ENGINE_HOVORKA_BINDINGS = resolveHovorkaBindings();
 const ENGINE_HOVORKA_STATE_IDX = ENGINE_HOVORKA_BINDINGS.HOVORKA_STATE_IDX;
+const ENGINE_GLUCOSE_G_PER_MMOL = ENGINE_HOVORKA_BINDINGS.HovorkaModel.GLUCOSE_G_PER_MMOL;
 
 // -----------------------------------------------------------------------------
 // PhysiologyEngine — the physiological core (under construction)
@@ -630,7 +630,6 @@ class PhysiologyEngine {
         // --- Food, gastric, and carbohydrate state ---
         // The absorption mathematics will be moved later; here the engine only owns the
         // physiological containers and queues.
-        this.activeFood = [];
         this.activeIntake = [];
         this.stomachContentGrams = 0;
         this.stomachFull = false;
@@ -1077,9 +1076,9 @@ class PhysiologyEngine {
                     `PhysiologyEngine: ikke-endelig Hovorka-state '${stateName}' efter step (${value})`);
             }
         }
-        if (!Number.isFinite(this.hovorka.tau_G) || this.hovorka.tau_G <= 0) {
+        if (!Number.isFinite(this.hovorka.tauGastric) || this.hovorka.tauGastric <= 0) {
             throw new Error(
-                `PhysiologyEngine: ugyldig tau_G efter step (${this.hovorka.tau_G})`);
+                `PhysiologyEngine: ugyldig tauGastric efter step (${this.hovorka.tauGastric})`);
         }
         if (!Number.isFinite(this.trueBG)) {
             throw new Error(`PhysiologyEngine: ikke-endelig trueBG efter step (${this.trueBG})`);
@@ -1370,8 +1369,21 @@ class PhysiologyEngine {
     ) {
         const maxStepSize = 1.0; // max 1 sim-minute per Euler step
         let remaining = simulatedMinutesPassed;
+        const integratedFluxes = {};
         while (remaining > 0) {
-            const stepDt = Math.min(remaining, maxStepSize);
+            // Indtaget afsluttes præcist på sin egen tidsgrænse. Under spisning
+            // opløses den hurtigt skiftende maveblanding i højst 0,1-minutters trin.
+            const intakeBoundary = this.activeIntake.reduce((min, intake) => Math.min(min, intake.remainingMin), Infinity);
+            const timeRoundoff = 1e-10;
+            let stepDt = Math.min(remaining, maxStepSize,
+                this.activeIntake.length ? 0.1 : maxStepSize,
+                intakeBoundary > timeRoundoff ? intakeBoundary : Infinity);
+            // Undgå et ekstra trin på fx 1e-16 min efter gentagne subtraktioner.
+            // En eventuel kørest leveres stadig i _processActiveIntake(), aldrig slettes.
+            if (remaining - stepDt < timeRoundoff) stepDt = remaining;
+            if (intakeBoundary > stepDt && intakeBoundary - stepDt < timeRoundoff) {
+                stepDt = Math.min(remaining, intakeBoundary);
+            }
 
             // --- Stress hormones, counter-regulation, and stress baseline (PER SUBSTEP) ---
             // Moved into the loop 2026-06-08 (finding #1) so counter-regulation, HAAF,
@@ -1428,16 +1440,15 @@ class PhysiologyEngine {
             const stressBase = glycogenBaseline + gngBaseline + effectiveCatecholamineDrive +
                 chronicStressTerm + this.circadianKortisolNiveau;
 
-            // --- 0. Drip active meals into the stomach (drip mechanism) ---
-            // The activeIntake queue contains meals that feed themselves into the
-            // stomach over their eatTimeMin. Must be called BEFORE _substepFatProteinFFA()
-            // so tau_G is computed on the updated stomach mixture each substep.
+            // 0. Forbered intervallets kontinuerte indtagsrater fra én fælles kø.
+            // Mavekoefficienten beregnes fra den fælles starttilstand; indtag og
+            // tømning integreres derefter over præcis samme interval i begge ejere.
             this._processActiveIntake(stepDt);
 
             // --- 1. Update fat/protein/FFA compartments (substep precision) ---
             // Updates: fatStomach, fatIntestine, ffaBlood, ffaResistanceFactor,
             //          proteinStomach, proteinGut, aminoAcidsBlood, proteinGlucagonLevel,
-            //          hovorka.tau_G (dynamic gastric emptying)
+            //          hovorka.tauGastric (fælles mavetømning, separat fra tarm)
             this._substepFatProteinFFA(stepDt);
 
             // --- 2. Update Hovorka parameters that depend on substep-updated state ---
@@ -1471,6 +1482,9 @@ class PhysiologyEngine {
             const basalFraction = Math.min(1, Math.max(0,
                 hs[ENGINE_HOVORKA_STATE_IDX.Ib] / Math.max(hs[ENGINE_HOVORKA_STATE_IDX.I], 1e-12)));
             this.hovorka.step(stepDt);
+            // Autoritativ COB og mavekulhydrat kommer fra de samme puljer.
+            this.stomachCarbsTotal = this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.D1] * ENGINE_GLUCOSE_G_PER_MMOL;
+            this.cob = this.hovorka.carbsOnBoard;
             this.applyPlasmaInsulinClamp();
             const plasmaExchange = this.hovorka._lastTransport - this.hovorka._lastReturn;
             this.q1Fluxes = {
@@ -1507,6 +1521,9 @@ class PhysiologyEngine {
             this._substepGlucagon(stepDt);
             this.q1Fluxes.rescue =
                 (this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.Q1] - q1BeforeRescue) / stepDt;
+            for (const [key, rate] of Object.entries(this.q1Fluxes)) {
+                integratedFluxes[key] = (integratedFluxes[key] || 0) + rate * stepDt;
+            }
 
             // --- 7. Refresh trueBG + BG-coupled damage accumulators (PER SUBSTEP) ---
             // trueBG is updated HERE — after all other substep physics — so the subsystems
@@ -1556,6 +1573,12 @@ class PhysiologyEngine {
                 this._lastPhysioRecordTime = substepTime;
             }
         }
+        // Diagnostikken skal forklare hele det ydre trin, ikke kun et eventuelt
+        // mikroskopisk sidste deltrin. Middelrater bevarer Q1- og kulhydratregnskab.
+        for (const [key, amount] of Object.entries(integratedFluxes)) {
+            this.q1Fluxes[key] = amount / simulatedMinutesPassed;
+        }
+        this.hovorka._lastUG = this.q1Fluxes.gut || 0;
     }
 
     // _prepInsulinRates — Pre-loop insulin calculation (S7.3). Computes the basal
@@ -1659,52 +1682,18 @@ class PhysiologyEngine {
         this.displayIOB = Math.max(0, this.iob * bioavScale);
     }
 
-    // _prepStepInputs — pre-loop carbohydrate rate + heart-rate/exercise prep (S8-C1).
-    // Computes tau_G init, carb rate for Hovorka D1/D2 (step-overlap weighted),
-    // COB estimate, heart rate (sliding toward activity target, hypo-reduced), and
+    // _prepStepInputs — COB-visning og puls-/motionsinput før deltrinene.
+    // Kulhydratinput kommer udelukkende fra activeIntake i deltrinsløkken.
+    // Beregner puls (sliding toward activity target, hypo-reduced), and
     // exercise stress rates; handles calorie/time accumulation and auto-stop
     // (fixed duration or 4 h limit → stopActivity + 'exercise-max-duration').
-    // Sets hovorka.insulinRate/carbRate/heartRate/exerciseInput. Returns the two
+    // Sets hovorka.insulinRate/heartRate/exerciseInput. Returns the two
     // exercise stress rates plus an auto-stop flag. Reads only
     // engine state + hovorka + activity typeDef (stored on activeAktivitet).
     _prepStepInputs(simulatedMinutesPassed) {
-        // Initialise tau_G from fat state before carb rate is computed.
-        // tau_G is updated continuously in each substep, but the start value is used for carbRate.
-        this.hovorka.tau_G = 40 + 18 * Math.log(1 + this.fatIntestine / 10);
-
-        // --- COMPUTE CARBOHYDRATE RATE for Hovorka D1/D2 [mmol/min] ---
-        // Mass-conservation under variable step size: compute the real overlap
-        // between the update step [stepStart, stepEnd] and the eating window [eatStart, eatEnd]
-        // and derive carbRate so that totalCarbRate × stepDuration matches the carbs
-        // "eaten" in this step. Protein affects BG via glucagon, not as carbs.
-        const stepStart = this.totalSimMinutes - simulatedMinutesPassed;
-        const stepEnd = this.totalSimMinutes;
-        let totalCarbRate = 0;
-        this.cob = 0;
-        this.activeFood.forEach(food => {
-            const timeSinceConsumption = this.totalSimMinutes - food.startTime;
-            const eatingDuration = food.eatingDuration > 0 ? food.eatingDuration : 10;
-
-            // Carbohydrate rate: fed in over eating time, weighted by step overlap
-            if (food.carbs > 0 && simulatedMinutesPassed > 0) {
-                const eatStart = food.startTime;
-                const eatEnd = food.startTime + eatingDuration;
-                const overlap = Math.max(0, Math.min(stepEnd, eatEnd) - Math.max(stepStart, eatStart));
-                if (overlap > 0) {
-                    const mmolDelivered = (food.carbs / ENGINE_GLUCOSE_G_PER_MMOL) * (overlap / eatingDuration);
-                    totalCarbRate += mmolDelivered / simulatedMinutesPassed;
-                }
-            }
-
-            // COB tracking: estimate remaining carbohydrates based on time (dynamic tau_G).
-            const decayTime = 3 * this.hovorka.tau_G; // ~95% absorbed after 3×tau_G
-            const carbDecay = Math.max(0, 1 - timeSinceConsumption / decayTime);
-            this.cob += food.carbs * carbDecay;
-        });
-        // Bevar leveringsplanen, indtil sidste del af måltidet er indtaget.
-        // Allerede indtaget kulhydrat fortsætter i D1/D2 efter oprydningen.
-        this.activeFood = this.activeFood.filter(f =>
-            (this.totalSimMinutes - f.startTime) < Math.max(360, f.eatingDuration || 10));
+        // Indtag leveres kun fra activeIntake pr. deltrin. COB indeholder alene
+        // allerede spist kulhydrat i mave og tarm, aldrig endnu uspist kø.
+        this.cob = this.hovorka.carbsOnBoard;
 
         // --- COMPUTE HEART RATE AND EXERCISE EFFECTS ---
         // Heart rate rises/falls GRADUALLY via exponential smoothing (up t½≈2 min, down t½≈5 min).
@@ -1768,8 +1757,6 @@ class PhysiologyEngine {
         // --- Set Hovorka inputs (constant for the whole tick) ---
         // insulinRate = 0: the rapid depot (S1/S2) receives input only via direct deposit.
         this.hovorka.insulinRate = 0;
-        // Carbohydrates are fed via Hovorka's D1→D2 gut model (realistic 2-compartment absorption).
-        this.hovorka.carbRate = totalCarbRate;
         this.hovorka.heartRate = currentHeartRate;
         // E1 input is normalized heart-rate excess while the muscles are actually
         // working. It becomes zero immediately when no activity is active; E1 itself
@@ -2122,16 +2109,16 @@ class PhysiologyEngine {
         this.hovorka.state[ENGINE_HOVORKA_STATE_IDX.S2] = totalS2;
     }
 
-    // _substepFatProteinFFA — fat/protein/FFA compartments + dynamic tau_G (S7.5d).
-    // Computes the stomach's dynamic tau_G (carb type, fibre, retention, fat delay,
+    // _substepFatProteinFFA — fat/protein/FFA compartments + dynamic tauGastric.
+    // Computes the stomach's dynamic tauGastric (carb type, fibre, retention, fat delay,
     // hyperglycaemia delay, exercise delay), updates fat/protein ODEs, FFA resistance
-    // (pizza effect), and protein-glucagon. Sets hovorka.tau_G + splanchnicAbsorbMod.
-    // Called BEFORE hovorka.step() (affects tau_G/ISF). Reads only engine state +
+    // (pizza effect), and protein-glucagon. Sets hovorka.tauGastric + splanchnicAbsorbMod.
+    // Called BEFORE hovorka.step() (affects tauGastric/ISF). Reads only engine state +
     // engine constants (STOMACH_*/TAU_*/FFA_*/AA_*, moved in S7.4b).
     // Full calibration/source documentation: docs/BG-SCIENCE.md §5/§23 +
     // git history for js/simulator.js.
     _substepFatProteinFFA(dt) {
-        // Dynamic tau_G from the stomach's mixture state (carb type, fibre, retention).
+        // Mavetømning fra fælles startblanding; ingen ændring af eksisterende tarmprofiler.
         // Empty stomach: fall back to base 40 min.
         let carbBase = 40; // fallback when stomach is empty
         let fiberMod = 1.0;
@@ -2169,28 +2156,29 @@ class PhysiologyEngine {
 
         const currentTauG = (carbBase * fiberMod * retentionMod + fatDelay) * hyperMod * exerciseGEMod;
 
+        // Samme eksakte førsteordens mavetransport som kulhydratpuljerne.
+        // Indtag er en konstant rate i intervallet, ikke en bolus ved dets start.
+        const intake = this._intakeRates || {};
+        const gastricDecay = Math.exp(-dt / currentTauG);
+        const gastricIntegral = -Math.expm1(-dt / currentTauG) * currentTauG;
+        const gastricEnd = (amount, rate) => amount * gastricDecay + (rate || 0) * gastricIntegral;
+
         // --- Fat compartment ODEs ---
-        const fatStomachToIntestine = this.fatStomach / currentTauG * dt;
+        const fatStomachEnd = gastricEnd(this.fatStomach, intake.fatRate);
+        const fatStomachToIntestine = this.fatStomach + (intake.fatRate || 0) * dt - fatStomachEnd;
         const fatIntestineAbsorbed = this.fatIntestine / this.TAU_FAT_ABS * dt;
-        this.fatStomach = Math.max(0, this.fatStomach - fatStomachToIntestine);
+        this.fatStomach = fatStomachEnd;
         this.fatIntestine = Math.max(0, this.fatIntestine + fatStomachToIntestine - fatIntestineAbsorbed);
 
-        // Update Hovorka's tau_G dynamically — affects D1→D2 carbohydrate absorption
-        this.hovorka.tau_G = currentTauG;
+        // Kun mavens overgang ændres dynamisk; tarmens profilparametre er konstante.
+        this.hovorka.tauGastric = currentTauG;
 
-        // Stomach volume empties with the same tau_G (everything is mixed in the same stomach)
-        const stomachContentBefore = this.stomachContentGrams;
-        const stomachEmptied = stomachContentBefore / currentTauG * dt;
-        this.stomachContentGrams = Math.max(0, stomachContentBefore - stomachEmptied);
-
-        // Scale stomach mixture variables proportionally (preserve composition)
-        if (stomachContentBefore > 0.001) {
-            const ratio = this.stomachContentGrams / stomachContentBefore;
-            this.stomachCarbsTotal   *= ratio;
-            this.stomachCarbsSimple  *= ratio;
-            this.stomachFiber        *= ratio;
-            this.stomachRetentionWeight *= ratio;
-        }
+        // Fysisk mavemængde følger samme koefficient og indtagsinterval som kulhydraterne.
+        this.stomachContentGrams = gastricEnd(this.stomachContentGrams, intake.weightRate);
+        this.stomachCarbsTotal = gastricEnd(this.stomachCarbsTotal, intake.carbsTotalRate);
+        this.stomachCarbsSimple = gastricEnd(this.stomachCarbsSimple, intake.carbsSimpleRate);
+        this.stomachFiber = gastricEnd(this.stomachFiber, intake.fiberRate);
+        this.stomachRetentionWeight = gastricEnd(this.stomachRetentionWeight, intake.retentionWeightRate);
 
         // Hysteresis: clear stomachFull when content + queue is below threshold.
         if (this.stomachFull) {
@@ -2216,9 +2204,10 @@ class PhysiologyEngine {
         }
 
         // --- Protein compartment ODEs ---
-        // Transit: stomach → gut (shares tau_G with carbohydrates)
-        const protStomachToGut = this.proteinStomach / currentTauG * dt;
-        this.proteinStomach = Math.max(0, this.proteinStomach - protStomachToGut);
+        // Transit: stomach → gut (shares tauGastric with carbohydrates)
+        const proteinStomachEnd = gastricEnd(this.proteinStomach, intake.proteinRate);
+        const protStomachToGut = this.proteinStomach + (intake.proteinRate || 0) * dt - proteinStomachEnd;
+        this.proteinStomach = proteinStomachEnd;
         // Absorption: gut → amino acids (tau_ProtAbs = 90 min)
         const protGutAbsorbed = this.proteinGut / this.TAU_PROT_ABS * dt;
         this.proteinGut = Math.max(0, this.proteinGut + protStomachToGut - protGutAbsorbed);
@@ -2236,20 +2225,25 @@ class PhysiologyEngine {
     // eatTimeMin. Called BEFORE _substepFatProteinFFA() each substep. Reads/writes
     // only engine state (activeIntake queue + stomach compartments).
     _processActiveIntake(dt) {
-        if (this.activeIntake.length === 0) return;
+        // Kun denne kø bestemmer leveringen af alle måltidets bestanddele.
+        // Satser beregnes for præcis samme interval som core og fysisk mave.
+        const totals = { fatRate: 0, proteinRate: 0, weightRate: 0,
+            carbsTotalRate: 0, carbsSimpleRate: 0, fiberRate: 0, retentionWeightRate: 0 };
+        this.hovorka.carbIntakeRates = [];
         for (const intake of this.activeIntake) {
             const consume = Math.min(dt, intake.remainingMin);
             if (consume <= 0) continue;
-            this.fatStomach             += intake.fatRate * consume;
-            this.proteinStomach         += intake.proteinRate * consume;
-            this.stomachContentGrams    += intake.weightRate * consume;
-            this.stomachCarbsTotal      += intake.carbsTotalRate * consume;
-            this.stomachCarbsSimple     += intake.carbsSimpleRate * consume;
-            this.stomachFiber           += intake.fiberRate * consume;
-            this.stomachRetentionWeight += intake.retentionWeightRate * consume;
+            for (const key of Object.keys(totals)) totals[key] += intake[key] * consume / dt;
+            if (intake.carbsTotalRate > 0) this.hovorka.carbIntakeRates.push({
+                profileId: intake.appearanceProfileId,
+                appearanceTauMin: intake.appearanceTauMin,
+                gramsPerMinute: intake.carbsTotalRate * consume / dt,
+            });
             intake.remainingMin -= consume;
         }
-        this.activeIntake = this.activeIntake.filter(i => i.remainingMin > 0.001);
+        // Ingen vilkårlig restgrænse: sidste positive rest skal faktisk leveres.
+        this.activeIntake = this.activeIntake.filter(i => i.remainingMin > 0);
+        this._intakeRates = totals;
     }
 
     // --- Stress/HAAF/liver glycogen (S7.5e, moved from simulator.js) ---
@@ -3212,7 +3206,11 @@ class PhysiologyEngine {
         // but when supplied all three fields are required. The upper bounds are broad
         // API safety limits, not calibration targets: fiber/digestible-carb can exceed
         // 1 for vegetables, while all catalogue retention factors currently lie <= 1.
-        let carbParams = { simpleFraction: 0.20, fiberPerGram: 0.08, retentionFactor: 1.0 };
+        // Direkte API uden profil beskriver et generisk blandet måltid.
+        // Standardtiden er en modelantagelse, ikke en glukosekalibrering.
+        let carbParams = { simpleFraction: 0.20, fiberPerGram: 0.08, retentionFactor: 1.0,
+            appearanceProfileId: 'mixed', appearanceTauMin: 45,
+            sugarIdentity: 'mixed', physicalForm: 'solid' };
         if (spec.carbParams != null) {
             if (typeof spec.carbParams !== 'object' || Array.isArray(spec.carbParams)) {
                 throw new TypeError("PhysiologyEngine: 'food.carbParams' must be an object");
@@ -3224,7 +3222,24 @@ class PhysiologyEngine {
                     spec.carbParams.fiberPerGram, 'food.carbParams.fiberPerGram', { min: 0, max: 10 }),
                 retentionFactor: requireNumber(
                     spec.carbParams.retentionFactor, 'food.carbParams.retentionFactor', { min: 0, max: 10 }),
+                appearanceProfileId: spec.carbParams.appearanceProfileId ?? 'custom',
+                appearanceTauMin: spec.carbParams.appearanceTauMin == null ? 40 : requireNumber(
+                    spec.carbParams.appearanceTauMin, 'food.carbParams.appearanceTauMin', { min: 0.001, max: 10000 }),
+                sugarIdentity: spec.carbParams.sugarIdentity ?? 'unspecified',
+                physicalForm: spec.carbParams.physicalForm ?? 'unspecified',
             };
+        }
+        if (typeof carbParams.appearanceProfileId !== 'string'
+            || !/^[a-z][a-z0-9_-]*$/i.test(carbParams.appearanceProfileId)
+            || typeof carbParams.sugarIdentity !== 'string' || typeof carbParams.physicalForm !== 'string') {
+            throw new TypeError('Ugyldig kulhydratidentitet eller fysisk form');
+        }
+        const previousPool = Object.hasOwn(this.hovorka.carbPools, carbParams.appearanceProfileId)
+            ? this.hovorka.carbPools[carbParams.appearanceProfileId] : null;
+        if ((previousPool && previousPool.appearanceTauMin !== carbParams.appearanceTauMin)
+            || this.activeIntake.some(i => i.appearanceProfileId === carbParams.appearanceProfileId
+                && i.appearanceTauMin !== carbParams.appearanceTauMin)) {
+            throw new RangeError('Samme kulhydratprofil må ikke have forskellige optagelsestider');
         }
 
         const carbs = spec.carbs || 0;
@@ -3259,12 +3274,14 @@ class PhysiologyEngine {
         this.totalKcalConsumed += foodKcal;
         this.emitEvent('food-added', { carbs, protein, fat, kcal: foodKcal, icon: spec.icon });
 
-        // activeFood: the carbRate mechanism in step() feeds Hovorka D1 over eatTime.
-        this.activeFood.push({ carbs, protein, fat, startTime: this.totalSimMinutes, eatingDuration: eatTime });
-        // activeIntake queue: _processActiveIntake() drips the physical stomach contributions
-        // (fat/protein/weight/carb blend) gradually over eatTime → smooth tau_G.
+        // Én kø ejer både kulhydrat og resten af måltidet. Profilen fastholdes
+        // efter indtag, så nye måltider ikke ændrer kulhydrat i tarmen.
         this.activeIntake.push({
             remainingMin: eatTime,
+            appearanceProfileId: carbParams.appearanceProfileId,
+            appearanceTauMin: carbParams.appearanceTauMin,
+            sugarIdentity: carbParams.sugarIdentity,
+            physicalForm: carbParams.physicalForm,
             proteinRate:         protein / eatTime,
             fatRate:             fat / eatTime,
             weightRate:          foodWeight / eatTime,
@@ -3745,17 +3762,22 @@ class PhysiologyEngine {
         // snapshot or import/restore would not round-trip the glucose compartments —
         // trueBG is re-derived from hovorka.glucoseConcentration on the next step, so a
         // snapshot without it silently reverts to the live ODE state. state[4]/Q1 etc.
-        // live in the Float64Array; insulinRate/carbRate/heartRate are transient inputs
+        // live in the Float64Array; insulinRate/carbIntakeRates/heartRate are transient inputs
         // re-derived each step but exported too for a faithful mid-tick snapshot.
         const hovorka = {
             state: Array.from(this.hovorka.state),
             insulinRate: this.hovorka.insulinRate,
-            carbRate: this.hovorka.carbRate,
+            carbPools: this._cloneForExport(this.hovorka.carbPools),
+            carbIntakeRates: this._cloneForExport(this.hovorka.carbIntakeRates),
+            tauGastric: this.hovorka.tauGastric,
+            splanchnicAbsorbMod: this.hovorka.splanchnicAbsorbMod,
+            A_G: this.hovorka.A_G,
+            lastUG: this.hovorka._lastUG,
             heartRate: this.hovorka.heartRate,
         };
 
         return {
-            version: 2,
+            version: 3,
             seed: this._seed,
             rngState: this.rng._state,
             eventCount: this.events.length,
@@ -3769,8 +3791,9 @@ class PhysiologyEngine {
     // holds a reference to it. The event buffer is cleared: exportState() stores only
     // eventCount as metadata, not side-effect events for replay.
     importState(snapshot) {
-        if (!snapshot || snapshot.version !== 2 || !snapshot.state || !snapshot.hovorka) {
-            throw new Error('PhysiologyEngine.importState forventer exportState() version 2');
+        if (!snapshot || snapshot.version !== 3 || !snapshot.state || !snapshot.hovorka
+            || !snapshot.hovorka.carbPools || !Array.isArray(snapshot.hovorka.carbIntakeRates)) {
+            throw new Error('PhysiologyEngine.importState forventer exportState() version 3');
         }
 
         for (const key of Object.keys(this)) {
@@ -3787,7 +3810,13 @@ class PhysiologyEngine {
         // copies in place) so any reference held by the facade stays valid.
         this.hovorka.state.set(snapshot.hovorka.state);
         this.hovorka.insulinRate = snapshot.hovorka.insulinRate;
-        this.hovorka.carbRate = snapshot.hovorka.carbRate;
+        this.hovorka.carbPools = this._cloneForExport(snapshot.hovorka.carbPools);
+        this.hovorka.carbIntakeRates = this._cloneForExport(snapshot.hovorka.carbIntakeRates);
+        this.hovorka.tauGastric = snapshot.hovorka.tauGastric;
+        this.hovorka.splanchnicAbsorbMod = snapshot.hovorka.splanchnicAbsorbMod;
+        this.hovorka.A_G = snapshot.hovorka.A_G;
+        this.hovorka._lastUG = snapshot.hovorka.lastUG;
+        this.hovorka.syncCarbohydrateViews();
         this.hovorka.heartRate = snapshot.hovorka.heartRate;
 
         this._seed = snapshot.seed >>> 0;

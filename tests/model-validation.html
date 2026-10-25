@@ -2673,51 +2673,31 @@ addSection(
 
 // SECTION: Carb-type comparison — 25g pure carbs, 7 CARB_TYPES, 8h window
 // -------------------------------------------------------------------------
-// Isolates the carb-type effect by giving exactly 25g pure carbohydrate via
-// all seven CARB_TYPES. No protein, no fat, no weight override (default weight
-// = carbs = 25g for all seven). This keeps only simpleFraction, fiberPerGram
-// and retentionFactor variable, so all differences come from the CARB_TYPES
-// table.
-//
-// 8-hour window (redesign 2026-04-11):
-// The old 3-hour test was too short for slow carb types such as rye bread and
-// vegetables. At 3 hours, whole grain has only absorbed ~70%, so peak BG and
-// AUC differences were artificially compressed. With 8 hours, ALL types have
-// reached ~99% absorption, and AUC measures the true glycemic load per carb type.
-//
-// Primary kinetic metrics are max slope (dBG/dt over 5 min) and time to max
-// slope. We avoid peak BG and time-to-peak because slow carbs such as whole
-// grain and vegetables produce asymptotic curves that rise toward a plateau
-// without a well-defined peak. The peak metric becomes fragile enough that a
-// few mmol/L of noise can move it by many minutes. Max slope is well-defined
-// for both sharp-peak and asymptotic curve shapes, and captures the intended
-// metric: how quickly carbohydrate reaches the blood at its steepest point.
+// Sammenligner syv udvalgte profiler med samme 25 g kulhydrat og uden fedt
+// eller protein. Maveegenskaber og efterfølgende tilførselstid varierer efter
+// CARB_TYPES. Glukosehældning og AUC beskriver den samlede models respons;
+// de er ikke direkte målinger af optaget masse eller mavetømning.
+// Den historiske 8-timers protokol og dens numeriske grænser bevares synligt
+// som intern diagnostik. De udgør ikke klinisk kalibrering af den nye struktur.
 addSection(
-    'Carb-type comparison — 25g pure carbs, all 7 CARB_TYPES (8h window)',
+    'Carb-type comparison — 25g carbohydrate, 7 selected profiles (8h window)',
     'Isolates the pure carb-type effect by delivering exactly 25g carbohydrates '
-    + '(no protein, no fat, default weight) for each of the seven CARB_TYPES in foods.js. '
-    + 'Each type has different simpleFraction, fiberPerGram and retentionFactor — these '
-    + 'drive the dynamic τG in _substepFatProteinFFA. '
-    + 'No bolus is given — the raw absorption rate is the signal. '
-    + '8-hour window ensures all types reach full absorption so AUC is comparable. '
+    + '(no protein, no fat, default weight) for seven selected CARB_TYPES in foods.js. '
+    + 'Each profile has gastric properties and a separate downstream appearance time. '
+    + 'The table reports the gastric time at 2 minutes and the downstream profile time. '
+    + 'No bolus is given; the glucose curve also reflects insulin action and glucose disposal. '
+    + 'The observation window is 8 hours; glucose AUC is not a measure of absorbed carbohydrate mass. '
     + 'X-axis shows clock time (meal at 14:00, observation window 14:00 - 22:00). '
-    + 'Categorical colors — each of the seven carb types has its own hue. '
-    + 'Expected τG ordering (fastest → slowest, new 2026-04-11 calibration): '
-    + 'liquid sugar ≈ 17 min, solid sugar ≈ 25 min, fruit ≈ 43 min, '
-    + 'white flour ≈ 59 min, mixed ≈ 61 min, vegetable ≈ 73 min, whole grain ≈ 78 min.',
+    + 'Categorical colors distinguish the seven selected profiles. '
+    + 'Parameters are provisional; this comparison does not establish product-specific clinical calibration.',
 
-    'Ordering by τG: liquid sugar < solid sugar < fruit < white flour ≈ mixed < vegetable < whole grain. '
-    + 'Ordering by max slope: fastest types → steepest rise (concentrated absorption), '
-    + 'slowest types → gentler rise (spread-out absorption). '
-    + 'AUC should be approximately equal for all 25g servings (same total glucose), '
-    + 'but time-to-max-slope should scale with τG. Max slope (the steepest dBG/dt of the '
-    + 'curve) is the primary kinetic metric here because peak BG and time-to-peak are '
-    + 'fragile for slow carbs that produce asymptotic, plateau-like curves. '
-    + 'The fiber effect (1 + 0.5·ln(1+fiber/2)) should cleanly separate the bread pair '
-    + '(whole grain with 5g fiber vs. white flour with 1g fiber).',
+    'Historical internal checks retain the original gastric ordering, slope ordering and 35% AUC-spread threshold. '
+    + 'They are regression diagnostics, not literature-derived acceptance criteria. '
+    + 'Independent downstream times mean gastric ordering alone need not determine glucose-slope ordering. '
+    + 'A failed ordering check must be assessed against both model stages and the full simulation protocol.',
 
     async (canvas, resultDiv, conclusionDiv, legendDiv, conditionsDiv) => {
-        const TEST_MINUTES = 8 * 60;           // 8 hours — all types reach full absorption
+        const TEST_MINUTES = 8 * 60;           // Fælles observationsvindue; ingen antagelse om fuldt optag.
         const START_BG = 6.0;
 
         // Control: no food, no bolus — runs the exact same time window.
@@ -2732,7 +2712,7 @@ addSection(
         // Ordered by expected τG (fastest first → slowest last).
         const foods = [
             { name: 'liquid sugar (juice)',  carbType: 'sukker_flydende', icon: FOODS.juice.icon,          color: '#06b6d4' },
-            { name: 'solid sugar (glucose tabs)', carbType: 'sukker_fast',     icon: FOODS.druesukker.icon,    color: '#fbbf24' },
+            { name: 'dextrose (solid glucose)', carbType: FOODS.druesukker.carbType, icon: FOODS.druesukker.icon, color: '#fbbf24' },
             { name: 'fruit (banana)',              carbType: 'frugt',           icon: FOODS.banan.icon,          color: '#ef4444' },
             { name: 'white flour (pasta)',         carbType: 'hvidt_mel',       icon: FOODS.pasta.icon,          color: '#f97316' },
             { name: 'mixed (default)',             carbType: 'mixed',           icon: '../assets/icons/app/meal-plate.png', color: '#a855f7' },
@@ -2773,9 +2753,11 @@ addSection(
             clampBG(sim, START_BG);
             // 25g carbs, 0 protein, 0 fat, default icon, weight=0 (→ 25g), carbType.
             sim.addFood(25, 0, 0, f.icon, 0, f.carbType);
-            // Capture tau_G after 2 min, so substepFatProteinFFA has updated it.
+            // Vis de to adskilte tider: mavens aktuelle konstant og profilens
+            // efterfølgende tilførselstid. Det tidligere tau_G-felt findes ikke mere.
             sim.update(2.0);
-            const tauG = sim.hovorka.tau_G;
+            const tauG = sim.hovorka.tauGastric;
+            const appearanceTauMin = CARB_TYPES[f.carbType].appearanceTauMin;
             // Run the remaining 8 hours minus the 2 min just simulated.
             const data = await collectBG(sim, TEST_MINUTES - 2);
             const stats = bgStats(data);
@@ -2789,8 +2771,8 @@ addSection(
             // Time-to-peak is kept as a secondary metric, but it is fragile for
             // asymptotic curves.
             const tPeak   = stats.peakTime - 14 * 60;
-            results.push({ ...f, tauG, peak: stats.peak, rise30, rise60, rise120, auc, tPeak, maxSlope, tMaxSlope });
-            allSeries.push({ label: `${f.iconHtml}${f.name} (τG=${tauG.toFixed(0)}m)`, data, color: f.color });
+            results.push({ ...f, tauG, appearanceTauMin, peak: stats.peak, rise30, rise60, rise120, auc, tPeak, maxSlope, tMaxSlope });
+            allSeries.push({ label: `${f.iconHtml}${f.name} (gastric ${tauG.toFixed(0)}m, downstream ${appearanceTauMin.toFixed(1)}m)`, data, color: f.color });
         }
 
         // Y-akse 0-24 deler skala med C.1/C.2/C.3 (post-prandial subgruppe)
@@ -2801,6 +2783,7 @@ addSection(
         const tableRows = results.map(r =>
             `<tr><td>${r.iconHtml}${r.name}</td>`
             + `<td>${r.tauG.toFixed(0)} min</td>`
+            + `<td>${r.appearanceTauMin.toFixed(1)} min</td>`
             + `<td>+${r.rise30.toFixed(1)}</td>`
             + `<td>+${r.rise60.toFixed(1)}</td>`
             + `<td>+${r.rise120.toFixed(1)}</td>`
@@ -2809,7 +2792,7 @@ addSection(
             + `<td>${r.auc.toFixed(0)}</td></tr>`
         ).join('');
         resultDiv.innerHTML = `<table class="results-table">
-            <tr><th>Carb-type</th><th>τG</th><th>Rise @30</th><th>Rise @60</th><th>Rise @120</th><th>Max slope<br>(mmol/L/h)</th><th>t @ max slope</th><th>AUC</th></tr>
+            <tr><th>Carb-type</th><th>Gastric τ at 2 min</th><th>Downstream τ</th><th>Rise @30</th><th>Rise @60</th><th>Rise @120</th><th>Max slope<br>(mmol/L/h)</th><th>t @ max slope</th><th>AUC</th></tr>
             ${tableRows}
         </table>`;
 
@@ -2820,8 +2803,8 @@ addSection(
         // they are fragile when BG flattens without a true peak.
 
         // τG: ordering matches the expected sequence (fastest → slowest).
-        // White flour and mixed are calibrated almost identically and may round
-        // to the same minute, so equal neighboring values are valid.
+        // Hvidt mel og blandet har næsten ens arvede maveparametre og kan
+        // afrundes til samme minut; derfor tillades ens naboværdier.
         let tauGOrdered = true;
         for (let i = 1; i < results.length; i++) {
             if (results[i].tauG + 0.5 < results[i - 1].tauG) { tauGOrdered = false; break; }
@@ -2838,13 +2821,9 @@ addSection(
         for (let i = 1; i < results.length; i++) {
             if (results[i].tMaxSlope + 3 < results[i - 1].tMaxSlope) { tSlopeOrdered = false; break; }
         }
-        // AUC spread: 35% tolerance reflects the documented dual effect of fiber.
-        // A pure bioavailability bug would create arbitrary spread; 35% is the range
-        // where Würsch 1997 reports β-glucan iAUC reduction (17-31% for high-fiber
-        // foods at 2.5-5.5g β-glucan per 30g carb). Whole grain in this test is near
-        // the top of that interval because it has 5g fiber in 25g carb, matching the
-        // intended intestinal fiber layer from gutFiberFactor.
-        // Source: Würsch & Pi-Sunyer 1997, Diabetes Care 20(11):1774-1780.
+        // Den historiske 35%-grænse bevares som intern diagnostik. Den er ikke
+        // en valideret litteraturgrænse for denne protokol, og glukose-AUC kan
+        // ikke bruges som direkte kontrol af kulhydraternes massebalance.
         const aucs = results.map(r => r.auc);
         const aucMin = Math.min(...aucs);
         const aucMax = Math.max(...aucs);
@@ -2853,30 +2832,20 @@ addSection(
 
         const tauGList   = results.map(r => `${r.name}: ${r.tauG.toFixed(0)}`).join(' ≤ ');
         const slopeList  = results.map(r => `${r.name}: ${(r.maxSlope * 60).toFixed(2)}`).join(' > ');
-        const tSlopeList = results.map(r => `${r.name}: ${r.tMaxSlope.toFixed(0)}m`).join(' < ');
+        const tSlopeList = results.map(r => `${r.name}: ${r.tMaxSlope.toFixed(0)}m`).join(' &lt; ');
         const aucList    = results.map(r => `${r.name}: ${r.auc.toFixed(0)}`).join(', ');
 
         conclusionDiv.innerHTML = `
-            <p class="${tauGOrdered ? 'pass' : 'fail'}">${tauGOrdered ? '✓' : '✗'} τG non-decreasing: ${tauGList} min</p>
-            <p class="${slopeOrdered ? 'pass' : 'fail'}">${slopeOrdered ? '✓' : '✗'} Max slope monotonically ordered (faster τG → steeper rise): ${slopeList} mmol/L/h</p>
-            <p class="${tSlopeOrdered ? 'pass' : 'fail'}">${tSlopeOrdered ? '✓' : '✗'} Time-to-max-slope monotonically ordered: ${tSlopeList}</p>
-            <p class="${aucTight ? 'pass' : 'fail'}">${aucTight ? '✓' : '✗'} AUC spread ${(aucSpread * 100).toFixed(0)}% across 25g servings (should be &lt;35%, matches Würsch 1997 β-glucan range): ${aucList} mmol·min/L</p>
-            <p><strong>Why max slope, not peak?</strong> Slow carbs (whole grain, vegetable) produce
-               asymptotic BG curves that rise and plateau without a sharp peak — peak BG and
-               time-to-peak are fragile on those curves. The steepest slope is well-defined for
-               both sharp peaks and asymptotes and captures the physiologically meaningful
-               quantity: how fast glucose is hitting the bloodstream at its fastest moment.</p>
-            <p><strong>AUC spread and dual fiber effect:</strong> Under EU convention
-               (sugar + starch = carbs, fiber separate), all 25g servings contain the same
-               digestible glucose amount. AUC should therefore be equal, but only if the
-               intestinal fiber effect is ignored. Würsch & Pi-Sunyer 1997 (Diabetes Care
-               20(11):1774-1780) showed that β-glucan gel in the small intestine reduces
-               postprandial iAUC by 17-31% for high-fiber foods (2.5-5.5 g β-glucan per
-               30 g carb). Whole grain with 5 g fiber in 25 g carb is near the top of that
-               interval, so the ~28% AUC spread here is physiologically plausible and
-               reflects the gutFiberFactor layer on SGLT1/GLUT2 uptake. The tolerance is
-               35% to allow this natural fiber range without hiding true bioavailability
-               bugs.</p>`;
+            <p class="${tauGOrdered ? 'pass' : 'fail'}">${tauGOrdered ? '✓' : '✗'} Historical check — gastric τ non-decreasing: ${tauGList} min</p>
+            <p class="${slopeOrdered ? 'pass' : 'fail'}">${slopeOrdered ? '✓' : '✗'} Historical check — max slope monotonically ordered: ${slopeList} mmol/L/h</p>
+            <p class="${tSlopeOrdered ? 'pass' : 'fail'}">${tSlopeOrdered ? '✓' : '✗'} Historical check — time-to-max-slope monotonically ordered: ${tSlopeList}</p>
+            <p class="${aucTight ? 'pass' : 'fail'}">${aucTight ? '✓' : '✗'} Historical check — AUC spread ${(aucSpread * 100).toFixed(0)}% across 25g servings (internal threshold &lt;35%): ${aucList} mmol·min/L</p>
+            <p class="warn"><strong>Evidence boundary:</strong> These checks are internal diagnostics,
+               not clinical validation. Glucose slope and AUC also depend on insulin action,
+               glucose disposal and hepatic production. The current fibre modifier acts on
+               gastric transport; this model has no separate intestinal fibre-viscosity state.
+               The need for such a mechanism and the provisional profile times remain open
+               calibration questions.</p>`;
     }
 );
 

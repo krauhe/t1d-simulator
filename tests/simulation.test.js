@@ -2040,8 +2040,8 @@ test('Fat-free meal: τG har ingen fat-delay (kun carbBase * fiberMod * retentio
     // på den fulde blanding — ikke på en partiel drip-tilstand.
     simulateMinutes(sim, 2);
     assert(sim.fatIntestine === 0, 'fatIntestine skal være 0 efter fat-fri måltid');
-    assert(sim.hovorka.tau_G >= 65 && sim.hovorka.tau_G <= 75,
-        `τG skal være i range for mixed-default uden fat (var ${sim.hovorka.tau_G.toFixed(1)})`);
+    assert(sim.hovorka.tauGastric >= 65 && sim.hovorka.tauGastric <= 75,
+        `τG skal være i range for mixed-default uden fat (var ${sim.hovorka.tauGastric.toFixed(1)})`);
 });
 
 test('High-fat meal increases τG via intestinal fat', () => {
@@ -2052,8 +2052,8 @@ test('High-fat meal increases τG via intestinal fat', () => {
     for (let i = 0; i < 30 * 60; i++) sim.update(1/60);
     assert(sim.fatIntestine > 5,
         `Fat should have reached intestine after 30 min (fatIntestine=${sim.fatIntestine.toFixed(1)}g)`);
-    assert(sim.hovorka.tau_G > 50,
-        `τG should be elevated with fat in intestine (was ${sim.hovorka.tau_G.toFixed(1)})`);
+    assert(sim.hovorka.tauGastric > 50,
+        `τG should be elevated with fat in intestine (was ${sim.hovorka.tauGastric.toFixed(1)})`);
 });
 
 test('τG returns toward baseline as fat is absorbed from intestine', () => {
@@ -2061,15 +2061,15 @@ test('τG returns toward baseline as fat is absorbed from intestine', () => {
     sim.addFood(30, 0, 25, '🧀'); // 25g fat
     // Measure τG at peak (after ~40 min when fat reaches intestine)
     for (let i = 0; i < 60 * 60; i++) sim.update(1/60);
-    const tauGPeak = sim.hovorka.tau_G;
+    const tauGPeak = sim.hovorka.tauGastric;
     // Simulate 7 more hours — fat should be mostly absorbed
     for (let i = 0; i < 420 * 60; i++) sim.update(1/60);
-    assert(sim.hovorka.tau_G < tauGPeak - 5,
-        `τG should decrease significantly after 8 hours (peak ${tauGPeak.toFixed(1)}, now ${sim.hovorka.tau_G.toFixed(1)})`);
+    assert(sim.hovorka.tauGastric < tauGPeak - 5,
+        `τG should decrease significantly after 8 hours (peak ${tauGPeak.toFixed(1)}, now ${sim.hovorka.tauGastric.toFixed(1)})`);
     // Uden bolus-insulin er BG forhøjet efter 8t → hyperMod (hyperglykæmi-GE
     // delay) hæver τG med ~15-35%. Baseline ~40–50 × hyperMod ≈ 48–65.
-    assert(sim.hovorka.tau_G < 70,
-        `τG should be near baseline after 8 hours (was ${sim.hovorka.tau_G.toFixed(1)})`);
+    assert(sim.hovorka.tauGastric < 70,
+        `τG should be near baseline after 8 hours (was ${sim.hovorka.tauGastric.toFixed(1)})`);
 });
 
 test('Fat from first meal delays absorption of second meal', () => {
@@ -2080,7 +2080,7 @@ test('Fat from first meal delays absorption of second meal', () => {
     // Scenario 1: eat burger (fat) then dextrose 30 min later
     simWithFat.addFood(40, 30, 30, '🍔');
     for (let i = 0; i < 30 * 60; i++) simWithFat.update(1/60);
-    const tauGBeforeDextro = simWithFat.hovorka.tau_G;
+    const tauGBeforeDextro = simWithFat.hovorka.tauGastric;
     simWithFat.addFood(15, 0, 0, '◻️'); // dextrose (no fat)
 
     // Scenario 2: eat dextrose alone (no prior fat)
@@ -2099,7 +2099,7 @@ test('Exercise increases τG at high intensity (GE delay)', () => {
     sim.addFood(50, 10, 0, '🍞');
     // Simulér 10 min uden motion — mål baseline τG
     for (let i = 0; i < 10 * 60; i++) sim.update(1/60);
-    const tauGBaseline = sim.hovorka.tau_G;
+    const tauGBaseline = sim.hovorka.tauGastric;
 
     // Hård cardio: hold puls på 160 bpm (sæt HVER step da update-loopet
     // ellers exponentialt decay'er smoothHeartRate mod HR_base)
@@ -2107,7 +2107,7 @@ test('Exercise increases τG at high intensity (GE delay)', () => {
         sim.smoothHeartRate = 160;
         sim.update(1/60);
     }
-    const tauGExercise = sim.hovorka.tau_G;
+    const tauGExercise = sim.hovorka.tauGastric;
 
     assert(tauGExercise > tauGBaseline * 1.15,
         `τG should increase during hard exercise (baseline ${tauGBaseline.toFixed(1)}, exercise ${tauGExercise.toFixed(1)})`);
@@ -2117,14 +2117,14 @@ test('Exercise does NOT increase τG at low intensity', () => {
     const sim = createCleanSimulator();
     sim.addFood(50, 10, 0, '🍞');
     for (let i = 0; i < 10 * 60; i++) sim.update(1/60);
-    const tauGBaseline = sim.hovorka.tau_G;
+    const tauGBaseline = sim.hovorka.tauGastric;
 
     // Let cardio: hold puls på 100 bpm
     for (let i = 0; i < 10 * 60; i++) {
         sim.smoothHeartRate = 100;
         sim.update(1/60);
     }
-    const tauGLowExercise = sim.hovorka.tau_G;
+    const tauGLowExercise = sim.hovorka.tauGastric;
 
     assert(Math.abs(tauGLowExercise - tauGBaseline) / tauGBaseline < 0.05,
         `τG should be ~unchanged at low intensity (baseline ${tauGBaseline.toFixed(1)}, low ${tauGLowExercise.toFixed(1)})`);
@@ -3656,16 +3656,16 @@ test('CHO-indtag accelererer resynthesis (Mann 2021: 48→18t)', () => {
 console.log('\n--- Test CARB-TYPES: dynamisk τG fra mavens blanding ---');
 
 // --- Helper: returnér simulator's currentTauG ved at trigge én sub-step ---
-// Vi læser hovorka.tau_G som proxy fordi _substepFatProteinFFA() sætter den
+// Vi læser hovorka.tauGastric som proxy fordi _substepFatProteinFFA() sætter den
 // direkte, og det er præcis værdien BG-modellen bruger.
 function getTauGAfterMeal(carbs, protein, fat, weight, carbType) {
     const sim = createCleanSimulator();
     sim.addFood(carbs, protein, fat, 'X', weight, carbType);
     // Kør 5 sim-min så hele eatTime-queue er drænet ind i mavesækken og
-    // _substepFatProteinFFA() har opdateret hovorka.tau_G på den fulde blanding.
+    // _substepFatProteinFFA() har opdateret hovorka.tauGastric på den fulde blanding.
     // (eatTime for typiske test-vægte er 0.5-5 min via estimateEatTimeMin fallback.)
     simulateMinutes(sim, 5);
-    return sim.hovorka.tau_G;
+    return sim.hovorka.tauGastric;
 }
 
 test('CARB_TYPES og FOODS er tilgængelige globalt', () => {
@@ -3731,7 +3731,7 @@ test('Tom mave: τG falder tilbage på base 40 min (kompatibelt med gammel opfø
     const sim = createCleanSimulator();
     // Ingen mad → ingen blanding → fallback
     sim.update(1.0);
-    assertInRange(sim.hovorka.tau_G, 38, 42, 'tom mave τG fallback');
+    assertInRange(sim.hovorka.tauGastric, 38, 42, 'tom mave τG fallback');
 });
 
 test('Default carbType="mixed" giver ~60 min τG (typisk blandet måltid)', () => {

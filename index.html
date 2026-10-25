@@ -447,7 +447,7 @@
                     <div class="dp-row" title="Fedt i tarmen — udløser CCK/GLP-1 der bremser mavetømning (pizza-effekten). Højere = langsommere KH-absorption">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#food" target="_blank">Tarm-fedt</a></span>
                         <span class="dp-val" id="dbgFatInt">--</span><span class="dp-unit">g</span></div>
-                    <div class="dp-row" title="Dynamisk τG — mavetømningshastighed. Baseline=40 min, stiger med fedt i tarmen. Højere τG = langsommere absorption">
+                    <div class="dp-row" title="Mavens aktuelle tømningskonstant. Højere værdi giver langsommere overførsel til tarmen. Den efterfølgende glukosetilførsel har sin egen profil.">
                         <span class="dp-label"><a href="https://github.com/krauhe/t1d-simulator/blob/main/docs/MODEL-IMPLEMENTATION.md#food" target="_blank">τG</a></span>
                         <span class="dp-val" id="dbgTauG">40</span><span class="dp-unit">min</span></div>
                     <div class="dp-row" title="Aminosyrer i blodet — fra protein-fordøjelse. Driver glukagon-sekretion → øget leverproduktion (HGP). EC50=8g, Hill n=2">
@@ -659,8 +659,8 @@
                  Række 3 (Z-N): Hurtige kulhydrater — hurtige sukre, frugt og let mad.
                  Lav selv (P): Lodret knap til højre — åbner custom popup med fri sammensætning.
                  Hver præsentation slår op i FOODS-tabellen i js/foods.js, så kulhydrat-typen
-                 (sukker_fast, sukker_flydende, fuldkorn, hvidt_mel, frugt, grøntsag, mixed)
-                 sendes med til Simulator.addFood() og bestemmer den dynamiske mavetømning. -->
+                 sendes med til Simulator.addFood(). Profilen beskriver både den fælles
+                 mavetømning og den efterfølgende glukosetilførsel. -->
             <div class="dp-food-presets">
               <div class="preset-rows-main">
 
@@ -779,24 +779,27 @@
         </div>
 
         <!-- CUSTOM FOOD PANEL — "Byg din egen" som forgrening fra mad-panelet -->
-        <!-- Carb-type vælges ØVERST (styrer τG via simulator.js), derefter sættes
+        <!-- Kulhydratprofil vælges ØVERST, derefter sættes
              makroerne (kulhydrat/protein/fedt) på sliderne. Rækkefølgen afspejler
              den naturlige beslutningsorden: først hvilken slags kulhydrat, så hvor meget. -->
         <div id="dock-panel-custom-food" class="dock-panel">
             <!-- Carb-type selector — placeret ØVERST så valget af kulhydrat-type
                  træffes FØR brugeren sætter gram-mængden på Kulhydrat-slideren.
-                 Pædagogisk vigtigt: typen styrer absorptionshastigheden (τG) og
-                 hører tankemæssigt sammen med carbs-værdien. -->
+                 Typen beskriver kulhydratkilden; gram vælges særskilt.
+                 Mavetømning og efterfølgende glukosetilførsel beregnes hver for sig. -->
             <div class="dp-carb-type-section">
                 <div class="dp-carb-type-label" data-i18n="food.custom.carbType.label">Type kulhydrat</div>
                 <div class="dp-carb-type-chips" id="customCarbTypeChips">
                     <div class="carb-type-chip selected" data-carb-type="mixed" data-i18n-title="food.custom.carbType.mixedTitle" title="Blandet måltid (default)">
                         <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-mixed.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.mixed">Blandet</span>
                     </div>
-                    <div class="carb-type-chip" data-carb-type="sukker_fast" data-i18n-title="food.custom.carbType.sugarSolidTitle" title="Rent sukker (fast form)">
-                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-sugar.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.sugarSolid">Sukker</span>
+                    <div class="carb-type-chip" data-carb-type="druesukker" data-i18n-title="food.custom.carbType.glucoseTitle" title="Glukose i fast form. Gram vælges på kulhydrat-skyderen.">
+                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/food/glucose-tablets.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.glucose">Druesukker</span>
                     </div>
-                    <div class="carb-type-chip" data-carb-type="sukker_flydende" data-i18n-title="food.custom.carbType.sugarLiquidTitle" title="Sukker i flydende form (fx juice)">
+                    <div class="carb-type-chip" data-carb-type="sukrose" data-i18n-title="food.custom.carbType.sugarSolidTitle" title="Sukrose i fast form. Gram vælges på kulhydrat-skyderen.">
+                        <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-sugar.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.sugarSolid">Hvidt sukker</span>
+                    </div>
+                    <div class="carb-type-chip" data-carb-type="sukker_flydende" data-i18n-title="food.custom.carbType.sugarLiquidTitle" title="En drik med blandede sukkerarter, fx juice">
                         <span class="ct-emoji"><img class="ct-emoji-img" src="assets/icons/app/carb-drink.png" alt=""></span><span class="ct-name" data-i18n="food.custom.carbType.sugarLiquid">Drik</span>
                     </div>
                     <div class="carb-type-chip" data-carb-type="frugt" data-i18n-title="food.custom.carbType.fruitTitle" title="Frugt: simple sukre + skal-fiber">

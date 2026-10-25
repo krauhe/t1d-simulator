@@ -84,7 +84,7 @@ test('exportState/importState round-tripper Hovorka ODE-kernen (S9.9)', () => {
 
     const target = createEngine({}, { seed: 999 });
     target.importState(snapshot);
-    assert(snapshot.version === 2, 'snapshot-format skal være version 2 (inkl. hovorka)');
+    assert(snapshot.version === 3, 'snapshot-format skal være version 3 (inkl. kulhydratprofiler)');
     assert(approx(target.hovorka.state[4], sourceQ1), 'Hovorka Q1 skal restaureres');
     assert(approx(target.trueBG, sourceBG), 'trueBG skal matche kilden efter import');
     // Det afgørende: efter import skal step() fortsætte IDENTISK med kilden (ODE-kerne + rng).
@@ -153,7 +153,7 @@ test('carbParams valideres før måltidet kan sprede NaN til ODE-kernen', () => 
         }
         assert(error instanceof ExpectedError,
             `ugyldige carbParams skal kaste ${ExpectedError.name}, fik ${error && error.constructor.name}`);
-        assert(engine.activeFood.length === 0 && engine.activeIntake.length === 0,
+        assert(engine.activeIntake.length === 0 && Object.keys(engine.hovorka.carbPools).length === 0,
             'afvist carbParams må ikke efterlade måltids-state');
         assert(engine.peekEvents().length === 0,
             'afvist carbParams må ikke udsende events før fejlen');
@@ -515,7 +515,7 @@ test('runScenario afvikler events i tidsorden via runner uden DOM', () => {
     assert(applied.join(',') === 'first,second', 'events skal afvikles i tidsorden');
     assert(result.samples[0].time === 0, 'første sample skal være start');
     assert(result.samples[result.samples.length - 1].time === 10, 'sidste sample skal være scenarie-slut');
-    assert(result.finalState.version === 2, 'runScenario skal returnere finalState');
+    assert(result.finalState.version === 3, 'runScenario skal returnere finalState');
     assert(!Object.prototype.hasOwnProperty.call(result.finalState.state, 'scenarioRunner'),
         'scenarioRunner må ikke eksporteres');
 });
@@ -561,7 +561,7 @@ test('engine-native interventioner muterer state + emitterer events', () => {
 
     const foodOk = engine.addFood({ carbs: 40, protein: 10, fat: 5, weight: 80 });
     assert(foodOk === true, 'addFood skal returnere true ved accept');
-    assert(engine.activeFood.length === 1, 'addFood skal lægge i activeFood');
+    assert(engine.activeIntake.length === 1, 'addFood skal lægge i den fælles indtagskø');
     assert(engine.activeIntake.length === 1, 'addFood skal lægge i activeIntake-køen');
     assert(approx(engine.totalKcalConsumed, 40 * 4 + 10 * 4 + 5 * 9), 'addFood skal akkumulere kcal');
 
@@ -797,7 +797,7 @@ test('addFood afviser når mavesækken er fuld', () => {
     const ok = engine.addFood({ carbs: 30, weight: 60 });
     assert(ok === false, 'addFood skal returnere false ved fuld mave');
     assert(engine.peekEvents().some(e => e.type === 'stomach-full'), 'addFood skal emitte stomach-full');
-    assert(engine.activeFood.length === 0, 'afvist mad må ikke ligge i activeFood');
+    assert(engine.activeIntake.length === 0, 'afvist mad må ikke ligge i indtagskøen');
 });
 
 test('getState/getFluxSnapshot/getPhysiologySnapshot leverer forventede former', () => {
@@ -854,7 +854,7 @@ test('attachDefaultRunner muliggør standalone runScenario uden facade', () => {
     assert(result.samples.length > 0, 'runScenario skal producere samples');
     assert(result.samples[0].time === 0, 'første sample skal være start');
     assert(typeof result.samples[1].trueBG === 'number', 'samples skal indeholde trueBG (getState)');
-    assert(result.finalState.version === 2, 'runScenario skal returnere finalState');
+    assert(result.finalState.version === 3, 'runScenario skal returnere finalState');
 });
 
 // --- S9.2: ergonomi (default-aktivitetskatalog + reset) ---
@@ -882,7 +882,7 @@ test('reset nulstiller engine til frisk start med samme profil', () => {
     engine.reset();
     assert(engine.totalSimMinutes === 0, 'reset skal nulstille uret');
     assert(engine.activeFastInsulin.length === 0, 'reset skal rydde rapid-insulin');
-    assert(engine.activeFood.length === 0 && engine.activeIntake.length === 0, 'reset skal rydde mad');
+    assert(engine.activeIntake.length === 0 && Object.keys(engine.hovorka.carbPools).length === 0, 'reset skal rydde mad');
     assert(engine.events.length === 0, 'reset skal rydde event-buffer');
 
     engine.reset({ steadyState: true });
